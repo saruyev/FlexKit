@@ -1,0 +1,68 @@
+{
+  "author": "Michael Saruyev",
+  "name": "FlexKit Integration Test Project",
+  "description": "An integration test project template for FlexKit with pre-configured packages and settings.",
+  "identity": "MichaelSaruyev.FlexKit.IntegrationTest.Template",
+  "shortName": "flexkit-integrationtest",
+  "tags": {
+    "language": "C#",
+    "type": "project"
+  },
+  "sourceName": "FlexKit.IntegrationTest.Template",
+  "preferNameDirectory": true,
+  "symbols": {
+    "TargetFramework": {
+      "type": "parameter",
+      "description": "The target framework for the project.",
+      "datatype": "choice",
+      "choices": [
+        {
+          "choice": "net9.0",
+          "description": ".NET 9.0"
+        },
+        {
+          "choice": "net8.0",
+          "description": ".NET 8.0"
+        }
+      ],
+      "defaultValue": "net9.0",
+      "replaces": "TARGETFRAMEWORK_PLACEHOLDER"
+    },
+    "ProjectName": {
+      "type": "parameter",
+      "description": "The name of the project",
+      "datatype": "text",
+      "replaces": "FlexKit.IntegrationTest.Template",
+      "fileRename": "FlexKit.IntegrationTest.Template"
+    },
+    "SafeProjectName": {
+      "type": "derived",
+      "valueSource": "ProjectName",
+      "valueTransform": "WithoutTrailingNumbers",
+      "description": "A safe version of the project name for use in code"
+    }
+  },
+  "forms": {
+    "WithoutTrailingNumbers": {
+      "identifier": "replace",
+      "pattern": "\\d+$",
+      "replacement": ""
+    }
+  },
+  "sources": [
+    {
+      "modifiers": [
+        {
+          "condition": "true",
+          "exclude": [
+            "**/bin/**",
+            "**/obj/**",
+            ".template.config/**/*",
+            ".vs/**",
+            ".vscode/**"
+          ]
+        }
+      ]
+    }
+  ]
+}

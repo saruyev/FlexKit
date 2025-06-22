@@ -209,7 +209,7 @@ public sealed class FlexConfiguration(IConfiguration root) : DynamicObject, IFle
     /// var port = flexConfig["Server:Port"]?.ToType&lt;int&gt;();
     /// </code>
     /// </example>
-    public string? this[string key] => !string.IsNullOrEmpty(key) ? _root[key] : null;
+    public string? this[string key] => !string.IsNullOrEmpty(key.Trim()) ? _root[key] : null;
 
     /// <summary>
     /// Gets a configuration section by numeric index, treating the configuration as an array-like structure.

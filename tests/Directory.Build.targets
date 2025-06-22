@@ -1,0 +1,127 @@
+﻿<!-- tests/Directory.Build.targets - Common targets for ALL test projects -->
+<Project>
+
+    <!-- Import solution-level targets -->
+    <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.targets', '$(MSBuildThisFileDirectory)../'))" />
+
+    <!-- Automatic Project Reference Resolution -->
+    <Target Name="AddAutomaticProjectReferences" BeforeTargets="CollectPackageReferences">
+        <!-- Determine the source project name by removing test suffixes -->
+        <PropertyGroup>
+            <SourceProjectName>$(MSBuildProjectName)</SourceProjectName>
+            <SourceProjectName Condition="$(SourceProjectName.EndsWith('.Tests'))">$(SourceProjectName.Substring(0, $(SourceProjectName.LastIndexOf('.Tests'))))</SourceProjectName>
+            <SourceProjectName Condition="$(SourceProjectName.EndsWith('.Integration.Tests'))">$(SourceProjectName.Substring(0, $(SourceProjectName.LastIndexOf('.Integration.Tests'))))</SourceProjectName>
+            <SourceProjectName Condition="$(SourceProjectName.EndsWith('.Performance.Tests'))">$(SourceProjectName.Substring(0, $(SourceProjectName.LastIndexOf('.Performance.Tests'))))</SourceProjectName>
+
+            <!-- Calculate source project path -->
+            <SourceProjectPath>$([MSBuild]::GetDirectoryNameOfFileAbove('$(MSBuildProjectDirectory)', '$(SourceProjectName).csproj'))</SourceProjectPath>
+            <SourceProjectFile>$(SourceProjectPath)/$(SourceProjectName).csproj</SourceProjectFile>
+        </PropertyGroup>
+
+        <!-- Add reference to source project if it exists -->
+        <ItemGroup Condition="Exists('$(SourceProjectFile)')">
+            <ProjectReference Include="$(SourceProjectFile)" />
+        </ItemGroup>
+
+        <!-- Output information for debugging -->
+        <Message Text="Test Project: $(MSBuildProjectName)" Importance="low" />
+        <Message Text="Source Project: $(SourceProjectName)" Importance="low" />
+        <Message Text="Source Project Path: $(SourceProjectFile)" Importance="low" />
+        <Message Text="Source Project Exists: $([System.IO.File]::Exists('$(SourceProjectFile)'))" Importance="low" />
+    </Target>
+
+    <!-- Test Result Organization -->
+    <Target Name="OrganizeTestResults" AfterTargets="VSTest">
+        <PropertyGroup>
+            <TestResultsDir>$(MSBuildThisFileDirectory)../TestResults</TestResultsDir>
+            <ProjectTestResultsDir>$(TestResultsDir)/$(MSBuildProjectName)</ProjectTestResultsDir>
+        </PropertyGroup>
+
+        <!-- Create project-specific test results directory -->
+        <MakeDir Directories="$(ProjectTestResultsDir)" />
+
+        <!-- Move test results to organized structure -->
+        <ItemGroup>
+            <TestResultFiles Include="$(TestResultsDir)/**/*.trx" />
+            <CoverageFiles Include="$(TestResultsDir)/**/*.xml" />
+        </ItemGroup>
+
+        <Move SourceFiles="@(TestResultFiles)" DestinationFolder="$(ProjectTestResultsDir)" Condition="'@(TestResultFiles)' != ''" />
+    </Target>
+
+    <!-- Test Coverage Validation -->
+    <Target Name="ValidateTestCoverage" AfterTargets="Test" Condition="'$(Configuration)' == 'Release'">
+        <PropertyGroup>
+            <CoverageThreshold Condition="'$(CoverageThreshold)' == ''">100</CoverageThreshold>
+            <CoverageReportPath>$(CoverletOutput)$(MSBuildProjectName).xml</CoverageReportPath>
+        </PropertyGroup>
+
+        <!-- Custom task to validate coverage (simplified version) -->
+        <Message Text="Validating test coverage for $(MSBuildProjectName)" Importance="high" />
+        <Message Text="Expected coverage: $(CoverageThreshold)%" Importance="normal" />
+        <Message Text="Coverage report: $(CoverageReportPath)" Importance="low" />
+
+        <!-- In a real implementation, you'd parse the coverage report and fail if below threshold -->
+        <Warning Text="Coverage validation not implemented - add ReportGenerator or custom tool" Condition="!Exists('$(CoverageReportPath)')" />
+    </Target>
+
+    <!-- Test Categories and Filtering -->
+    <Target Name="SetTestCategories" BeforeTargets="VSTest">
+        <PropertyGroup>
+            <!-- Set test traits based on project type -->
+            <VSTestTestCaseFilter Condition="'$(IsUnitTestProject)' == 'true'">TestCategory=Unit</VSTestTestCaseFilter>
+            <VSTestTestCaseFilter Condition="'$(IsIntegrationTestProject)' == 'true'">TestCategory=Integration</VSTestTestCaseFilter>
+            <VSTestTestCaseFilter Condition="'$(IsPerformanceTestProject)' == 'true'">TestCategory=Performance</VSTestTestCaseFilter>
+        </PropertyGroup>
+    </Target>
+
+    <!-- Performance Test Specific Targets -->
+    <Target Name="RunBenchmarks" Condition="'$(IsPerformanceTestProject)' == 'true'">
+        <PropertyGroup>
+            <BenchmarkAssembly>$(OutputPath)$(AssemblyName).dll</BenchmarkAssembly>
+            <BenchmarkResultsDir>$(TestResultsDir)/Benchmarks/$(MSBuildProjectName)</BenchmarkResultsDir>
+        </PropertyGroup>
+
+        <MakeDir Directories="$(BenchmarkResultsDir)" />
+
+        <Message Text="Running benchmarks for $(MSBuildProjectName)" Importance="high" />
+        <Message Text="Results will be saved to: $(BenchmarkResultsDir)" Importance="normal" />
+
+        <!-- Note: In real usage, you'd execute BenchmarkDotNet console runner here -->
+        <Message Text="To run benchmarks manually: dotnet $(BenchmarkAssembly) --artifacts $(BenchmarkResultsDir)" Importance="high" />
+    </Target>
+
+    <!-- Clean Test Results -->
+    <Target Name="CleanTestResults" BeforeTargets="Clean">
+        <PropertyGroup>
+            <TestResultsDir>$(MSBuildThisFileDirectory)../TestResults</TestResultsDir>
+            <ProjectTestResultsDir>$(TestResultsDir)/$(MSBuildProjectName)</ProjectTestResultsDir>
+        </PropertyGroup>
+
+        <RemoveDir Directories="$(ProjectTestResultsDir)" Condition="Exists('$(ProjectTestResultsDir)')" />
+        <Delete Files="$(CoverletOutput)$(MSBuildProjectName).*" />
+    </Target>
+
+    <!-- Test Project Validation -->
+    <Target Name="ValidateTestProject" BeforeTargets="Build">
+        <!-- Ensure test projects follow naming conventions -->
+        <Error Text="Test project '$(MSBuildProjectName)' must end with '.Tests', '.Integration.Tests', or '.Performance.Tests'"
+               Condition="!$(MSBuildProjectName.EndsWith('.Tests')) and
+                         !$(MSBuildProjectName.EndsWith('.Integration.Tests')) and
+                         !$(MSBuildProjectName.EndsWith('.Performance.Tests'))" />
+
+        <!-- Ensure test projects are in tests directory -->
+        <Warning Text="Test project '$(MSBuildProjectName)' should be in a 'tests' directory for consistency"
+                 Condition="!$(MSBuildProjectDirectory.Contains('tests'))" />
+    </Target>
+
+    <!-- Generate Test Summary -->
+    <Target Name="GenerateTestSummary" AfterTargets="Test">
+        <Message Text="📊 Test Summary for $(MSBuildProjectName):" Importance="high" />
+        <Message Text="  🏷️  Category: $(TestCategory)" Importance="high" />
+        <Message Text="  📁 Results: $(TestResultsDir)/$(MSBuildProjectName)" Importance="high" />
+        <Message Text="  ⏱️  Timeout: $(TestTimeout)ms" Importance="high" />
+        <Message Text="  🎯 Coverage Target: $(CoverageThreshold)%" Importance="high" />
+    </Target>
+
+</Project>

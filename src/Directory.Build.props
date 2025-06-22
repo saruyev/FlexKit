@@ -55,25 +55,25 @@
     <!-- Analyzer Packages for ALL Projects - Using latest available versions -->
     <ItemGroup>
         <!-- Microsoft's built-in analyzers (always included with SDK) -->
-        <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="9.0.0">
+        <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="[9.0.0,10.0.0)">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
 
         <!-- Roslynator for advanced C# analysis -->
-        <PackageReference Include="Roslynator.Analyzers" Version="4.13.1">
+        <PackageReference Include="Roslynator.Analyzers" Version="[4.13.1,5.0.0)">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
 
         <!-- SonarAnalyzer - using latest stable version -->
-        <PackageReference Include="SonarAnalyzer.CSharp" Version="10.3.0.106239">
+        <PackageReference Include="SonarAnalyzer.CSharp" Version="[10.12.0.118525,11.0.0.0)">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
 
         <!-- Source Link for debugging support -->
-        <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0">
+        <PackageReference Include="Microsoft.SourceLink.GitHub" Version="[8.0.0,9.0.0)">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>

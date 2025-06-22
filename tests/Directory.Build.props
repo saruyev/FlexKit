@@ -1,0 +1,94 @@
+﻿<!-- tests/Directory.Build.props - Common properties for ALL test projects -->
+<Project>
+
+    <!-- Import solution-level properties first -->
+    <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
+
+    <!-- Test Project Common Properties -->
+    <PropertyGroup>
+        <IsPackable>false</IsPackable>
+        <IsTestProject>true</IsTestProject>
+        <GenerateDocumentationFile>false</GenerateDocumentationFile>
+
+        <!-- Test-specific build settings -->
+        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+        <WarningsAsErrors />
+        <WarningsNotAsErrors>CS1591;CS0618</WarningsNotAsErrors> <!-- Disable XML doc warnings for tests, allow obsolete for testing -->
+
+        <!-- Test runner configuration -->
+        <VSTestLogger>trx</VSTestLogger>
+        <VSTestResultsDirectory>$(MSBuildThisFileDirectory)../TestResults</VSTestResultsDirectory>
+
+        <!-- Project name analysis for test projects -->
+        <ProjectNameWithoutTests>$(MSBuildProjectName)</ProjectNameWithoutTests>
+        <IsActualTestProject>false</IsActualTestProject>
+    </PropertyGroup>
+
+    <!-- Determine if this is actually a test project based on naming -->
+    <PropertyGroup Condition="$(MSBuildProjectName.EndsWith('.Tests'))">
+        <ProjectNameWithoutTests>$(MSBuildProjectName.Substring(0, $(MSBuildProjectName.LastIndexOf('.Tests'))))</ProjectNameWithoutTests>
+        <IsActualTestProject>true</IsActualTestProject>
+    </PropertyGroup>
+
+    <!-- Shared Test Package References (ONLY packages needed by ALL test types) -->
+    <ItemGroup>
+        <!-- Core test framework - Required by ALL test projects -->
+        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="[17.14.1,18.0.0)" />
+        <PackageReference Include="xunit" Version="[2.9.3,3.0.0)" />
+        <PackageReference Include="xunit.runner.visualstudio" Version="[3.1.1,4.0.0)">
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+            <PrivateAssets>all</PrivateAssets>
+        </PackageReference>
+
+        <!-- Assertion library - Used in ALL test types for better readable assertions -->
+        <PackageReference Include="FluentAssertions" Version="[8.3.0,9.0.0)" />
+
+        <!-- Mocking library - Used in unit tests AND integration tests for partial mocking -->
+        <PackageReference Include="NSubstitute" Version="[5.3.0,6.0.0)" />
+
+        <!-- Basic configuration support - Most test projects need some config -->
+        <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="[9.0.6,10.0.0)" />
+        <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="[9.0.6,10.0.0)" />
+    </ItemGroup>
+
+    <!-- Test Data Files Configuration - All test types may have test data -->
+    <ItemGroup>
+        <None Update="TestData/**/*">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+        <!-- Use the property-based condition instead of inline string replacement -->
+        <None Update="**/*.json" Condition="'$(IsActualTestProject)' == 'true'">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+        <None Update="**/*.env">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+    </ItemGroup>
+
+    <!-- Test Project Categorization -->
+    <PropertyGroup>
+        <!-- Determine test project type based on naming -->
+        <IsUnitTestProject Condition="$(MSBuildProjectName.Contains('.Tests')) and !$(MSBuildProjectName.Contains('.Integration')) and !$(MSBuildProjectName.Contains('.Performance'))">true</IsUnitTestProject>
+        <IsIntegrationTestProject Condition="$(MSBuildProjectName.Contains('.Integration'))">true</IsIntegrationTestProject>
+        <IsPerformanceTestProject Condition="$(MSBuildProjectName.Contains('.Performance'))">true</IsPerformanceTestProject>
+
+        <!-- Set appropriate test categories -->
+        <TestCategory Condition="'$(IsUnitTestProject)' == 'true'">Unit</TestCategory>
+        <TestCategory Condition="'$(IsIntegrationTestProject)' == 'true'">Integration</TestCategory>
+        <TestCategory Condition="'$(IsPerformanceTestProject)' == 'true'">Performance</TestCategory>
+    </PropertyGroup>
+
+    <!-- Default timeout settings (can be overridden in templates) -->
+    <PropertyGroup Condition="'$(IsUnitTestProject)' == 'true'">
+        <TestTimeout>60000</TestTimeout> <!-- 1 minute for unit tests -->
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(IsIntegrationTestProject)' == 'true'">
+        <TestTimeout>300000</TestTimeout> <!-- 5 minutes for integration tests -->
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(IsPerformanceTestProject)' == 'true'">
+        <TestTimeout>1800000</TestTimeout> <!-- 30 minutes for performance tests -->
+    </PropertyGroup>
+
+</Project>

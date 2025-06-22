@@ -1,0 +1,124 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!-- FlexKit Solution Test Run Settings -->
+<RunSettings>
+
+  <!-- Test Adapter Settings -->
+  <RunConfiguration>
+    <!-- Parallelize test execution -->
+    <MaxCpuCount>0</MaxCpuCount>
+
+    <!-- Test timeout (in milliseconds) -->
+    <TestSessionTimeout>3600000</TestSessionTimeout> <!-- 1 hour -->
+
+    <!-- Results directory -->
+    <ResultsDirectory>./TestResults</ResultsDirectory>
+
+    <!-- Target platform and framework -->
+    <TargetPlatform>x64</TargetPlatform>
+    <TargetFrameworkVersion>net9.0</TargetFrameworkVersion>
+
+    <!-- Disable app domains for better performance -->
+    <DisableAppDomain>true</DisableAppDomain>
+
+    <!-- Disable parallelization within assemblies (we control this per project) -->
+    <DisableParallelization>false</DisableParallelization>
+  </RunConfiguration>
+
+  <!-- xUnit Configuration -->
+  <xUnit>
+    <!-- Parallelize assemblies -->
+    <ParallelizeAssembly>true</ParallelizeAssembly>
+
+    <!-- Parallelize test collections -->
+    <ParallelizeTestCollections>true</ParallelizeTestCollections>
+
+    <!-- Maximum parallel threads -->
+    <MaxParallelThreads>0</MaxParallelThreads> <!-- Use all available cores -->
+
+    <!-- Capture console output -->
+    <CaptureConsoleOutput>true</CaptureConsoleOutput>
+
+    <!-- Stop on first failure (for debugging) -->
+    <StopOnFail>false</StopOnFail>
+
+    <!-- Test timeout per test -->
+    <TestTimeout>60000</TestTimeout> <!-- 1 minute default -->
+  </xUnit>
+
+  <!-- Test Categories and Filters -->
+  <TestCaseFilter>
+    <!-- Default: Run all tests except manual ones -->
+    <!-- Override with: dotnet test --filter "TestCategory!=Manual" -->
+  </TestCaseFilter>
+
+  <!-- Data Collection (Code Coverage) -->
+  <DataCollectionRunSettings>
+    <DataCollectors>
+      <!-- XPlat Code Coverage -->
+      <DataCollector friendlyName="XPlat code coverage" uri="datacollector://Microsoft/CodeCoverage/2.0" assemblyQualifiedName="Microsoft.VisualStudio.CodeCoverage.MSBuild.DataCollector, Microsoft.VisualStudio.CodeCoverage.MSBuild" enabled="true">
+        <Configuration>
+          <Format>opencover,cobertura,json</Format>
+          <ExcludeByFile>**/bin/**/*,**/obj/**/*,**/*Tests/**/*,**/TestData/**/*</ExcludeByFile>
+          <ExcludeByAttribute>Obsolete,GeneratedCodeAttribute,CompilerGeneratedAttribute,ExcludeFromCodeCoverage</ExcludeByAttribute>
+          <IncludeDirectory>./src/**</IncludeDirectory>
+          <UseSourceLink>true</UseSourceLink>
+        </Configuration>
+      </DataCollector>
+
+      <!-- Blame data collector for crash analysis -->
+      <DataCollector friendlyName="blame" enabled="true">
+        <Configuration>
+          <CollectDump>true</CollectDump>
+          <CollectAlways>false</CollectAlways>
+          <DumpType>mini</DumpType>
+        </Configuration>
+      </DataCollector>
+    </DataCollectors>
+  </DataCollectionRunSettings>
+
+  <!-- MSTest specific settings (if needed) -->
+  <MSTest>
+    <Parallelize>
+      <Workers>0</Workers> <!-- Use all available cores -->
+      <Scope>MethodLevel</Scope>
+    </Parallelize>
+    <CaptureTraceOutput>true</CaptureTraceOutput>
+    <DeleteDeploymentDirectoryAfterTestRunIsComplete>true</DeleteDeploymentDirectoryAfterTestRunIsComplete>
+    <DeploymentEnabled>false</DeploymentEnabled>
+  </MSTest>
+
+  <!-- Logging Configuration -->
+  <LoggerRunSettings>
+    <Loggers>
+      <!-- Console logger -->
+      <Logger friendlyName="console" enabled="true">
+        <Configuration>
+          <Verbosity>normal</Verbosity>
+        </Configuration>
+      </Logger>
+
+      <!-- TRX logger for CI/CD -->
+      <Logger friendlyName="trx" enabled="true">
+        <Configuration>
+          <LogFileName>FlexKit.TestResults.trx</LogFileName>
+        </Configuration>
+      </Logger>
+
+      <!-- HTML logger (if available) -->
+      <Logger friendlyName="html" enabled="false">
+        <Configuration>
+          <LogFileName>FlexKit.TestResults.html</LogFileName>
+        </Configuration>
+      </Logger>
+    </Loggers>
+  </LoggerRunSettings>
+
+  <!-- Environment Variables for Tests -->
+  <TestRunParameters>
+    <Parameter name="TestEnvironment" value="Local" />
+    <Parameter name="EnableTestLogging" value="true" />
+    <Parameter name="TestDataDirectory" value="./TestData" />
+    <Parameter name="TempDirectory" value="./temp" />
+  </TestRunParameters>
+
+</RunSettings>
