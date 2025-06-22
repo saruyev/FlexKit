@@ -1,0 +1,67 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net9.0</TargetFramework>
+        <!-- Unit test specific settings -->
+        <CoverageThreshold>100</CoverageThreshold>
+
+        <!-- Unit tests should be fast and isolated -->
+        <DefineConstants>$(DefineConstants);UNIT_TESTS</DefineConstants>
+        <IsPackable>false</IsPackable>
+        <IsTestProject>true</IsTestProject>
+        <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    </PropertyGroup>
+
+    <!-- Unit test specific packages (beyond what's in Directory.Build.props) -->
+    <ItemGroup>
+        <!-- Code coverage tools - Unit tests focus heavily on coverage -->
+        <PackageReference Include="AutoFixture.AutoNSubstitute" Version="4.18.1" />
+        <PackageReference Include="coverlet.collector" Version="[6.0.4,7.0.0)">
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+            <PrivateAssets>all</PrivateAssets>
+        </PackageReference>
+        <PackageReference Include="coverlet.msbuild" Version="[6.0.4,7.0.0)">
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+            <PrivateAssets>all</PrivateAssets>
+        </PackageReference>
+        <PackageReference Include="ReportGenerator" Version="[5.4.8,6.0.0)"/>
+
+        <!-- Test data generation - For creating test objects and realistic data -->
+        <PackageReference Include="AutoFixture" Version="[4.18.1,5.0.0)"/>
+        <PackageReference Include="AutoFixture.Xunit2" Version="[4.18.1,5.0.0)"/>
+        <PackageReference Include="Bogus" Version="[35.6.3,36.0.0)"/>
+
+        <!-- Autofac for unit testing DI scenarios and module testing -->
+        <PackageReference Include="Autofac" Version="[8.3.0,9.0.0)"/>
+        <PackageReference Include="Autofac.Extensions.DependencyInjection" Version="[10.0.0,11.0.0)"/>
+
+        <!-- Additional configuration support for unit testing configuration logic -->
+        <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="[9.0.6,10.0.0)"/>
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="[9.0.6,10.0.0)"/>
+        <PackageReference Include="Microsoft.Extensions.Diagnostics.Testing" Version="[9.1.0,10.0.0)"/>
+        <PackageReference Include="Microsoft.Extensions.Logging" Version="[9.0.6,10.0.0)"/>
+    </ItemGroup>
+    <ItemGroup>
+      <Folder Include="Assembly\" />
+      <Folder Include="Conversion\" />
+      <Folder Include="Sources\" />
+    </ItemGroup>
+    <ItemGroup>
+      <ProjectReference Include="..\..\src\FlexKit.Configuration\FlexKit.Configuration.csproj" />
+    </ItemGroup>
+
+    <!-- Code coverage configuration for unit tests -->
+    <PropertyGroup>
+        <CollectCoverage>true</CollectCoverage>
+        <CoverletOutputFormat>opencover,cobertura,json</CoverletOutputFormat>
+        <CoverletOutput>$(MSBuildThisFileDirectory)../TestResults/coverage/</CoverletOutput>
+        <ExcludeByFile>**/bin/**/*;**/obj/**/*;**/TestData/**/*</ExcludeByFile>
+        <Include>[FlexKit.*]*</Include>
+        <Exclude>[*.Tests]*,[*.Integration.Tests]*,[*.Performance.Tests]*</Exclude>
+
+        <!-- Strict coverage requirements for unit tests -->
+        <CoverageFailOnMinThreshold>true</CoverageFailOnMinThreshold>
+        <CoverageThresholdType>line,branch,method</CoverageThresholdType>
+    </PropertyGroup>
+
+</Project>
