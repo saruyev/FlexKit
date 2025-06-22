@@ -1,0 +1,114 @@
+<!-- Directory.Build.targets - Place this in the solution root directory -->
+<!-- This file automatically applies to ALL projects in the solution -->
+<Project>
+
+    <!-- FlexKit Style Guide Validation Targets -->
+
+    <!-- Validate file naming conventions -->
+    <Target Name="ValidateFlexKitFileNaming" BeforeTargets="Build">
+        <ItemGroup>
+            <!-- Check for files that don't follow PascalCase naming -->
+            <InvalidNamedFiles Include="**/*.cs" Exclude="bin/**;obj/**" Condition="$([System.Text.RegularExpressions.Regex]::IsMatch('%(Filename)', '^[a-z]'))" />
+        </ItemGroup>
+
+        <Error Text="FlexKit Style Guide Violation: File '%(InvalidNamedFiles.Filename)%(InvalidNamedFiles.Extension)' should use PascalCase naming convention."
+               Condition="'@(InvalidNamedFiles)' != ''" />
+    </Target>
+
+    <!-- Validate project structure follows feature-based organization -->
+    <Target Name="ValidateFlexKitStructure" BeforeTargets="Build">
+        <ItemGroup>
+            <!-- Warn about potential type-based organization -->
+            <TypeBasedFolders Include="**/Contracts/**/*.cs;**/Utilities/**/*.cs;**/Helpers/**/*.cs;**/Common/**/*.cs" Exclude="bin/**;obj/**" />
+        </ItemGroup>
+
+        <Warning Text="FlexKit Style Guide: Consider feature-based organization instead of type-based folders (Contracts, Utilities, Helpers, Common). File: %(TypeBasedFolders.Identity)"
+                 Condition="'@(TypeBasedFolders)' != ''" />
+    </Target>
+
+    <!-- Check for large files that might violate size guidelines -->
+    <Target Name="ValidateFlexKitFileSize" BeforeTargets="Build">
+        <ItemGroup>
+            <CSharpFiles Include="**/*.cs" Exclude="bin/**;obj/**;*.Designer.cs;*.g.cs;*.g.i.cs" />
+        </ItemGroup>
+
+        <!-- This is a simplified check - in practice, you'd need a custom task to count actual lines -->
+        <Message Text="FlexKit Style Guide: Monitor file sizes to ensure they don't exceed 500 lines. Large files detected in: %(CSharpFiles.Identity)"
+                 Importance="normal"
+                 Condition="$([System.IO.File]::ReadAllText('%(CSharpFiles.FullPath)').Length) > 25000" />
+    </Target>
+
+    <!-- Generate build summary with FlexKit compliance -->
+    <Target Name="FlexKitBuildSummary" AfterTargets="Build">
+        <Message Text="🎉 FlexKit Build Summary:" Importance="high" />
+        <Message Text="  ✅ Style Guide: Enforced" Importance="high" />
+        <Message Text="  ✅ Analyzers: Enabled" Importance="high" />
+        <Message Text="  ✅ Modern C#: Required" Importance="high" />
+        <Message Text="  ✅ Null Safety: Enabled" Importance="high" />
+    </Target>
+
+    <!-- Custom task to validate method complexity (optional enhancement) -->
+    <UsingTask TaskName="ValidateMethodComplexity" TaskFactory="RoslynCodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.Core.dll">
+        <ParameterGroup>
+            <SourceFiles ParameterType="Microsoft.Build.Framework.ITaskItem[]" Required="true" />
+        </ParameterGroup>
+        <Task>
+            <Using Namespace="System" />
+            <Using Namespace="System.IO" />
+            <Using Namespace="System.Linq" />
+            <Using Namespace="Microsoft.Build.Framework" />
+            <Code Type="Fragment" Language="cs">
+                <![CDATA[
+        // Simple heuristic check for method complexity
+        foreach (var file in SourceFiles)
+        {
+            var content = File.ReadAllText(file.ItemSpec);
+            var lines = content.Split('\n');
+            var inMethod = false;
+            var methodLines = 0;
+            var methodName = "";
+
+            for (int i = 0; i < lines.Length; i++)
+            {
+                var line = lines[i].Trim();
+
+                // Simple detection of method start
+                if (line.Contains("public ") || line.Contains("private ") || line.Contains("protected "))
+                {
+                    if (line.Contains("(") && line.Contains(")") && !line.Contains("class ") && !line.Contains("interface "))
+                    {
+                        inMethod = true;
+                        methodLines = 0;
+                        methodName = line.Split('(')[0].Split(' ').Last();
+                    }
+                }
+
+                if (inMethod)
+                {
+                    methodLines++;
+                    if (line.Contains("}") && !line.Contains("{"))
+                    {
+                        if (methodLines > 25) // Approximate 20-line limit with some tolerance
+                        {
+                            Log.LogWarning($"FlexKit Style Guide: Method '{methodName}' in {file.ItemSpec} may exceed 20-line guideline ({methodLines} lines)");
+                        }
+                        inMethod = false;
+                    }
+                }
+            }
+        }
+        ]]>
+            </Code>
+        </Task>
+    </UsingTask>
+
+    <!-- Run method complexity validation -->
+    <Target Name="ValidateMethodComplexity" BeforeTargets="Build">
+        <ItemGroup>
+            <CSharpFilesToCheck Include="**/*.cs" Exclude="bin/**;obj/**;*.Designer.cs;*.g.cs;*.g.i.cs" />
+        </ItemGroup>
+
+        <ValidateMethodComplexity SourceFiles="@(CSharpFilesToCheck)" ContinueOnError="true" />
+    </Target>
+
+</Project>

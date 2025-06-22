@@ -1,0 +1,506 @@
+# FlexKit Solution .gitignore
+# Comprehensive .gitignore for a large .NET 9 solution with 33+ projects
+
+###############################
+# .NET Core / .NET 9 Build Outputs
+###############################
+
+# Build results
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+[Ww][Ii][Nn]32/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+
+# Visual Studio 2015/2017/2019/2022 cache/options directory
+.vs/
+
+# Visual Studio Code
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
+
+# JetBrains Rider
+.idea/
+*.sln.iml
+
+# MSTest test Results
+[Tt]est[Rr]esult*/
+[Bb]uild[Ll]og.*
+
+# NUnit
+*.VisualState.xml
+TestResult.xml
+nunit-*.xml
+
+# xUnit
+xunit-*.xml
+
+# Build Results of an ATL Project
+[Dd]ebugPS/
+[Rr]eleasePS/
+dlldata.c
+
+# Benchmark Results
+BenchmarkDotNet.Artifacts/
+
+###############################
+# NuGet Packages
+###############################
+
+# NuGet v3's project.json files produces more ignoreable files
+*.nuget.props
+*.nuget.targets
+
+# NuGet Symbol Packages
+*.snupkg
+
+# The packages folder can be ignored because of Package Restore
+**/[Pp]ackages/*
+# except build/, which is used as an MSBuild target
+!**/[Pp]ackages/build/
+
+# Uncomment if necessary however generally it will be regenerated when needed
+#!**/[Pp]ackages/repositories.config
+
+# NuGet lock files
+packages.lock.json
+
+###############################
+# ASP.NET Core
+###############################
+
+# ASP.NET Scaffolding
+ScaffoldingReadMe.txt
+
+# ASP.NET Core Web App publish settings
+**/Properties/PublishProfiles/
+
+# Microsoft Azure Web App publish settings
+*.PublishSettings
+
+# Note: Comment the next line if you want to checkin your web deploy settings,
+# but database connection strings (with potential passwords) will be unencrypted
+*.pubxml
+*.publishproj
+
+# Microsoft Azure Web App publish settings. Comment the next line if you want to
+# checkin your Azure Web App publish settings, but sensitive information contained
+# in these scripts will be unencrypted
+PublishScripts/
+
+###############################
+# Entity Framework
+###############################
+
+# Entity Framework migrations
+**/Migrations/*
+!**/Migrations/*.cs
+
+# Entity Framework database files
+*.mdf
+*.ldf
+*.ndf
+
+###############################
+# Configuration & Secrets
+###############################
+
+# User secrets (development only)
+**/secrets.json
+
+# Environment files (may contain sensitive data)
+.env
+.env.local
+.env.*.local
+.env.development
+.env.staging
+.env.production
+
+# Configuration files with sensitive data
+appsettings.Development.json
+appsettings.Staging.json
+appsettings.Production.json
+appsettings.*.json
+!appsettings.json
+!appsettings.Example.json
+
+# Azure Functions local settings
+local.settings.json
+
+# Local database files
+*.db
+*.sqlite
+*.sqlite3
+*.db-shm
+*.db-wal
+
+###############################
+# Docker
+###############################
+
+# Docker files (keep Dockerfile, ignore runtime files)
+**/docker-compose.override.yml
+.dockerignore
+
+###############################
+# IDE & Editor Files
+###############################
+
+# Visual Studio cache files
+*.cachefile
+*.VC.db
+*.VC.VC.opendb
+
+# Visual Studio profiler
+*.psess
+*.vsp
+*.vspx
+*.sap
+
+# Visual Studio Trace Files
+*.e2e
+
+# TFS 2012 Local Workspace
+$tf/
+
+# Guidance Automation Toolkit
+*.gpState
+
+# ReSharper
+_ReSharper*/
+*.[Rr]e[Ss]harper
+*.DotSettings.user
+
+# JustCode
+.JustCode
+
+# TeamCity
+_TeamCity*
+
+# DotCover
+*.dotCover
+
+# AxoCover
+.axoCover/*
+!.axoCover/settings.json
+
+# Coverlet
+coverage*.json
+coverage*.xml
+coverage*.info
+
+# Visual Studio code coverage results
+*.coverage
+*.coveragexml
+
+# NCrunch
+_NCrunch_*
+.*crunch*.local.xml
+nCrunchTemp_*
+
+# MightyMoose
+*.mm.*
+AutoTest.Net/
+
+# Web workbench (sass)
+.sass-cache/
+
+# Installshield output folder
+[Ee]xpress/
+
+# DocProject
+DocProject/buildhelp/
+DocProject/Help/*.HxT
+DocProject/Help/*.HxC
+DocProject/Help/*.hhc
+DocProject/Help/*.hhk
+DocProject/Help/*.hhp
+DocProject/Help/Html2
+DocProject/Help/html
+
+# Click-Once directory
+publish/
+
+# Publish Web Output
+*.[Pp]ublish.xml
+*.azurePubxml
+
+# Note: Comment the next line if you want to checkin your web deploy settings,
+# but database connection strings (with potential passwords) will be unencrypted
+*.pubxml
+*.publishproj
+
+# Microsoft Azure Web App publish settings. Comment the next line if you want to
+# checkin your Azure Web App publish settings, but sensitive information contained
+# in these scripts will be unencrypted
+PublishScripts/
+
+###############################
+# Windows & macOS System Files
+###############################
+
+# Windows image file caches
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+
+# Dump file
+*.stackdump
+
+# Folder config file
+[Dd]esktop.ini
+
+# Recycle Bin used on file shares
+$RECYCLE.BIN/
+
+# Windows Installer files
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+
+# Windows shortcuts
+*.lnk
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Icon must end with two \r
+Icon
+
+# Thumbnails
+._*
+
+# Files that might appear in the root of a volume
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+
+# Directories potentially created on remote AFP share
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+###############################
+# Node.js (for any frontend/tooling)
+###############################
+
+# Dependency directories
+node_modules/
+jspm_packages/
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Microbundle cache
+.rpt2_cache/
+.rts2_cache_cjs/
+.rts2_cache_es/
+.rts2_cache_umd/
+
+# Optional REPL history
+.node_repl_history
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn Integrity file
+.yarn-integrity
+
+# parcel-bundler cache (https://parceljs.org/)
+.cache
+.parcel-cache
+
+# Next.js build output
+.next
+
+# Nuxt.js build / generate output
+.nuxt
+dist
+
+# Gatsby files
+.cache/
+public
+
+# Storybook build outputs
+.out
+.storybook-out
+
+###############################
+# Logs & Temporary Files
+###############################
+
+# General logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+*.lcov
+
+# nyc test coverage
+.nyc_output
+
+# Grunt intermediate storage (https://gruntjs.com/creating-plugins#storing-task-files)
+.grunt
+
+# Bower dependency directory (https://bower.io/)
+bower_components
+
+# Lock files (choose one based on your preference)
+# Keep package-lock.json OR yarn.lock, not both
+yarn.lock
+# package-lock.json
+
+###############################
+# FlexKit Specific
+###############################
+
+# FlexKit temporary files
+flexkit-temp/
+.flexkit/
+
+# Generated documentation
+docs/api/
+docs/_site/
+
+# Benchmark results
+benchmark-results/
+
+# Performance profiling results
+PerfLogs/
+
+# Local development tools
+.tools/
+
+# Local certificates for development
+*.pfx
+*.p12
+*.crt
+*.pem
+*.key
+
+# License key files (if any)
+*.lic
+*.license
+
+###############################
+# Cloud & CI/CD
+###############################
+
+# Azure Functions
+.azure/
+
+# AWS
+.aws/
+
+# Terraform
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+
+# Pulumi
+Pulumi.*.yaml
+
+# GitHub Actions
+!.github/
+
+###############################
+# Development Tools
+###############################
+
+# Fiddler
+*.saz
+
+# SQL Server files
+*.mdf
+*.ldf
+*.ndf
+
+# SQLite
+*.sqlite
+*.db3
+
+# Local History for Visual Studio Code
+.history/
+
+# Windows Installer files from build outputs
+*.cab
+*.msi
+*.msm
+*.msp
+
+# JetBrains Rider
+.idea/
+*.sln.iml
+
+###############################
+# Custom FlexKit Rules
+###############################
+
+# Keep these files
+!.editorconfig
+!Directory.Build.props
+!Directory.Build.targets
+!global.json
+!LICENSE
+!README.md
+!CHANGELOG.md
+!.github/workflows/
+!docs/flexkit-style-guide.md
+
+# Ignore generated files but keep examples
+**/Generated/
+!**/*Example*
+!**/*Template*
+
+# Ignore personal IDE settings
+**/*.DotSettings.user
+**/*.user
+
+# Ignore OS-specific files
+.DS_Store
+Thumbs.db
+
+###############################
+# End of .gitignore
+###############################

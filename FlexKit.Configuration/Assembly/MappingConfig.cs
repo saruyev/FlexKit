@@ -1,0 +1,174 @@
+﻿// <copyright file="MappingConfig.cs" company="Michael Saruyev">
+// Copyright (c) Michael Saruyev. All rights reserved.
+// Licensed under the MIT License. See LICENSE file in the project root for full license information.
+// </copyright>
+
+using JetBrains.Annotations;
+
+namespace FlexKit.Configuration.Assembly;
+
+/// <summary>
+/// Assembly mapping settings holder for controlling which assemblies are scanned during module discovery.
+/// Provides configuration options to filter assemblies by naming patterns, enabling precise control
+/// over which assemblies are included in the Autofac module registration process.
+/// </summary>
+/// <remarks>
+/// This record defines the configuration structure used by the FlexKit Configuration library
+/// to determine which assemblies should be scanned for Autofac modules. It supports two
+/// filtering strategies that can be used independently:
+///
+/// <list type="number">
+/// <item>
+/// <term>Prefix-based filtering</term>
+/// <description>All assemblies starting with a specific prefix are included</description>
+/// </item>
+/// <item>
+/// <term>Name-based filtering</term>
+/// <description>Only assemblies starting with explicitly listed prefixes are included</description>
+/// </item>
+/// </list>
+///
+/// <para>
+/// <strong>Configuration Priority:</strong>
+/// If both <see cref="Prefix"/> and <see cref="Names"/> are specified, the <see cref="Prefix"/>
+/// takes precedence and <see cref="Names"/> is ignored.
+/// </para>
+///
+/// <para>
+/// <strong>Configuration Examples:</strong>
+/// <code>
+/// // Example 1: Prefix-based configuration
+/// {
+///     "Application": {
+///         "Mapping": {
+///             "Prefix": "MyCompany"
+///         }
+///     }
+/// }
+/// // This will include: MyCompany.Services.dll, MyCompany.Data.dll, MyCompany.Core.dll, etc.
+///
+/// // Example 2: Name-based configuration
+/// {
+///     "Application": {
+///         "Mapping": {
+///             "Names": ["Acme.Services", "Acme.Data", "ThirdParty.Extensions"]
+///         }
+///     }
+/// }
+/// // This will include: Acme.Services.dll, Acme.Data.Models.dll, ThirdParty.Extensions.dll, etc.
+///
+/// // Example 3: No configuration (uses defaults)
+/// {
+///     "Application": {
+///         "Mapping": {}
+///     }
+/// }
+/// // This will include FlexKit.Configuration assemblies and any assembly containing "Module" in the name
+/// </code>
+/// </para>
+///
+/// <para>
+/// <strong>Best Practices:</strong>
+/// <list type="bullet">
+/// <item>Use <see cref="Prefix"/> when all your assemblies follow a consistent naming convention</item>
+/// <item>Use <see cref="Names"/> when you need fine-grained control over which assemblies to include</item>
+/// <item>Prefer specific configurations over defaults to improve startup performance</item>
+/// <item>Ensure the configuration matches your actual assembly naming patterns</item>
+/// </list>
+/// </para>
+/// </remarks>
+public sealed record MappingConfig
+{
+    /// <summary>
+    /// Gets the assembly prefix pattern for filtering assemblies during module discovery.
+    /// When specified, only assemblies whose names start with this prefix will be scanned for Autofac modules.
+    /// </summary>
+    /// <value>
+    /// A string representing the prefix that assembly names must start with to be included in scanning.
+    /// If <c>null</c> or empty, prefix-based filtering is not applied.
+    /// </value>
+    /// <remarks>
+    /// This property provides a simple way to include all assemblies that follow a consistent
+    /// naming convention. It's particularly useful in enterprise environments where all
+    /// application assemblies share a common prefix (e.g., company name or product name).
+    ///
+    /// <para>
+    /// <strong>Comparison is Case-Invariant:</strong>
+    /// The prefix matching is performed using <see cref="StringComparison.InvariantCulture"/>,
+    /// making the comparison case-sensitive but culture-invariant.
+    /// </para>
+    ///
+    /// <para>
+    /// <strong>Example Usage:</strong>
+    /// If <c>Prefix</c> is set to "MyCompany", the following assemblies would be included:
+    /// <list type="bullet">
+    /// <item>MyCompany.Services.dll</item>
+    /// <item>MyCompany.Data.dll</item>
+    /// <item>MyCompany.Core.Utilities.dll</item>
+    /// </list>
+    /// But these would be excluded:
+    /// <list type="bullet">
+    /// <item>ThirdParty.Library.dll</item>
+    /// <item>System.Core.dll</item>
+    /// <item>Microsoft.Extensions.dll</item>
+    /// </list>
+    /// </para>
+    /// </remarks>
+    public string? Prefix { get; [UsedImplicitly] init; }
+
+    /// <summary>
+    /// Gets the collection of assembly name prefixes for fine-grained filtering during module discovery.
+    /// When specified, only assemblies whose names start with one of these prefixes will be scanned for Autofac modules.
+    /// </summary>
+    /// <value>
+    /// An array of strings representing the prefixes that assembly names must start with to be included in scanning.
+    /// If <c>null</c> or empty, name-based filtering is not applied.
+    /// </value>
+    /// <remarks>
+    /// This property enables precise control over which assemblies are included in module scanning.
+    /// It's particularly useful when you need to include assemblies from multiple sources or
+    /// when your assemblies don't follow a single consistent naming pattern.
+    ///
+    /// <para>
+    /// <strong>Priority Note:</strong>
+    /// If both <see cref="Prefix"/> and <see cref="Names"/> are specified, <see cref="Prefix"/>
+    /// takes precedence and this property is ignored. To use name-based filtering, ensure
+    /// <see cref="Prefix"/> is <c>null</c> or empty.
+    /// </para>
+    ///
+    /// <para>
+    /// <strong>Matching Logic:</strong>
+    /// An assembly is included if its name starts with ANY of the specified prefixes.
+    /// The matching uses the <see cref="string.StartsWith(string)"/> method, which is
+    /// case-sensitive and culture-specific.
+    /// </para>
+    ///
+    /// <para>
+    /// <strong>Example Usage:</strong>
+    /// If <c>Names</c> is set to <c>["Acme.Services", "Acme.Data", "ThirdParty.Extensions"]</c>,
+    /// the following assemblies would be included:
+    /// <list type="bullet">
+    /// <item>Acme.Services.dll</item>
+    /// <item>Acme.Services.WebApi.dll</item>
+    /// <item>Acme.Data.dll</item>
+    /// <item>Acme.Data.EntityFramework.dll</item>
+    /// <item>ThirdParty.Extensions.dll</item>
+    /// <item>ThirdParty.Extensions.Logging.dll</item>
+    /// </list>
+    /// But these would be excluded:
+    /// <list type="bullet">
+    /// <item>Acme.Core.dll (doesn't match any prefix)</item>
+    /// <item>OtherVendor.Services.dll (doesn't match any prefix)</item>
+    /// <item>System.dll (doesn't match any prefix)</item>
+    /// </list>
+    /// </para>
+    ///
+    /// <para>
+    /// <strong>Performance Consideration:</strong>
+    /// Using a longer list of names may slightly impact startup performance as each assembly
+    /// name is checked against all specified prefixes. For large numbers of prefixes,
+    /// consider using a single <see cref="Prefix"/> if possible.
+    /// </para>
+    /// </remarks>
+    public string[]? Names { get; [UsedImplicitly] init; }
+}
