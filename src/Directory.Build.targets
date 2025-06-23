@@ -1,8 +1,7 @@
 <!-- Directory.Build.targets - Place this in the solution root directory -->
 <!-- This file automatically applies to ALL projects in the solution -->
 <Project>
-
-    <!-- FlexKit Style Guide Validation Targets -->
+    <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.targets', '$(MSBuildThisFileDirectory)../'))" />
 
     <!-- Validate file naming conventions -->
     <Target Name="ValidateFlexKitFileNaming" BeforeTargets="Build">
@@ -56,48 +55,95 @@
             <Using Namespace="System" />
             <Using Namespace="System.IO" />
             <Using Namespace="System.Linq" />
+            <Using Namespace="System.Text.RegularExpressions" />
             <Using Namespace="Microsoft.Build.Framework" />
             <Code Type="Fragment" Language="cs">
                 <![CDATA[
-        // Simple heuristic check for method complexity
-        foreach (var file in SourceFiles)
+    foreach (var file in SourceFiles)
+    {
+        var content = File.ReadAllText(file.ItemSpec);
+        var lines = content.Split('\n');
+        var inMethod = false;
+        var methodLines = 0;
+        var methodName = "";
+        var braceDepth = 0;
+        var startLine = 0;
+
+        for (int i = 0; i < lines.Length; i++)
         {
-            var content = File.ReadAllText(file.ItemSpec);
-            var lines = content.Split('\n');
-            var inMethod = false;
-            var methodLines = 0;
-            var methodName = "";
+            var line = lines[i].Trim();
 
-            for (int i = 0; i < lines.Length; i++)
+            // Skip empty lines, comments, and using statements
+            if (string.IsNullOrWhiteSpace(line) || line.StartsWith("//") || line.StartsWith("/*") || line.StartsWith("using "))
+                continue;
+
+            // Detect method/property start - improved regex
+            if (!inMethod && (line.Contains("public ") || line.Contains("private ") || line.Contains("protected ") || line.Contains("internal ")))
             {
-                var line = lines[i].Trim();
+                // Skip class, interface, enum, struct declarations
+                if (line.Contains("class ") || line.Contains("interface ") || line.Contains("enum ") || line.Contains("struct "))
+                    continue;
 
-                // Simple detection of method start
-                if (line.Contains("public ") || line.Contains("private ") || line.Contains("protected "))
+                // Check for method signature (has parentheses) or property
+                var isMethod = line.Contains("(") && line.Contains(")") && !line.Contains("=>");
+                var isProperty = line.Contains("{") || line.Contains("=>");
+
+                if (isMethod || isProperty)
                 {
-                    if (line.Contains("(") && line.Contains(")") && !line.Contains("class ") && !line.Contains("interface "))
+                    // Extract method/property name more carefully
+                    var nameMatch = Regex.Match(line, @"(?:public|private|protected|internal)\s+(?:static\s+)?(?:virtual\s+)?(?:override\s+)?(?:async\s+)?[\w\?\<\>\[\]]+\s+(\w+)");
+                    if (nameMatch.Success)
                     {
-                        inMethod = true;
-                        methodLines = 0;
-                        methodName = line.Split('(')[0].Split(' ').Last();
+                        methodName = nameMatch.Groups[1].Value;
                     }
+                    else
+                    {
+                        // Fallback for complex cases like indexers
+                        var parts = line.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                        methodName = parts.Length > 2 ? parts[2] : "Unknown";
+                        if (methodName.Contains("("))
+                            methodName = methodName.Split('(')[0];
+                    }
+
+                    // Handle expression-bodied members (single line)
+                    if (line.Contains("=>"))
+                    {
+                        // Expression-bodied member - count as 1 line, don't track further
+                        continue;
+                    }
+
+                    inMethod = true;
+                    methodLines = 1;
+                    startLine = i + 1;
+                    braceDepth = 0;
+
+                    // Count opening braces on the same line
+                    braceDepth += line.Count(c => c == '{');
+                    braceDepth -= line.Count(c => c == '}');
                 }
+            }
+            else if (inMethod)
+            {
+                methodLines++;
 
-                if (inMethod)
+                // Track brace depth
+                braceDepth += line.Count(c => c == '{');
+                braceDepth -= line.Count(c => c == '}');
+
+                // Method ends when we return to brace depth 0
+                if (braceDepth <= 0)
                 {
-                    methodLines++;
-                    if (line.Contains("}") && !line.Contains("{"))
+                    if (methodLines > 25) // 20-line limit with some tolerance
                     {
-                        if (methodLines > 25) // Approximate 20-line limit with some tolerance
-                        {
-                            Log.LogWarning($"FlexKit Style Guide: Method '{methodName}' in {file.ItemSpec} may exceed 20-line guideline ({methodLines} lines)");
-                        }
-                        inMethod = false;
+                        var fileName = Path.GetFileName(file.ItemSpec);
+                        Log.LogWarning($"FlexKit Style Guide: Method '{methodName}' in {fileName} may exceed 20-line guideline ({methodLines} lines, starting at line {startLine})");
                     }
+                    inMethod = false;
                 }
             }
         }
-        ]]>
+    }
+    ]]>
             </Code>
         </Task>
     </UsingTask>

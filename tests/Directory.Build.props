@@ -6,6 +6,10 @@
 
     <!-- Test Project Common Properties -->
     <PropertyGroup>
+
+        <!-- Test specific settings -->
+        <CoverageThreshold>100</CoverageThreshold>
+        <DefineConstants>$(DefineConstants);UNIT_TESTS</DefineConstants>
         <IsPackable>false</IsPackable>
         <IsTestProject>true</IsTestProject>
         <GenerateDocumentationFile>false</GenerateDocumentationFile>
@@ -17,7 +21,7 @@
 
         <!-- Test runner configuration -->
         <VSTestLogger>trx</VSTestLogger>
-        <VSTestResultsDirectory>$(MSBuildThisFileDirectory)../TestResults</VSTestResultsDirectory>
+        <VSTestResultsDirectory>$(MSBuildThisFileDirectory)/$(MSBuildProjectName)/TestResults</VSTestResultsDirectory>
 
         <!-- Project name analysis for test projects -->
         <ProjectNameWithoutTests>$(MSBuildProjectName)</ProjectNameWithoutTests>

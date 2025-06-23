@@ -1,0 +1,29 @@
+<Project>
+    <!-- Common properties for all projects -->
+    <PropertyGroup>
+        <TargetFramework>net9.0</TargetFramework>
+        <LangVersion>13.0</LangVersion>
+        <Nullable>enable</Nullable>
+        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+        <WarningsAsErrors />
+        <WarningsNotAsErrors>CS1591</WarningsNotAsErrors>
+        <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+        <EnableNETAnalyzers>true</EnableNETAnalyzers>
+        <AnalysisLevel>latest</AnalysisLevel>
+        <ImplicitUsings>enable</ImplicitUsings>
+
+        <!-- Version and package information -->
+        <Version>1.0.0</Version>
+        <Company>Michael Saruyev</Company>
+        <Product>FlexKit</Product>
+        <Copyright>Copyright (c) Michael Saruyev. All rights reserved.</Copyright>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <RepositoryUrl>https://github.com/msaruyev/FlexKit</RepositoryUrl>
+        <RepositoryType>git</RepositoryType>
+    </PropertyGroup>
+
+    <!-- Common package references for all projects -->
+    <ItemGroup>
+        <PackageReference Include="JetBrains.Annotations" Version="2024.3.0" />
+    </ItemGroup>
+</Project>

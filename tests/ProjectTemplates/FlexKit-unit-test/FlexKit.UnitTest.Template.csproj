@@ -46,7 +46,7 @@
   <PropertyGroup>
     <CollectCoverage>true</CollectCoverage>
     <CoverletOutputFormat>opencover,cobertura,json</CoverletOutputFormat>
-    <CoverletOutput>$(MSBuildThisFileDirectory)../TestResults/coverage/</CoverletOutput>
+    <CoverletOutput>$(MSBuildThisFileDirectory)/TestResults/coverage/</CoverletOutput>
     <ExcludeByFile>**/bin/**/*;**/obj/**/*;**/TestData/**/*</ExcludeByFile>
     <Include>[FlexKit.*]*</Include>
     <Exclude>[*.Tests]*,[*.Integration.Tests]*,[*.Performance.Tests]*</Exclude>

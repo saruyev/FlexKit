@@ -1,9 +1,4 @@
-﻿#nullable enable
-using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
-using Autofac;
+﻿using System.Globalization;
 using AutoFixture;
 using AutoFixture.Xunit2;
 using FlexKit.Configuration.Core;
@@ -21,7 +16,7 @@ public class FlexConfigurationTests : UnitTestBase
     private readonly IConfiguration _mockConfiguration;
     private readonly FlexConfiguration _flexConfiguration;
 
-    public FlexConfigurationTests() : base()
+    public FlexConfigurationTests()
     {
         _mockConfiguration = CreateMock<IConfiguration>();
         _flexConfiguration = new FlexConfiguration(_mockConfiguration);
@@ -116,14 +111,14 @@ public class FlexConfigurationTests : UnitTestBase
         mockSection.Key.Returns(key);
 
         // Mock the underlying methods that CurrentConfig uses
-        _mockConfiguration.GetChildren().Returns(new[] { mockSection });
+        _mockConfiguration.GetChildren().Returns([mockSection]);
 
         // Act
         var result = _flexConfiguration[index];
 
         // Assert
         result.Should().NotBeNull();
-        result!.Configuration.Should().BeSameAs(mockSection);
+        result.Configuration.Should().BeSameAs(mockSection);
     }
 
     [Fact]
@@ -159,8 +154,8 @@ public class FlexConfigurationTests : UnitTestBase
     {
         // Arrange
         var configData = ConfigurationTestDataBuilder.CreateConfigurationDictionary();
-        var dbConfig = ConfigurationTestDataBuilder.DatabaseConfig.Generate();
-        var apiConfig = ConfigurationTestDataBuilder.ApiConfig.Generate();
+        ConfigurationTestDataBuilder.DatabaseConfig.Generate();
+        ConfigurationTestDataBuilder.ApiConfig.Generate();
 
         // Setup mock responses
         foreach (var kvp in configData)
@@ -187,7 +182,7 @@ public class FlexConfigurationTests : UnitTestBase
     [Theory]
     [InlineData("TestValue", "TestValue")] // Section with value
     [InlineData(null, "")] // Section with null value  
-    [InlineData("", "")] // Section with empty value
+    [InlineData("", "")] // Section with an empty value
     public void ToString_WithConfigurationSection_ReturnsExpectedValue(string? sectionValue, string expectedResult)
     {
         // Arrange
@@ -294,7 +289,7 @@ public class FlexConfigurationTests : UnitTestBase
         child2.Value.Returns("value2");
 
         var mockSection = Substitute.For<IConfigurationSection>();
-        mockSection.GetChildren().Returns(new[] { child1, child2 });
+        mockSection.GetChildren().Returns([child1, child2]);
 
         var flexConfig = new FlexConfiguration(mockSection);
 
@@ -336,14 +331,14 @@ public class FlexConfigurationTests : UnitTestBase
     
         var child1 = Substitute.For<IConfigurationSection>();
         child1.Key.Returns("parent1"); // This is ignored
-        child1.GetChildren().Returns(new[] { grandChild1 });
+        child1.GetChildren().Returns([grandChild1]);
     
         var child2 = Substitute.For<IConfigurationSection>();
         child2.Key.Returns("parent2"); // This is ignored
-        child2.GetChildren().Returns(new[] { grandChild2 });
+        child2.GetChildren().Returns([grandChild2]);
     
         var mockSection = Substitute.For<IConfigurationSection>();
-        mockSection.GetChildren().Returns(new[] { child1, child2 });
+        mockSection.GetChildren().Returns([child1, child2]);
     
         var flexConfig = new FlexConfiguration(mockSection);
 
@@ -367,14 +362,14 @@ public class FlexConfigurationTests : UnitTestBase
         var mockSection = Substitute.For<IConfigurationSection>();
         mockSection.Key.Returns(key);
     
-        _mockConfiguration.GetChildren().Returns(new[] { mockSection });
+        _mockConfiguration.GetChildren().Returns([mockSection]);
 
         // Act
         var result = _flexConfiguration[index];
 
         // Assert
         result.Should().NotBeNull();
-        result!.Configuration.Should().BeSameAs(mockSection);
+        result.Configuration.Should().BeSameAs(mockSection);
     }
 
     [Fact]
@@ -382,7 +377,7 @@ public class FlexConfigurationTests : UnitTestBase
     {
         // Arrange
         var index = 999;
-        _mockConfiguration.GetChildren().Returns(Array.Empty<IConfigurationSection>());
+        _mockConfiguration.GetChildren().Returns([]);
 
         // Act
         var result = _flexConfiguration[index];

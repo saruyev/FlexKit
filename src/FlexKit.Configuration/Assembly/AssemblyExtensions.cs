@@ -199,16 +199,12 @@ public static class AssemblyExtensions
     {
         // Use provided context or fall back to default
         context ??= DependencyContext.Default;
-        if (context?.CompilationOptions is null)
-        {
-            return [];
-        }
 
         // Retrieve assembly filtering configuration
         var config = configuration?.GetSection(MappingSectionName).Get<MappingConfig>();
 
         // Process runtime libraries through the resolution pipeline
-        return context.RuntimeLibraries
+        return context!.RuntimeLibraries
             .Select(lib => lib.ConvertToCompilation()) // Convert to a compilation library for resolution
             .Where(lib => FilterLibraries(lib.Name, config)) // Apply name-based filtering
             .Where(lib => !lib.Name.Equals("FlexKit.Configuration", StringComparison.OrdinalIgnoreCase)) // Exclude self
@@ -306,7 +302,7 @@ public static class AssemblyExtensions
         }
 
         // Priority 2: Name-based filtering
-        if (names?.Length > 0)
+        if (names?.Count > 0)
         {
             return names.Any(lib.StartsWith);
         }
