@@ -170,5 +170,99 @@ public sealed record MappingConfig
     /// consider using a single <see cref="Prefix"/> if possible.
     /// </para>
     /// </remarks>
-    public string[]? Names { get; [UsedImplicitly] init; }
+    public IReadOnlyList<string>? Names { get; [UsedImplicitly] init; }
+
+    /// <summary>
+    /// Determines whether the specified <see cref="MappingConfig"/> is equal to the current instance.
+    /// Compares both the <see cref="Prefix"/> and <see cref="Names"/> properties using value equality.
+    /// For the <see cref="Names"/> collection, performs element-wise comparison to ensure structural equality.
+    /// </summary>
+    /// <param name="other">The <see cref="MappingConfig"/> to compare with the current instance.</param>
+    /// <returns>
+    /// <c>true</c> if the specified <see cref="MappingConfig"/> is equal to the current instance; otherwise, <c>false</c>.
+    /// </returns>
+    /// <remarks>
+    /// This method provides proper value-based equality comparison for the record type, ensuring that:
+    /// <list type="bullet">
+    /// <item>Null references are handled correctly</item>
+    /// <item>Reference equality is checked for performance optimization</item>
+    /// <item>String properties are compared using default string equality</item>
+    /// <item>Collection properties are compared element-wise using <see cref="Enumerable.SequenceEqual{TSource}(IEnumerable{TSource}, IEnumerable{TSource})"/></item>
+    /// <item>Null collections are treated as equivalent to each other but not to non-null collections</item>
+    /// </list>
+    ///
+    /// <para>
+    /// <strong>Example Usage:</strong>
+    /// <code>
+    /// var config1 = new MappingConfig { Prefix = "Test", Names = new[] { "Assembly1", "Assembly2" } };
+    /// var config2 = new MappingConfig { Prefix = "Test", Names = new[] { "Assembly1", "Assembly2" } };
+    /// bool areEqual = config1.Equals(config2); // Returns true
+    /// </code>
+    /// </para>
+    /// </remarks>
+    public bool Equals(MappingConfig? other)
+    {
+        if (other is null)
+        {
+            return false;
+        }
+
+        if (ReferenceEquals(this, other))
+        {
+            return true;
+        }
+
+        return Prefix == other.Prefix &&
+               (Names == null && other.Names == null ||
+                Names != null && other.Names != null && Names.SequenceEqual(other.Names));
+    }
+
+    /// <summary>
+    /// Returns a hash code for the current <see cref="MappingConfig"/> instance.
+    /// Combines hash codes from both the <see cref="Prefix"/> and <see cref="Names"/> properties
+    /// to ensure consistent hash code generation for value equality scenarios.
+    /// </summary>
+    /// <returns>A 32-bit signed integer hash code.</returns>
+    /// <remarks>
+    /// This method ensures that instances with equal values produce the same hash code,
+    /// which is essential for proper behavior in hash-based collections like <see cref="Dictionary{TKey,TValue}"/>
+    /// and <see cref="HashSet{T}"/>.
+    ///
+    /// <para>
+    /// <strong>Hash Code Calculation:</strong>
+    /// <list type="number">
+    /// <item>Starts with the hash code of the <see cref="Prefix"/> property</item>
+    /// <item>For non-null <see cref="Names"/> collections, incorporates the hash code of each element</item>
+    /// <item>Uses <see cref="HashCode"/> struct for efficient and collision-resistant hash combination</item>
+    /// <item>Handles null collections appropriately to maintain consistency with <see cref="Equals(MappingConfig?)"/></item>
+    /// </list>
+    /// </para>
+    ///
+    /// <para>
+    /// <strong>Performance Considerations:</strong>
+    /// The hash code calculation has O(n) complexity where n is the number of elements in the <see cref="Names"/> collection.
+    /// For large collections, consider caching the hash code if the instance is immutable and used frequently in hash-based operations.
+    /// </para>
+    ///
+    /// <para>
+    /// <strong>Consistency Guarantee:</strong>
+    /// This implementation guarantees that if <c>config1.Equals(config2)</c> returns <c>true</c>,
+    /// then <c>config1.GetHashCode() == config2.GetHashCode()</c> will also be <c>true</c>.
+    /// </para>
+    /// </remarks>
+    public override int GetHashCode()
+    {
+        var hashCode = new HashCode();
+        hashCode.Add(Prefix);
+
+        if (Names != null)
+        {
+            foreach (var name in Names)
+            {
+                hashCode.Add(name);
+            }
+        }
+
+        return hashCode.ToHashCode();
+    }
 }

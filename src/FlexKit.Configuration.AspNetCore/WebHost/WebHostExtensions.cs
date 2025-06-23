@@ -2,6 +2,7 @@
 // Copyright (c) Michael Saruyev. All rights reserved.
 // </copyright>
 
+using Autofac.Extensions.DependencyInjection;
 using JetBrains.Annotations;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;

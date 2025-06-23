@@ -42,11 +42,6 @@
         <PackageReference Include="Microsoft.Extensions.Logging" Version="[9.0.6,10.0.0)"/>
     </ItemGroup>
     <ItemGroup>
-      <Folder Include="Assembly\" />
-      <Folder Include="Conversion\" />
-      <Folder Include="Sources\" />
-    </ItemGroup>
-    <ItemGroup>
       <ProjectReference Include="..\..\src\FlexKit.Configuration\FlexKit.Configuration.csproj" />
     </ItemGroup>
 
@@ -54,7 +49,7 @@
     <PropertyGroup>
         <CollectCoverage>true</CollectCoverage>
         <CoverletOutputFormat>opencover,cobertura,json</CoverletOutputFormat>
-        <CoverletOutput>$(MSBuildThisFileDirectory)../TestResults/coverage/</CoverletOutput>
+        <CoverletOutput>$(MSBuildThisFileDirectory)/TestResults/coverage/</CoverletOutput>
         <ExcludeByFile>**/bin/**/*;**/obj/**/*;**/TestData/**/*</ExcludeByFile>
         <Include>[FlexKit.*]*</Include>
         <Exclude>[*.Tests]*,[*.Integration.Tests]*,[*.Performance.Tests]*</Exclude>

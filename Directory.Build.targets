@@ -1,0 +1,25 @@
+<!-- Directory.Build.targets - Place this in the solution root directory -->
+<Project>
+
+    <!-- Common targets for ALL projects (but NOT style guide validation) -->
+
+    <!-- Validate file naming conventions (if you want this everywhere) -->
+    <Target Name="ValidateFlexKitFileNaming" BeforeTargets="Build" Condition="'$(IsTestProject)' != 'true'">
+        <ItemGroup>
+            <!-- Check for files that don't follow PascalCase naming -->
+            <InvalidNamedFiles Include="**/*.cs" Exclude="bin/**;obj/**" Condition="$([System.Text.RegularExpressions.Regex]::IsMatch('%(Filename)', '^[a-z]'))" />
+        </ItemGroup>
+
+        <Error Text="FlexKit Style Guide Violation: File '%(InvalidNamedFiles.Filename)%(InvalidNamedFiles.Extension)' should use PascalCase naming convention."
+               Condition="'@(InvalidNamedFiles)' != ''" />
+    </Target>
+
+    <!-- Generate build summary -->
+    <Target Name="FlexKitBuildSummary" AfterTargets="Build">
+        <Message Text="🎉 FlexKit Build Summary:" Importance="high" />
+        <Message Text="  ✅ Project Type: $(MSBuildProjectName)" Importance="high" />
+        <Message Text="  ✅ Framework: $(TargetFramework)" Importance="high" />
+        <Message Text="  ✅ Configuration: $(Configuration)" Importance="high" />
+    </Target>
+
+</Project>

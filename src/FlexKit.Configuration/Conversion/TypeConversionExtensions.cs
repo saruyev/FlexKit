@@ -141,6 +141,11 @@ public static class TypeConversionExtensions
             return type.IsValueType ? Activator.CreateInstance(type) : null;
         }
 
+        if (type == typeof(TimeSpan))
+        {
+            return TimeSpan.Parse(text, CultureInfo.InvariantCulture);
+        }
+
         return type.IsEnum
             ? Enum.Parse(type, text)
             : Convert.ChangeType(text, type, CultureInfo.InvariantCulture);
@@ -447,16 +452,18 @@ public static class TypeConversionExtensions
     /// <exception cref="ArgumentException">Thrown when the type is not a valid dictionary type.</exception>
     [RequiresUnreferencedCode("Uses reflection to create dictionary instance")]
     [UsedImplicitly]
-    public static IDictionary? ToDictionary(this IEnumerable<IConfigurationSection> source, Type type)
+    public static IDictionary ToDictionary(this IEnumerable<IConfigurationSection> source, Type type)
     {
         ArgumentNullException.ThrowIfNull(source);
 
-        var dictionary = (IDictionary?)Activator.CreateInstance(type);
-        if (dictionary is null)
+        if (!type.IsGenericType ||
+            (type.GetGenericTypeDefinition() != typeof(IDictionary<,>) &&
+             type.GetGenericTypeDefinition() != typeof(Dictionary<,>)))
         {
-            return null;
+            throw new ArgumentException($"Type {type.Name} is not a supported dictionary type.", nameof(type));
         }
 
+        var dictionary = (IDictionary?)Activator.CreateInstance(type);
         var args = type.GetGenericArguments();
 
         foreach (var value in source)
@@ -469,10 +476,10 @@ public static class TypeConversionExtensions
             }
 
             var key = item.Key.ToType(args[0]) ?? throw new InvalidOperationException();
-            dictionary.Add(key, item.Value.ToType(args[1]));
+            dictionary!.Add(key, item.Value.ToType(args[1]));
         }
 
-        return dictionary;
+        return dictionary!;
     }
 
     /// <summary>
@@ -547,6 +554,6 @@ public static class TypeConversionExtensions
 
         var arr = str.ToLowerInvariant().ToCharArray();
         arr[0] = char.ToUpper(arr[0], CultureInfo.InvariantCulture);
-        return new string(arr);
+        return new string(arr).Trim();
     }
 }

@@ -33,7 +33,7 @@
     <!-- Test Result Organization -->
     <Target Name="OrganizeTestResults" AfterTargets="VSTest">
         <PropertyGroup>
-            <TestResultsDir>$(MSBuildThisFileDirectory)../TestResults</TestResultsDir>
+            <TestResultsDir>$(MSBuildThisFileDirectory)/$(MSBuildProjectName)/TestResults</TestResultsDir>
             <ProjectTestResultsDir>$(TestResultsDir)/$(MSBuildProjectName)</ProjectTestResultsDir>
         </PropertyGroup>
 
@@ -65,16 +65,6 @@
         <Warning Text="Coverage validation not implemented - add ReportGenerator or custom tool" Condition="!Exists('$(CoverageReportPath)')" />
     </Target>
 
-    <!-- Test Categories and Filtering -->
-    <Target Name="SetTestCategories" BeforeTargets="VSTest">
-        <PropertyGroup>
-            <!-- Set test traits based on project type -->
-            <VSTestTestCaseFilter Condition="'$(IsUnitTestProject)' == 'true'">TestCategory=Unit</VSTestTestCaseFilter>
-            <VSTestTestCaseFilter Condition="'$(IsIntegrationTestProject)' == 'true'">TestCategory=Integration</VSTestTestCaseFilter>
-            <VSTestTestCaseFilter Condition="'$(IsPerformanceTestProject)' == 'true'">TestCategory=Performance</VSTestTestCaseFilter>
-        </PropertyGroup>
-    </Target>
-
     <!-- Performance Test Specific Targets -->
     <Target Name="RunBenchmarks" Condition="'$(IsPerformanceTestProject)' == 'true'">
         <PropertyGroup>
@@ -94,7 +84,7 @@
     <!-- Clean Test Results -->
     <Target Name="CleanTestResults" BeforeTargets="Clean">
         <PropertyGroup>
-            <TestResultsDir>$(MSBuildThisFileDirectory)../TestResults</TestResultsDir>
+            <TestResultsDir>$(MSBuildThisFileDirectory)/$(MSBuildProjectName)/TestResults</TestResultsDir>
             <ProjectTestResultsDir>$(TestResultsDir)/$(MSBuildProjectName)</ProjectTestResultsDir>
         </PropertyGroup>
 

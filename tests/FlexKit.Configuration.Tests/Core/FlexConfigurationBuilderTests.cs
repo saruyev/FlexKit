@@ -1,13 +1,9 @@
-﻿using System;
-using Autofac;
+﻿using Autofac;
 using AutoFixture.Xunit2;
 using FlexKit.Configuration.Core;
-using FlexKit.Configuration.Sources;
 using FlexKit.Configuration.Tests.TestBase;
 using FluentAssertions;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Configuration.Memory;
-using NSubstitute;
 using Xunit;
 
 namespace FlexKit.Configuration.Tests.Core;
@@ -74,7 +70,7 @@ public class FlexConfigurationBuilderTests : UnitTestBase
         
         builder.AddSource(new MemoryConfigurationSource
         {
-            InitialData = testData
+            InitialData = testData!
         });
 
         // Act
@@ -86,7 +82,7 @@ public class FlexConfigurationBuilderTests : UnitTestBase
 
         // Verify some test data is accessible
         dynamic config = flexConfig;
-        var appName = config.Application?.Name?.ToString();
+        string appName = config.Application?.Name?.ToString()!;
         appName.Should().NotBeNullOrEmpty();
     }
 
@@ -102,7 +98,7 @@ public class FlexConfigurationBuilderTests : UnitTestBase
         // Act & Assert
         var action = () => builder.Build(); // Second call
         action.Should().Throw<InvalidOperationException>()
-            .WithMessage("*already been built*");
+            .WithMessage("Build() can only be called once");
     }
 
     [Theory]
@@ -119,7 +115,7 @@ public class FlexConfigurationBuilderTests : UnitTestBase
             .AddJsonFile(jsonFile + ".json", optional)
             .AddDotEnvFile(envFile + ".env", optional)
             .AddEnvironmentVariables()
-            .AddSource(new MemoryConfigurationSource { InitialData = testData });
+            .AddSource(new MemoryConfigurationSource { InitialData = testData! });
 
         // Assert
         result.Should().BeSameAs(builder);
@@ -127,5 +123,102 @@ public class FlexConfigurationBuilderTests : UnitTestBase
         // Verify the builder can still build
         var flexConfig = result.Build();
         flexConfig.Should().NotBeNull();
+    }
+    
+    [Fact]
+    public void AddEnvironmentVariables_ReturnsFluentInterface()
+    {
+        // Arrange
+        var builder = Resolve<FlexConfigurationBuilder>();
+
+        // Act
+        var result = builder.AddEnvironmentVariables();
+
+        // Assert
+        result.Should().BeSameAs(builder);
+    }
+    
+    [Fact]
+    public void AddEnvironmentVariables_WithChaining_MaintainsFluentInterface()
+    {
+        // Arrange
+        var builder = Resolve<FlexConfigurationBuilder>();
+        var testData = ConfigurationTestDataBuilder.CreateConfigurationDictionary();
+
+        // Act
+        var result = builder
+            .AddEnvironmentVariables()
+            .AddSource(new MemoryConfigurationSource { InitialData = testData! });
+
+        // Assert
+        result.Should().BeSameAs(builder);
+    
+        // Verify the builder can still build
+        var flexConfig = result.Build();
+        flexConfig.Should().NotBeNull();
+    }
+    
+    [Fact]
+    public void AddSource_AfterBuild_ThrowsInvalidOperationException()
+    {
+        // Arrange
+        var builder = Resolve<FlexConfigurationBuilder>();
+        var testData = ConfigurationTestDataBuilder.CreateConfigurationDictionary();
+    
+        builder.AddSource(new MemoryConfigurationSource { InitialData = testData! });
+        builder.Build(); // Set _isBuilt to true
+
+        // Act & Assert
+        var action = () => builder.AddSource(new MemoryConfigurationSource());
+        action.Should().Throw<InvalidOperationException>()
+            .WithMessage("Cannot add sources after Build() has been called");
+    }
+    
+    [Fact]
+    public void AddJsonFile_AfterBuild_ThrowsInvalidOperationException()
+    {
+        // Arrange
+        var builder = Resolve<FlexConfigurationBuilder>();
+        var testData = ConfigurationTestDataBuilder.CreateConfigurationDictionary();
+    
+        builder.AddSource(new MemoryConfigurationSource { InitialData = testData! });
+        builder.Build(); // Set _isBuilt to true
+
+        // Act & Assert
+        var action = () => builder.AddJsonFile("test.json");
+        action.Should().Throw<InvalidOperationException>()
+            .WithMessage("Cannot add sources after Build() has been called");
+    }
+    
+    [Fact]
+    public void AddDotEnvFile_AfterBuild_ThrowsInvalidOperationException()
+    {
+        // Arrange
+        var builder = Resolve<FlexConfigurationBuilder>();
+        var testData = ConfigurationTestDataBuilder.CreateConfigurationDictionary();
+    
+        builder.AddSource(new MemoryConfigurationSource { InitialData = testData! });
+        builder.Build(); // Set _isBuilt to true
+
+        // Act & Assert
+        var action = () => builder.AddDotEnvFile();
+        action.Should().Throw<InvalidOperationException>()
+            .WithMessage("Cannot add sources after Build() has been called");
+    }
+    
+    [Fact]
+    public void AddEnvironmentVariables_AfterBuild_ThrowsInvalidOperationException()
+    {
+        // Arrange
+        var builder = Resolve<FlexConfigurationBuilder>();
+        var testData = ConfigurationTestDataBuilder.CreateConfigurationDictionary();
+    
+        builder.AddSource(new MemoryConfigurationSource { InitialData = testData! });
+        builder.Build(); // Set _isBuilt to true
+
+        // Act & Assert
+        var action = () => builder.AddEnvironmentVariables();
+        action.Should().Throw<InvalidOperationException>()
+            .WithMessage("Cannot add sources after Build() has been called");
     }
 }
