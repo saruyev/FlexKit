@@ -1,0 +1,34 @@
+{
+  "$schema": "https://schemas.reqnroll.net/reqnroll-config.json",
+  "language": {
+    "feature": "en"
+  },
+  "framework": {
+    "unitTestProvider": "xunit"
+  },
+  "generator": {
+    "allowDebugGeneratedFiles": false,
+    "allowRowTests": true,
+    "generateAsyncTests": true,
+    "markFeaturesParallelSafe": false
+  },
+  "runtime": {
+    "stopAtFirstError": false,
+    "missingOrPendingStepsOutcome": "Pending"
+  },
+  "trace": {
+    "traceSuccessfulSteps": false,
+    "traceTimings": true,
+    "minTracedDuration": "0:0:0.1",
+    "stepDefinitionSkeletonStyle": "RegexAttribute"
+  },
+  "stepAssemblies": [
+    {
+      "assembly": "FlexKit.IntegrationTest.Template"
+    }
+  ],
+  "plugins": [],
+  "bindingCulture": {
+    "name": "en-US"
+  }
+}

@@ -1,0 +1,120 @@
+﻿{
+  "Application": {
+    "Name": "Invalid Configuration Test",
+    "Version": "1.0.0",
+    // This is an invalid comment in JSON
+    "Environment": "Test"
+  },
+  "Database": {
+    "CommandTimeout": "not-a-number",
+    "MaxRetryCount": -5,
+    "EnableLogging": "maybe",
+    "ConnectionString": null,
+    "PoolSize": "huge"
+  },
+  "External": {
+    "Api": {
+      "BaseUrl": "not-a-valid-url",
+      "Timeout": "forever",
+      "MaxRetries": 3.14159,
+      "ApiKey": "",
+      "RetryDelay": "soon"
+    }
+  },
+  "Features": {
+    "EnableCaching": "yes",
+    "EnableMetrics": 1,
+    "EnableTracing": "on",
+    "MaxUploadSize": "all-of-them",
+    "BetaFeatures": "sometimes"
+  },
+  "Logging": {
+    "LogLevel": {
+      "Default": "VeryVeryVerbose",
+      "Microsoft": "SilentButDeadly",
+      "Custom": 42
+    },
+    "File": {
+      "MaxFileSize": "gigantic",
+      "MaxFiles": "many"
+    }
+  },
+  "Security": {
+    "JwtSettings": {
+      "ExpirationMinutes": "never",
+      "SecretKey": 12345,
+      "Issuer": true
+    },
+    "RateLimiting": {
+      "MaxRequests": "unlimited",
+      "WindowMinutes": "always"
+    },
+    "PasswordPolicy": {
+      "MinLength": "short",
+      "RequireDigit": "maybe",
+      "RequireUppercase": 1.5
+    }
+  },
+  "Cache": {
+    "DefaultExpiration": "long time",
+    "MaxSize": "infinity",
+    "CompactionPercentage": "all of it"
+  },
+  "Monitoring": {
+    "Metrics": {
+      "CollectionInterval": "frequently"
+    },
+    "HealthChecks": {
+      "Timeout": "eventually"
+    }
+  },
+  "InvalidStructure": {
+    "MissingClosingBrace": {
+      "Property1": "value1",
+      "Property2": "value2"
+      // Missing closing brace for MissingClosingBrace
+    },
+    "DuplicateKeys": {
+      "SameKey": "value1",
+      "SameKey": "value2"
+    },
+    "Arrays": {
+      "InvalidArray": [
+        "item1",
+        "item2",
+        // Missing comma and invalid comment
+        "item3"
+      ],
+      "MixedTypes": [
+        "string",
+        42,
+        true,
+        null,
+        "another string",
+        3.14159,
+        {
+          "nested": "object"
+        }
+      ]
+    },
+    "NullValues": {
+      "ExplicitNull": null,
+      "EmptyString": "",
+      "UndefinedProperty": undefined
+    },
+    "SpecialCharacters": {
+      "Unicode": "Special chars: àáâãäåæçèéêë",
+      "Emojis": "Testing emojis: 🚀🔧📦🎯",
+      "ControlCharacters": "Line1\nLine2\tTabbed\rCarriageReturn",
+      "Quotes": "He said \"Hello\" and she replied 'Hi'"
+    },
+    // Another invalid comment
+    "TrailingComma": {
+      "Property1": "value1",
+      "Property2": "value2",
+    },
+    "EscapeSequences": {
+      "ValidEscapes": "Valid: \n\t\r\\\"",
+      "InvalidEscapes": "Invalid: \x \z \q"
+    }
+// Missing final closing brace
