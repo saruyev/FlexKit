@@ -6,9 +6,6 @@
     <CoverageThreshold>50</CoverageThreshold> <!-- Lower coverage for perf tests -->
 
     <!-- Performance optimization settings -->
-    <IsPackable>false</IsPackable>
-    <IsTestProject>true</IsTestProject>
-    <GenerateDocumentationFile>false</GenerateDocumentationFile>
     <Optimize>true</Optimize>
     <DebugType>portable</DebugType>
     <DebugSymbols>true</DebugSymbols>
@@ -34,6 +31,7 @@
   <ItemGroup>
     <!-- BenchmarkDotNet for micro-benchmarks -->
     <PackageReference Include="BenchmarkDotNet" Version="[0.15.2,1.0.0)" />
+    <PackageReference Include="BenchmarkDotNet.Annotations" Version="[0.15.2,1.0.0]" />
     <PackageReference Include="BenchmarkDotNet.Diagnostics.Windows" Version="[0.15.2,1.0.0)" Condition="$([MSBuild]::IsOSPlatform('Windows'))" />
     <PackageReference Include="BenchmarkDotNet.Diagnostics.dotTrace" Version="[0.15.2,1.0.0)" />
 
@@ -51,17 +49,8 @@
     <PackageReference Include="System.IO.Pipelines" Version="[9.0.6,10.0.0)" />
     <PackageReference Include="Microsoft.Extensions.ObjectPool" Version="[9.0.6,10.0.0)" />
 
-    <!-- Realistic test data generation for performance scenarios -->
-    <PackageReference Include="Bogus" Version="[35.6.3,36.0.0)" />
-
     <!-- Time manipulation for performance testing -->
     <PackageReference Include="Microsoft.Extensions.TimeProvider.Testing" Version="[9.6.0,10.0.0)" />
-
-    <!-- Minimal DI for performance scenarios -->
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="[9.0.6,10.0.0)" />
-
-    <!-- Configuration for performance test scenarios -->
-    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="[9.0.6,10.0.0)" />
   </ItemGroup>
 
   <!-- Performance test specific build settings -->

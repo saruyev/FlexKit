@@ -10,24 +10,24 @@
         <PropertyGroup>
             <SourceProjectName>$(MSBuildProjectName)</SourceProjectName>
             <SourceProjectName Condition="$(SourceProjectName.EndsWith('.Tests'))">$(SourceProjectName.Substring(0, $(SourceProjectName.LastIndexOf('.Tests'))))</SourceProjectName>
-            <SourceProjectName Condition="$(SourceProjectName.EndsWith('.Integration.Tests'))">$(SourceProjectName.Substring(0, $(SourceProjectName.LastIndexOf('.Integration.Tests'))))</SourceProjectName>
-            <SourceProjectName Condition="$(SourceProjectName.EndsWith('.Performance.Tests'))">$(SourceProjectName.Substring(0, $(SourceProjectName.LastIndexOf('.Performance.Tests'))))</SourceProjectName>
+            <SourceProjectName Condition="$(SourceProjectName.EndsWith('.IntegrationTests'))">$(SourceProjectName.Substring(0, $(SourceProjectName.LastIndexOf('.IntegrationTests'))))</SourceProjectName>
+            <SourceProjectName Condition="$(SourceProjectName.EndsWith('.PerformanceTests'))">$(SourceProjectName.Substring(0, $(SourceProjectName.LastIndexOf('.PerformanceTests'))))</SourceProjectName>
 
             <!-- Calculate source project path -->
-            <SourceProjectPath>$([MSBuild]::GetDirectoryNameOfFileAbove('$(MSBuildProjectDirectory)', '$(SourceProjectName).csproj'))</SourceProjectPath>
-            <SourceProjectFile>$(SourceProjectPath)/$(SourceProjectName).csproj</SourceProjectFile>
+            <GrandParentDir>$([System.IO.Path]::GetDirectoryName('$([System.IO.Path]::GetDirectoryName('$(MSBuildProjectDirectory)'))'))</GrandParentDir>
+            <SourceProjectFile>$(GrandParentDir)/src/$(SourceProjectName)/$(SourceProjectName).csproj</SourceProjectFile>
+            
         </PropertyGroup>
 
         <!-- Add reference to source project if it exists -->
         <ItemGroup Condition="Exists('$(SourceProjectFile)')">
             <ProjectReference Include="$(SourceProjectFile)" />
         </ItemGroup>
-
         <!-- Output information for debugging -->
-        <Message Text="Test Project: $(MSBuildProjectName)" Importance="low" />
-        <Message Text="Source Project: $(SourceProjectName)" Importance="low" />
-        <Message Text="Source Project Path: $(SourceProjectFile)" Importance="low" />
-        <Message Text="Source Project Exists: $([System.IO.File]::Exists('$(SourceProjectFile)'))" Importance="low" />
+        <Message Text="Test Project: $(MSBuildProjectName)" Importance="high" />
+        <Message Text="Source Project: $(SourceProjectName)" Importance="high" />
+        <Message Text="Source Project Path: $(SourceProjectFile)" Importance="high" />
+        <Message Text="Source Project Exists: $([System.IO.File]::Exists('$(SourceProjectFile)'))" Importance="high" />
     </Target>
 
     <!-- Test Result Organization -->
@@ -95,10 +95,10 @@
     <!-- Test Project Validation -->
     <Target Name="ValidateTestProject" BeforeTargets="Build">
         <!-- Ensure test projects follow naming conventions -->
-        <Error Text="Test project '$(MSBuildProjectName)' must end with '.Tests', '.Integration.Tests', or '.Performance.Tests'"
+        <Error Text="Test project '$(MSBuildProjectName)' must end with '.Tests', '.IntegrationTests', or '.PerformanceTests'"
                Condition="!$(MSBuildProjectName.EndsWith('.Tests')) and
-                         !$(MSBuildProjectName.EndsWith('.Integration.Tests')) and
-                         !$(MSBuildProjectName.EndsWith('.Performance.Tests'))" />
+                         !$(MSBuildProjectName.EndsWith('.IntegrationTests')) and
+                         !$(MSBuildProjectName.EndsWith('.PerformanceTests'))" />
 
         <!-- Ensure test projects are in tests directory -->
         <Warning Text="Test project '$(MSBuildProjectName)' should be in a 'tests' directory for consistency"

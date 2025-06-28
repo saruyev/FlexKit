@@ -6,6 +6,7 @@
 using System.Reflection;
 using System.Runtime.Loader;
 using Autofac;
+using FlexKit.Configuration.Core;
 using JetBrains.Annotations;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyModel;
@@ -158,6 +159,8 @@ public static class AssemblyExtensions
     [UsedImplicitly]
     public static void AddModules(this ContainerBuilder builder, IConfiguration configuration)
     {
+        builder.RegisterModule<ConfigurationModule>(); // Register FlexKit.Configuration module>()
+
         // Register modules from dependency context (compile-time dependencies)
         foreach (var assembly in DependencyContext.Default?.GetAssemblies(configuration) ?? [])
         {

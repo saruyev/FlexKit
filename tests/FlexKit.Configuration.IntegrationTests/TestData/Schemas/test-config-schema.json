@@ -1,0 +1,684 @@
+﻿{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://flexkit.com/schemas/test-config-schema.json",
+  "title": "FlexKit Configuration Schema",
+  "description": "JSON Schema for validating FlexKit Configuration test files",
+  "type": "object",
+  "properties": {
+    "Application": {
+      "type": "object",
+      "description": "Application-specific configuration settings",
+      "properties": {
+        "Name": {
+          "type": "string",
+          "description": "Application name",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "Version": {
+          "type": "string",
+          "description": "Application version in semantic versioning format",
+          "pattern": "^\\d+\\.\\d+\\.\\d+(-[a-zA-Z0-9.-]+)?(\\+[a-zA-Z0-9.-]+)?$"
+        },
+        "Environment": {
+          "type": "string",
+          "description": "Deployment environment",
+          "enum": ["Development", "Test", "Staging", "Production"]
+        },
+        "Description": {
+          "type": "string",
+          "description": "Application description",
+          "maxLength": 500
+        },
+        "Url": {
+          "type": "string",
+          "description": "Application base URL",
+          "format": "uri"
+        },
+        "SupportEmail": {
+          "type": "string",
+          "description": "Support email address",
+          "format": "email"
+        },
+        "MaxConcurrentUsers": {
+          "type": "integer",
+          "description": "Maximum concurrent users",
+          "minimum": 1,
+          "maximum": 100000
+        },
+        "MaintenanceMode": {
+          "type": "boolean",
+          "description": "Whether the application is in maintenance mode"
+        },
+        "Mapping": {
+          "type": "object",
+          "description": "Assembly mapping configuration",
+          "properties": {
+            "Prefix": {
+              "type": "string",
+              "description": "Assembly name prefix for scanning",
+              "minLength": 1
+            },
+            "Names": {
+              "type": "array",
+              "description": "Explicit assembly names to scan",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "uniqueItems": true
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "required": ["Name", "Version", "Environment"],
+      "additionalProperties": false
+    },
+    "ConnectionStrings": {
+      "type": "object",
+      "description": "Database and service connection strings",
+      "properties": {
+        "DefaultConnection": {
+          "type": "string",
+          "description": "Primary database connection string",
+          "minLength": 1
+        },
+        "ReadOnlyConnection": {
+          "type": "string",
+          "description": "Read-only database connection string"
+        },
+        "Redis": {
+          "type": "string",
+          "description": "Redis connection string"
+        },
+        "MongoDB": {
+          "type": "string",
+          "description": "MongoDB connection string"
+        }
+      },
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "Database": {
+      "type": "object",
+      "description": "Database configuration settings",
+      "properties": {
+        "Provider": {
+          "type": "string",
+          "description": "Database provider",
+          "enum": ["SqlServer", "PostgreSQL", "MySQL", "SQLite", "Oracle"]
+        },
+        "CommandTimeout": {
+          "type": "integer",
+          "description": "Command timeout in seconds",
+          "minimum": 1,
+          "maximum": 3600
+        },
+        "MaxRetryCount": {
+          "type": "integer",
+          "description": "Maximum retry count",
+          "minimum": 0,
+          "maximum": 10
+        },
+        "RetryDelay": {
+          "type": "integer",
+          "description": "Retry delay in milliseconds",
+          "minimum": 100,
+          "maximum": 30000
+        },
+        "EnableLogging": {
+          "type": "boolean",
+          "description": "Enable database logging"
+        },
+        "LogSensitiveData": {
+          "type": "boolean",
+          "description": "Log sensitive data (development only)"
+        },
+        "PoolSize": {
+          "type": "integer",
+          "description": "Connection pool size",
+          "minimum": 1,
+          "maximum": 1000
+        },
+        "MaxPoolSize": {
+          "type": "integer",
+          "description": "Maximum connection pool size",
+          "minimum": 1,
+          "maximum": 2000
+        },
+        "ConnectionLifetime": {
+          "type": "integer",
+          "description": "Connection lifetime in seconds",
+          "minimum": 60,
+          "maximum": 3600
+        }
+      },
+      "additionalProperties": false
+    },
+    "External": {
+      "type": "object",
+      "description": "External API configurations",
+      "patternProperties": {
+        "^[A-Za-z][A-Za-z0-9]*Api$": {
+          "type": "object",
+          "description": "External API configuration",
+          "properties": {
+            "BaseUrl": {
+              "type": "string",
+              "description": "API base URL",
+              "format": "uri"
+            },
+            "ApiKey": {
+              "type": "string",
+              "description": "API key for authentication",
+              "minLength": 1
+            },
+            "Timeout": {
+              "type": "integer",
+              "description": "Request timeout in milliseconds",
+              "minimum": 1000,
+              "maximum": 300000
+            },
+            "MaxRetries": {
+              "type": "integer",
+              "description": "Maximum retry attempts",
+              "minimum": 0,
+              "maximum": 10
+            },
+            "RetryDelay": {
+              "type": "integer",
+              "description": "Retry delay in milliseconds",
+              "minimum": 100,
+              "maximum": 30000
+            },
+            "EnableCompression": {
+              "type": "boolean",
+              "description": "Enable HTTP compression"
+            },
+            "UserAgent": {
+              "type": "string",
+              "description": "HTTP User-Agent header"
+            },
+            "AcceptLanguage": {
+              "type": "string",
+              "description": "HTTP Accept-Language header"
+            },
+            "RateLimitPerMinute": {
+              "type": "integer",
+              "description": "Rate limit per minute",
+              "minimum": 1,
+              "maximum": 10000
+            },
+            "EnableCircuitBreaker": {
+              "type": "boolean",
+              "description": "Enable circuit breaker pattern"
+            }
+          },
+          "required": ["BaseUrl", "ApiKey", "Timeout"],
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "Features": {
+      "type": "object",
+      "description": "Feature flag configurations",
+      "properties": {
+        "EnableCaching": {
+          "type": "boolean",
+          "description": "Enable caching functionality"
+        },
+        "EnableMetrics": {
+          "type": "boolean",
+          "description": "Enable metrics collection"
+        },
+        "EnableTracing": {
+          "type": "boolean",
+          "description": "Enable distributed tracing"
+        },
+        "EnableHealthChecks": {
+          "type": "boolean",
+          "description": "Enable health checks"
+        },
+        "EnableSwagger": {
+          "type": "boolean",
+          "description": "Enable Swagger/OpenAPI documentation"
+        },
+        "EnableDarkMode": {
+          "type": "boolean",
+          "description": "Enable dark mode UI"
+        },
+        "BetaFeatures": {
+          "type": "boolean",
+          "description": "Enable beta features"
+        },
+        "EnableAdvancedSearch": {
+          "type": "boolean",
+          "description": "Enable advanced search functionality"
+        },
+        "EnableFileUpload": {
+          "type": "boolean",
+          "description": "Enable file upload functionality"
+        },
+        "EnableRealTimeNotifications": {
+          "type": "boolean",
+          "description": "Enable real-time notifications"
+        },
+        "EnableAuditLogging": {
+          "type": "boolean",
+          "description": "Enable audit logging"
+        },
+        "EnableCompression": {
+          "type": "boolean",
+          "description": "Enable response compression"
+        },
+        "EnableRateLimiting": {
+          "type": "boolean",
+          "description": "Enable rate limiting"
+        },
+        "MaxUploadSize": {
+          "type": "integer",
+          "description": "Maximum upload size in bytes",
+          "minimum": 1024,
+          "maximum": 104857600
+        },
+        "MaxConcurrentConnections": {
+          "type": "integer",
+          "description": "Maximum concurrent connections",
+          "minimum": 1,
+          "maximum": 10000
+        }
+      },
+      "additionalProperties": {
+        "type": "boolean"
+      }
+    },
+    "Logging": {
+      "type": "object",
+      "description": "Logging configuration",
+      "properties": {
+        "LogLevel": {
+          "type": "object",
+          "description": "Log level configuration",
+          "properties": {
+            "Default": {
+              "type": "string",
+              "enum": ["Trace", "Debug", "Information", "Warning", "Error", "Critical", "None"]
+            },
+            "Microsoft": {
+              "type": "string",
+              "enum": ["Trace", "Debug", "Information", "Warning", "Error", "Critical", "None"]
+            },
+            "System": {
+              "type": "string",
+              "enum": ["Trace", "Debug", "Information", "Warning", "Error", "Critical", "None"]
+            }
+          },
+          "patternProperties": {
+            "^[A-Za-z][A-Za-z0-9.]*$": {
+              "type": "string",
+              "enum": ["Trace", "Debug", "Information", "Warning", "Error", "Critical", "None"]
+            }
+          },
+          "additionalProperties": false
+        },
+        "Console": {
+          "type": "object",
+          "properties": {
+            "IncludeScopes": {
+              "type": "boolean"
+            },
+            "TimestampFormat": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
+        "File": {
+          "type": "object",
+          "properties": {
+            "Path": {
+              "type": "string",
+              "minLength": 1
+            },
+            "MaxFileSize": {
+              "type": "string",
+              "pattern": "^\\d+[KMGT]?B$"
+            },
+            "MaxFiles": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "Security": {
+      "type": "object",
+      "description": "Security configuration",
+      "properties": {
+        "JwtSettings": {
+          "type": "object",
+          "properties": {
+            "Issuer": {
+              "type": "string",
+              "minLength": 1
+            },
+            "Audience": {
+              "type": "string",
+              "minLength": 1
+            },
+            "SecretKey": {
+              "type": "string",
+              "minLength": 32
+            },
+            "ExpirationMinutes": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 43200
+            },
+            "RefreshTokenExpirationDays": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 365
+            }
+          },
+          "required": ["Issuer", "Audience", "SecretKey"],
+          "additionalProperties": false
+        },
+        "Cors": {
+          "type": "object",
+          "properties": {
+            "AllowedOrigins": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "format": "uri"
+              },
+              "uniqueItems": true
+            },
+            "AllowCredentials": {
+              "type": "boolean"
+            }
+          },
+          "additionalProperties": false
+        },
+        "RateLimiting": {
+          "type": "object",
+          "properties": {
+            "MaxRequests": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 10000
+            },
+            "WindowMinutes": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1440
+            }
+          },
+          "additionalProperties": false
+        },
+        "PasswordPolicy": {
+          "type": "object",
+          "properties": {
+            "MinLength": {
+              "type": "integer",
+              "minimum": 4,
+              "maximum": 128
+            },
+            "RequireDigit": {
+              "type": "boolean"
+            },
+            "RequireUppercase": {
+              "type": "boolean"
+            },
+            "RequireSpecialChar": {
+              "type": "boolean"
+            }
+          },
+          "additionalProperties": false
+        },
+        "SessionTimeout": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1440
+        },
+        "EnableTwoFactor": {
+          "type": "boolean"
+        },
+        "AllowedFileTypes": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "Cache": {
+      "type": "object",
+      "description": "Caching configuration",
+      "properties": {
+        "Type": {
+          "type": "string",
+          "enum": ["Memory", "Redis", "Distributed"]
+        },
+        "DefaultExpiration": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 86400
+        },
+        "SlidingExpiration": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 3600
+        },
+        "MaxSize": {
+          "type": "string",
+          "pattern": "^\\d+[KMGT]?B$"
+        },
+        "CompactionPercentage": {
+          "type": "number",
+          "minimum": 0.01,
+          "maximum": 1.0
+        },
+        "EnableCompression": {
+          "type": "boolean"
+        },
+        "Redis": {
+          "type": "object",
+          "properties": {
+            "ConnectionString": {
+              "type": "string",
+              "minLength": 1
+            },
+            "Database": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 15
+            },
+            "KeyPrefix": {
+              "type": "string"
+            },
+            "ConnectTimeout": {
+              "type": "integer",
+              "minimum": 1000,
+              "maximum": 30000
+            },
+            "SyncTimeout": {
+              "type": "integer",
+              "minimum": 1000,
+              "maximum": 30000
+            },
+            "MaxRetries": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 10
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "MessageQueue": {
+      "type": "object",
+      "description": "Message queue configuration",
+      "properties": {
+        "Type": {
+          "type": "string",
+          "enum": ["InMemory", "RabbitMQ", "ServiceBus", "SQS"]
+        },
+        "MaxRetries": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10
+        },
+        "RetryDelay": {
+          "type": "integer",
+          "minimum": 100,
+          "maximum": 30000
+        },
+        "EnableDeadLetter": {
+          "type": "boolean"
+        },
+        "MessageTtl": {
+          "type": "integer",
+          "minimum": 60,
+          "maximum": 604800
+        }
+      },
+      "additionalProperties": false
+    },
+    "Monitoring": {
+      "type": "object",
+      "description": "Monitoring and observability configuration",
+      "properties": {
+        "ApplicationInsights": {
+          "type": "object",
+          "properties": {
+            "InstrumentationKey": {
+              "type": "string"
+            },
+            "ConnectionString": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
+        "Metrics": {
+          "type": "object",
+          "properties": {
+            "Enabled": {
+              "type": "boolean"
+            },
+            "CollectionInterval": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 3600
+            }
+          },
+          "additionalProperties": false
+        },
+        "Tracing": {
+          "type": "object",
+          "properties": {
+            "Enabled": {
+              "type": "boolean"
+            },
+            "ServiceName": {
+              "type": "string",
+              "minLength": 1
+            },
+            "ServiceVersion": {
+              "type": "string",
+              "pattern": "^\\d+\\.\\d+\\.\\d+(-[a-zA-Z0-9.-]+)?(\\+[a-zA-Z0-9.-]+)?$"
+            }
+          },
+          "additionalProperties": false
+        },
+        "HealthChecks": {
+          "type": "object",
+          "properties": {
+            "Enabled": {
+              "type": "boolean"
+            },
+            "Interval": {
+              "type": "integer",
+              "minimum": 10,
+              "maximum": 3600
+            },
+            "Timeout": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 300
+            }
+          },
+          "additionalProperties": false
+        },
+        "Prometheus": {
+          "type": "object",
+          "properties": {
+            "Enabled": {
+              "type": "boolean"
+            },
+            "Port": {
+              "type": "integer",
+              "minimum": 1024,
+              "maximum": 65535
+            },
+            "Path": {
+              "type": "string",
+              "pattern": "^/[a-zA-Z0-9/_-]*$"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "Servers": {
+      "type": "array",
+      "description": "Server configuration array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "Name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "Host": {
+            "type": "string",
+            "anyOf": [
+              { "format": "hostname" },
+              { "format": "ipv4" },
+              { "format": "ipv6" }
+            ]
+          },
+          "Port": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 65535
+          },
+          "Ssl": {
+            "type": "boolean"
+          },
+          "HealthCheckPath": {
+            "type": "string",
+            "pattern": "^/[a-zA-Z0-9/_-]*$"
+          }
+        },
+        "required": ["Name", "Host", "Port"],
+        "additionalProperties": false
+      }
+    },
+    "AllowedHosts": {
+      "type": "string",
+      "description": "Allowed hosts configuration"
+    }
+  },
+  "additionalProperties": false
+}

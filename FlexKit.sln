@@ -1,6 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{7A6DFB3B-9FF1-41B5-A109-33C03EE11F2C}"
+	ProjectSection(SolutionItems) = preProject
+		.gitignore = .gitignore
+	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{F60C1E3A-80C0-4F52-9CE0-C3D24657A3AC}"
 EndProject
@@ -25,6 +28,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "scripts", "scripts", "{4AF8020B-0106-4856-A1CB-89186A42F58D}"
 	ProjectSection(SolutionItems) = preProject
 		tests\scripts\coverage.ps1 = tests\scripts\coverage.ps1
+		tests\scripts\integration.ps1 = tests\scripts\integration.ps1
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FlexKit.Configuration", "src\FlexKit.Configuration\FlexKit.Configuration.csproj", "{675C7DE3-C822-423C-8F95-86E9D2F1D1B3}"
@@ -65,6 +69,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "FlexKit-integration-test", 
 	ProjectSection(SolutionItems) = preProject
 		tests\ProjectTemplates\FlexKit-integration-test\.template.config\template.json = tests\ProjectTemplates\FlexKit-integration-test\.template.config\template.json
 		tests\ProjectTemplates\FlexKit-integration-test\FlexKit.IntegrationTest.Template.csproj = tests\ProjectTemplates\FlexKit-integration-test\FlexKit.IntegrationTest.Template.csproj
+		tests\ProjectTemplates\FlexKit-integration-test\reqnroll.json = tests\ProjectTemplates\FlexKit-integration-test\reqnroll.json
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FlexKit.Configuration.Tests", "tests\FlexKit.Configuration.Tests\FlexKit.Configuration.Tests.csproj", "{11AD4093-67A3-4953-96A2-8E5A1F885401}"
@@ -72,10 +77,6 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "integration_tests", "integration_tests", "{A79CA617-3F5D-4017-97AC-41C70A117F2D}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "performance_tests", "performance_tests", "{F5D1F2EF-2091-4B69-9BC7-FDDDEA4DAE35}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FlexKit.Configuration.IntegrationTests", "tests\FlexKit.Configuration.IntegrationTests\FlexKit.Configuration.IntegrationTests.csproj", "{C8FB49F3-C668-483B-B434-B856E4520E6C}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FlexKit.Configuration.PerformanceTests", "tests\FlexKit.Configuration.PerformanceTests\FlexKit.Configuration.PerformanceTests.csproj", "{AA80903F-0FB0-4BE4-B348-913274B0F96B}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FlexKit.Configuration.Providers.Yaml", "src\FlexKit.Configuration.Providers.Yaml\FlexKit.Configuration.Providers.Yaml.csproj", "{A8BD4266-4B67-4011-BEBA-9BA0126AB340}"
 EndProject
@@ -88,6 +89,10 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FlexKit.Configuration.AzureFunctions", "src\FlexKit.Configuration.AzureFunctions\FlexKit.Configuration.AzureFunctions.csproj", "{3264E11F-3729-48C8-966F-904E6DE4163E}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FlexKit.Configuration.Hosting", "src\FlexKit.Configuration.Hosting\FlexKit.Configuration.Hosting.csproj", "{598AAA58-5FA9-47C9-AAB3-8406A51497EF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FlexKit.Configuration.IntegrationTests", "tests\FlexKit.Configuration.IntegrationTests\FlexKit.Configuration.IntegrationTests.csproj", "{4C8073E6-2ACA-41A3-A1B4-F28F0440F762}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FlexKit.IntegrationTests", "tests\FlexKit.IntegrationTests\FlexKit.IntegrationTests.csproj", "{173EE4F7-BD75-4212-8109-28CF01AFDD7B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -107,14 +112,6 @@ Global
 		{11AD4093-67A3-4953-96A2-8E5A1F885401}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{11AD4093-67A3-4953-96A2-8E5A1F885401}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{11AD4093-67A3-4953-96A2-8E5A1F885401}.Release|Any CPU.Build.0 = Release|Any CPU
-		{C8FB49F3-C668-483B-B434-B856E4520E6C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{C8FB49F3-C668-483B-B434-B856E4520E6C}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{C8FB49F3-C668-483B-B434-B856E4520E6C}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{C8FB49F3-C668-483B-B434-B856E4520E6C}.Release|Any CPU.Build.0 = Release|Any CPU
-		{AA80903F-0FB0-4BE4-B348-913274B0F96B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{AA80903F-0FB0-4BE4-B348-913274B0F96B}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{AA80903F-0FB0-4BE4-B348-913274B0F96B}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{AA80903F-0FB0-4BE4-B348-913274B0F96B}.Release|Any CPU.Build.0 = Release|Any CPU
 		{A8BD4266-4B67-4011-BEBA-9BA0126AB340}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{A8BD4266-4B67-4011-BEBA-9BA0126AB340}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A8BD4266-4B67-4011-BEBA-9BA0126AB340}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -139,6 +136,14 @@ Global
 		{598AAA58-5FA9-47C9-AAB3-8406A51497EF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{598AAA58-5FA9-47C9-AAB3-8406A51497EF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{598AAA58-5FA9-47C9-AAB3-8406A51497EF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4C8073E6-2ACA-41A3-A1B4-F28F0440F762}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4C8073E6-2ACA-41A3-A1B4-F28F0440F762}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4C8073E6-2ACA-41A3-A1B4-F28F0440F762}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4C8073E6-2ACA-41A3-A1B4-F28F0440F762}.Release|Any CPU.Build.0 = Release|Any CPU
+		{173EE4F7-BD75-4212-8109-28CF01AFDD7B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{173EE4F7-BD75-4212-8109-28CF01AFDD7B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{173EE4F7-BD75-4212-8109-28CF01AFDD7B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{173EE4F7-BD75-4212-8109-28CF01AFDD7B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{EEDA0AD3-426C-426B-8832-B34B21B1D332} = {F60C1E3A-80C0-4F52-9CE0-C3D24657A3AC}
@@ -155,13 +160,13 @@ Global
 		{11AD4093-67A3-4953-96A2-8E5A1F885401} = {78B496C4-1EAF-4703-8625-1A2652843F0F}
 		{A79CA617-3F5D-4017-97AC-41C70A117F2D} = {F60C1E3A-80C0-4F52-9CE0-C3D24657A3AC}
 		{F5D1F2EF-2091-4B69-9BC7-FDDDEA4DAE35} = {F60C1E3A-80C0-4F52-9CE0-C3D24657A3AC}
-		{C8FB49F3-C668-483B-B434-B856E4520E6C} = {A79CA617-3F5D-4017-97AC-41C70A117F2D}
-		{AA80903F-0FB0-4BE4-B348-913274B0F96B} = {F5D1F2EF-2091-4B69-9BC7-FDDDEA4DAE35}
 		{A8BD4266-4B67-4011-BEBA-9BA0126AB340} = {FDE5555A-87A2-4EDD-92DF-7948CD95E4CB}
 		{A49CB9AC-43D3-4AB4-8A68-D1CCBF84DBE9} = {FDE5555A-87A2-4EDD-92DF-7948CD95E4CB}
 		{5D360394-A8A6-497F-9916-28988BC77A4A} = {FDE5555A-87A2-4EDD-92DF-7948CD95E4CB}
 		{D2EA6810-BE5E-46D2-8057-60C5CED2E111} = {FDE5555A-87A2-4EDD-92DF-7948CD95E4CB}
 		{3264E11F-3729-48C8-966F-904E6DE4163E} = {FDE5555A-87A2-4EDD-92DF-7948CD95E4CB}
 		{598AAA58-5FA9-47C9-AAB3-8406A51497EF} = {FDE5555A-87A2-4EDD-92DF-7948CD95E4CB}
+		{4C8073E6-2ACA-41A3-A1B4-F28F0440F762} = {A79CA617-3F5D-4017-97AC-41C70A117F2D}
+		{173EE4F7-BD75-4212-8109-28CF01AFDD7B} = {A79CA617-3F5D-4017-97AC-41C70A117F2D}
 	EndGlobalSection
 EndGlobal
