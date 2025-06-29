@@ -1,12 +1,8 @@
-﻿#nullable enable
-using System;
-using Autofac;
-using AutoFixture.Xunit2;
+﻿using AutoFixture.Xunit2;
 using FlexKit.Configuration.Sources;
 using FlexKit.Configuration.Tests.TestBase;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
-using NSubstitute;
 using Xunit;
 
 namespace FlexKit.Configuration.Tests.Sources;
@@ -125,7 +121,7 @@ public class DotEnvConfigurationSourceTests : UnitTestBase
         // Assert
         provider.Should().NotBeNull();
         // We can't directly access the private _source field, but we can verify behavior
-        // through the provider's Load method behavior which depends on the source properties
+        // through the provider's Load method behavior, which depends on the source properties
     }
 
     [Fact]
@@ -256,7 +252,7 @@ public class DotEnvConfigurationSourceTests : UnitTestBase
 
         // Assert
         configuration.Should().NotBeNull();
-        // Since the file doesn't exist and it's optional, configuration should be empty but valid
+        // Since the file doesn't exist, and it's optional, the configuration should be empty but valid
         configuration.AsEnumerable().Should().BeEmpty();
     }
 }

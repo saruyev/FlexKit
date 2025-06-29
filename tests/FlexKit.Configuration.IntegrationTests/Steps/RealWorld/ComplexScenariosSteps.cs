@@ -4,14 +4,12 @@ using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Reqnroll;
 using System.Diagnostics;
-using FlexKit.IntegrationTests.Utils;
 
 namespace FlexKit.Configuration.IntegrationTests.Steps.RealWorld;
 
 [Binding]
-public class ComplexScenariosSteps
+public class ComplexScenariosSteps(ScenarioContext scenarioContext)
 {
-    private readonly ScenarioContext _scenarioContext;
     private TestConfigurationBuilder? _complexConfigurationBuilder;
     private IConfiguration? _complexConfiguration;
     private IFlexConfig? _complexFlexConfiguration;
@@ -22,14 +20,13 @@ public class ComplexScenariosSteps
     private readonly Dictionary<string, string?> _dynamicUpdates = new();
     private readonly Dictionary<string, string?> _validationRules = new();
     private readonly Dictionary<string, string?> _securityMetadata = new();
-    private readonly Dictionary<string, string?> _performanceTestData = new();
     private readonly Dictionary<string, string?> _platformPaths = new();
     private readonly Dictionary<string, string?> _securityData = new();
     
     private string _currentEnvironment = "Development";
-    private bool _validationEnabled = false;
-    private bool _securityFeaturesEnabled = false;
-    private bool _performanceMonitoringEnabled = false;
+    private bool _validationEnabled;
+    private bool _securityFeaturesEnabled;
+    private bool _performanceMonitoringEnabled;
     private Exception? _lastComplexException;
     private bool _complexConfigurationLoaded;
     
@@ -46,17 +43,12 @@ public class ComplexScenariosSteps
     private List<string> GetOrganizedJsonFiles() => _organizedJsonFiles;
     private List<string> GetOrganizedEnvFiles() => _organizedEnvFiles;
 
-    public ComplexScenariosSteps(ScenarioContext scenarioContext)
-    {
-        _scenarioContext = scenarioContext;
-    }
-
     #region Given Steps
 
     [Given(@"I have organized a comprehensive configuration testing environment")]
     public void GivenIHaveOrganizedAComprehensiveConfigurationTestingEnvironment()
     {
-        _complexConfigurationBuilder = TestConfigurationBuilder.Create(_scenarioContext);
+        _complexConfigurationBuilder = TestConfigurationBuilder.Create(scenarioContext);
         _memoryUsageBefore = GC.GetTotalMemory(false);
     }
 
@@ -136,7 +128,7 @@ public class ComplexScenariosSteps
             _inMemoryOverrides[key] = value;
         }
     
-        // Don't add here - will be added in execute step for proper precedence
+        // Don't add here - will be added in the executed step for proper precedence
     }
 
     [When(@"I organize comprehensive test configuration structure:")]
@@ -162,7 +154,7 @@ public class ComplexScenariosSteps
     [When("I organize conditional overrides when environment is {string}:")]
     public void WhenIOrganizeConditionalOverridesWhenEnvironmentIs(string environment, Table table)
     {
-        // Only process if it matches current environment
+        // Only process if it matches the current environment
         if (_currentEnvironment == environment)
         {
             _complexConfigurationBuilder.Should().NotBeNull();
@@ -389,7 +381,7 @@ public class ComplexScenariosSteps
     public void WhenIExecuteComplexConfigurationAssembly()
     {
         // Create a new builder to ensure proper order
-        var builder = TestConfigurationBuilder.Create(_scenarioContext);
+        var builder = TestConfigurationBuilder.Create(scenarioContext);
     
         // Add sources in precedence order (lowest to highest)
     
@@ -413,13 +405,13 @@ public class ComplexScenariosSteps
             builder.AddDotEnvFile(envFile, optional: true);
         }
     
-        // 4. Conditional configuration (highest precedence among organized)
+        // 4. Conditional configuration (the highest precedence among organized)
         if (_conditionalConfiguration.Any())
         {
             builder.AddInMemoryCollection(_conditionalConfiguration);
         }
     
-        // 5. In-memory final overrides (highest precedence)
+        // 5. In-memory final overrides (the highest precedence)
         if (_inMemoryOverrides.Any())
         {
             builder.AddInMemoryCollection(_inMemoryOverrides);
@@ -465,8 +457,8 @@ public class ComplexScenariosSteps
     [When(@"I execute complex configuration assembly with cross-platform support")]
     public void WhenIExecuteComplexConfigurationAssemblyWithCrossPlatformSupport()
     {
-        // Create builder and add platform-specific data
-        var builder = TestConfigurationBuilder.Create(_scenarioContext);
+        // Create a builder and add platform-specific data
+        var builder = TestConfigurationBuilder.Create(scenarioContext);
     
         // Add platform paths that were organized
         if (_platformPaths.Any())
@@ -510,8 +502,8 @@ public class ComplexScenariosSteps
     {
         _securityFeaturesEnabled = true;
     
-        // Create builder and add security data
-        var builder = TestConfigurationBuilder.Create(_scenarioContext);
+        // Create a builder and add security data
+        var builder = TestConfigurationBuilder.Create(scenarioContext);
     
         // Add security data that was organized
         if (_securityData.Any())
@@ -521,10 +513,11 @@ public class ComplexScenariosSteps
     
         // Add security metadata
         var securityMetadataKeys = _securityMetadata.Keys.Where(k => !string.IsNullOrEmpty(_securityMetadata[k]));
-        if (securityMetadataKeys.Any())
+        var metadataKeys = securityMetadataKeys as string[] ?? securityMetadataKeys.ToArray();
+        if (metadataKeys.Any())
         {
             var metadataConfig = new Dictionary<string, string?>();
-            foreach (var key in securityMetadataKeys)
+            foreach (var key in metadataKeys)
             {
                 metadataConfig[$"Security:Metadata:{key}"] = _securityMetadata[key];
             }
@@ -558,15 +551,14 @@ public class ComplexScenariosSteps
         if (_dynamicUpdates.Any())
         {
             var currentData = _complexConfiguration!.AsEnumerable()
-                .Where(kvp => kvp.Key != null)
-                .ToDictionary(kvp => kvp.Key!, kvp => kvp.Value);
+                .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
             
             foreach (var update in _dynamicUpdates)
             {
                 currentData[update.Key] = update.Value;
             }
             
-            var updatedBuilder = TestConfigurationBuilder.Create(_scenarioContext);
+            var updatedBuilder = TestConfigurationBuilder.Create(scenarioContext);
             updatedBuilder.AddInMemoryCollection(currentData);
             
             _complexConfiguration = updatedBuilder.Build();
@@ -631,7 +623,7 @@ public class ComplexScenariosSteps
         _complexConfiguration.Should().NotBeNull();
     
         var externalEntries = _complexConfiguration!.AsEnumerable()
-            .Where(kvp => kvp.Key != null && kvp.Key.StartsWith("External:"))
+            .Where(kvp => kvp.Key.StartsWith("External:"))
             .ToList();
     
         foreach (var entry in externalEntries.Take(3))
@@ -649,14 +641,14 @@ public class ComplexScenariosSteps
         _complexConfiguration.Should().NotBeNull();
         
         var featureEntries = _complexConfiguration!.AsEnumerable()
-            .Where(kvp => kvp.Key != null && kvp.Key.StartsWith("Features:"))
+            .Where(kvp => kvp.Key.StartsWith("Features:"))
             .ToList();
         
         foreach (var entry in featureEntries)
         {
             if (entry.Value != null)
             {
-                if (bool.TryParse(entry.Value, out var boolValue))
+                if (bool.TryParse(entry.Value, out _))
                 {
                     // Boolean feature flag
                 }
@@ -678,7 +670,7 @@ public class ComplexScenariosSteps
         _complexConfiguration.Should().NotBeNull();
         
         var securityEntries = _complexConfiguration!.AsEnumerable()
-            .Where(kvp => kvp.Key != null && kvp.Key.StartsWith("Security:"))
+            .Where(kvp => kvp.Key.StartsWith("Security:"))
             .ToList();
         
         foreach (var entry in securityEntries)
@@ -708,7 +700,7 @@ public class ComplexScenariosSteps
         {
             try
             {
-                var section = config[sectionName];
+                _ = config[sectionName];
                 // Section access should not throw, whether it exists or not
             }
             catch
@@ -838,7 +830,7 @@ public class ComplexScenariosSteps
             
             for (int i = 0; i < 1000; i++)
             {
-                var value = _complexFlexConfiguration!["Database:ConnectionString"];
+                _ = _complexFlexConfiguration!["Database:ConnectionString"];
             }
             
             accessStopwatch.Stop();
@@ -851,13 +843,13 @@ public class ComplexScenariosSteps
     {
         _complexConfiguration.Should().NotBeNull();
         
-        var allKeys = _complexConfiguration!.AsEnumerable().Where(kvp => kvp.Key != null).ToList();
+        var allKeys = _complexConfiguration!.AsEnumerable().ToList();
         
         var accessStopwatch = Stopwatch.StartNew();
         
         foreach (var kvp in allKeys.Take(100))
         {
-            var value = _complexConfiguration[kvp.Key!];
+            _ = _complexConfiguration[kvp.Key];
         }
         
         accessStopwatch.Stop();
@@ -884,7 +876,7 @@ public class ComplexScenariosSteps
         
         try
         {
-            var testValue = config["Application:Name"];
+            _ = config["Application:Name"];
             // Configuration access should work regardless of platform
         }
         catch
@@ -899,11 +891,11 @@ public class ComplexScenariosSteps
         _complexConfiguration.Should().NotBeNull();
         
         var pathEntries = _complexConfiguration!.AsEnumerable()
-            .Where(kvp => kvp.Key != null && kvp.Value != null && 
+            .Where(kvp => kvp.Value != null && 
                          (kvp.Key.Contains("Path") || kvp.Value.Contains("/") || kvp.Value.Contains("\\")))
             .ToList();
         
-        // Paths should be properly formatted for current platform
+        // Paths should be properly formatted for the current platform
         pathEntries.Should().NotBeNull();
     }
 
@@ -939,7 +931,7 @@ public class ComplexScenariosSteps
                 var securitySection = config.Security;
                 if (securitySection != null)
                 {
-                    var metadataSection = securitySection.Metadata;
+                    _ = securitySection.Metadata;
                     // Metadata should be accessible if it exists
                 }
             }
@@ -986,7 +978,7 @@ public class ComplexScenariosSteps
             var validationRule = rule.Value;
             var actualValue = _complexConfiguration![key];
             
-            var isValid = ValidateConfigurationValue(key, actualValue, validationRule!);
+            var isValid = ValidateConfigurationValue(actualValue, validationRule!);
             
             if (!isValid)
             {
@@ -996,7 +988,7 @@ public class ComplexScenariosSteps
         }
     }
 
-    private static bool ValidateConfigurationValue(string key, string? value, string rule)
+    private static bool ValidateConfigurationValue(string? value, string rule)
     {
         if (string.IsNullOrEmpty(value))
         {
@@ -1010,8 +1002,6 @@ public class ComplexScenariosSteps
             var r when r.Contains("positive number") => double.TryParse(value, out var doubleVal) && doubleVal > 0,
             var r when r.Contains("should handle gracefully") => true,
             var r when r.Contains("should provide clear error") => false,
-            var r when r.Contains("should use fallback") => true,
-            var r when r.Contains("should default appropriately") => true,
             _ => true
         };
     }
@@ -1021,7 +1011,7 @@ public class ComplexScenariosSteps
         if (!double.TryParse(value, out var numericValue))
             return false;
 
-        var parts = rule.Split(new[] { " and " }, StringSplitOptions.RemoveEmptyEntries);
+        var parts = rule.Split([" and "], StringSplitOptions.RemoveEmptyEntries);
         if (parts.Length != 2)
             return false;
 

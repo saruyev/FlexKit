@@ -1,0 +1,144 @@
+﻿{
+  "Database": {
+    "Primary": {
+      "ConnectionString": "Server=localhost;Database=FlexKitTest;Trusted_Connection=true;",
+      "CommandTimeout": 30,
+      "MaxPoolSize": 100,
+      "RetryCount": 3
+    },
+    "Secondary": {
+      "ConnectionString": "Server=backup;Database=FlexKitTest;Trusted_Connection=true;",
+      "CommandTimeout": 45,
+      "MaxPoolSize": 50,
+      "RetryCount": 2
+    }
+  },
+  "External": {
+    "Services": {
+      "Api": {
+        "BaseUrl": "https://api.example.com",
+        "ApiKey": "sk-test-12345abcdef",
+        "Timeout": 5000,
+        "RetryCount": 3,
+        "Enabled": true
+      },
+      "PaymentGateway": {
+        "BaseUrl": "https://payments.example.com",
+        "ApiKey": "pk-live-987654321",
+        "WebhookSecret": "whsec_abcdef123456",
+        "SandboxMode": false,
+        "SupportedCurrencies": ["USD", "EUR", "GBP", "CAD"]
+      }
+    }
+  },
+  "Features": {
+    "Payment": {
+      "Enabled": true,
+      "MaxAmount": 10000.50,
+      "MinAmount": 0.01,
+      "SupportedCurrencies": ["USD", "EUR", "GBP"],
+      "ProcessingFee": 2.9
+    },
+    "Logging": {
+      "Level": "Information",
+      "EnableSensitiveDataLogging": false,
+      "MaxLogSize": "100MB",
+      "RetentionDays": 30
+    },
+    "Cache": {
+      "Enabled": true,
+      "Provider": "Redis",
+      "TTL": 3600,
+      "MaxSize": "1GB"
+    }
+  },
+  "Application": {
+    "Metadata": {
+      "Name": "FlexKit.Configuration.PerformanceTests",
+      "Version": "1.0.0",
+      "Environment": "Development",
+      "Author": "FlexKit Team",
+      "Description": "Performance testing application for FlexKit Configuration"
+    },
+    "Runtime": {
+      "MaxThreads": 100,
+      "GcMode": "Server",
+      "EnableOptimizations": true,
+      "MemoryLimit": "2GB"
+    },
+    "Security": {
+      "EnableHttps": true,
+      "RequireAuthentication": true,
+      "TokenExpiration": 3600,
+      "AllowedOrigins": ["https://localhost:5001", "https://test.example.com"]
+    }
+  },
+  "Monitoring": {
+    "ApplicationInsights": {
+      "InstrumentationKey": "12345678-1234-1234-1234-123456789012",
+      "Enabled": true,
+      "SamplingRate": 100
+    },
+    "HealthChecks": {
+      "Enabled": true,
+      "Timeout": 10000,
+      "Interval": 30000,
+      "Endpoints": [
+        {
+          "Name": "Database",
+          "Url": "/health/database",
+          "Timeout": 5000
+        },
+        {
+          "Name": "External API",
+          "Url": "/health/api",
+          "Timeout": 3000
+        }
+      ]
+    },
+    "Metrics": {
+      "Enabled": true,
+      "Provider": "Prometheus",
+      "Port": 9090,
+      "Path": "/metrics"
+    }
+  },
+  "Cache": {
+    "Redis": {
+      "ConnectionString": "localhost:6379",
+      "Database": 0,
+      "KeyPrefix": "flexkit:",
+      "EnableCompression": true
+    },
+    "InMemory": {
+      "SizeLimit": 1000,
+      "CompactionPercentage": 0.25,
+      "ExpirationScanFrequency": 60
+    }
+  },
+  "PerformanceTest": {
+    "Scenarios": {
+      "SmallData": {
+        "RecordCount": 100,
+        "Complexity": "Low",
+        "ConcurrentUsers": 10
+      },
+      "MediumData": {
+        "RecordCount": 10000,
+        "Complexity": "Medium",
+        "ConcurrentUsers": 50
+      },
+      "LargeData": {
+        "RecordCount": 1000000,
+        "Complexity": "High",
+        "ConcurrentUsers": 200
+      }
+    },
+    "Benchmarks": {
+      "DurationSeconds": 60,
+      "WarmupSeconds": 10,
+      "Iterations": 5,
+      "EnableMemoryProfiling": true
+    }
+  }
+}

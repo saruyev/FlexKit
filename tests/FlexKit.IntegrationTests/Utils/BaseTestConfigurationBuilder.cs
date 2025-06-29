@@ -4,6 +4,7 @@ using Reqnroll;
 using System.Text.Json;
 using System.IO.Abstractions;
 using FlexKit.IntegrationTests.Hooks;
+using JetBrains.Annotations;
 
 namespace FlexKit.IntegrationTests.Utils;
 
@@ -282,6 +283,7 @@ public abstract class BaseTestConfigurationBuilder<T> where T : BaseTestConfigur
     /// <param name="prefix">Assembly prefix to scan</param>
     /// <param name="names">Specific assembly names to scan</param>
     /// <returns>This builder for method chaining</returns>
+    [UsedImplicitly]
     public T AddAssemblyMappingConfig(string? prefix = null, string[]? names = null)
     {
         var mappingData = new Dictionary<string, string?>();

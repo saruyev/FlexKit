@@ -3,10 +3,10 @@ using Autofac.Core;
 using FlexKit.Configuration.Core;
 using FlexKit.Configuration.IntegrationTests.Utils;
 using FluentAssertions;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Configuration.Memory;
 using Reqnroll;
 using FlexKit.IntegrationTests.Utils;
+using JetBrains.Annotations;
 
 namespace FlexKit.Configuration.IntegrationTests.Steps.DependencyInjection;
 
@@ -17,9 +17,8 @@ namespace FlexKit.Configuration.IntegrationTests.Steps.DependencyInjection;
 /// Uses distinct step patterns ("registration module") to avoid conflicts.
 /// </summary>
 [Binding]
-public class RegisterConfigIntegrationSteps
+public class RegisterConfigIntegrationSteps(ScenarioContext scenarioContext)
 {
-    private readonly ScenarioContext _scenarioContext;
     private TestConfigurationBuilder? _configurationBuilder;
     private ContainerBuilder? _containerBuilder;
     private IContainer? _container;
@@ -41,13 +40,9 @@ public class RegisterConfigIntegrationSteps
     private DatabaseService? _resolvedDatabaseService;
     private ApiService? _resolvedApiService;
 
-    public RegisterConfigIntegrationSteps(ScenarioContext scenarioContext)
-    {
-        _scenarioContext = scenarioContext;
-    }
-
     #region Test Configuration Classes
 
+    [UsedImplicitly]
     public class AppConfig
     {
         public string Name { get; set; } = string.Empty;
@@ -57,10 +52,10 @@ public class RegisterConfigIntegrationSteps
 
     public class DatabaseConfig
     {
-        public string ConnectionString { get; set; } = string.Empty;
-        public int CommandTimeout { get; set; } = 30;
-        public int MaxRetryCount { get; set; } = 3;
-        public bool EnableLogging { get; set; }
+        public string ConnectionString { get; [UsedImplicitly] set; } = string.Empty;
+        public int CommandTimeout { get; [UsedImplicitly] set; } = 30;
+        public int MaxRetryCount { get; [UsedImplicitly] set; } = 3;
+        public bool EnableLogging { get; [UsedImplicitly] set; }
     }
 
     public class ApiConfig
@@ -71,6 +66,7 @@ public class RegisterConfigIntegrationSteps
         public bool EnableCompression { get; set; } = true;
     }
 
+    [UsedImplicitly]
     public class PaymentApiConfig
     {
         public string BaseUrl { get; set; } = string.Empty;
@@ -79,35 +75,26 @@ public class RegisterConfigIntegrationSteps
         public bool EnableCompression { get; set; } = true;
     }
 
+    [UsedImplicitly]
     public class FeatureConfig
     {
-        public bool EnableCaching { get; set; }
+        public bool EnableCaching { get;  [UsedImplicitly] set; }
         public bool EnableMetrics { get; set; }
-        public int MaxCacheSize { get; set; } = 500;
+        public int MaxCacheSize { get; [UsedImplicitly] set; } = 500;
     }
 
     #endregion
 
     #region Test Service Classes
 
-    public class DatabaseService
+    public class DatabaseService(DatabaseConfig config)
     {
-        public DatabaseConfig Config { get; }
-        
-        public DatabaseService(DatabaseConfig config)
-        {
-            Config = config;
-        }
+        public DatabaseConfig Config { get; } = config;
     }
 
-    public class ApiService
+    public class ApiService(ApiConfig config)
     {
-        public ApiConfig Config { get; }
-        
-        public ApiService(ApiConfig config)
-        {
-            Config = config;
-        }
+        public ApiConfig Config { get; } = config;
     }
 
     #endregion
@@ -118,7 +105,7 @@ public class RegisterConfigIntegrationSteps
     public void GivenIHaveEstablishedARegistrationModuleTestingEnvironment()
     {
         // Quote: "public static T Create(ScenarioContext scenarioContext)"
-        _configurationBuilder = TestConfigurationBuilder.Create(_scenarioContext);
+        _configurationBuilder = TestConfigurationBuilder.Create(scenarioContext);
         _containerBuilder = new ContainerBuilder();
         
         _configRegistrations.Clear();
@@ -519,17 +506,17 @@ public class RegisterConfigIntegrationSteps
             {
                 // Quote from RegisterConfigExtensionTests: ".RegisterConfig<AppConfig>();"
                 var method = typeof(ContainerBuilderConfigurationExtensions)
-                    .GetMethod("RegisterConfig", new[] { typeof(ContainerBuilder) })!
+                    .GetMethod("RegisterConfig", [typeof(ContainerBuilder)])!
                     .MakeGenericMethod(configType);
-                method.Invoke(null, new object[] { builder });
+                method.Invoke(null, [builder]);
             }
             else
             {
                 // Quote from RegisterConfigExtensionTests: ".RegisterConfig<RegisterDatabaseConfig>("Database")"
                 var method = typeof(ContainerBuilderConfigurationExtensions)
-                    .GetMethod("RegisterConfig", new[] { typeof(ContainerBuilder), typeof(string) })!
+                    .GetMethod("RegisterConfig", [typeof(ContainerBuilder), typeof(string)])!
                     .MakeGenericMethod(configType);
-                method.Invoke(null, new object[] { builder, sectionPath });
+                method.Invoke(null, [builder, sectionPath]);
             }
         }
     }
@@ -542,7 +529,7 @@ public class RegisterConfigIntegrationSteps
             _containerBuildSucceeded = true;
             
             // Quote: "public static void RegisterAutofacContainer(this ScenarioContext scenarioContext, IContainer container)"
-            _scenarioContext.RegisterAutofacContainer(_container);
+            scenarioContext.RegisterAutofacContainer(_container);
         }
         catch (Exception ex)
         {

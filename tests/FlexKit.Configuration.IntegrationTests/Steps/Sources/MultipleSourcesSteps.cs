@@ -4,36 +4,30 @@ using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Reqnroll;
 using System.Diagnostics;
-using FlexKit.IntegrationTests.Utils;
+using JetBrains.Annotations;
 
 namespace FlexKit.Configuration.IntegrationTests.Steps.Sources;
 
 /// <summary>
 /// Step definitions for multiple configuration sources scenarios.
-/// Tests combining various configuration sources with proper precedence handling,
+/// Tests combine various configuration sources with proper precedence handling,
 /// error management, and integration with FlexKit Configuration.
 /// Uses distinct step patterns ("established", "incorporate", "construct") to avoid conflicts 
 /// with other configuration step classes.
 /// </summary>
 [Binding]
-public class MultipleSourcesSteps
+public class MultipleSourcesSteps(ScenarioContext scenarioContext)
 {
-    private readonly ScenarioContext _scenarioContext;
     private TestConfigurationBuilder? _multiLayerBuilder;
     private IConfiguration? _multiLayerConfiguration;
     private IFlexConfig? _multiLayerFlexConfiguration;
     private readonly List<LayerInfo> _incorporatedLayers = new();
     private readonly Dictionary<string, string?> _environmentVariables = new();
-    private readonly Dictionary<string, string?> _inMemoryData = new();
+    [UsedImplicitly] public readonly Dictionary<string, string?> InMemoryData = new();
     private Exception? _lastMultiLayerException;
     private bool _multiLayerConstructionSucceeded;
     private readonly Stopwatch _performanceStopwatch = new();
     private readonly List<string> _performanceMetrics = new();
-
-    public MultipleSourcesSteps(ScenarioContext scenarioContext)
-    {
-        _scenarioContext = scenarioContext;
-    }
 
     #region Helper Classes
 
@@ -42,12 +36,12 @@ public class MultipleSourcesSteps
     /// </summary>
     private class LayerInfo
     {
-        public string Type { get; set; } = string.Empty;
-        public string Name { get; set; } = string.Empty;
-        public string? FilePath { get; set; }
-        public bool Required { get; set; } = true;
-        public Dictionary<string, string?> Data { get; set; } = new();
-        public int Order { get; set; }
+        public string Type { get; init; } = string.Empty;
+        public string Name { get; init; } = string.Empty;
+        public string? FilePath { [UsedImplicitly] get; set; }
+        public bool Required { get; init; } = true;
+        public Dictionary<string, string?> Data { get; init; } = new();
+        public int Order { get; init; }
     }
 
     #endregion
@@ -57,8 +51,8 @@ public class MultipleSourcesSteps
     [Given(@"I have established a multi-source configuration environment")]
     public void GivenIHaveEstablishedAMultiSourceConfigurationEnvironment()
     {
-        _multiLayerBuilder = TestConfigurationBuilder.Create(_scenarioContext);
-        _scenarioContext.Set(_multiLayerBuilder, "MultiLayerBuilder");
+        _multiLayerBuilder = TestConfigurationBuilder.Create(scenarioContext);
+        scenarioContext.Set(_multiLayerBuilder, "MultiLayerBuilder");
     }
 
     #endregion
@@ -145,7 +139,7 @@ public class MultipleSourcesSteps
                 if (required)
                 {
                     // For required files with invalid JSON, we still want to register them
-                    // but use the actual JSON file source so the error occurs during Build()
+                    // but use the actual JSON file source, so the error occurs during Build()
                     _multiLayerBuilder!.AddJsonFile(normalizedPath, optional: false, reloadOnChange: false);
                 }
                 else
@@ -157,7 +151,7 @@ public class MultipleSourcesSteps
         }
         else if (!required)
         {
-            // For optional files that don't exist, just register them (they'll be skipped)
+            // For optional files that don't exist, register them (they'll be skipped)
             _multiLayerBuilder!.AddJsonFile(normalizedPath, optional: true, reloadOnChange: false);
         }
         else
@@ -321,7 +315,7 @@ public class MultipleSourcesSteps
             var key = row["Key"];
             var value = row["Value"];
             configData[key] = value;
-            _inMemoryData[key] = value;
+            InMemoryData[key] = value;
         }
 
         _multiLayerBuilder!.AddInMemoryCollection(configData);
@@ -471,7 +465,6 @@ public class MultipleSourcesSteps
         
         // Verify that we have some application-level settings that would come from JSON
         var hasAppSettings = configEntries.Any(kvp => 
-            kvp.Key != null && 
             (kvp.Key.StartsWith("Application:") || kvp.Key.StartsWith("Database:")) && 
             !string.IsNullOrEmpty(kvp.Value));
         
@@ -494,7 +487,7 @@ public class MultipleSourcesSteps
     {
         _multiLayerConfiguration.Should().NotBeNull("Multi-layer configuration should be constructed");
         
-        // Environment variables are typically incorporated last and should have highest precedence
+        // Environment variables are typically incorporated last and should have the highest precedence
         var hasEnvLayer = _incorporatedLayers.Any(s => s.Type == "EnvironmentVariables");
         hasEnvLayer.Should().BeTrue("Environment variables should have been incorporated as a layer");
     }
@@ -570,19 +563,15 @@ public class MultipleSourcesSteps
         
         // Test basic dynamic access functionality
         dynamic config = _multiLayerFlexConfiguration!;
-        
+
         // This should not throw an exception (even if the property doesn't exist)
-        var testAccess = config.Database;
-        
-        // Verify that FlexConfig can access configuration data through indexer
+        _ = config.Database;
+
+        // Verify that FlexConfig can access configuration data through the indexer
         var configEntries = _multiLayerConfiguration!.AsEnumerable().Take(3).ToList();
         foreach (var entry in configEntries)
         {
-            if (entry.Key != null)
-            {
-                var value = _multiLayerFlexConfiguration[entry.Key];
-                // Should not throw - just verify access works
-            }
+            _ = _multiLayerFlexConfiguration[entry.Key];
         }
     }
 
@@ -600,12 +589,9 @@ public class MultipleSourcesSteps
         if (configEntries.Any())
         {
             var firstEntry = configEntries.First();
-            if (firstEntry.Key != null)
-            {
-                var flexValue = _multiLayerFlexConfiguration![firstEntry.Key];
-                var configValue = _multiLayerConfiguration[firstEntry.Key];
-                flexValue.Should().Be(configValue, "FlexConfig should return the same values as the underlying configuration");
-            }
+            var flexValue = _multiLayerFlexConfiguration![firstEntry.Key];
+            var configValue = _multiLayerConfiguration[firstEntry.Key];
+            flexValue.Should().Be(configValue, "FlexConfig should return the same values as the underlying configuration");
         }
     }
 
@@ -619,7 +605,7 @@ public class MultipleSourcesSteps
         
         // Verify that we have some basic application settings
         var hasAppSettings = configEntries.Any(kvp => 
-            kvp.Key != null && kvp.Key.StartsWith("Application:") && !string.IsNullOrEmpty(kvp.Value));
+            kvp.Key.StartsWith("Application:") && !string.IsNullOrEmpty(kvp.Value));
         
         hasAppSettings.Should().BeTrue("Configuration should contain application settings from base JSON");
     }
@@ -632,7 +618,7 @@ public class MultipleSourcesSteps
         var configEntries = _multiLayerConfiguration!.AsEnumerable().ToList();
         configEntries.Should().NotBeEmpty("Configuration should contain data from all layers");
         
-        // Verify we have reasonable number of configuration entries
+        // Verify we have a reasonable number of configuration entries
         configEntries.Should().HaveCountGreaterThan(5, "Configuration should have data from multiple layers");
     }
 
@@ -645,8 +631,8 @@ public class MultipleSourcesSteps
         configEntries.Should().NotBeEmpty("Configuration should contain data from both JSON and .env layers");
         
         // Check that we have both JSON-style and env-style configurations
-        var hasJsonStyle = configEntries.Any(kvp => kvp.Key != null && kvp.Key.Contains(':'));
-        var hasEnvStyle = configEntries.Any(kvp => kvp.Key != null && kvp.Key.Contains('_'));
+        var hasJsonStyle = configEntries.Any(kvp => kvp.Key.Contains(':'));
+        var hasEnvStyle = configEntries.Any(kvp => kvp.Key.Contains('_'));
         
         (hasJsonStyle || hasEnvStyle).Should().BeTrue("Configuration should contain data from both layer types");
     }
@@ -658,7 +644,7 @@ public class MultipleSourcesSteps
         
         var layer = _incorporatedLayers.FirstOrDefault(s => s.Name == layerName);
         layer.Should().NotBeNull($"Layer '{layerName}' should have been incorporated");
-        layer!.Type.Should().Be("JSON", $"Layer '{layerName}' should be a JSON layer");
+        layer.Type.Should().Be("JSON", $"Layer '{layerName}' should be a JSON layer");
     }
 
     [Then(@"layer ""(.*)"" should contribute environment-specific keys")]
@@ -668,7 +654,7 @@ public class MultipleSourcesSteps
         
         var layer = _incorporatedLayers.FirstOrDefault(s => s.Name == layerName);
         layer.Should().NotBeNull($"Layer '{layerName}' should have been incorporated");
-        layer!.Type.Should().Be("DotEnv", $"Layer '{layerName}' should be a DotEnv layer");
+        layer.Type.Should().Be("DotEnv", $"Layer '{layerName}' should be a DotEnv layer");
     }
 
     [Then(@"layer ""(.*)"" should contribute memory-specific keys")]
@@ -678,7 +664,7 @@ public class MultipleSourcesSteps
         
         var layer = _incorporatedLayers.FirstOrDefault(s => s.Name == layerName);
         layer.Should().NotBeNull($"Layer '{layerName}' should have been incorporated");
-        layer!.Type.Should().Be("InMemory", $"Layer '{layerName}' should be an InMemory layer");
+        layer.Type.Should().Be("InMemory", $"Layer '{layerName}' should be an InMemory layer");
         layer.Data.Should().NotBeEmpty($"Layer '{layerName}' should have in-memory data");
     }
 
@@ -704,7 +690,7 @@ public class MultipleSourcesSteps
         var buildTimeMetric = _performanceMetrics.FirstOrDefault(m => m.Contains("Configuration construction time"));
         buildTimeMetric.Should().NotBeNull("Configuration construction time should have been measured");
         
-        // For integration tests, reasonable time is under 5 seconds
+        // For integration tests, the reasonable time is under 5 seconds
         _multiLayerConstructionSucceeded.Should().BeTrue("Configuration construction should have succeeded within reasonable time");
     }
 
@@ -717,14 +703,11 @@ public class MultipleSourcesSteps
         var configEntries = _multiLayerConfiguration!.AsEnumerable().ToList();
         configEntries.Should().NotBeEmpty("All layer data should be accessible");
         
-        // Test that we can access data using standard indexer
+        // Test that we can access data using a standard indexer
         foreach (var entry in configEntries.Take(5)) // Test first 5 entries
         {
-            if (entry.Key != null)
-            {
-                var value = _multiLayerConfiguration[entry.Key];
-                value.Should().Be(entry.Value, $"Standard indexer access should work for key '{entry.Key}'");
-            }
+            var value = _multiLayerConfiguration[entry.Key];
+            value.Should().Be(entry.Value, $"Standard indexer access should work for key '{entry.Key}'");
         }
     }
 

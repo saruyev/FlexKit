@@ -50,7 +50,7 @@ public class BasicConfigurationSteps
 
         _flexConfiguration = _configuration.GetFlexConfiguration();
 
-        // Store in scenario context for potential use by other steps
+        // Store in the scenario context for potential use by other steps
         _scenarioContext.Set(_configuration, "Configuration");
         _scenarioContext.Set(_flexConfiguration, "FlexConfiguration");
     }
@@ -68,16 +68,13 @@ public class BasicConfigurationSteps
             additionalData[key] = value;
         }
 
-        // Create new configuration builder with existing data plus additional data
+        // Create a new configuration builder with existing data plus additional data
         var allData = new Dictionary<string, string?>();
         
         // Copy existing configuration data
         foreach (var kvp in existingConfig.AsEnumerable())
         {
-            if (kvp.Key != null)
-            {
-                allData[kvp.Key] = kvp.Value;
-            }
+            allData[kvp.Key] = kvp.Value;
         }
         
         // Add new data
@@ -197,7 +194,7 @@ public class BasicConfigurationSteps
         _configuration.Should().NotBeNull("Configuration should be initialized");
         var section = _configuration!.CurrentConfig(sectionName);
         section.Should().NotBeNull($"Section '{sectionName}' should exist");
-        var value = section![key];
+        var value = section[key];
         _accessResults.Add(value ?? "null");
     }
 
@@ -307,7 +304,7 @@ public class BasicConfigurationSteps
         _accessResults.Should().HaveCount(3, "Should have results from three access methods");
         _accessResults.Should().AllSatisfy(result => result.Should().Be(expectedValue));
         
-        // Clear results for next scenario
+        // Clear results for the next scenario
         _accessResults.Clear();
     }
 
@@ -324,7 +321,7 @@ public class BasicConfigurationSteps
     /// <returns>The property value or null if not found</returns>
     private static object? GetDynamicProperty(object target, string propertyName)
     {
-        if (target is IDynamicMetaObjectProvider dynamicProvider)
+        if (target is IDynamicMetaObjectProvider)
         {
             // For FlexConfiguration, we need to simulate dynamic access
             if (target is IFlexConfig flexConfig)

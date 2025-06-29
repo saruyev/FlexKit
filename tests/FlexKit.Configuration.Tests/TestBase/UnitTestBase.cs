@@ -1,10 +1,7 @@
-﻿#nullable enable
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using Autofac;
+﻿using Autofac;
 using AutoFixture;
 using AutoFixture.AutoNSubstitute;
+using JetBrains.Annotations;
 using NSubstitute;
 
 namespace FlexKit.Configuration.Tests.TestBase;
@@ -20,6 +17,7 @@ public abstract class UnitTestBase : IDisposable
     /// <summary>
     /// Autofac container for dependency injection in tests.
     /// </summary>
+    [UsedImplicitly] 
     protected IContainer Container { get; private set; } = null!;
 
     /// <summary>
@@ -69,7 +67,7 @@ public abstract class UnitTestBase : IDisposable
     }
 
     /// <summary>
-    /// Sets up Autofac container with test-specific registrations.
+    /// Sets up the Autofac container with test-specific registrations.
     /// </summary>
     private void SetupContainer()
     {
@@ -143,7 +141,7 @@ public abstract class UnitTestBase : IDisposable
     {
         if (!_disposed && disposing)
         {
-            Container?.Dispose();
+            Container.Dispose();
             _disposed = true;
         }
     }

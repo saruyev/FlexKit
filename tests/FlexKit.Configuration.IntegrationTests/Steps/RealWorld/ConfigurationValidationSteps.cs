@@ -4,7 +4,6 @@ using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Reqnroll;
 using System.Globalization;
-using FlexKit.IntegrationTests.Utils;
 
 namespace FlexKit.Configuration.IntegrationTests.Steps.RealWorld;
 
@@ -16,9 +15,8 @@ namespace FlexKit.Configuration.IntegrationTests.Steps.RealWorld;
 /// with other configuration step classes.
 /// </summary>
 [Binding]
-public class ConfigurationValidationSteps
+public class ConfigurationValidationSteps(ScenarioContext scenarioContext)
 {
-    private readonly ScenarioContext _scenarioContext;
     private TestConfigurationBuilder? _validationConfigurationBuilder;
     private IConfiguration? _validationConfiguration;
     private IFlexConfig? _validationFlexConfiguration;
@@ -43,18 +41,13 @@ public class ConfigurationValidationSteps
     private bool _multiSourceValidationSucceeded = true;
     private Exception? _lastValidationException;
 
-    public ConfigurationValidationSteps(ScenarioContext scenarioContext)
-    {
-        _scenarioContext = scenarioContext;
-    }
-
     #region Given Steps - Setup
 
     [Given(@"I have validation setup with a configuration validation environment")]
     public void GivenIHaveValidationSetupWithAConfigurationValidationEnvironment()
     {
-        _validationConfigurationBuilder = TestConfigurationBuilder.Create(_scenarioContext);
-        _scenarioContext.Set(_validationConfigurationBuilder, "ValidationConfigurationBuilder");
+        _validationConfigurationBuilder = TestConfigurationBuilder.Create(scenarioContext);
+        scenarioContext.Set(_validationConfigurationBuilder, "ValidationConfigurationBuilder");
         
         // Clear any previous validation state
         _configurationData.Clear();
@@ -483,7 +476,7 @@ public class ConfigurationValidationSteps
             
             value.Should().NotBeNull($"Value for {key} should not be null");
             
-            var conversionSucceeded = TryConvertValue(value!, expectedType);
+            var conversionSucceeded = TryConvertValue(value, expectedType);
             conversionSucceeded.Should().BeTrue($"Value '{value}' should be convertible to {expectedType}");
         }
     }
@@ -573,8 +566,8 @@ public class ConfigurationValidationSteps
         {
             if (!string.IsNullOrEmpty(entry.Key))
             {
-                var value = _validationFlexConfiguration![entry.Key];
-                // Value can be null/empty, just verify no exception is thrown
+                _ = _validationFlexConfiguration![entry.Key];
+                // Value can be null/empty, verify no exception is thrown
             }
         }
     }
@@ -592,7 +585,7 @@ public class ConfigurationValidationSteps
         _validationConfiguration.Should().NotBeNull("Validation configuration should be loaded");
         
         // Check that environment variables were loaded correctly
-        // With VALIDATION_ prefix, they should be available with the prefix stripped
+        // With VALIDATION_ prefix; they should be available with the prefix stripped
         foreach (var envVar in _environmentVariables.Take(3))
         {
             var keyWithoutPrefix = envVar.Key.Replace("VALIDATION_", "");
@@ -614,7 +607,7 @@ public class ConfigurationValidationSteps
         foreach (var envVar in _environmentVariables.Take(2))
         {
             var keyWithoutPrefix = envVar.Key.Replace("VALIDATION_", "");
-            var value = _validationFlexConfiguration![keyWithoutPrefix];
+            _ = _validationFlexConfiguration![keyWithoutPrefix];
             // This should not throw - FlexConfig should be functional
         }
     }
@@ -649,7 +642,7 @@ public class ConfigurationValidationSteps
         {
             if (!string.IsNullOrEmpty(entry.Key))
             {
-                var value = _validationFlexConfiguration![entry.Key];
+                _ = _validationFlexConfiguration![entry.Key];
                 // Comprehensive validation - just ensure access works
             }
         }
@@ -904,7 +897,7 @@ public class ConfigurationValidationSteps
             var validationRule = rule.Value;
             var value = _validationConfiguration?[key];
             
-            var isValid = ValidateGenericRule(key, value, validationRule);
+            var isValid = ValidateGenericRule(value, validationRule);
             if (!isValid)
             {
                 var errorMessage = $"File-based validation failed for {key}: {validationRule}";
@@ -927,7 +920,7 @@ public class ConfigurationValidationSteps
             var validationRule = rule.Value;
             var value = _validationConfiguration?[key];
             
-            var isValid = ValidateGenericRule(key, value, validationRule);
+            var isValid = ValidateGenericRule(value, validationRule);
             if (!isValid)
             {
                 var errorMessage = $"Environment validation failed for {key}: {validationRule} (value: '{value}')";
@@ -949,7 +942,7 @@ public class ConfigurationValidationSteps
             var validationRule = rule.Value;
             var value = _validationConfiguration?[key];
             
-            var isValid = ValidateGenericRule(key, value, validationRule);
+            var isValid = ValidateGenericRule(value, validationRule);
             if (!isValid)
             {
                 var errorMessage = $"Multi-source validation failed for {key}: {validationRule} (value: '{value}')";
@@ -957,42 +950,6 @@ public class ConfigurationValidationSteps
                 _multiSourceValidationSucceeded = false;
             }
         }
-    }
-
-    /// <summary>
-    /// Converts an environment variable name to a configuration key.
-    /// </summary>
-    /// <param name="envVarName">Environment variable name</param>
-    /// <returns>Configuration key</returns>
-    private static string ConvertEnvironmentVariableToConfigKey(string envVarName)
-    {
-        // Remove VALIDATION_ prefix and convert underscores to colons
-        if (envVarName.StartsWith("VALIDATION_"))
-        {
-            var configKey = envVarName.Substring("VALIDATION_".Length);
-            return configKey.Replace("_", ":");
-        }
-        
-        return envVarName.Replace("_", ":");
-    }
-
-    /// <summary>
-    /// Determines if a configuration key is reasonable to expect in multi-source scenarios.
-    /// </summary>
-    /// <param name="key">Configuration key</param>
-    /// <returns>True if the key is reasonable to expect</returns>
-    private static bool IsKeyReasonableForMultiSource(string key)
-    {
-        // Keys that are commonly found in appsettings.json
-        var commonKeys = new[]
-        {
-            "Application:Name",
-            "Application:Version", 
-            "Logging:LogLevel:Default"
-        };
-        
-        return commonKeys.Contains(key, StringComparer.OrdinalIgnoreCase) ||
-               key.StartsWith("Application:", StringComparison.OrdinalIgnoreCase);
     }
 
     /// <summary>
@@ -1025,7 +982,7 @@ public class ConfigurationValidationSteps
 
         if (rule.Contains("Between") && rule.Contains("and"))
         {
-            var parts = rule.Replace("Between", "").Split(new[] { " and " }, StringSplitOptions.RemoveEmptyEntries);
+            var parts = rule.Replace("Between", "").Split([" and "], StringSplitOptions.RemoveEmptyEntries);
             if (parts.Length == 2 && 
                 double.TryParse(parts[0].Trim(), out var min) && 
                 double.TryParse(parts[1].Trim(), out var max))
@@ -1040,18 +997,17 @@ public class ConfigurationValidationSteps
     /// <summary>
     /// Validates a generic rule against a configuration value.
     /// </summary>
-    /// <param name="key">The configuration key</param>
     /// <param name="value">The configuration value to validate</param>
     /// <param name="rule">The validation rule</param>
     /// <returns>True if validation passes, false otherwise</returns>
-    private static bool ValidateGenericRule(string key, string? value, string rule)
+    private static bool ValidateGenericRule(string? value, string rule)
     {
         return rule.ToLowerInvariant() switch
         {
             var r when r.Contains("required") => !string.IsNullOrEmpty(value),
             var r when r.Contains("must be present") => !string.IsNullOrEmpty(value),
             var r when r.Contains("valid url") => Uri.TryCreate(value, UriKind.Absolute, out _),
-            var r when r.Contains("valid port") => int.TryParse(value, out var port) && port > 0 && port <= 65535,
+            var r when r.Contains("valid port") => int.TryParse(value, out var port) && port is > 0 and <= 65535,
             var r when r.Contains("positive integer") => int.TryParse(value, out var intVal) && intVal > 0,
             var r when r.Contains("boolean") => bool.TryParse(value, out _),
             var r when r.Contains("valid log level") => IsValidLogLevel(value),

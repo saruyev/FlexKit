@@ -6,7 +6,6 @@ using Microsoft.Extensions.Configuration;
 using Reqnroll;
 using System.Text.Json;
 using System.Globalization;
-using FlexKit.IntegrationTests.Utils;
 
 namespace FlexKit.Configuration.IntegrationTests.Steps.Configuration;
 
@@ -17,9 +16,8 @@ namespace FlexKit.Configuration.IntegrationTests.Steps.Configuration;
 /// Uses distinct step patterns to avoid conflicts with other configuration step classes.
 /// </summary>
 [Binding]
-public class TypeConversionSteps
+public class TypeConversionSteps(ScenarioContext scenarioContext)
 {
-    private readonly ScenarioContext _scenarioContext;
     private TestConfigurationBuilder? _configurationBuilder;
     private IConfiguration? _testConfiguration;
     private IFlexConfig? _testFlexConfiguration;
@@ -41,20 +39,15 @@ public class TypeConversionSteps
     private Exception? _lastConversionException;
     private bool _conversionSucceeded;
 
-    public TypeConversionSteps(ScenarioContext scenarioContext)
-    {
-        _scenarioContext = scenarioContext;
-    }
-
     #region Given Steps - Setup
 
     [Given(@"I have established a configuration for type conversion testing")]
     public void GivenIHaveEstablishedAConfigurationForTypeConversionTesting()
     {
-        _configurationBuilder = TestConfigurationBuilder.Create(_scenarioContext);
-        _scenarioContext.Set(_configurationBuilder, "TypeConversionBuilder");
+        _configurationBuilder = TestConfigurationBuilder.Create(scenarioContext);
+        scenarioContext.Set(_configurationBuilder, "TypeConversionBuilder");
         
-        // Debug: Test if ToType extension method is available
+        // Debug: Test if the ToType extension method is available
         try
         {
             var testResult = "123".ToType<int>();
@@ -97,8 +90,8 @@ public class TypeConversionSteps
         }
         Console.WriteLine("=== End verification ===");
         
-        _scenarioContext.Set(_testConfiguration, "TypeConversionConfiguration");
-        _scenarioContext.Set(_testFlexConfiguration, "TypeConversionFlexConfiguration");
+        scenarioContext.Set(_testConfiguration, "TypeConversionConfiguration");
+        scenarioContext.Set(_testFlexConfiguration, "TypeConversionFlexConfiguration");
     }
 
     [When(@"I load configuration from JSON file ""(.*)""")]
@@ -124,8 +117,8 @@ public class TypeConversionSteps
         _testConfiguration = _configurationBuilder.Build();
         _testFlexConfiguration = _testConfiguration.GetFlexConfiguration();
         
-        _scenarioContext.Set(_testConfiguration, "TypeConversionConfiguration");
-        _scenarioContext.Set(_testFlexConfiguration, "TypeConversionFlexConfiguration");
+        scenarioContext.Set(_testConfiguration, "TypeConversionConfiguration");
+        scenarioContext.Set(_testFlexConfiguration, "TypeConversionFlexConfiguration");
     }
 
     [When(@"I retrieve and convert ""(.*)"" to integer type")]
@@ -138,15 +131,9 @@ public class TypeConversionSteps
             var stringValue = _testConfiguration![configurationKey];
             Console.WriteLine($"Converting integer: '{configurationKey}' = '{stringValue}'");
             
-            if (string.IsNullOrEmpty(stringValue))
-            {
-                _convertedIntegerResult = 0; // Default for int
-            }
-            else
-            {
+            _convertedIntegerResult = string.IsNullOrEmpty(stringValue) ? 0 : // Default for int
                 // Use direct conversion instead of ToType extension method
-                _convertedIntegerResult = Convert.ToInt32(stringValue, CultureInfo.InvariantCulture);
-            }
+                Convert.ToInt32(stringValue, CultureInfo.InvariantCulture);
             _conversionSucceeded = true;
         }
         catch (Exception ex)
@@ -167,15 +154,9 @@ public class TypeConversionSteps
             var stringValue = _testConfiguration![configurationKey];
             Console.WriteLine($"Converting boolean: '{configurationKey}' = '{stringValue}'");
             
-            if (string.IsNullOrEmpty(stringValue))
-            {
-                _convertedBooleanResult = false; // Default for bool
-            }
-            else
-            {
-                // Use direct conversion instead of ToType extension method
-                _convertedBooleanResult = Convert.ToBoolean(stringValue, CultureInfo.InvariantCulture);
-            }
+            _convertedBooleanResult = !string.IsNullOrEmpty(stringValue) && // Default for bool
+                                      // Use direct conversion instead of ToType extension method
+                                      Convert.ToBoolean(stringValue, CultureInfo.InvariantCulture);
             _conversionSucceeded = true;
         }
         catch (Exception ex)
@@ -196,15 +177,9 @@ public class TypeConversionSteps
             var stringValue = _testConfiguration![configurationKey];
             Console.WriteLine($"Converting double: '{configurationKey}' = '{stringValue}'");
             
-            if (string.IsNullOrEmpty(stringValue))
-            {
-                _convertedDoubleResult = 0.0; // Default for double
-            }
-            else
-            {
+            _convertedDoubleResult = string.IsNullOrEmpty(stringValue) ? 0.0 : // Default for double
                 // Use direct conversion instead of ToType extension method
-                _convertedDoubleResult = Convert.ToDouble(stringValue, CultureInfo.InvariantCulture);
-            }
+                Convert.ToDouble(stringValue, CultureInfo.InvariantCulture);
             _conversionSucceeded = true;
         }
         catch (Exception ex)
@@ -261,7 +236,7 @@ public class TypeConversionSteps
             var stringValue = _testConfiguration![configurationKey];
             Console.WriteLine($"Converting nullable integer: '{configurationKey}' = '{stringValue}' (IsNull: {stringValue == null}, IsEmpty: {string.IsNullOrEmpty(stringValue)})");
             
-            // Use direct conversion instead of ToType extension method
+            // Use direct conversion instead of the ToType extension method
             if (string.IsNullOrEmpty(stringValue))
             {
                 Console.WriteLine("Setting nullable integer to null due to empty/null string");
@@ -293,7 +268,7 @@ public class TypeConversionSteps
             var stringValue = _testConfiguration![configurationKey];
             Console.WriteLine($"Converting nullable boolean: '{configurationKey}' = '{stringValue}' (IsNull: {stringValue == null}, IsEmpty: {string.IsNullOrEmpty(stringValue)})");
             
-            // Use direct conversion instead of ToType extension method
+            // Use direct conversion instead of the ToType extension method
             if (string.IsNullOrEmpty(stringValue))
             {
                 Console.WriteLine("Setting nullable boolean to null due to empty/null string");
@@ -325,7 +300,7 @@ public class TypeConversionSteps
             var stringValue = _testConfiguration![configurationKey];
             Console.WriteLine($"Converting nullable double: '{configurationKey}' = '{stringValue}' (IsNull: {stringValue == null}, IsEmpty: {string.IsNullOrEmpty(stringValue)})");
             
-            // Use direct conversion instead of ToType extension method
+            // Use direct conversion instead of the ToType extension method
             if (string.IsNullOrEmpty(stringValue))
             {
                 Console.WriteLine("Setting nullable double to null due to empty/null string");
@@ -364,7 +339,7 @@ public class TypeConversionSteps
             else
             {
                 var separator = GetSeparatorCharacter(separatorName);
-                // Use direct string splitting instead of GetCollection extension method
+                // Use direct string splitting instead of the GetCollection extension method
                 _convertedStringCollection = stringValue.Split(separator);
             }
             _conversionSucceeded = true;
@@ -394,7 +369,7 @@ public class TypeConversionSteps
             else
             {
                 var separator = GetSeparatorCharacter(separatorName);
-                // Use direct conversion instead of GetCollection extension method
+                // Use direct conversion instead of the GetCollection extension method
                 var stringItems = stringValue.Split(separator);
                 _convertedIntegerCollection = stringItems.Select(item => Convert.ToInt32(item.Trim(), CultureInfo.InvariantCulture)).ToArray();
             }
@@ -425,7 +400,7 @@ public class TypeConversionSteps
             else
             {
                 var separator = GetSeparatorCharacter(separatorName);
-                // Use direct conversion instead of GetCollection extension method
+                // Use direct conversion instead of the GetCollection extension method
                 var stringItems = stringValue.Split(separator);
                 _convertedDoubleCollection = stringItems.Select(item => Convert.ToDouble(item.Trim(), CultureInfo.InvariantCulture)).ToArray();
             }
@@ -598,8 +573,8 @@ public class TypeConversionSteps
     public void ThenTheConvertedIntegerResultShouldMatchTheJsonFileValue()
     {
         _conversionSucceeded.Should().BeTrue("Integer conversion from JSON should have succeeded");
-        // Instead of expecting a specific value, just verify it's a valid integer that was converted
-        // Since we don't know the exact content of the JSON file, we just verify successful conversion
+        // Instead of expecting a specific value, verify it's a valid integer that was converted
+        // Since we don't know the exact content of the JSON file, we just verify the successful conversion
         _convertedIntegerResult.Should().BeGreaterThanOrEqualTo(0, "JSON file should contain a valid integer value");
     }
 
@@ -609,7 +584,7 @@ public class TypeConversionSteps
         _conversionSucceeded.Should().BeTrue("Boolean conversion from JSON should have succeeded");
         // The boolean result should be either true or false (valid boolean conversion)
         // We can't predict the exact value, but we can verify it converted successfully
-        (_convertedBooleanResult == true || _convertedBooleanResult == false).Should().BeTrue("Should be a valid boolean value");
+        (_convertedBooleanResult || _convertedBooleanResult == false).Should().BeTrue("Should be a valid boolean value");
     }
 
     [Then(@"the conversion should fail with format exception")]

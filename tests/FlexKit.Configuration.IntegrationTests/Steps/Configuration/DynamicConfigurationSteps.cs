@@ -56,7 +56,7 @@ public class DynamicConfigurationSteps
 
         _flexConfiguration = _configuration.GetFlexConfiguration();
 
-        // Store in scenario context
+        // Store in a scenario context
         _scenarioContext.Set(_configuration, "DynamicConfiguration");
         _scenarioContext.Set(_flexConfiguration, "DynamicFlexConfiguration");
     }
@@ -304,7 +304,7 @@ public class DynamicConfigurationSteps
     #region Helper Methods
 
     /// <summary>
-    /// Navigates to a property using dot notation path.
+    /// Navigates to a property using a dot notation path.
     /// </summary>
     /// <param name="root">The root configuration object</param>
     /// <param name="propertyPath">The dot-separated property path</param>

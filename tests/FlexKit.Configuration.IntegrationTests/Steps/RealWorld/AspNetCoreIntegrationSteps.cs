@@ -4,7 +4,6 @@ using FlexKit.Configuration.Core;
 using FlexKit.Configuration.IntegrationTests.Utils;
 using FluentAssertions;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Configuration.Memory;
@@ -12,7 +11,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Reqnroll;
-using System.Text.Json;
 using FlexKit.Configuration.Conversion;
 using FlexKit.IntegrationTests.Utils;
 
@@ -22,13 +20,12 @@ namespace FlexKit.Configuration.IntegrationTests.Steps.RealWorld;
 /// Step definitions for ASP.NET Core integration scenarios.
 /// Tests FlexConfig integration with ASP.NET Core hosting infrastructure,
 /// including WebApplicationBuilder, service registration, and dependency injection.
-/// Uses distinct step patterns ("setup an ASP.NET Core", "configure ASP.NET Core", "build ASP.NET Core") 
+/// Uses distinct step patterns ("set up an ASP.NET Core", "configure ASP.NET Core", "build ASP.NET Core") 
 /// to avoid conflicts with other step classes.
 /// </summary>
 [Binding]
-public class AspNetCoreIntegrationSteps
+public class AspNetCoreIntegrationSteps(ScenarioContext scenarioContext)
 {
-    private readonly ScenarioContext _scenarioContext;
     private WebApplicationBuilder? _webApplicationBuilder;
     private WebApplication? _webApplication;
     private IHost? _host;
@@ -46,30 +43,17 @@ public class AspNetCoreIntegrationSteps
     private TestControllerWithFlexConfig? _resolvedTestController;
     private TestAutofacModuleForAspNetCore? _testAutofacModule;
 
-    public AspNetCoreIntegrationSteps(ScenarioContext scenarioContext)
-    {
-        _scenarioContext = scenarioContext;
-    }
-
     #region Test Service Classes
 
     /// <summary>
     /// Test service that depends on FlexConfig for ASP.NET Core integration testing.
     /// </summary>
-    public class TestServiceWithFlexConfig
+    public class TestServiceWithFlexConfig(IFlexConfig configuration)
     {
-        public IFlexConfig Configuration { get; }
-        public string ServiceName { get; }
-        public bool IsEnabled { get; }
-        public int MaxRetries { get; }
-
-        public TestServiceWithFlexConfig(IFlexConfig configuration)
-        {
-            Configuration = configuration;
-            ServiceName = configuration["Service:Name"] ?? "DefaultService";
-            IsEnabled = configuration["Service:Enabled"].ToType<bool>();
-            MaxRetries = configuration["Service:MaxRetries"].ToType<int>();
-        }
+        public IFlexConfig Configuration { get; } = configuration;
+        public string ServiceName { get; } = configuration["Service:Name"] ?? "DefaultService";
+        public bool IsEnabled { get; } = configuration["Service:Enabled"].ToType<bool>();
+        public int MaxRetries { get; } = configuration["Service:MaxRetries"].ToType<int>();
 
         /// <summary>
         /// Gets a configuration value to demonstrate FlexConfig access.
@@ -83,19 +67,12 @@ public class AspNetCoreIntegrationSteps
     }
 
     /// <summary>
-    /// Test controller that uses FlexConfig for dynamic configuration access.
+    /// Test a controller that uses FlexConfig for dynamic configuration access.
     /// </summary>
     [ApiController]
     [Route("api/[controller]")]
-    public class TestControllerWithFlexConfig : ControllerBase
+    public class TestControllerWithFlexConfig(IFlexConfig configuration) : ControllerBase
     {
-        private readonly IFlexConfig _configuration;
-
-        public TestControllerWithFlexConfig(IFlexConfig configuration)
-        {
-            _configuration = configuration;
-        }
-
         /// <summary>
         /// Test action that demonstrates dynamic configuration access.
         /// </summary>
@@ -103,7 +80,7 @@ public class AspNetCoreIntegrationSteps
         [HttpGet("config")]
         public IActionResult GetConfiguration()
         {
-            dynamic config = _configuration;
+            dynamic config = configuration;
             
             var result = new
             {
@@ -123,7 +100,7 @@ public class AspNetCoreIntegrationSteps
         [HttpGet("config/{key}")]
         public IActionResult GetConfigurationValue(string key)
         {
-            var value = _configuration[key];
+            var value = configuration[key];
             return Ok(new { Key = key, Value = value });
         }
     }
@@ -131,7 +108,7 @@ public class AspNetCoreIntegrationSteps
     /// <summary>
     /// Test Autofac module for ASP.NET Core integration.
     /// </summary>
-    public class TestAutofacModuleForAspNetCore : Module
+    private class TestAutofacModuleForAspNetCore : Module
     {
         public bool IsLoaded { get; private set; }
         public IFlexConfig? LoadedConfiguration { get; private set; }
@@ -154,7 +131,7 @@ public class AspNetCoreIntegrationSteps
     /// <summary>
     /// Interface for test Autofac service.
     /// </summary>
-    public interface ITestAutofacService
+    private interface ITestAutofacService
     {
         string ModuleName { get; }
         bool IsEnabled { get; }
@@ -163,16 +140,10 @@ public class AspNetCoreIntegrationSteps
     /// <summary>
     /// Implementation of test Autofac service.
     /// </summary>
-    public class TestAutofacService : ITestAutofacService
+    private class TestAutofacService(string moduleName, bool isEnabled) : ITestAutofacService
     {
-        public string ModuleName { get; }
-        public bool IsEnabled { get; }
-
-        public TestAutofacService(string moduleName, bool isEnabled)
-        {
-            ModuleName = moduleName;
-            IsEnabled = isEnabled;
-        }
+        public string ModuleName { get; } = moduleName;
+        public bool IsEnabled { get; } = isEnabled;
     }
 
     #endregion
@@ -194,7 +165,7 @@ public class AspNetCoreIntegrationSteps
         _webApplicationBuilder.Logging.AddConsole();
         _webApplicationBuilder.Logging.SetMinimumLevel(LogLevel.Warning);
         
-        _scenarioContext.Set(_webApplicationBuilder, "WebApplicationBuilder");
+        scenarioContext.Set(_webApplicationBuilder, "WebApplicationBuilder");
     }
 
     [Given(@"I have a test service that depends on FlexConfig")]
@@ -252,7 +223,7 @@ public class AspNetCoreIntegrationSteps
         {
             containerBuilder.AddFlexConfig(config =>
             {
-                // Add JSON file first (lower precedence)
+                // Add a JSON file first (lower precedence)
                 config.AddJsonFile(normalizedPath, optional: false, reloadOnChange: false);
                 
                 // Add in-memory data last (higher precedence) if we have any
@@ -283,15 +254,15 @@ public class AspNetCoreIntegrationSteps
         }
         
         // Store for later configuration building
-        _scenarioContext.Set(configurationSources, "ConfigurationSources");
+        scenarioContext.Set(configurationSources, "ConfigurationSources");
     }
     
     private void BuildFlexConfigWithStoredSources()
     {
-        var configurationSources = _scenarioContext.Get<List<(string sourceType, string path, bool optional)>>("ConfigurationSources");
+        var configurationSources = scenarioContext.Get<List<(string sourceType, string path, bool optional)>>("ConfigurationSources");
         
         // Build the configuration using TestConfigurationBuilder (which handles environment variables properly)
-        var testBuilder = TestConfigurationBuilder.Create(_scenarioContext);
+        var testBuilder = TestConfigurationBuilder.Create(scenarioContext);
         
         // Apply environment variables first using the proper pattern
         if (_aspNetCoreEnvironmentVariables.Any())
@@ -354,9 +325,9 @@ public class AspNetCoreIntegrationSteps
             _aspNetCoreEnvironmentVariables[key] = value;
             
             // Set environment variables immediately AND use scenario context for proper cleanup
-            if (_scenarioContext != null)
+            if (scenarioContext != null)
             {
-                _scenarioContext.SetEnvironmentVariable(key, value);
+                scenarioContext.SetEnvironmentVariable(key, value);
             }
             else
             {
@@ -365,7 +336,7 @@ public class AspNetCoreIntegrationSteps
         }
         
         // Now that environment variables are set, configure FlexConfig if we have stored sources
-        if (_scenarioContext!.ContainsKey("ConfigurationSources"))
+        if (scenarioContext!.ContainsKey("ConfigurationSources"))
         {
             BuildFlexConfigWithStoredSources();
         }
@@ -443,7 +414,7 @@ public class AspNetCoreIntegrationSteps
         
         var normalizedPath = filePath.Replace('/', Path.DirectorySeparatorChar);
         
-        // Configure FlexConfig with invalid JSON file - this should cause an error
+        // Configure FlexConfig with an invalid JSON file - this should cause an error
         _webApplicationBuilder!.Host.ConfigureContainer<ContainerBuilder>(containerBuilder =>
         {
             containerBuilder.AddFlexConfig(config => config
@@ -506,7 +477,7 @@ public class AspNetCoreIntegrationSteps
                     }
                 }
                 
-                // Add in-memory data last (highest precedence) if we have any
+                // Add in-memory data last (the highest precedence) if we have any
                 if (_aspNetCoreConfigurationData.Any())
                 {
                     config.AddSource(new MemoryConfigurationSource { InitialData = _aspNetCoreConfigurationData });
@@ -551,9 +522,9 @@ public class AspNetCoreIntegrationSteps
             _serviceProvider = _webApplication.Services;
             _aspNetCoreHostBuildSucceeded = true;
             
-            // Store in scenario context
-            _scenarioContext.Set(_webApplication, "WebApplication");
-            _scenarioContext.Set(_serviceProvider, "ServiceProvider");
+            // Store in a scenario context
+            scenarioContext.Set(_webApplication, "WebApplication");
+            scenarioContext.Set(_serviceProvider, "ServiceProvider");
         }
         catch (Exception ex)
         {
@@ -635,7 +606,7 @@ public class AspNetCoreIntegrationSteps
     [Then(@"the environment variables should override configuration file values")]
     public void ThenTheEnvironmentVariablesShouldOverrideConfigurationFileValues()
     {
-        // First, let's test if a simple FlexConfig setup can read environment variables
+        // First, let's test it if a simple FlexConfig setup can read environment variables
         Environment.SetEnvironmentVariable("TEST_SIMPLE_VAR", "TEST_VALUE");
         
         var simpleBuilder = new FlexConfigurationBuilder();
@@ -701,20 +672,20 @@ public class AspNetCoreIntegrationSteps
         _resolvedTestService.Should().NotBeNull("Test service should be resolved");
         
         // Verify that the service can access configuration values
-        if (_aspNetCoreConfigurationData.ContainsKey("Service:Name"))
+        if (_aspNetCoreConfigurationData.TryGetValue("Service:Name", out var value2))
         {
-            _resolvedTestService!.ServiceName.Should().Be(_aspNetCoreConfigurationData["Service:Name"]);
+            _resolvedTestService!.ServiceName.Should().Be(value2);
         }
         
-        if (_aspNetCoreConfigurationData.ContainsKey("Service:Enabled"))
+        if (_aspNetCoreConfigurationData.TryGetValue("Service:Enabled", out var value1))
         {
-            var expectedEnabled = bool.Parse(_aspNetCoreConfigurationData["Service:Enabled"] ?? "false");
+            var expectedEnabled = bool.Parse(value1 ?? "false");
             _resolvedTestService!.IsEnabled.Should().Be(expectedEnabled);
         }
         
-        if (_aspNetCoreConfigurationData.ContainsKey("Service:MaxRetries"))
+        if (_aspNetCoreConfigurationData.TryGetValue("Service:MaxRetries", out var value))
         {
-            var expectedRetries = int.Parse(_aspNetCoreConfigurationData["Service:MaxRetries"] ?? "0");
+            var expectedRetries = int.Parse(value ?? "0");
             _resolvedTestService!.MaxRetries.Should().Be(expectedRetries);
         }
     }
@@ -851,7 +822,7 @@ public class AspNetCoreIntegrationSteps
         _hostFlexConfiguration.Should().NotBeNull("FlexConfig should be resolved");
         
         // This verification depends on the specific content of the test configuration files
-        // For now, just verify that configuration loading succeeded
+        // For now, verify that configuration loading succeeded
         var allConfigEntries = _hostFlexConfiguration!.Configuration.AsEnumerable().ToList();
         allConfigEntries.Should().NotBeEmpty("Configuration should contain merged entries from multiple files");
     }
@@ -936,7 +907,7 @@ public class AspNetCoreIntegrationSteps
             // Clean up environment variables
             CleanupEnvironmentVariables();
             
-            // Clear environment variable for next test
+            // Clear environment variable for the next test
             Environment.SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", null);
         }
         catch (Exception ex)

@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using Reqnroll;
 using System.IO.Abstractions;
 using System.IO.Abstractions.TestingHelpers;
+using JetBrains.Annotations;
 
 namespace FlexKit.IntegrationTests.Utils;
 
@@ -57,6 +58,7 @@ public abstract class BaseTestContainerBuilder<T> where T : BaseTestContainerBui
     /// </summary>
     /// <param name="configurationData">Dictionary of configuration key-value pairs</param>
     /// <returns>This builder for method chaining</returns>
+    [UsedImplicitly]
     public T WithConfiguration(Dictionary<string, string?> configurationData)
     {
         var builder = new ConfigurationBuilder();
@@ -219,6 +221,7 @@ public abstract class BaseTestContainerBuilder<T> where T : BaseTestContainerBui
     /// Sets up common test services and configurations.
     /// </summary>
     /// <returns>This builder for method chaining</returns>
+    [UsedImplicitly]
     public T WithTestDefaults()
     {
         return WithLogging()
@@ -235,6 +238,7 @@ public abstract class BaseTestContainerBuilder<T> where T : BaseTestContainerBui
     /// Builds the Autofac container with all configured registrations.
     /// </summary>
     /// <returns>The configured Autofac container</returns>
+    [UsedImplicitly]
     public virtual IContainer Build()
     {
         RegisterServices();

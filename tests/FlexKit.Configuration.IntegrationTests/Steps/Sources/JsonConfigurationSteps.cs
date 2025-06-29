@@ -4,7 +4,6 @@ using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Reqnroll;
 using System.Text.Json;
-using FlexKit.IntegrationTests.Utils;
 
 namespace FlexKit.Configuration.IntegrationTests.Steps.Sources;
 
@@ -15,9 +14,8 @@ namespace FlexKit.Configuration.IntegrationTests.Steps.Sources;
 /// with other configuration step classes.
 /// </summary>
 [Binding]
-public class JsonConfigurationSteps
+public class JsonConfigurationSteps(ScenarioContext scenarioContext)
 {
-    private readonly ScenarioContext _scenarioContext;
     private TestConfigurationBuilder? _jsonConfigurationBuilder;
     private IConfiguration? _jsonConfiguration;
     private IFlexConfig? _jsonFlexConfiguration;
@@ -26,18 +24,13 @@ public class JsonConfigurationSteps
     private Exception? _lastJsonException;
     private bool _jsonLoadingSucceeded;
 
-    public JsonConfigurationSteps(ScenarioContext scenarioContext)
-    {
-        _scenarioContext = scenarioContext;
-    }
-
     #region Given Steps - Setup
 
     [Given(@"I have prepared a JSON configuration source environment")]
     public void GivenIHavePreparedAJsonConfigurationSourceEnvironment()
     {
-        _jsonConfigurationBuilder = TestConfigurationBuilder.Create(_scenarioContext);
-        _scenarioContext.Set(_jsonConfigurationBuilder, "JsonConfigurationBuilder");
+        _jsonConfigurationBuilder = TestConfigurationBuilder.Create(scenarioContext);
+        scenarioContext.Set(_jsonConfigurationBuilder, "JsonConfigurationBuilder");
     }
 
     #endregion
@@ -138,7 +131,6 @@ public class JsonConfigurationSteps
         
         // Use the same pattern as ConfigurationBuilderSteps for consistency
         var normalizedPath = filePath.Replace('/', Path.DirectorySeparatorChar);
-        // var fullPath = Path.Combine(Directory.GetCurrentDirectory(), normalizedPath);
         
         if (!File.Exists(normalizedPath))
         {
@@ -183,11 +175,10 @@ public class JsonConfigurationSteps
     {
         _jsonConfigurationBuilder.Should().NotBeNull("JSON configuration builder should be prepared");
         
-        // Use same simple path normalization as other methods
+        // Use the same simple path normalization as other methods
         var normalizedPath = filePath.Replace('/', Path.DirectorySeparatorChar);
-        // var fullPath = Path.Combine(Directory.GetCurrentDirectory(), normalizedPath);
         
-        // Don't validate existence for optional files - just add to the builder
+        // Don't validate the existence for optional files - just add to the builder
         _jsonConfigurationBuilder!.AddJsonFile(normalizedPath, optional: true, reloadOnChange: false);
     }
 
@@ -276,14 +267,13 @@ public class JsonConfigurationSteps
         var testFilePath = "TestData/ConfigurationFiles/appsettings.json";
         // Use the same simple normalization pattern as ConfigurationBuilderSteps
         var normalizedPath = testFilePath.Replace('/', Path.DirectorySeparatorChar);
-        // var fullPath = Path.Combine(Directory.GetCurrentDirectory(), normalizedPath);
         
         if (!File.Exists(normalizedPath))
         {
             throw new FileNotFoundException($"Test data file not found: {normalizedPath}");
         }
 
-        // For reload-on-change testing, we still need to use AddJsonFile to enable file watching
+        // For reload-on-change testing, we still need to use AddJsonFile to enable file watching,
         // But we use the corrected path approach from ConfigurationBuilderSteps
         _jsonConfigurationBuilder!.AddJsonFile(normalizedPath, optional: false, reloadOnChange: true);
     }
@@ -299,7 +289,7 @@ public class JsonConfigurationSteps
             var isValid = bool.Parse(row["Valid"]);
             var isOptional = bool.Parse(row["Optional"]);
             
-            // Use same simple path normalization as other methods
+            // Use the same simple path normalization as other methods
             var normalizedPath = filePath.Replace('/', Path.DirectorySeparatorChar);
             
             if (isValid && File.Exists(normalizedPath))
@@ -308,13 +298,6 @@ public class JsonConfigurationSteps
                 var jsonContent = File.ReadAllText(normalizedPath);
                 var configData = ParseJsonToConfigurationData(jsonContent);
                 _jsonConfigurationBuilder!.AddInMemoryCollection(configData);
-            }
-            else if (!isValid && isOptional)
-            {
-                // FIX PROBLEM 2: For invalid optional files, don't add them at all
-                // Adding them with AddJsonFile will still cause failure when JSON is parsed
-                // Skip them entirely - this is correct behavior for optional invalid files
-                continue;
             }
             else if (!isValid && !isOptional)
             {
@@ -333,7 +316,7 @@ public class JsonConfigurationSteps
         {
             _jsonConfiguration = _jsonConfigurationBuilder!.Build();
             _jsonLoadingSucceeded = true;
-            _scenarioContext.Set(_jsonConfiguration, "JsonConfiguration");
+            scenarioContext.Set(_jsonConfiguration, "JsonConfiguration");
         }
         catch (Exception ex)
         {
@@ -341,8 +324,8 @@ public class JsonConfigurationSteps
             _jsonLoadingSucceeded = false;
             
             // Store exception details for debugging
-            _scenarioContext.Set(ex, "LastException");
-            _scenarioContext.Set(ex.Message, "LastExceptionMessage");
+            scenarioContext.Set(ex, "LastException");
+            scenarioContext.Set(ex.Message, "LastExceptionMessage");
         }
     }
 
@@ -362,8 +345,8 @@ public class JsonConfigurationSteps
             _jsonConfiguration = _jsonConfigurationBuilder!.Build();
             _jsonFlexConfiguration = new FlexConfiguration(_jsonConfiguration);
             _jsonLoadingSucceeded = true;
-            _scenarioContext.Set(_jsonConfiguration, "JsonConfiguration");
-            _scenarioContext.Set(_jsonFlexConfiguration, "JsonFlexConfiguration");
+            scenarioContext.Set(_jsonConfiguration, "JsonConfiguration");
+            scenarioContext.Set(_jsonFlexConfiguration, "JsonFlexConfiguration");
         }
         catch (Exception ex)
         {
@@ -398,7 +381,7 @@ public class JsonConfigurationSteps
         
         // Verify that some application settings are present
         var hasAppSettings = _jsonConfiguration!.AsEnumerable()
-            .Any(kvp => kvp.Key != null && kvp.Key.StartsWith("Application:") && !string.IsNullOrEmpty(kvp.Value));
+            .Any(kvp => kvp.Key.StartsWith("Application:") && !string.IsNullOrEmpty(kvp.Value));
         
         hasAppSettings.Should().BeTrue("JSON configuration should contain application settings");
     }
@@ -408,9 +391,9 @@ public class JsonConfigurationSteps
     {
         _jsonConfiguration.Should().NotBeNull("JSON configuration should be loaded");
         
-        // Verify hierarchical structure is flattened correctly (using colon notation)
+        // Verify the hierarchical structure is flattened correctly (using colon notation)
         var configEntries = _jsonConfiguration!.AsEnumerable().ToList();
-        var hasHierarchy = configEntries.Any(kvp => kvp.Key != null && kvp.Key.Contains(':'));
+        var hasHierarchy = configEntries.Any(kvp => kvp.Key.Contains(':'));
         
         hasHierarchy.Should().BeTrue("JSON configuration should have hierarchical structure flattened with colon notation");
     }
@@ -421,7 +404,7 @@ public class JsonConfigurationSteps
         _jsonConfiguration.Should().NotBeNull("JSON configuration should be loaded");
         
         // This would require specific knowledge of what's in the test files
-        // For now, just verify configuration was loaded
+        // For now, verify configuration was loaded
         var configEntries = _jsonConfiguration!.AsEnumerable().ToList();
         configEntries.Should().NotBeEmpty("Configuration should contain entries from JSON files");
     }
@@ -511,8 +494,8 @@ public class JsonConfigurationSteps
     {
         _jsonFlexConfiguration.Should().NotBeNull("FlexConfig should be created");
         
-        // FIX PROBLEM 1: Test dynamic support without performing operations that could fail on null
-        // Just verify the FlexConfig type supports dynamic access
+        // FIX PROBLEM 1: Test dynamic support without performing operations that could fail on null.
+        // Verify the FlexConfig type supports dynamic access
         var flexConfigType = _jsonFlexConfiguration!.GetType();
         flexConfigType.Should().NotBeNull("FlexConfig should have a valid type that supports dynamic access");
         
@@ -539,7 +522,7 @@ public class JsonConfigurationSteps
     public void ThenTheConfigurationShouldBeSetUpForAutomaticReloading()
     {
         _jsonConfiguration.Should().NotBeNull("JSON configuration should be loaded");
-        // Note: This is a behavioral test - we can't easily test actual file watching
+        // Note: This is a behavioral test - we can't easily test actual file watching,
         // But we can verify the configuration was set up with reload capability
         _jsonLoadingSucceeded.Should().BeTrue("Configuration with reload capability should load successfully");
     }
@@ -549,7 +532,7 @@ public class JsonConfigurationSteps
     {
         // This is a behavioral assertion that's hard to test in integration tests
         // without actual file system changes and async operations
-        // For now, just verify setup succeeded.
+        // For now, verify setup succeeded.
         _jsonConfiguration.Should().NotBeNull("Configuration should be set up for monitoring changes");
     }
 
