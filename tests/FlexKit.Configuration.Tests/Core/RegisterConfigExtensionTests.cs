@@ -40,34 +40,19 @@ public class AppConfig
 /// <summary>
 /// Test services to verify dependency injection works correctly
 /// </summary>
-public class DatabaseService
+public class DatabaseService(RegisterDatabaseConfig config)
 {
-    public RegisterDatabaseConfig Config { get; }
-    
-    public DatabaseService(RegisterDatabaseConfig config)
-    {
-        Config = config;
-    }
+    public RegisterDatabaseConfig Config { get; } = config;
 }
 
-public class ApiService
+public class ApiService(ApiConfig config)
 {
-    public ApiConfig Config { get; }
-    
-    public ApiService(ApiConfig config)
-    {
-        Config = config;
-    }
+    public ApiConfig Config { get; } = config;
 }
 
-public class AppService
+public class AppService(AppConfig config)
 {
-    public AppConfig Config { get; }
-    
-    public AppService(AppConfig config)
-    {
-        Config = config;
-    }
+    public AppConfig Config { get; } = config;
 }
 
 /// <summary>
@@ -204,7 +189,7 @@ public class RegisterConfigExtensionTests : UnitTestBase
         // Assert
         var dbConfig = container.Resolve<RegisterDatabaseConfig>();
         dbConfig.Should().NotBeNull();
-        // Should have default values since section doesn't exist
+        // Should have default values since a section doesn't exist
         dbConfig.ConnectionString.Should().BeEmpty();
         dbConfig.CommandTimeout.Should().Be(30); // Default from constructor
         dbConfig.MaxRetryCount.Should().Be(3);   // Default from constructor
@@ -227,7 +212,7 @@ public class RegisterConfigExtensionTests : UnitTestBase
 
         using var container = containerBuilder.Build();
 
-        // Assert - Multiple resolutions should return same instances (singleton)
+        // Assert - Multiple resolutions should return the same instances (singleton)
         var dbConfig1 = container.Resolve<RegisterDatabaseConfig>();
         var dbConfig2 = container.Resolve<RegisterDatabaseConfig>();
         dbConfig1.Should().BeSameAs(dbConfig2);

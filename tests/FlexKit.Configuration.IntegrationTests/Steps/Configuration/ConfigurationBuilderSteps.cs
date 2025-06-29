@@ -4,7 +4,7 @@ using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Reqnroll;
 using System.Text.Json;
-using FlexKit.IntegrationTests.Utils;
+using JetBrains.Annotations;
 
 namespace FlexKit.Configuration.IntegrationTests.Steps.Configuration;
 
@@ -15,26 +15,20 @@ namespace FlexKit.Configuration.IntegrationTests.Steps.Configuration;
 /// Uses completely distinct step patterns to avoid conflicts with other configuration steps.
 /// </summary>
 [Binding]
-public class ConfigurationBuilderSteps
+public class ConfigurationBuilderSteps(ScenarioContext scenarioContext)
 {
-    private readonly ScenarioContext _scenarioContext;
     private TestConfigurationBuilder? _configurationBuilder;
     private IConfiguration? _builtConfiguration;
     private IFlexConfig? _builtFlexConfiguration;
-    private readonly Dictionary<string, string?> _testEnvironmentVariables = new();
-
-    public ConfigurationBuilderSteps(ScenarioContext scenarioContext)
-    {
-        _scenarioContext = scenarioContext;
-    }
+    [UsedImplicitly]public readonly Dictionary<string, string?> TestEnvironmentVariables = new();
 
     #region Given Steps - Setup
 
     [Given(@"I have initialized a test configuration builder")]
     public void GivenIHaveInitializedATestConfigurationBuilder()
     {
-        _configurationBuilder = TestConfigurationBuilder.Create(_scenarioContext);
-        _scenarioContext.Set(_configurationBuilder, "ConfigurationBuilder");
+        _configurationBuilder = TestConfigurationBuilder.Create(scenarioContext);
+        scenarioContext.Set(_configurationBuilder, "ConfigurationBuilder");
     }
 
     #endregion
@@ -87,8 +81,7 @@ public class ConfigurationBuilderSteps
             System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
         if (builderField != null)
         {
-            var inMemoryData = builderField.GetValue(_configurationBuilder) as Dictionary<string, string?>;
-            if (inMemoryData != null)
+            if (builderField.GetValue(_configurationBuilder) is Dictionary<string, string?> inMemoryData)
             {
                 foreach (var kvp in inMemoryData)
                 {
@@ -107,7 +100,7 @@ public class ConfigurationBuilderSteps
         Console.WriteLine($"External:Api:BaseUrl = {_builtConfiguration["External:Api:BaseUrl"]}");
         Console.WriteLine("=== End built configuration ===");
         
-        _scenarioContext.Set(_builtConfiguration, "BuiltConfiguration");
+        scenarioContext.Set(_builtConfiguration, "BuiltConfiguration");
     }
 
     [When(@"I construct the FlexConfiguration")]
@@ -115,7 +108,7 @@ public class ConfigurationBuilderSteps
     {
         _configurationBuilder.Should().NotBeNull("Configuration builder should be initialized");
         _builtFlexConfiguration = _configurationBuilder!.BuildFlexConfig();
-        _scenarioContext.Set(_builtFlexConfiguration, "BuiltFlexConfiguration");
+        scenarioContext.Set(_builtFlexConfiguration, "BuiltFlexConfiguration");
     }
 
     [When(@"I append database configuration with defaults")]
@@ -171,7 +164,7 @@ public class ConfigurationBuilderSteps
     public void WhenIConfigureTestEnvironmentVariableTo(string name, string value)
     {
         _configurationBuilder.Should().NotBeNull("Configuration builder should be initialized");
-        _testEnvironmentVariables[name] = value;
+        TestEnvironmentVariables[name] = value;
         _configurationBuilder!.WithEnvironmentVariable(name, value);
     }
 
@@ -419,8 +412,8 @@ public class ConfigurationBuilderSteps
 
     private void ParseDatabaseParameters(string parameters)
     {
-        var connectionString = "Server=chain.db.com"; // Set default to expected value to see if it gets overridden
-        var timeout = 120; // Set default to expected value
+        var connectionString = "Server=chain.db.com"; // Set default to the expected value to see if it gets overridden
+        var timeout = 120; // Set default to the expected value
 
         Console.WriteLine($"Parsing database parameters: {parameters}");
         
@@ -472,8 +465,7 @@ public class ConfigurationBuilderSteps
         
         if (inMemoryDataField != null)
         {
-            var inMemoryData = inMemoryDataField.GetValue(_configurationBuilder) as Dictionary<string, string?>;
-            if (inMemoryData != null)
+            if (inMemoryDataField.GetValue(_configurationBuilder) is Dictionary<string, string?> inMemoryData)
             {
                 var keysToRemove = inMemoryData.Keys.Where(k => k.StartsWith("Database:")).ToList();
                 foreach (var key in keysToRemove)

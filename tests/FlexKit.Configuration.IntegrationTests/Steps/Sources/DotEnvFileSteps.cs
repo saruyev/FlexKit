@@ -1,7 +1,7 @@
 ﻿using FlexKit.Configuration.Core;
 using FlexKit.Configuration.IntegrationTests.Utils;
-using FlexKit.IntegrationTests.Utils;
 using FluentAssertions;
+using JetBrains.Annotations;
 using Microsoft.Extensions.Configuration;
 using Reqnroll;
 
@@ -14,31 +14,25 @@ namespace FlexKit.Configuration.IntegrationTests.Steps.Sources;
 /// with other configuration step classes.
 /// </summary>
 [Binding]
-public class DotEnvFileSteps
+public class DotEnvFileSteps(ScenarioContext scenarioContext)
 {
-    private readonly ScenarioContext _scenarioContext;
     private TestConfigurationBuilder? _dotEnvConfigurationBuilder;
     private IConfiguration? _dotEnvConfiguration;
     private IFlexConfig? _dotEnvFlexConfiguration;
-    private readonly List<string> _registeredDotEnvFiles = new();
+    [UsedImplicitly] public readonly List<string> RegisteredDotEnvFiles = new();
     private readonly List<string> _dynamicDotEnvContent = new();
     private readonly List<string> _baseDotEnvContent = new();
     private readonly List<string> _overrideDotEnvContent = new();
     private Exception? _lastDotEnvException;
     private bool _dotEnvLoadingSucceeded;
 
-    public DotEnvFileSteps(ScenarioContext scenarioContext)
-    {
-        _scenarioContext = scenarioContext;
-    }
-
     #region Given Steps - Setup
 
     [Given(@"I have established a \.env file configuration source environment")]
     public void GivenIHaveEstablishedADotEnvFileConfigurationSourceEnvironment()
     {
-        _dotEnvConfigurationBuilder = TestConfigurationBuilder.Create(_scenarioContext);
-        _scenarioContext.Set(_dotEnvConfigurationBuilder, "DotEnvConfigurationBuilder");
+        _dotEnvConfigurationBuilder = TestConfigurationBuilder.Create(scenarioContext);
+        scenarioContext.Set(_dotEnvConfigurationBuilder, "DotEnvConfigurationBuilder");
     }
 
     #endregion
@@ -163,7 +157,7 @@ public class DotEnvFileSteps
         }
 
         _dotEnvConfigurationBuilder!.AddDotEnvFile(normalizedPath, optional: false);
-        _registeredDotEnvFiles.Add(normalizedPath);
+        RegisteredDotEnvFiles.Add(normalizedPath);
     }
 
     [When(@"I load non-existent \.env file ""(.*)"" as optional")]
@@ -171,10 +165,10 @@ public class DotEnvFileSteps
     {
         _dotEnvConfigurationBuilder.Should().NotBeNull(".env configuration builder should be established");
         
-        // Use same simple path normalization as JsonConfigurationSteps
+        // Use the same simple path normalization as JsonConfigurationSteps
         var normalizedPath = filePath.Replace('/', Path.DirectorySeparatorChar);
         
-        // Don't validate existence for optional files - just add to the builder
+        // Don't validate the existence for optional files - just add to the builder
         _dotEnvConfigurationBuilder!.AddDotEnvFile(normalizedPath, optional: true);
     }
 
@@ -183,7 +177,7 @@ public class DotEnvFileSteps
     {
         _dotEnvConfigurationBuilder.Should().NotBeNull(".env configuration builder should be established");
         
-        // Use same simple path normalization as JsonConfigurationSteps
+        // Use the same simple path normalization as JsonConfigurationSteps
         var normalizedPath = filePath.Replace('/', Path.DirectorySeparatorChar);
         
         // Add as required file - will fail during build if not found

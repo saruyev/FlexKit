@@ -4,9 +4,8 @@ using FlexKit.Configuration.IntegrationTests.Utils;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Reqnroll;
-using System.IO;
 using FlexKit.IntegrationTests.Utils;
-using Xunit;
+using JetBrains.Annotations;
 
 namespace FlexKit.Configuration.IntegrationTests.Steps.DependencyInjection;
 
@@ -16,51 +15,36 @@ namespace FlexKit.Configuration.IntegrationTests.Steps.DependencyInjection;
 /// Uses completely unique step patterns ("established", "compose", "deploy") to avoid all conflicts.
 /// </summary>
 [Binding]
-public class ModuleRegistrationSteps
+public class ModuleRegistrationSteps(ScenarioContext scenarioContext)
 {
-    private readonly ScenarioContext _scenarioContext;
     private TestContainerBuilder? _testContainerBuilder;
     private ContainerBuilder? _containerBuilder;
     private IContainer? _container;
     private TestConfigurationBuilder? _configurationBuilder;
     private readonly Dictionary<string, TestConfigurationModule> _testModules = new();
     private readonly Dictionary<string, Dictionary<string, string?>> _moduleConfigurations = new();
-    private Exception? _lastModuleException;
     private bool _containerBuildSucceeded;
-
-    public ModuleRegistrationSteps(ScenarioContext scenarioContext)
-    {
-        _scenarioContext = scenarioContext;
-    }
 
     #region Test Module Class
 
     /// <summary>
     /// Test configuration module for module registration scenarios.
     /// </summary>
-    public class TestConfigurationModule : Module
+    [UsedImplicitly]
+    public class TestConfigurationModule(string moduleName, IConfiguration configuration) : Module
     {
-        private readonly string _moduleName;
-        private readonly IConfiguration _configuration;
-
-        public TestConfigurationModule(string moduleName, IConfiguration configuration)
-        {
-            _moduleName = moduleName;
-            _configuration = configuration;
-        }
-
-        public string ModuleName => _moduleName;
+        public string ModuleName => moduleName;
 
         protected override void Load(ContainerBuilder builder)
         {
             // Register the configuration instance
-            builder.RegisterInstance(_configuration)
+            builder.RegisterInstance(configuration)
                 .As<IConfiguration>()
-                .Named<IConfiguration>(_moduleName)
+                .Named<IConfiguration>(moduleName)
                 .SingleInstance();
 
             // Register FlexConfig based on this configuration
-            var flexConfig = _configuration.GetFlexConfiguration();
+            var flexConfig = configuration.GetFlexConfiguration();
             builder.RegisterInstance(flexConfig)
                 .As<IFlexConfig>()
                 .As<dynamic>()
@@ -71,16 +55,10 @@ public class ModuleRegistrationSteps
     /// <summary>
     /// Test service that depends on module configuration.
     /// </summary>
-    public class TestServiceWithModuleConfig
+    public class TestServiceWithModuleConfig(IFlexConfig configuration)
     {
-        public IFlexConfig Configuration { get; }
-        public string ServiceName { get; }
-
-        public TestServiceWithModuleConfig(IFlexConfig configuration)
-        {
-            Configuration = configuration;
-            ServiceName = "ModuleConfigService";
-        }
+        public IFlexConfig Configuration { get; } = configuration;
+        public string ServiceName { get; } = "ModuleConfigService";
     }
 
     #endregion
@@ -90,13 +68,13 @@ public class ModuleRegistrationSteps
     [Given(@"I have established a module registration test environment")]
     public void GivenIHaveEstablishedAModuleRegistrationTestEnvironment()
     {
-        _testContainerBuilder = TestContainerBuilder.Create(_scenarioContext);
+        _testContainerBuilder = TestContainerBuilder.Create(scenarioContext);
         _containerBuilder = new ContainerBuilder();
-        _configurationBuilder = TestConfigurationBuilder.Create(_scenarioContext);
+        _configurationBuilder = TestConfigurationBuilder.Create(scenarioContext);
         
-        _scenarioContext.Set(_testContainerBuilder, "TestContainerBuilder");
-        _scenarioContext.Set(_containerBuilder, "ContainerBuilder");
-        _scenarioContext.Set(_configurationBuilder, "ConfigurationBuilder");
+        scenarioContext.Set(_testContainerBuilder, "TestContainerBuilder");
+        scenarioContext.Set(_containerBuilder, "ContainerBuilder");
+        scenarioContext.Set(_configurationBuilder, "ConfigurationBuilder");
     }
 
     #endregion
@@ -187,11 +165,10 @@ public class ModuleRegistrationSteps
         {
             _container = _containerBuilder!.Build();
             _containerBuildSucceeded = true;
-            _scenarioContext.RegisterAutofacContainer(_container);
+            scenarioContext.RegisterAutofacContainer(_container);
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            _lastModuleException = ex;
             _containerBuildSucceeded = false;
         }
     }
@@ -232,7 +209,7 @@ public class ModuleRegistrationSteps
         {
             foreach (var kvp in anyModuleConfig)
             {
-                resolvedFlexConfig![kvp.Key].Should().Be(kvp.Value);
+                resolvedFlexConfig[kvp.Key].Should().Be(kvp.Value);
             }
         }
     }
@@ -253,7 +230,7 @@ public class ModuleRegistrationSteps
         
         var resolvedServiceWithModuleConfig = _container!.Resolve<TestServiceWithModuleConfig>();
         resolvedServiceWithModuleConfig.Should().NotBeNull("Service should be resolved");
-        resolvedServiceWithModuleConfig!.Configuration.Should().NotBeNull("Service should have received module configuration");
+        resolvedServiceWithModuleConfig.Configuration.Should().NotBeNull("Service should have received module configuration");
     }
 
     [Then(@"the deployed test module configuration should be available to dependent services")]
@@ -270,7 +247,7 @@ public class ModuleRegistrationSteps
         {
             foreach (var kvp in anyModuleConfig)
             {
-                resolvedServiceWithModuleConfig!.Configuration[kvp.Key].Should().Be(kvp.Value);
+                resolvedServiceWithModuleConfig.Configuration[kvp.Key].Should().Be(kvp.Value);
             }
         }
     }
@@ -308,92 +285,6 @@ public class ModuleRegistrationSteps
         {
             ThenConfigurationFromTestModuleShouldBeReachable(moduleName);
         }
-    }
-
-    #endregion
-
-    #region Helper Methods
-
-    /// <summary>
-    /// Parses JSON content into a configuration data dictionary.
-    /// Uses the same implementation as JsonConfigurationSteps.
-    /// </summary>
-    /// <param name="jsonContent">The JSON content to parse</param>
-    /// <returns>Dictionary of configuration key-value pairs</returns>
-    private static Dictionary<string, string?> ParseJsonToConfigurationData(string jsonContent)
-    {
-        try
-        {
-            using var document = System.Text.Json.JsonDocument.Parse(jsonContent);
-            return FlattenJsonElement(document.RootElement);
-        }
-        catch (System.Text.Json.JsonException ex)
-        {
-            throw new InvalidOperationException($"Failed to parse JSON configuration: {ex.Message}", ex);
-        }
-    }
-
-    /// <summary>
-    /// Flattens a JSON element into a dictionary with colon-separated keys.
-    /// Exact copy from ConfigurationBuilderSteps for consistency.
-    /// </summary>
-    /// <param name="element">The JSON element to flatten</param>
-    /// <param name="prefix">The key prefix</param>
-    /// <returns>Flattened dictionary</returns>
-    private static Dictionary<string, string?> FlattenJsonElement(System.Text.Json.JsonElement element, string prefix = "")
-    {
-        var result = new Dictionary<string, string?>();
-
-        switch (element.ValueKind)
-        {
-            case System.Text.Json.JsonValueKind.Object:
-                foreach (var property in element.EnumerateObject())
-                {
-                    var key = string.IsNullOrEmpty(prefix) ? property.Name : $"{prefix}:{property.Name}";
-                    var nestedResult = FlattenJsonElement(property.Value, key);
-                    foreach (var kvp in nestedResult)
-                    {
-                        result[kvp.Key] = kvp.Value;
-                    }
-                }
-                break;
-
-            case System.Text.Json.JsonValueKind.Array:
-                var index = 0;
-                foreach (var item in element.EnumerateArray())
-                {
-                    var key = $"{prefix}:{index}";
-                    var nestedResult = FlattenJsonElement(item, key);
-                    foreach (var kvp in nestedResult)
-                    {
-                        result[kvp.Key] = kvp.Value;
-                    }
-                    index++;
-                }
-                break;
-
-            case System.Text.Json.JsonValueKind.String:
-                result[prefix] = element.GetString();
-                break;
-
-            case System.Text.Json.JsonValueKind.Number:
-                result[prefix] = element.GetRawText();
-                break;
-
-            case System.Text.Json.JsonValueKind.True:
-                result[prefix] = "True";
-                break;
-
-            case System.Text.Json.JsonValueKind.False:
-                result[prefix] = "False";
-                break;
-
-            case System.Text.Json.JsonValueKind.Null:
-                result[prefix] = null;
-                break;
-        }
-
-        return result;
     }
 
     #endregion

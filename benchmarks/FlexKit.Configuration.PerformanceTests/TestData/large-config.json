@@ -1,0 +1,991 @@
+﻿{
+  "Application": {
+    "Name": "FlexKit Enterprise Application",
+    "Version": "2.4.1",
+    "Environment": "Production",
+    "Description": "Large-scale enterprise application with complex configuration",
+    "Copyright": "© 2025 FlexKit Corporation",
+    "BuildNumber": "20250129.142",
+    "ReleaseDate": "2025-01-29T14:20:00Z",
+    "SupportEmail": "support@flexkit.com",
+    "DocumentationUrl": "https://docs.flexkit.com/v2.4",
+    "LicenseKey": "FKENT-2024-PROD-8392847",
+    "MaxUserSessions": 50000,
+    "SessionTimeoutMinutes": 720,
+    "MaintenanceMode": false,
+    "DebugMode": false
+  },
+
+  "Database": {
+    "Primary": {
+      "ConnectionString": "Server=prod-sql-01.company.com;Database=FlexKitProd;User=flexapp;Password=P@ssw0rd123;",
+      "Provider": "SqlServer",
+      "CommandTimeout": 120,
+      "MaxRetryCount": 5,
+      "RetryDelayMs": 2000,
+      "EnableLogging": true,
+      "LogSlowQueriesMs": 5000,
+      "MaxPoolSize": 200,
+      "MinPoolSize": 10,
+      "ConnectionLifetime": 1800,
+      "EnableConnectionPooling": true,
+      "LoadBalancingTimeout": 5,
+      "PacketSize": 8192,
+      "ApplicationIntent": "ReadWrite",
+      "MultiSubnetFailover": true,
+      "ConnectRetryCount": 3,
+      "ConnectRetryInterval": 10
+    },
+    "ReadReplica": {
+      "ConnectionString": "Server=prod-sql-02.company.com;Database=FlexKitProd;User=readonly;Password=R34d0nly!;",
+      "Provider": "SqlServer",
+      "CommandTimeout": 60,
+      "MaxRetryCount": 3,
+      "RetryDelayMs": 1000,
+      "EnableLogging": false,
+      "MaxPoolSize": 100,
+      "MinPoolSize": 5,
+      "ConnectionLifetime": 3600,
+      "EnableConnectionPooling": true,
+      "ApplicationIntent": "ReadOnly"
+    },
+    "Analytics": {
+      "ConnectionString": "Server=analytics-cluster.company.com;Database=FlexKitAnalytics;",
+      "Provider": "PostgreSQL",
+      "CommandTimeout": 300,
+      "MaxRetryCount": 2,
+      "BatchSize": 5000,
+      "EnableBulkOperations": true,
+      "CompressionLevel": 6,
+      "SslMode": "Require"
+    },
+    "Cache": {
+      "ConnectionString": "redis-cluster.company.com:6379",
+      "Provider": "Redis",
+      "Database": 0,
+      "DefaultTtlMinutes": 60,
+      "MaxMemoryPolicyType": "allkeys-lru",
+      "MaxConnections": 50,
+      "ConnectRetryCount": 3,
+      "AbortOnConnectFail": false,
+      "SyncTimeout": 5000,
+      "AsyncTimeout": 5000,
+      "KeepAlive": 60,
+      "LazyConnection": true
+    }
+  },
+
+  "ExternalServices": {
+    "PaymentProcessor": {
+      "Primary": {
+        "BaseUrl": "https://api.stripe.com/v1",
+        "ApiKey": "sk_live_51ABCDEfghijklmnopqrstuvwxyz",
+        "SecretKey": "whsec_1234567890abcdefghijklmnop",
+        "Timeout": 30000,
+        "MaxRetries": 3,
+        "RetryDelayMs": 1000,
+        "EnableWebhooks": true,
+        "WebhookSecret": "whsec_webhook_secret_key_here",
+        "SupportedCurrencies": ["USD", "EUR", "GBP", "CAD", "AUD"],
+        "MinAmount": 50,
+        "MaxAmount": 100000,
+        "EnableRefunds": true,
+        "RefundDays": 30,
+        "EnableRecurring": true,
+        "WebhookRetryCount": 5
+      },
+      "Backup": {
+        "BaseUrl": "https://api.paypal.com/v2",
+        "ClientId": "AaBbCcDdEeFfGgHhIiJjKkLlMmNn",
+        "ClientSecret": "OoPpQqRrSsTtUuVvWwXxYyZz1234",
+        "Environment": "live",
+        "Timeout": 25000,
+        "MaxRetries": 2,
+        "SupportedCurrencies": ["USD", "EUR", "GBP"],
+        "EnableWhenPrimaryFails": true
+      }
+    },
+
+    "EmailService": {
+      "Provider": "SendGrid",
+      "ApiKey": "SG.1234567890abcdefghijklmnopqrstuvwxyz",
+      "FromEmail": "noreply@flexkit.com",
+      "FromName": "FlexKit Application",
+      "ReplyToEmail": "support@flexkit.com",
+      "Timeout": 15000,
+      "MaxRetries": 3,
+      "RetryDelayMs": 2000,
+      "EnableTracking": true,
+      "EnableClickTracking": true,
+      "EnableOpenTracking": true,
+      "Templates": {
+        "Welcome": "d-1234567890abcdef",
+        "PasswordReset": "d-abcdef1234567890",
+        "OrderConfirmation": "d-567890abcdef1234",
+        "MonthlyReport": "d-cdef567890abef12",
+        "SecurityAlert": "d-90abcdef12345678"
+      },
+      "RateLimits": {
+        "RequestsPerSecond": 100,
+        "RequestsPerMinute": 6000,
+        "RequestsPerHour": 100000
+      }
+    },
+
+    "SmsService": {
+      "Provider": "Twilio",
+      "AccountSid": "AC1234567890abcdefghijklmnopqrstuv",
+      "AuthToken": "1234567890abcdefghijklmnopqrstuvwx",
+      "FromNumber": "+15551234567",
+      "Timeout": 10000,
+      "MaxRetries": 2,
+      "EnableDeliveryCallbacks": true,
+      "CallbackUrl": "https://api.flexkit.com/webhooks/sms",
+      "SupportedCountries": ["US", "CA", "GB", "AU", "DE", "FR"],
+      "MaxMessageLength": 160,
+      "EnableUnicode": true,
+      "RateLimits": {
+        "MessagesPerSecond": 10,
+        "MessagesPerMinute": 100
+      }
+    },
+
+    "GeolocationService": {
+      "Provider": "MaxMind",
+      "ApiKey": "geoip_api_key_1234567890abcdef",
+      "DatabasePath": "/data/geoip/GeoLite2-City.mmdb",
+      "UpdateIntervalDays": 7,
+      "Timeout": 5000,
+      "EnableCaching": true,
+      "CacheTtlMinutes": 1440,
+      "EnableAccuracyRadius": true,
+      "EnableIspData": true,
+      "FallbackProvider": {
+        "Enabled": true,
+        "BaseUrl": "https://ipapi.co",
+        "Timeout": 3000
+      }
+    },
+
+    "CloudStorage": {
+      "Primary": {
+        "Provider": "AWS",
+        "AccessKey": "AKIA1234567890ABCDEF",
+        "SecretKey": "abcdefghijklmnopqrstuvwxyz1234567890ABCDEF",
+        "Region": "us-east-1",
+        "BucketName": "flexkit-prod-storage",
+        "EnableEncryption": true,
+        "EncryptionKey": "arn:aws:kms:us-east-1:123456789:key/12345678-1234",
+        "MaxFileSize": 104857600,
+        "AllowedExtensions": [".jpg", ".png", ".pdf", ".docx", ".xlsx", ".zip"],
+        "EnableVersioning": true,
+        "EnableLogging": true,
+        "LifecycleRules": {
+          "TransitionToIA": 30,
+          "TransitionToGlacier": 90,
+          "ExpirationDays": 2555
+        }
+      },
+      "Backup": {
+        "Provider": "Azure",
+        "ConnectionString": "DefaultEndpointsProtocol=https;AccountName=flexkitbackup;",
+        "ContainerName": "backup-storage",
+        "EnableGeoReplication": true,
+        "ReplicationRegion": "West US 2"
+      }
+    }
+  },
+
+  "Security": {
+    "Authentication": {
+      "JwtSettings": {
+        "Issuer": "https://auth.flexkit.com",
+        "Audience": "flexkit-app",
+        "SecretKey": "super_secret_jwt_signing_key_256_bits_minimum_length_required_here",
+        "ExpirationMinutes": 60,
+        "RefreshTokenExpirationDays": 30,
+        "RequireHttpsMetadata": true,
+        "ValidateIssuer": true,
+        "ValidateAudience": true,
+        "ValidateLifetime": true,
+        "ValidateIssuerSigningKey": true,
+        "ClockSkewSeconds": 300,
+        "EnableJwtBearerEvents": true
+      },
+      "OAuth": {
+        "Google": {
+          "ClientId": "123456789-abcdefghijklmnopqrstuvwxyz.apps.googleusercontent.com",
+          "ClientSecret": "GOCSPX-abcdefghijklmnopqrstuvwxyz",
+          "Enabled": true,
+          "Scopes": ["openid", "profile", "email"]
+        },
+        "Microsoft": {
+          "ClientId": "12345678-1234-1234-1234-123456789abc",
+          "ClientSecret": "abc123def456ghi789jkl012mno345pqr",
+          "TenantId": "common",
+          "Enabled": true,
+          "Scopes": ["openid", "profile", "email"]
+        },
+        "Facebook": {
+          "AppId": "1234567890123456",
+          "AppSecret": "abcdefghijklmnopqrstuvwxyz123456",
+          "Enabled": false
+        }
+      },
+      "PasswordPolicy": {
+        "MinLength": 12,
+        "RequireDigit": true,
+        "RequireLowercase": true,
+        "RequireUppercase": true,
+        "RequireNonAlphanumeric": true,
+        "RequiredUniqueChars": 6,
+        "MaxPasswordAge": 90,
+        "PreventPasswordReuse": 12,
+        "LockoutDuration": 30,
+        "MaxFailedAttempts": 5,
+        "AllowUserChangePassword": true,
+        "ForceChangeOnFirstLogin": true
+      }
+    },
+
+    "Encryption": {
+      "DataProtection": {
+        "KeyRingPath": "/var/lib/flexkit/keys",
+        "ApplicationName": "FlexKit.Production",
+        "KeyLifetime": 90,
+        "EnableKeyEscrow": false,
+        "EncryptionAlgorithm": "AES-256-GCM",
+        "KeyDerivationPrf": "HMACSHA512"
+      },
+      "DatabaseEncryption": {
+        "EnableTransparentDataEncryption": true,
+        "EncryptionKey": "DEK_KEY_ID_FOR_DATABASE_ENCRYPTION",
+        "EnableColumnEncryption": true,
+        "AlwaysEncryptedColumns": [
+          "Users.SocialSecurityNumber",
+          "Users.CreditCardNumber",
+          "Orders.PaymentDetails"
+        ]
+      },
+      "FileEncryption": {
+        "EnableEncryptionAtRest": true,
+        "EncryptionMethod": "AES-256",
+        "KeyManagementService": "AWS-KMS",
+        "CustomerManagedKeys": true
+      }
+    },
+
+    "ApiSecurity": {
+      "RateLimiting": {
+        "RequestsPerMinute": 1000,
+        "RequestsPerHour": 10000,
+        "RequestsPerDay": 100000,
+        "BurstAllowance": 100,
+        "EnableDistributedRateLimiting": true,
+        "EnableIpWhitelist": true,
+        "WhitelistedIps": [
+          "192.168.1.0/24",
+          "10.0.0.0/8",
+          "172.16.0.0/12"
+        ],
+        "BlacklistedIps": [
+          "192.0.2.0/24"
+        ]
+      },
+      "Cors": {
+        "AllowedOrigins": [
+          "https://app.flexkit.com",
+          "https://admin.flexkit.com",
+          "https://api.flexkit.com"
+        ],
+        "AllowedMethods": ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+        "AllowedHeaders": ["Content-Type", "Authorization", "X-Requested-With"],
+        "AllowCredentials": true,
+        "MaxAge": 86400,
+        "ExposeHeaders": ["X-Total-Count", "X-Page-Count"]
+      },
+      "ApiKeys": {
+        "EnableApiKeyAuthentication": true,
+        "ApiKeyHeader": "X-API-Key",
+        "RequireApiKeyForPublicEndpoints": false,
+        "EnableApiKeyRateLimit": true,
+        "DefaultRateLimit": 5000,
+        "EnableApiKeyExpiration": true,
+        "DefaultExpirationDays": 365
+      }
+    }
+  },
+
+  "Features": {
+    "UserManagement": {
+      "EnableSelfRegistration": true,
+      "RequireEmailVerification": true,
+      "EnableSocialLogin": true,
+      "EnableTwoFactorAuth": true,
+      "DefaultTwoFactorMethod": "TOTP",
+      "SupportedTwoFactorMethods": ["TOTP", "SMS", "Email"],
+      "EnableAccountLocking": true,
+      "EnablePasswordHistory": true,
+      "EnableProfilePictures": true,
+      "MaxProfilePictureSize": 5242880,
+      "EnableUserPreferences": true,
+      "EnableNotificationSettings": true,
+      "EnablePrivacySettings": true,
+      "EnableAccountDeletion": true,
+      "DataRetentionDays": 2555
+    },
+
+    "Notifications": {
+      "EnableEmailNotifications": true,
+      "EnableSmsNotifications": true,
+      "EnablePushNotifications": true,
+      "EnableInAppNotifications": true,
+      "DefaultNotificationPreferences": {
+        "SecurityAlerts": ["Email", "SMS"],
+        "OrderUpdates": ["Email", "Push"],
+        "Marketing": ["Email"],
+        "SystemMaintenance": ["Email", "InApp"]
+      },
+      "NotificationTemplates": {
+        "SecurityAlert": {
+          "Subject": "Security Alert for Your Account",
+          "Priority": "High",
+          "RetryCount": 3
+        },
+        "OrderConfirmation": {
+          "Subject": "Order Confirmation #{OrderNumber}",
+          "Priority": "Normal",
+          "RetryCount": 2
+        }
+      },
+      "RateLimiting": {
+        "EmailsPerUserPerHour": 10,
+        "SmsPerUserPerHour": 5,
+        "PushNotificationsPerUserPerHour": 50
+      }
+    },
+
+    "Analytics": {
+      "EnableUserTracking": true,
+      "EnableEventTracking": true,
+      "EnablePerformanceTracking": true,
+      "EnableErrorTracking": true,
+      "DataRetentionDays": 365,
+      "SamplingRate": 100,
+      "EnableRealTimeAnalytics": true,
+      "EnableCustomEvents": true,
+      "EnableConversionTracking": true,
+      "EnableHeatmaps": false,
+      "EnableSessionRecording": false,
+      "PrivacyMode": {
+        "EnableGdprCompliance": true,
+        "EnableCcpaCompliance": true,
+        "AnonymizeIpAddresses": true,
+        "RespectDoNotTrack": true,
+        "EnableCookieConsent": true
+      },
+      "Providers": {
+        "GoogleAnalytics": {
+          "TrackingId": "GA-123456789-1",
+          "Enabled": true,
+          "EnableEcommerce": true
+        },
+        "MixPanel": {
+          "ProjectToken": "1234567890abcdef",
+          "Enabled": true,
+          "EnablePeopleTracking": true
+        }
+      }
+    },
+
+    "Search": {
+      "EnableFullTextSearch": true,
+      "SearchProvider": "Elasticsearch",
+      "ClusterUrl": "https://search-cluster.company.com:9200",
+      "IndexPrefix": "flexkit-prod",
+      "MaxResultsPerPage": 100,
+      "DefaultResultsPerPage": 20,
+      "EnableAutocomplete": true,
+      "EnableSpellCheck": true,
+      "EnableSynonyms": true,
+      "EnableAnalytics": true,
+      "CacheResultsMinutes": 15,
+      "ReindexIntervalHours": 24,
+      "EnableFacetedSearch": true,
+      "SupportedLanguages": ["en", "es", "fr", "de", "it"],
+      "DefaultLanguage": "en",
+      "MinQueryLength": 2,
+      "MaxQueryLength": 200
+    },
+
+    "Reporting": {
+      "EnableScheduledReports": true,
+      "EnableRealtimeReports": true,
+      "EnableCustomReports": true,
+      "EnableDataExport": true,
+      "SupportedExportFormats": ["PDF", "Excel", "CSV", "JSON"],
+      "MaxExportRows": 100000,
+      "ReportCacheMinutes": 60,
+      "EnableReportSubscriptions": true,
+      "MaxSubscriptionsPerUser": 10,
+      "EnableReportSharing": true,
+      "DataRetentionDays": 1095,
+      "EnableAutomatedInsights": true,
+      "EnableDashboards": true,
+      "MaxDashboardsPerUser": 25
+    },
+
+    "ContentManagement": {
+      "EnableFileUploads": true,
+      "MaxFileSize": 104857600,
+      "AllowedFileTypes": [
+        ".jpg", ".jpeg", ".png", ".gif", ".svg",
+        ".pdf", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx",
+        ".txt", ".csv", ".zip", ".rar"
+      ],
+      "EnableImageProcessing": true,
+      "ImageQuality": 85,
+      "GenerateThumbnails": true,
+      "ThumbnailSizes": ["150x150", "300x300", "800x600"],
+      "EnableWatermarks": false,
+      "EnableContentVersioning": true,
+      "EnableContentApproval": true,
+      "ContentRetentionDays": 2555,
+      "EnableContentSearch": true,
+      "EnableContentTags": true,
+      "EnableContentCategories": true
+    }
+  },
+
+  "Infrastructure": {
+    "LoadBalancing": {
+      "Strategy": "RoundRobin",
+      "EnableStickySession": false,
+      "HealthCheckIntervalSeconds": 30,
+      "HealthCheckTimeoutSeconds": 10,
+      "HealthCheckPath": "/health",
+      "EnableFailover": true,
+      "FailoverThreshold": 3,
+      "EnableCircuitBreaker": true,
+      "CircuitBreakerThreshold": 5,
+      "CircuitBreakerTimeoutSeconds": 60,
+      "Servers": [
+        {
+          "Name": "WebServer01",
+          "Url": "https://web01.flexkit.com",
+          "Weight": 100,
+          "MaxConnections": 1000,
+          "Enabled": true
+        },
+        {
+          "Name": "WebServer02",
+          "Url": "https://web02.flexkit.com",
+          "Weight": 100,
+          "MaxConnections": 1000,
+          "Enabled": true
+        },
+        {
+          "Name": "WebServer03",
+          "Url": "https://web03.flexkit.com",
+          "Weight": 50,
+          "MaxConnections": 500,
+          "Enabled": false
+        }
+      ]
+    },
+
+    "Caching": {
+      "DefaultProvider": "Redis",
+      "EnableDistributedCaching": true,
+      "EnableMemoryCache": true,
+      "MemoryCacheSize": 268435456,
+      "DefaultCacheDuration": 3600,
+      "EnableCacheCompression": true,
+      "CompressionThreshold": 1024,
+      "CacheKeyPrefix": "flexkit:prod:",
+      "EnableCacheStatistics": true,
+      "EnableCacheWarmup": true,
+      "CacheWarmupOnStartup": true,
+      "Policies": {
+        "UserSessions": {
+          "Provider": "Redis",
+          "Duration": 3600,
+          "SlidingExpiration": true
+        },
+        "ApplicationData": {
+          "Provider": "Memory",
+          "Duration": 1800,
+          "SlidingExpiration": false
+        },
+        "StaticContent": {
+          "Provider": "Redis",
+          "Duration": 86400,
+          "SlidingExpiration": false
+        }
+      }
+    },
+
+    "Monitoring": {
+      "EnableApplicationInsights": true,
+      "ApplicationInsightsKey": "12345678-1234-1234-1234-123456789abc",
+      "EnableMetricsCollection": true,
+      "MetricsRetentionDays": 90,
+      "EnableAlerts": true,
+      "AlertThresholds": {
+        "CpuUsagePercent": 80,
+        "MemoryUsagePercent": 85,
+        "DiskUsagePercent": 90,
+        "ResponseTimeMs": 5000,
+        "ErrorRatePercent": 5,
+        "RequestsPerSecond": 1000
+      },
+      "AlertChannels": {
+        "Email": ["ops@flexkit.com", "alerts@flexkit.com"],
+        "Slack": "#ops-alerts",
+        "PagerDuty": "ABCDEF123456"
+      },
+      "EnableHealthChecks": true,
+      "HealthCheckEndpoint": "/health",
+      "DetailedHealthCheckEndpoint": "/health/detailed",
+      "HealthCheckIntervalSeconds": 30
+    },
+
+    "Logging": {
+      "MinimumLevel": "Information",
+      "EnableStructuredLogging": true,
+      "EnableConsoleLogging": false,
+      "EnableFileLogging": true,
+      "LogFilePath": "/var/log/flexkit/app-{Date}.log",
+      "LogFileRetentionDays": 30,
+      "MaxLogFileSize": "100MB",
+      "EnableRemoteLogging": true,
+      "RemoteLoggingProvider": "Splunk",
+      "RemoteLoggingUrl": "https://splunk.company.com:8088",
+      "RemoteLoggingToken": "abcdef12-3456-7890-abcd-ef1234567890",
+      "LogLevels": {
+        "Microsoft": "Warning",
+        "Microsoft.Hosting.Lifetime": "Information",
+        "System": "Warning",
+        "FlexKit": "Information"
+      },
+      "EnableSensitiveDataLogging": false,
+      "EnableQueryLogging": false,
+      "LogRequestResponse": {
+        "Enabled": true,
+        "IncludeHeaders": false,
+        "IncludeBody": false,
+        "MaxBodyLength": 4096
+      }
+    }
+  },
+
+  "Business": {
+    "Company": {
+      "Name": "FlexKit Corporation",
+      "Address": {
+        "Street": "123 Enterprise Way",
+        "Suite": "Suite 456",
+        "City": "Tech Valley",
+        "State": "CA",
+        "ZipCode": "94000",
+        "Country": "United States"
+      },
+      "Contact": {
+        "Phone": "+1-555-123-4567",
+        "Fax": "+1-555-123-4568",
+        "Email": "info@flexkit.com",
+        "Website": "https://www.flexkit.com",
+        "SupportEmail": "support@flexkit.com",
+        "SalesEmail": "sales@flexkit.com"
+      },
+      "TaxInformation": {
+        "TaxId": "12-3456789",
+        "VatNumber": "US123456789",
+        "TaxRate": 8.25,
+        "EnableTaxCalculation": true,
+        "TaxProvider": "Avalara",
+        "TaxProviderApiKey": "tax_api_key_here"
+      }
+    },
+
+    "Billing": {
+      "Currency": "USD",
+      "BillingCycle": "Monthly",
+      "InvoiceDueDays": 30,
+      "LateFeesEnabled": true,
+      "LateFeePercent": 1.5,
+      "EnableAutomaticBilling": true,
+      "EnableProration": true,
+      "EnableDiscounts": true,
+      "EnableCoupons": true,
+      "MaxDiscountPercent": 50,
+      "EnableTrialPeriods": true,
+      "DefaultTrialDays": 14,
+      "EnableRefunds": true,
+      "RefundPolicyDays": 30,
+      "PaymentMethods": ["CreditCard", "BankTransfer", "PayPal", "Invoice"],
+      "AcceptedCreditCards": ["Visa", "MasterCard", "AmericanExpress", "Discover"],
+      "MinimumPayment": 1.00,
+      "MaximumPayment": 50000.00
+    },
+
+    "Subscriptions": {
+      "EnableSubscriptions": true,
+      "EnablePlanChanges": true,
+      "EnableAddons": true,
+      "EnableMeteredBilling": true,
+      "BillingPeriods": ["Monthly", "Quarterly", "Annually"],
+      "EnableGrandfathering": true,
+      "EnableSubscriptionPausing": true,
+      "MaxPauseDays": 90,
+      "EnableCancellations": true,
+      "EnableDowngrades": true,
+      "EnableUpgrades": true,
+      "ProrationMethod": "Daily",
+      "Plans": {
+        "Basic": {
+          "MonthlyPrice": 29.99,
+          "AnnualPrice": 299.99,
+          "Features": ["BasicReporting", "EmailSupport", "5Users"],
+          "Limits": {
+            "MaxUsers": 5,
+            "MaxProjects": 10,
+            "StorageGB": 10
+          }
+        },
+        "Professional": {
+          "MonthlyPrice": 99.99,
+          "AnnualPrice": 999.99,
+          "Features": ["AdvancedReporting", "PrioritySupport", "50Users", "API"],
+          "Limits": {
+            "MaxUsers": 50,
+            "MaxProjects": 100,
+            "StorageGB": 100
+          }
+        },
+        "Enterprise": {
+          "MonthlyPrice": 299.99,
+          "AnnualPrice": 2999.99,
+          "Features": ["CustomReporting", "24x7Support", "UnlimitedUsers", "API", "SSO"],
+          "Limits": {
+            "MaxUsers": -1,
+            "MaxProjects": -1,
+            "StorageGB": 1000
+          }
+        }
+      }
+    },
+
+    "Compliance": {
+      "EnableGdprCompliance": true,
+      "EnableCcpaCompliance": true,
+      "EnableHipaaCompliance": false,
+      "EnableSoc2Compliance": true,
+      "DataRetentionPolicies": {
+        "UserData": 2555,
+        "AuditLogs": 2555,
+        "FinancialRecords": 2555,
+        "SupportTickets": 1095,
+        "EmailLogs": 365
+      },
+      "DataProcessingAgreements": {
+        "EnableDpaTracking": true,
+        "RequiredForEuCustomers": true,
+        "RequiredForCaCustomers": true,
+        "DpaTemplateId": "DPA-2024-001"
+      },
+      "PrivacySettings": {
+        "EnableCookieConsent": true,
+        "EnableDataPortability": true,
+        "EnableRightToErasure": true,
+        "EnableDataMinimization": true,
+        "EnablePurposeLimitation": true,
+        "ConsentWithdrawalProcess": "Automated"
+      }
+    }
+  },
+
+  "Environments": {
+    "Development": {
+      "DatabaseConnectionString": "Server=dev-sql.company.com;Database=FlexKitDev;",
+      "ApiBaseUrl": "https://dev-api.flexkit.com",
+      "EnableDebugMode": true,
+      "EnableDetailedErrors": true,
+      "LogLevel": "Debug",
+      "EnableHotReload": true,
+      "EnableSwaggerUI": true,
+      "MockExternalServices": true
+    },
+    "Staging": {
+      "DatabaseConnectionString": "Server=staging-sql.company.com;Database=FlexKitStaging;",
+      "ApiBaseUrl": "https://staging-api.flexkit.com",
+      "EnableDebugMode": false,
+      "EnableDetailedErrors": false,
+      "LogLevel": "Information",
+      "EnableHotReload": false,
+      "EnableSwaggerUI": true,
+      "MockExternalServices": false
+    },
+    "Production": {
+      "DatabaseConnectionString": "Server=prod-sql.company.com;Database=FlexKitProd;",
+      "ApiBaseUrl": "https://api.flexkit.com",
+      "EnableDebugMode": false,
+      "EnableDetailedErrors": false,
+      "LogLevel": "Warning",
+      "EnableHotReload": false,
+      "EnableSwaggerUI": false,
+      "MockExternalServices": false
+    }
+  },
+
+  "Regional": {
+    "DefaultRegion": "US",
+    "SupportedRegions": ["US", "EU", "APAC"],
+    "Regions": {
+      "US": {
+        "DataCenter": "us-east-1",
+        "Currency": "USD",
+        "Language": "en-US",
+        "TimeZone": "America/New_York",
+        "ComplianceRequirements": ["SOC2", "CCPA"],
+        "TaxRates": {
+          "California": 8.25,
+          "NewYork": 8.0,
+          "Texas": 6.25
+        }
+      },
+      "EU": {
+        "DataCenter": "eu-west-1",
+        "Currency": "EUR",
+        "Language": "en-GB",
+        "TimeZone": "Europe/London",
+        "ComplianceRequirements": ["GDPR", "SOC2"],
+        "TaxRates": {
+          "Germany": 19.0,
+          "France": 20.0,
+          "UnitedKingdom": 20.0,
+          "Netherlands": 21.0,
+          "Spain": 21.0,
+          "Italy": 22.0
+        },
+        "DataResidencyRules": {
+          "RequireEuDataStorage": true,
+          "AllowDataTransferToUs": false,
+          "EncryptionAtRest": true,
+          "EncryptionInTransit": true
+        }
+      },
+      "APAC": {
+        "DataCenter": "ap-southeast-1",
+        "Currency": "AUD",
+        "Language": "en-AU",
+        "TimeZone": "Australia/Sydney",
+        "ComplianceRequirements": ["SOC2"],
+        "TaxRates": {
+          "Australia": 10.0,
+          "NewZealand": 15.0,
+          "Singapore": 7.0,
+          "Japan": 10.0
+        }
+      }
+    }
+  },
+
+  "Integration": {
+    "Webhooks": {
+      "EnableWebhooks": true,
+      "MaxRetryAttempts": 5,
+      "RetryBackoffSeconds": [1, 2, 4, 8, 16],
+      "TimeoutSeconds": 30,
+      "EnableSignatureVerification": true,
+      "SigningSecret": "webhook_signing_secret_key_here",
+      "EnableEventFiltering": true,
+      "SupportedEvents": [
+        "user.created", "user.updated", "user.deleted",
+        "order.created", "order.updated", "order.completed", "order.cancelled",
+        "payment.succeeded", "payment.failed", "payment.refunded",
+        "subscription.created", "subscription.updated", "subscription.cancelled"
+      ],
+      "EventRetentionDays": 30,
+      "EnableWebhookLogs": true,
+      "LogRetentionDays": 90
+    },
+
+    "Apis": {
+      "Rest": {
+        "Version": "v1",
+        "BaseUrl": "/api/v1",
+        "EnableVersioning": true,
+        "SupportedVersions": ["v1", "v2"],
+        "DefaultVersion": "v1",
+        "EnableCompression": true,
+        "EnableCaching": true,
+        "CacheMaxAge": 300,
+        "MaxRequestSize": 52428800,
+        "EnableRequestLogging": true,
+        "EnableResponseCompression": true,
+        "SupportedMediaTypes": ["application/json", "application/xml", "text/csv"]
+      },
+      "GraphQL": {
+        "Enabled": true,
+        "Endpoint": "/graphql",
+        "EnablePlayground": false,
+        "EnableIntrospection": false,
+        "MaxComplexity": 1000,
+        "MaxDepth": 15,
+        "EnableQueryCaching": true,
+        "CacheTtlSeconds": 300,
+        "EnableSubscriptions": true,
+        "SubscriptionTransport": "WebSocket",
+        "EnableTracing": true,
+        "EnableMetrics": true
+      },
+      "Grpc": {
+        "Enabled": false,
+        "Port": 5001,
+        "EnableReflection": false,
+        "EnableCompression": true,
+        "MaxMessageSize": 4194304,
+        "EnableHealthChecks": true,
+        "EnableMetrics": true,
+        "EnableLogging": true
+      }
+    },
+
+    "ThirdPartyServices": {
+      "CrmIntegration": {
+        "Provider": "Salesforce",
+        "Enabled": true,
+        "ClientId": "3MVG9XK2d1234567890abcdefghijklmnopqrstuvwxyz",
+        "ClientSecret": "1234567890123456789",
+        "Username": "integration@flexkit.com",
+        "Password": "password123!SECURITY_TOKEN_HERE",
+        "Environment": "Production",
+        "ApiVersion": "57.0",
+        "SyncIntervalMinutes": 15,
+        "EnableRealTimeSync": true,
+        "SyncObjects": ["Account", "Contact", "Opportunity", "Lead"],
+        "EnableBidirectionalSync": true,
+        "ConflictResolutionStrategy": "LastModified"
+      },
+      "MarketingAutomation": {
+        "Provider": "HubSpot",
+        "Enabled": true,
+        "ApiKey": "pat-na1-abcdef12-3456-7890-abcd-ef1234567890",
+        "PortalId": "12345678",
+        "EnableContactSync": true,
+        "EnableDealSync": true,
+        "EnableEmailTracking": true,
+        "EnableFormSubmissions": true,
+        "SyncIntervalMinutes": 30,
+        "EnableWebhooks": true,
+        "WebhookSecret": "hubspot_webhook_secret_here"
+      },
+      "AccountingIntegration": {
+        "Provider": "QuickBooks",
+        "Enabled": true,
+        "AppKey": "qb_app_key_here",
+        "AppSecret": "qb_app_secret_here",
+        "AccessToken": "qb_access_token_here",
+        "RefreshToken": "qb_refresh_token_here",
+        "CompanyId": "123456789012345678",
+        "Environment": "Production",
+        "SyncIntervalHours": 6,
+        "SyncObjects": ["Customer", "Invoice", "Payment", "Item"],
+        "EnableAutoInvoicing": true,
+        "InvoiceTerms": "Net30"
+      }
+    }
+  },
+
+  "Performance": {
+    "CacheConfiguration": {
+      "EnableOutputCaching": true,
+      "OutputCacheDuration": 300,
+      "EnableResponseCaching": true,
+      "ResponseCacheProfiles": {
+        "Default": {
+          "Duration": 300,
+          "Location": "Any",
+          "VaryByQueryKeys": ["*"]
+        },
+        "StaticContent": {
+          "Duration": 86400,
+          "Location": "Any",
+          "VaryByHeader": "Accept-Encoding"
+        },
+        "UserSpecific": {
+          "Duration": 600,
+          "Location": "Client",
+          "VaryByHeader": "Authorization"
+        }
+      }
+    },
+    "CompressionSettings": {
+      "EnableCompression": true,
+      "CompressionLevel": "Optimal",
+      "MimeTypes": [
+        "text/html", "text/css", "text/javascript", "text/plain",
+        "application/json", "application/xml", "application/javascript"
+      ],
+      "MinimumSizeBytes": 1024,
+      "EnableBrotliCompression": true,
+      "EnableGzipCompression": true
+    },
+    "OptimizationSettings": {
+      "EnableMinification": true,
+      "EnableBundling": true,
+      "EnableImageOptimization": true,
+      "ImageQuality": 85,
+      "EnableLazyLoading": true,
+      "EnablePreloading": true,
+      "EnableDeferredLoading": true,
+      "MaxConcurrentRequests": 100,
+      "ConnectionTimeout": 30,
+      "RequestTimeout": 120
+    }
+  },
+
+  "Localization": {
+    "DefaultCulture": "en-US",
+    "SupportedCultures": [
+      "en-US", "en-GB", "en-CA", "en-AU",
+      "es-ES", "es-MX", "es-AR",
+      "fr-FR", "fr-CA",
+      "de-DE", "de-AT", "de-CH",
+      "it-IT", "pt-PT", "pt-BR",
+      "ja-JP", "ko-KR", "zh-CN", "zh-TW",
+      "ru-RU", "pl-PL", "nl-NL", "sv-SE",
+      "da-DK", "no-NO", "fi-FI"
+    ],
+    "EnableAutomaticLanguageDetection": true,
+    "FallbackCulture": "en-US",
+    "ResourcePath": "Resources",
+    "EnablePluralization": true,
+    "EnableContextualTranslations": true,
+    "TranslationProvider": "Azure",
+    "TranslationApiKey": "azure_translation_api_key_here",
+    "EnableMachineTranslation": false,
+    "EnableTranslationCaching": true,
+    "TranslationCacheTtlHours": 24,
+    "DateTimeFormats": {
+      "en-US": "MM/dd/yyyy",
+      "en-GB": "dd/MM/yyyy",
+      "de-DE": "dd.MM.yyyy",
+      "fr-FR": "dd/MM/yyyy",
+      "ja-JP": "yyyy/MM/dd"
+    },
+    "NumberFormats": {
+      "en-US": { "DecimalSeparator": ".", "GroupSeparator": "," },
+      "en-GB": { "DecimalSeparator": ".", "GroupSeparator": "," },
+      "de-DE": { "DecimalSeparator": ",", "GroupSeparator": "." },
+      "fr-FR": { "DecimalSeparator": ",", "GroupSeparator": " " }
+    },
+    "CurrencyFormats": {
+      "USD": { "Symbol": "$", "Position": "Before" },
+      "EUR": { "Symbol": "€", "Position": "After" },
+      "GBP": { "Symbol": "£", "Position": "Before" },
+      "JPY": { "Symbol": "¥", "Position": "Before" }
+    }
+  }
+}

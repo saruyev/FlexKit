@@ -2,6 +2,7 @@
 using FlexKit.Configuration.Core;
 using Reqnroll;
 using FlexKit.IntegrationTests.Utils;
+using JetBrains.Annotations;
 
 namespace FlexKit.Configuration.IntegrationTests.Utils;
 
@@ -30,6 +31,7 @@ public class TestContainerBuilder : BaseTestContainerBuilder<TestContainerBuilde
     /// Use this when you want to manually configure FlexConfig or don't need it.
     /// </summary>
     /// <returns>This builder for method chaining</returns>
+    [UsedImplicitly]
     public TestContainerBuilder WithoutFlexConfig()
     {
         _registerFlexConfig = false;

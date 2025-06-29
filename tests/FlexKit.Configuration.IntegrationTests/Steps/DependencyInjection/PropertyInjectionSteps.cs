@@ -1,13 +1,11 @@
 ﻿using Autofac;
-using Autofac.Core;
 using FlexKit.Configuration.Core;
 using FlexKit.Configuration.IntegrationTests.Utils;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Reqnroll;
-using System.IO;
 using FlexKit.IntegrationTests.Utils;
-using Xunit;
+using JetBrains.Annotations;
 
 namespace FlexKit.Configuration.IntegrationTests.Steps.DependencyInjection;
 
@@ -19,9 +17,8 @@ namespace FlexKit.Configuration.IntegrationTests.Steps.DependencyInjection;
 /// with other step classes.
 /// </summary>
 [Binding]
-public class PropertyInjectionSteps
+public class PropertyInjectionSteps(ScenarioContext scenarioContext)
 {
-    private readonly ScenarioContext _scenarioContext;
     private TestContainerBuilder? _testContainerBuilder;
     private ContainerBuilder? _containerBuilder;
     private IContainer? _container;
@@ -32,16 +29,11 @@ public class PropertyInjectionSteps
     private MultiplePropertyInjectionService? _resolvedServiceWithMultipleProperties;
     private PropertyInjectionModule? _customPropertyModule;
     private readonly Dictionary<string, string?> _testConfigurationData = new();
-    private readonly Dictionary<string, string?> _environmentVariables = new();
+    [UsedImplicitly] public readonly Dictionary<string, string?> EnvironmentVariables = new();
     private Exception? _lastPropertyInjectionException;
     private bool _containerBuildSucceeded;
     private bool _propertyInjectionEnabled;
     private readonly List<PropertyInjectionTestService> _multipleResolvedInstances = new();
-
-    public PropertyInjectionSteps(ScenarioContext scenarioContext)
-    {
-        _scenarioContext = scenarioContext;
-    }
 
     #region Test Service Classes
 
@@ -51,19 +43,19 @@ public class PropertyInjectionSteps
     /// </summary>
     public class PropertyInjectionTestService
     {
-        public IFlexConfig? FlexConfiguration { get; set; }
+        public IFlexConfig? FlexConfiguration { get; [UsedImplicitly] set; }
         public bool HasInjectedProperty => FlexConfiguration != null;
     }
 
     /// <summary>
     /// Test service with multiple configuration properties for injection.
-    /// Only FlexConfiguration property will be injected by ConfigurationModule.
+    /// ConfigurationModule will inject only FlexConfiguration property.
     /// </summary>
     public class MultiplePropertyInjectionService
     {
-        public IFlexConfig? FlexConfiguration { get; set; }
-        public IConfiguration? StandardConfiguration { get; set; }
-        public dynamic? DynamicConfiguration { get; set; }
+        public IFlexConfig? FlexConfiguration { get; [UsedImplicitly] set; }
+        public IConfiguration? StandardConfiguration { get; [UsedImplicitly] set; }
+        public dynamic? DynamicConfiguration { get; [UsedImplicitly] set; }
         
         public int InjectedPropertiesCount => 
             (FlexConfiguration != null ? 1 : 0) +
@@ -74,20 +66,13 @@ public class PropertyInjectionSteps
     /// <summary>
     /// Custom Autofac module for property injection scenarios.
     /// </summary>
-    public class PropertyInjectionModule : Module
+    private class PropertyInjectionModule(Dictionary<string, string?> moduleConfiguration) : Module
     {
-        private readonly Dictionary<string, string?> _moduleConfiguration;
-
-        public PropertyInjectionModule(Dictionary<string, string?> moduleConfiguration)
-        {
-            _moduleConfiguration = moduleConfiguration;
-        }
-
         protected override void Load(ContainerBuilder builder)
         {
             // Register configuration from module data
             var configBuilder = new ConfigurationBuilder();
-            configBuilder.AddInMemoryCollection(_moduleConfiguration);
+            configBuilder.AddInMemoryCollection(moduleConfiguration);
             var configuration = configBuilder.Build();
 
             builder.RegisterInstance(configuration)
@@ -110,10 +95,10 @@ public class PropertyInjectionSteps
     [Given(@"I have arranged a property injection test environment")]
     public void GivenIHaveArrangedAPropertyInjectionTestEnvironment()
     {
-        _testContainerBuilder = TestContainerBuilder.Create(_scenarioContext);
+        _testContainerBuilder = TestContainerBuilder.Create(scenarioContext);
         _containerBuilder = new ContainerBuilder();
-        _configurationBuilder = TestConfigurationBuilder.Create(_scenarioContext);
-        _scenarioContext.Set(_testContainerBuilder, "PropertyInjectionContainerBuilder");
+        _configurationBuilder = TestConfigurationBuilder.Create(scenarioContext);
+        scenarioContext.Set(_testContainerBuilder, "PropertyInjectionContainerBuilder");
     }
 
     [Given(@"I have configured test configuration data:")]
@@ -135,8 +120,8 @@ public class PropertyInjectionSteps
 
         _flexConfiguration = _configuration.GetFlexConfiguration();
         
-        _scenarioContext.Set(_configuration, "PropertyInjectionConfiguration");
-        _scenarioContext.Set(_flexConfiguration, "PropertyInjectionFlexConfiguration");
+        scenarioContext.Set(_configuration, "PropertyInjectionConfiguration");
+        scenarioContext.Set(_flexConfiguration, "PropertyInjectionFlexConfiguration");
     }
 
     #endregion
@@ -151,7 +136,7 @@ public class PropertyInjectionSteps
         // Enable property injection using Autofac's property injection support
         _propertyInjectionEnabled = true;
         
-        // Set up basic configuration if none exists
+        // Set up a basic configuration if none exists
         if (_configuration == null)
         {
             var basicConfig = new Dictionary<string, string?>
@@ -166,8 +151,8 @@ public class PropertyInjectionSteps
 
             _flexConfiguration = _configuration.GetFlexConfiguration();
             
-            _scenarioContext.Set(_configuration, "PropertyInjectionConfiguration");
-            _scenarioContext.Set(_flexConfiguration, "PropertyInjectionFlexConfiguration");
+            scenarioContext.Set(_configuration, "PropertyInjectionConfiguration");
+            scenarioContext.Set(_flexConfiguration, "PropertyInjectionFlexConfiguration");
         }
     }
 
@@ -232,8 +217,8 @@ public class PropertyInjectionSteps
 
         _flexConfiguration = _configuration.GetFlexConfiguration();
         
-        _scenarioContext.Set(_configuration, "PropertyInjectionConfiguration");
-        _scenarioContext.Set(_flexConfiguration, "PropertyInjectionFlexConfiguration");
+        scenarioContext.Set(_configuration, "PropertyInjectionConfiguration");
+        scenarioContext.Set(_flexConfiguration, "PropertyInjectionFlexConfiguration");
     }
 
     [When(@"I create custom property injection module with configuration:")]
@@ -268,7 +253,7 @@ public class PropertyInjectionSteps
     [When(@"I assign environment variable ""(.*)"" to ""(.*)""")]
     public void WhenIAssignEnvironmentVariableTo(string variableName, string value)
     {
-        _environmentVariables[variableName] = value;
+        EnvironmentVariables[variableName] = value;
         Environment.SetEnvironmentVariable(variableName, value);
     }
 
@@ -283,8 +268,8 @@ public class PropertyInjectionSteps
 
         _flexConfiguration = _configuration.GetFlexConfiguration();
         
-        _scenarioContext.Set(_configuration, "PropertyInjectionConfiguration");
-        _scenarioContext.Set(_flexConfiguration, "PropertyInjectionFlexConfiguration");
+        scenarioContext.Set(_configuration, "PropertyInjectionConfiguration");
+        scenarioContext.Set(_flexConfiguration, "PropertyInjectionFlexConfiguration");
     }
 
     [When(@"I build container with property injection support")]
@@ -317,7 +302,7 @@ public class PropertyInjectionSteps
             _container = _containerBuilder!.Build();
             _containerBuildSucceeded = true;
             
-            _scenarioContext.RegisterAutofacContainer(_container);
+            scenarioContext.RegisterAutofacContainer(_container);
         }
         catch (Exception ex)
         {
@@ -433,10 +418,10 @@ public class PropertyInjectionSteps
         var flexConfig = _resolvedServiceWithMultipleProperties.FlexConfiguration!;
         
         // Verify that the injected FlexConfig contains expected test data
-        if (_testConfigurationData.ContainsKey("Database:Host"))
+        if (_testConfigurationData.TryGetValue("Database:Host", out var value))
         {
             var dbHost = flexConfig["Database:Host"];
-            dbHost.Should().Be(_testConfigurationData["Database:Host"], "Database host should match test data");
+            dbHost.Should().Be(value, "Database host should match test data");
         }
     }
 
@@ -512,7 +497,7 @@ public class PropertyInjectionSteps
     [Then(@"property injection should handle missing configuration gracefully")]
     public void ThenPropertyInjectionShouldHandleMissingConfigurationGracefully()
     {
-        // Even without configuration, the container should build and services should be resolvable
+        // Even without configuration, the container should build, and services should be resolvable
         // The FlexConfig property might be null, which is acceptable behavior
         _lastPropertyInjectionException.Should().BeNull("Property injection should not cause exceptions");
     }
@@ -525,7 +510,7 @@ public class PropertyInjectionSteps
         
         var flexConfig = _resolvedServiceWithProperty.FlexConfiguration!;
         
-        // Verify environment variables are accessible (with prefix removed)
+        // Verify environment variables are accessible (with the prefix removed)
         var dbHost = flexConfig["DATABASE:HOST"];
         dbHost.Should().Be("env-host.com", "Environment variable should be accessible through FlexConfig");
     }

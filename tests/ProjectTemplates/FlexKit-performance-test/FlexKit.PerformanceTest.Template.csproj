@@ -1,14 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../src/'))" />
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.targets', '$(MSBuildThisFileDirectory)../src/'))" />
   <PropertyGroup>
     <TargetFramework>TARGETFRAMEWORK_PLACEHOLDER</TargetFramework>
     <!-- Performance test specific settings -->
-    <CoverageThreshold>50</CoverageThreshold> <!-- Lower coverage for perf tests -->
-
-    <!-- Performance optimization settings -->
-    <Optimize>true</Optimize>
-    <DebugType>portable</DebugType>
-    <DebugSymbols>true</DebugSymbols>
     <ServerGarbageCollection>true</ServerGarbageCollection>
     <ConcurrentGarbageCollection>true</ConcurrentGarbageCollection>
     <RetainVMGarbageCollection>true</RetainVMGarbageCollection>
@@ -18,7 +13,6 @@
 
     <!-- Allow unsafe code for performance optimizations -->
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <LangVersion>preview</LangVersion>
 
     <!-- Disable coverage collection during performance tests -->
     <CollectCoverage>false</CollectCoverage>
@@ -30,34 +24,30 @@
   <!-- Performance test specific packages (beyond what's in Directory.Build.props) -->
   <ItemGroup>
     <!-- BenchmarkDotNet for micro-benchmarks -->
-    <PackageReference Include="BenchmarkDotNet" Version="[0.15.2,1.0.0)" />
-    <PackageReference Include="BenchmarkDotNet.Annotations" Version="[0.15.2,1.0.0]" />
-    <PackageReference Include="BenchmarkDotNet.Diagnostics.Windows" Version="[0.15.2,1.0.0)" Condition="$([MSBuild]::IsOSPlatform('Windows'))" />
-    <PackageReference Include="BenchmarkDotNet.Diagnostics.dotTrace" Version="[0.15.2,1.0.0)" />
+    <PackageReference Include="BenchmarkDotNet" Version="[0.15.2,1.0.0)"/>
+    <PackageReference Include="BenchmarkDotNet.Annotations" Version="[0.15.2,1.0.0]"/>
+    <PackageReference Include="BenchmarkDotNet.Diagnostics.Windows" Version="[0.15.2,1.0.0)" Condition="$([MSBuild]::IsOSPlatform('Windows'))"/>
+    <PackageReference Include="BenchmarkDotNet.Diagnostics.dotTrace" Version="[0.15.2,1.0.0)"/>
 
-    <!-- Load testing framework -->
-    <PackageReference Include="NBomber" Version="[6.0.2,7.0.0)" />
-
-    <!-- Memory analysis and profiling -->
-    <PackageReference Include="Microsoft.Diagnostics.Tracing.TraceEvent" Version="[3.1.22,4.0.0)" Condition="$([MSBuild]::IsOSPlatform('Windows'))" />
-    <PackageReference Include="System.Diagnostics.PerformanceCounter" Version="[9.0.6,10.0.0)" Condition="$([MSBuild]::IsOSPlatform('Windows'))" />
-    <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="[9.0.6,10.0.0)" />
-
-    <!-- High-performance collections and utilities -->
-    <PackageReference Include="System.Threading.Tasks.Extensions" Version="[4.6.3,5.0.0)" />
-    <PackageReference Include="System.Threading.Channels" Version="[9.0.6,10.0.0)" />
-    <PackageReference Include="System.IO.Pipelines" Version="[9.0.6,10.0.0)" />
-    <PackageReference Include="Microsoft.Extensions.ObjectPool" Version="[9.0.6,10.0.0)" />
-
-    <!-- Time manipulation for performance testing -->
-    <PackageReference Include="Microsoft.Extensions.TimeProvider.Testing" Version="[9.6.0,10.0.0)" />
+    <PackageReference Include="Autofac" Version="8.3.0" />
+    <PackageReference Include="Autofac.Extensions.DependencyInjection" Version="10.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.6" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="9.0.6" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="9.0.6" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="9.0.6" />
+    <PackageReference Include="Microsoft.Extensions.DependencyModel" Version="9.0.6" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.6" />
+    <PackageReference Include="Microsoft.Extensions.Options" Version="9.0.6" />
+    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="9.0.6" />
   </ItemGroup>
 
+  <!-- Performance test specific build settings -->
   <!-- Performance test specific build settings -->
   <PropertyGroup>
     <!-- Release mode optimizations always -->
     <Optimize>true</Optimize>
     <DebugType>portable</DebugType>
+    <DebugSymbols>true</DebugSymbols>
 
     <!-- Aggressive inlining and optimizations -->
     <AggressiveInlining>true</AggressiveInlining>
@@ -69,30 +59,12 @@
 
   <!-- Benchmark configuration files -->
   <ItemGroup>
-    <None Update="BenchmarkDotNet.Artifacts/**/*">
+    <None Update="**/*.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="*.config">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="TestData/**/*.bin">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="TestData/**/*.dat">
+    <None Update="**/*.env">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
-
-  <!-- Performance test specific targets -->
-  <Target Name="RunBenchmarks" DependsOnTargets="Build">
-    <PropertyGroup>
-      <BenchmarkAssembly>$(OutputPath)$(AssemblyName).dll</BenchmarkAssembly>
-      <BenchmarkResults>$(MSBuildProjectDirectory)\BenchmarkDotNet.Artifacts</BenchmarkResults>
-    </PropertyGroup>
-
-    <Message Text="🚀 Running benchmarks: $(BenchmarkAssembly)" Importance="high" />
-    <Message Text="📊 Results will be in: $(BenchmarkResults)" Importance="normal" />
-    <Message Text="⚡ To run manually: dotnet run -c Release --project $(MSBuildProjectFile)" Importance="high" />
-  </Target>
 
 </Project>

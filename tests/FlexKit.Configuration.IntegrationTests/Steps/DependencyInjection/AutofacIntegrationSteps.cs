@@ -1,13 +1,11 @@
 ﻿using Autofac;
-using Autofac.Extensions.DependencyInjection;
 using FlexKit.Configuration.Core;
 using FlexKit.Configuration.IntegrationTests.Utils;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using Reqnroll;
 using System.Text.Json;
-using FlexKit.IntegrationTests.Utils;
+using JetBrains.Annotations;
 using Xunit;
 
 namespace FlexKit.Configuration.IntegrationTests.Steps.DependencyInjection;
@@ -20,9 +18,8 @@ namespace FlexKit.Configuration.IntegrationTests.Steps.DependencyInjection;
 /// with other step classes.
 /// </summary>
 [Binding]
-public class AutofacIntegrationSteps
+public class AutofacIntegrationSteps(ScenarioContext scenarioContext)
 {
-    private readonly ScenarioContext _scenarioContext;
     private TestContainerBuilder? _testContainerBuilder;
     private ContainerBuilder? _autofacContainerBuilder;
     private IContainer? _autofacContainer;
@@ -41,37 +38,22 @@ public class AutofacIntegrationSteps
     private TestAutofacModule? _testModule;
     private readonly List<IFlexConfig> _multipleResolvedInstances = new();
 
-    public AutofacIntegrationSteps(ScenarioContext scenarioContext)
-    {
-        _scenarioContext = scenarioContext;
-    }
-
     #region Test Service Classes
 
     /// <summary>
     /// Test service that depends on IFlexConfig through constructor injection.
     /// </summary>
-    public class TestServiceWithIFlexConfig
+    public class TestServiceWithIFlexConfig(IFlexConfig configuration)
     {
-        public IFlexConfig Configuration { get; }
-
-        public TestServiceWithIFlexConfig(IFlexConfig configuration)
-        {
-            Configuration = configuration;
-        }
+        public IFlexConfig Configuration { get; } = configuration;
     }
 
     /// <summary>
     /// Test service that depends on dynamic configuration through constructor injection.
     /// </summary>
-    public class TestServiceWithDynamicConfig
+    public class TestServiceWithDynamicConfig(dynamic configuration)
     {
-        public dynamic Configuration { get; }
-
-        public TestServiceWithDynamicConfig(dynamic configuration)
-        {
-            Configuration = configuration;
-        }
+        public dynamic Configuration { get; } = configuration;
     }
 
     /// <summary>
@@ -79,25 +61,19 @@ public class AutofacIntegrationSteps
     /// </summary>
     public class TestServiceWithPropertyInjection
     {
-        public IFlexConfig? FlexConfig { get; set; }
-        public string ServiceName { get; set; } = "TestService";
+        public IFlexConfig? FlexConfig { get; [UsedImplicitly] set; }
+        [UsedImplicitly] public string ServiceName { get; set; } = "TestService";
     }
 
     /// <summary>
     /// Test Autofac module that registers FlexConfig.
     /// </summary>
-    public class TestAutofacModule : Module
+    [UsedImplicitly]
+    public class TestAutofacModule(IConfiguration configuration) : Module
     {
-        private readonly IConfiguration _configuration;
-
-        public TestAutofacModule(IConfiguration configuration)
-        {
-            _configuration = configuration;
-        }
-
         protected override void Load(ContainerBuilder builder)
         {
-            var flexConfig = _configuration.GetFlexConfiguration();
+            var flexConfig = configuration.GetFlexConfiguration();
             
             builder.RegisterInstance(flexConfig)
                 .As<IFlexConfig>()
@@ -113,13 +89,13 @@ public class AutofacIntegrationSteps
     [Given(@"I have initialized an Autofac integration test environment")]
     public void GivenIHaveInitializedAnAutofacIntegrationTestEnvironment()
     {
-        _testContainerBuilder = TestContainerBuilder.Create(_scenarioContext);
+        _testContainerBuilder = TestContainerBuilder.Create(scenarioContext);
         _autofacContainerBuilder = new ContainerBuilder();
-        _configurationBuilder = TestConfigurationBuilder.Create(_scenarioContext);
+        _configurationBuilder = TestConfigurationBuilder.Create(scenarioContext);
         
-        _scenarioContext.Set(_testContainerBuilder, "TestContainerBuilder");
-        _scenarioContext.Set(_autofacContainerBuilder, "AutofacContainerBuilder");
-        _scenarioContext.Set(_configurationBuilder, "ConfigurationBuilder");
+        scenarioContext.Set(_testContainerBuilder, "TestContainerBuilder");
+        scenarioContext.Set(_autofacContainerBuilder, "AutofacContainerBuilder");
+        scenarioContext.Set(_configurationBuilder, "ConfigurationBuilder");
     }
 
     #endregion
@@ -144,8 +120,8 @@ public class AutofacIntegrationSteps
 
         _flexConfiguration = _configuration.GetFlexConfiguration();
         
-        _scenarioContext.Set(_configuration, "Configuration");
-        _scenarioContext.Set(_flexConfiguration, "FlexConfiguration");
+        scenarioContext.Set(_configuration, "Configuration");
+        scenarioContext.Set(_flexConfiguration, "FlexConfiguration");
     }
 
     [When(@"I configure FlexConfig with service configuration:")]
@@ -245,8 +221,8 @@ public class AutofacIntegrationSteps
             .As<dynamic>()
             .SingleInstance();
             
-        _scenarioContext.Set(_configuration, "Configuration");
-        _scenarioContext.Set(_flexConfiguration, "FlexConfiguration");
+        scenarioContext.Set(_configuration, "Configuration");
+        scenarioContext.Set(_flexConfiguration, "FlexConfiguration");
     }
 
     [When(@"I register FlexConfig in the Autofac container with property injection")]
@@ -335,7 +311,7 @@ public class AutofacIntegrationSteps
         // Ensure FlexConfig is registered as dynamic if not already done
         if (_flexConfiguration != null)
         {
-            // Check if dynamic is already registered by trying to register it
+            // Check if a dynamic is already registered by trying to register it.
             // Autofac will handle duplicate registrations appropriately
             _autofacContainerBuilder!.RegisterInstance(_flexConfiguration)
                 .As<dynamic>()
@@ -377,7 +353,7 @@ public class AutofacIntegrationSteps
         _configuration.Should().NotBeNull("Configuration should be set up");
         
         _testModule = new TestAutofacModule(_configuration!);
-        _scenarioContext.Set(_testModule, "TestModule");
+        scenarioContext.Set(_testModule, "TestModule");
     }
 
     [When(@"I configure the module with configuration data:")]
@@ -396,8 +372,8 @@ public class AutofacIntegrationSteps
             .Build();
 
         _testModule = new TestAutofacModule(_configuration);
-        _scenarioContext.Set(_configuration, "Configuration");
-        _scenarioContext.Set(_testModule, "TestModule");
+        scenarioContext.Set(_configuration, "Configuration");
+        scenarioContext.Set(_testModule, "TestModule");
     }
 
     [When(@"I register the module in the Autofac container")]
@@ -424,7 +400,7 @@ public class AutofacIntegrationSteps
             _containerBuildSucceeded = true;
             _lastAutofacException = null;
             
-            _scenarioContext.Set(_autofacContainer, "AutofacContainer");
+            scenarioContext.Set(_autofacContainer, "AutofacContainer");
         }
         catch (Exception ex)
         {
@@ -473,7 +449,7 @@ public class AutofacIntegrationSteps
         _autofacContainer.Should().NotBeNull("Autofac container should be built");
         
         _lifetimeScope = _autofacContainer!.BeginLifetimeScope();
-        _scenarioContext.Set(_lifetimeScope, "LifetimeScope");
+        scenarioContext.Set(_lifetimeScope, "LifetimeScope");
     }
 
     [When(@"I resolve dynamic configuration from the container")]
@@ -673,7 +649,7 @@ public class AutofacIntegrationSteps
         instance1.Should().BeSameAs(instance2, "First and second instances should be the same");
         instance2.Should().BeSameAs(instance3, "Second and third instances should be the same");
         
-        _multipleResolvedInstances.AddRange(new[] { instance1, instance2, instance3 });
+        _multipleResolvedInstances.AddRange([instance1, instance2, instance3]);
     }
 
     [Then(@"the singleton instance should maintain state across resolutions")]
@@ -768,7 +744,7 @@ public class AutofacIntegrationSteps
                 if (segments.Length >= 2)
                 {
                     dynamic current = _resolvedDynamicConfig!;
-                    // Just verify the dynamic object responds to property access
+                    // Verify the dynamic object responds to property access
                     Assert.NotNull(current);
                 }
             }
@@ -826,7 +802,7 @@ public class AutofacIntegrationSteps
             interfaceValue.Should().Be(kvp.Value, "Both registrations should have consistent data");
         }
         
-        // Just verify dynamic config is not null, avoid complex dynamic assertions
+        // Verify dynamic config is not null, avoid complex dynamic assertions
         Assert.NotNull(flexConfigDynamic);
     }
 
@@ -894,7 +870,7 @@ public class AutofacIntegrationSteps
     /// <summary>
     /// Navigates to a property using dot notation.
     /// </summary>
-    private static object? NavigateToProperty(dynamic source, string propertyPath)
+    private static object NavigateToProperty(dynamic source, string propertyPath)
     {
         var segments = propertyPath.Split('.');
         dynamic current = source;

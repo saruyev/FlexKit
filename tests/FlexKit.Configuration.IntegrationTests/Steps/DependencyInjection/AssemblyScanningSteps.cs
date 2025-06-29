@@ -6,9 +6,9 @@ using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Reqnroll;
 using System.Diagnostics;
-using System.Reflection;
 using System.Text.Json;
-using FlexKit.IntegrationTests.Utils;
+using Autofac.Core;
+using JetBrains.Annotations;
 using Xunit;
 using Module = Autofac.Module;
 
@@ -21,9 +21,8 @@ namespace FlexKit.Configuration.IntegrationTests.Steps.DependencyInjection;
 /// with other step classes.
 /// </summary>
 [Binding]
-public class AssemblyScanningSteps
+public class AssemblyScanningSteps(ScenarioContext scenarioContext)
 {
-    private readonly ScenarioContext _scenarioContext;
     private TestContainerBuilder? _testContainerBuilder;
     private ContainerBuilder? _containerBuilder;
     private IContainer? _container;
@@ -31,7 +30,7 @@ public class AssemblyScanningSteps
     private IConfiguration? _configuration;
     private IFlexConfig? _flexConfiguration;
     private readonly Dictionary<string, string?> _assemblyScanningConfig = new();
-    private readonly List<System.Reflection.Assembly> _scannedAssemblies = new();
+    [UsedImplicitly] public readonly List<System.Reflection.Assembly> ScannedAssemblies = new();
     private readonly List<string> _filteredAssemblyNames = new();
     private Exception? _lastScanningException;
     private bool _containerBuildSucceeded;
@@ -39,42 +38,31 @@ public class AssemblyScanningSteps
     private readonly Stopwatch _performanceStopwatch = new();
     private readonly List<string> _performanceMetrics = new();
 
-    public AssemblyScanningSteps(ScenarioContext scenarioContext)
-    {
-        _scenarioContext = scenarioContext;
-    }
-
     #region Test Module Classes
 
     /// <summary>
     /// Test module for assembly scanning scenarios.
     /// This module has no dependencies to avoid construction issues during scanning.
     /// </summary>
-    public class TestScanningModule : Module
+    [method: UsedImplicitly]
+    public class TestScanningModule(string moduleName) : Module
     {
-        private readonly string _moduleName;
-
         public TestScanningModule() : this("TestScanningModule")
         {
         }
 
-        public TestScanningModule(string moduleName)
-        {
-            _moduleName = moduleName;
-        }
-
-        public string ModuleName => _moduleName;
+        public string ModuleName => moduleName;
 
         protected override void Load(ContainerBuilder builder)
         {
             // Register test services to verify module discovery
             builder.RegisterType<TestScanningService>()
                 .As<ITestScanningService>()
-                .Named<ITestScanningService>(_moduleName)
+                .Named<ITestScanningService>(moduleName)
                 .SingleInstance();
 
             // Register the module name for verification
-            builder.RegisterInstance(_moduleName)
+            builder.RegisterInstance(moduleName)
                 .Named<string>("ModuleName")
                 .SingleInstance();
         }
@@ -83,6 +71,7 @@ public class AssemblyScanningSteps
     /// <summary>
     /// Test service interface for scanning verification.
     /// </summary>
+    [UsedImplicitly]
     public interface ITestScanningService
     {
         string GetServiceName();
@@ -103,13 +92,13 @@ public class AssemblyScanningSteps
     [Given(@"I have initialized an assembly scanning environment")]
     public void GivenIHaveInitializedAnAssemblyScanningEnvironment()
     {
-        _testContainerBuilder = TestContainerBuilder.Create(_scenarioContext);
+        _testContainerBuilder = TestContainerBuilder.Create(scenarioContext);
         _containerBuilder = new ContainerBuilder();
-        _configurationBuilder = TestConfigurationBuilder.Create(_scenarioContext);
+        _configurationBuilder = TestConfigurationBuilder.Create(scenarioContext);
         
-        _scenarioContext.Set(_testContainerBuilder, "TestContainerBuilder");
-        _scenarioContext.Set(_containerBuilder, "ContainerBuilder");
-        _scenarioContext.Set(_configurationBuilder, "ConfigurationBuilder");
+        scenarioContext.Set(_testContainerBuilder, "TestContainerBuilder");
+        scenarioContext.Set(_containerBuilder, "ContainerBuilder");
+        scenarioContext.Set(_configurationBuilder, "ConfigurationBuilder");
     }
 
     #endregion
@@ -141,7 +130,7 @@ public class AssemblyScanningSteps
             
             // Store scanned assemblies for verification
             var currentAssemblies = AppDomain.CurrentDomain.GetAssemblies();
-            _scannedAssemblies.AddRange(currentAssemblies.Where(a => 
+            ScannedAssemblies.AddRange(currentAssemblies.Where(a => 
                 a.GetName().Name?.Contains("FlexKit.Configuration.Core") == true));
         }
         catch (Exception ex)
@@ -163,7 +152,7 @@ public class AssemblyScanningSteps
             .AddInMemoryCollection(_assemblyScanningConfig)
             .Build();
             
-        _scenarioContext.Set(_configuration, "ScanningConfiguration");
+        scenarioContext.Set(_configuration, "ScanningConfiguration");
     }
 
     [When(@"I scan assemblies using configuration filters")]
@@ -211,7 +200,7 @@ public class AssemblyScanningSteps
             .AddInMemoryCollection(_assemblyScanningConfig)
             .Build();
             
-        _scenarioContext.Set(_configuration, "ScanningConfiguration");
+        scenarioContext.Set(_configuration, "ScanningConfiguration");
     }
 
     [When(@"I scan assemblies using name-based filters")]
@@ -246,7 +235,7 @@ public class AssemblyScanningSteps
     public void WhenICreateCustomScanningModule(string moduleName)
     {
         _customScanningModule = new TestScanningModule(moduleName);
-        _scenarioContext.Set(_customScanningModule, "CustomScanningModule");
+        scenarioContext.Set(_customScanningModule, "CustomScanningModule");
     }
 
     [When(@"I register the custom scanning module in test assembly")]
@@ -277,7 +266,7 @@ public class AssemblyScanningSteps
                 .AddInMemoryCollection(configData)
                 .Build();
                 
-            _scenarioContext.Set(_configuration, "ScanningConfiguration");
+            scenarioContext.Set(_configuration, "ScanningConfiguration");
         }
         catch (Exception ex)
         {
@@ -373,7 +362,7 @@ public class AssemblyScanningSteps
                 
             // Simulate bulk assembly scanning
             _containerBuilder.RegisterModule(new TestScanningModule());
-            _scannedAssemblies.Add(System.Reflection.Assembly.GetExecutingAssembly());
+            ScannedAssemblies.Add(System.Reflection.Assembly.GetExecutingAssembly());
         }
         catch (Exception ex)
         {
@@ -523,7 +512,7 @@ public class AssemblyScanningSteps
     {
         _container.Should().NotBeNull("Container should be built");
         
-        // Verify that container has registrations
+        // Verify that the container has registrations
         var containerRegistrations = _container!.ComponentRegistry.Registrations;
         containerRegistrations.Should().NotBeEmpty("Container should have registrations from scanned modules");
     }
@@ -664,14 +653,14 @@ public class AssemblyScanningSteps
     {
         _container.Should().NotBeNull("Container should be built");
         
-        // Check if dynamic configuration is registered and resolve it safely
+        // Check if a dynamic configuration is registered and resolve it safely
         if (_container!.IsRegistered<dynamic>())
         {
             try
             {
-                var dynamicConfig = _container.Resolve<dynamic>();
+                _ = _container.Resolve<dynamic>();
                 // Don't try to access properties on the dynamic object since it might be null
-                // Just verify that the resolution doesn't throw an exception
+                // verify that the resolution doesn't throw an exception
                 // The fact that we can resolve it means dynamic registration is working
                 
                 // Use a simple assertion that doesn't involve dynamic binding
@@ -685,7 +674,7 @@ public class AssemblyScanningSteps
         }
         else
         {
-            // If dynamic is not registered, that's also acceptable for this test
+            // If the dynamic is not registered, that's also acceptable for this test
             // We just want to verify the container works with scanned modules
             _container.ComponentRegistry.Registrations.Should().NotBeEmpty("Container should have some registrations from scanned modules");
         }
@@ -781,10 +770,11 @@ public class AssemblyScanningSteps
         _container.Should().NotBeNull("Container should be built");
         
         var containerRegistrations = _container!.ComponentRegistry.Registrations;
-        containerRegistrations.Should().NotBeEmpty("All discovered modules should be registered");
+        var registrations = containerRegistrations as IComponentRegistration[] ?? containerRegistrations.ToArray();
+        registrations.Should().NotBeEmpty("All discovered modules should be registered");
         
         // Verify that registrations are valid
-        foreach (var registration in containerRegistrations.Take(5)) // Check first few registrations
+        foreach (var registration in registrations.Take(5)) // Check the first few registrations
         {
             registration.Should().NotBeNull("Each registration should be valid");
             registration.Services.Should().NotBeEmpty("Each registration should have services");

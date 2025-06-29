@@ -1,6 +1,5 @@
 ﻿using FlexKit.Configuration.Core;
 using FlexKit.Configuration.IntegrationTests.Utils;
-using FlexKit.IntegrationTests.Utils;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Reqnroll;
@@ -15,9 +14,8 @@ namespace FlexKit.Configuration.IntegrationTests.Steps.Sources;
 /// with other configuration step classes.
 /// </summary>
 [Binding]
-public class EnvironmentVariableSteps
+public class EnvironmentVariableSteps(ScenarioContext scenarioContext)
 {
-    private readonly ScenarioContext _scenarioContext;
     private TestConfigurationBuilder? _envConfigurationBuilder;
     private IConfiguration? _envConfiguration;
     private IFlexConfig? _envFlexConfiguration;
@@ -27,18 +25,13 @@ public class EnvironmentVariableSteps
     private Exception? _lastEnvException;
     private bool _envLoadingSucceeded;
 
-    public EnvironmentVariableSteps(ScenarioContext scenarioContext)
-    {
-        _scenarioContext = scenarioContext;
-    }
-
     #region Given Steps - Setup
 
     [Given(@"I have prepared an environment variable configuration source environment")]
     public void GivenIHavePreparedAnEnvironmentVariableConfigurationSourceEnvironment()
     {
-        _envConfigurationBuilder = TestConfigurationBuilder.Create(_scenarioContext);
-        _scenarioContext.Set(_envConfigurationBuilder, "EnvironmentConfigurationBuilder");
+        _envConfigurationBuilder = TestConfigurationBuilder.Create(scenarioContext);
+        scenarioContext.Set(_envConfigurationBuilder, "EnvironmentConfigurationBuilder");
     }
 
     #endregion

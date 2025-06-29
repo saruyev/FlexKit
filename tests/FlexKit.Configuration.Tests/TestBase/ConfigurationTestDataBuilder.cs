@@ -1,6 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using Bogus;
+﻿using Bogus;
+using JetBrains.Annotations;
 
 namespace FlexKit.Configuration.Tests.TestBase;
 
@@ -47,7 +46,7 @@ public static class ConfigurationTestDataBuilder
             .RuleFor(u => u.LastLoginAt, f => f.Date.Recent(30));
 
     /// <summary>
-    /// Creates configuration dictionary with realistic key-value pairs.
+    /// Creates a configuration dictionary with realistic key-value pairs.
     /// </summary>
     public static Dictionary<string, string> CreateConfigurationDictionary()
     {
@@ -91,30 +90,30 @@ public static class ConfigurationTestDataBuilder
 /// </summary>
 public class DatabaseConfig
 {
-    public string ConnectionString { get; set; } = string.Empty;
-    public int CommandTimeout { get; set; }
-    public int MaxRetryCount { get; set; }
-    public bool EnableLogging { get; set; }
-    public int PoolSize { get; set; }
+    public string ConnectionString { get; [UsedImplicitly] set; } = string.Empty;
+    public int CommandTimeout { get; [UsedImplicitly] set; }
+    public int MaxRetryCount { get; [UsedImplicitly] set; }
+    public bool EnableLogging { get; [UsedImplicitly] set; }
+    public int PoolSize { get; [UsedImplicitly] set; }
 }
 
 public class ApiConfig
 {
-    public string BaseUrl { get; set; } = string.Empty;
-    public string ApiKey { get; set; } = string.Empty;
-    public int Timeout { get; set; }
-    public int MaxRetries { get; set; }
-    public bool EnableCompression { get; set; }
-    public string UserAgent { get; set; } = string.Empty;
+    public string BaseUrl { get; [UsedImplicitly] set; } = string.Empty;
+    public string ApiKey { get; [UsedImplicitly] set; } = string.Empty;
+    public int Timeout { get; [UsedImplicitly] set; }
+    public int MaxRetries { get; [UsedImplicitly] set; }
+    public bool EnableCompression { get; [UsedImplicitly] set; }
+    public string UserAgent { get; [UsedImplicitly] set; } = string.Empty;
 }
 
 public class UserConfig
 {
-    public Guid Id { get; set; }
-    public string Email { get; set; } = string.Empty;
-    public string FullName { get; set; } = string.Empty;
-    public string Role { get; set; } = string.Empty;
-    public bool IsActive { get; set; }
-    public DateTime CreatedAt { get; set; }
-    public DateTime? LastLoginAt { get; set; }
+    public Guid Id { get; [UsedImplicitly] set; }
+    public string Email { get; [UsedImplicitly] set; } = string.Empty;
+    public string FullName { get; [UsedImplicitly] set; } = string.Empty;
+    public string Role { get; [UsedImplicitly] set; } = string.Empty;
+    public bool IsActive { get; [UsedImplicitly] set; }
+    public DateTime CreatedAt { get; [UsedImplicitly] set; }
+    public DateTime? LastLoginAt { get; [UsedImplicitly] set; }
 }
