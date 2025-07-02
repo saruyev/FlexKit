@@ -1,0 +1,89 @@
+﻿# Feature flags and experiments configuration
+featureFlags:
+  provider: "internal"
+  defaultEnabled: false
+  flags:
+    newCheckoutFlow:
+      enabled: true
+      rolloutPercentage: 25
+      conditions:
+        - userGroup: "beta"
+        - region: "US"
+    enhancedSearch:
+      enabled: false
+      rolloutPercentage: 0
+    mobilePushNotifications:
+      enabled: true
+      rolloutPercentage: 100
+
+experiments:
+  abTesting:
+    provider: "optimizely"
+    defaultTrafficAllocation: 10
+    experiments:
+      - id: "pricing_page_test"
+        name: "Pricing Page Layout Test"
+        status: "running"
+        trafficAllocation: 100
+        variations:
+          - id: "control"
+            name: "Current Layout"
+            allocation: 50
+          - id: "variant_a"
+            name: "Simplified Layout"
+            allocation: 50
+        metrics:
+          primary: "conversion_rate"
+          secondary: ["page_views", "time_on_page", "bounce_rate"]
+        audience:
+          conditions:
+            - attribute: "new_visitor"
+              operator: "is"
+              value: true
+
+      - id: "email_subject_test"
+        name: "Email Subject Line Test"
+        status: "running"
+        trafficAllocation: 80
+        variations:
+          - id: "control"
+            name: "Current Subject"
+            allocation: 40
+          - id: "variant_personalized"
+            name: "Personalized Subject"
+            allocation: 40
+        metrics:
+          primary: "email_open_rate"
+          secondary: ["click_through_rate"]
+        audience:
+          conditions:
+            - attribute: "email_subscriber"
+              operator: "is"
+              value: true
+
+analytics:
+  segmentation:
+    userSegments:
+      premium:
+        conditions:
+          - attribute: "subscription_plan"
+            operator: "equals"
+            value: "premium"
+      enterprise:
+        conditions:
+          - attribute: "subscription_plan"
+            operator: "equals"
+            value: "enterprise"
+      newUsers:
+        conditions:
+          - attribute: "registration_date"
+            operator: "within_days"
+            value: 30
+      powerUsers:
+        conditions:
+          - attribute: "monthly_logins"
+            operator: "greater_than"
+            value: 20
+          - attribute: "features_used"
+            operator: "greater_than"
+            value: 5

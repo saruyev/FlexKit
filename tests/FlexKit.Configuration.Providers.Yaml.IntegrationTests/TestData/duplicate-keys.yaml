@@ -1,0 +1,9 @@
+﻿# YAML with duplicate keys
+database:
+  host: localhost
+  port: 5432
+  host: duplicated-host
+api:
+  key: first-key
+  timeout: 5000
+  key: second-key

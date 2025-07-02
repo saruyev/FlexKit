@@ -76,7 +76,7 @@
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="[13.0.3,14.0.0)" />
     <PackageReference Include="System.Text.Json" Version="[9.0.6,10.0.0)" />
-    <PackageReference Include="System.IO.Abstractions.TestingHelpers" Version="[21.1.3,22.0.0)" />
+    <PackageReference Include="System.IO.Abstractions.TestingHelpers" Version="[22.0.14,23.0.0)" />
   </ItemGroup>
 
   <!-- Folder structure for organizing integration tests -->
@@ -94,11 +94,6 @@
     </Content>
   </ItemGroup>
 
-  <!-- Reqnroll feature files configuration -->
-  <ItemGroup>
-    <ReqnrollFeatureFiles Include="Features\**\*.feature" />
-  </ItemGroup>
-
   <!-- Generated files configuration to place them outside Features folder -->
   <ItemGroup>
     <Compile Remove="Features\**\*.cs" />
@@ -110,14 +105,6 @@
     <Content Include="TestData\**\*">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-  </ItemGroup>
-
-  <!-- Reqnroll MSBuild integration -->
-  <ItemGroup>
-    <ReqnrollFeatureFiles Include="Features\**\*.feature">
-      <Generator>ReqnrollCodeBehindGenerator</Generator>
-      <LastGenOutput>%(RelativeDir)%(Filename).feature.cs</LastGenOutput>
-    </ReqnrollFeatureFiles>
   </ItemGroup>
 
   <ItemGroup>

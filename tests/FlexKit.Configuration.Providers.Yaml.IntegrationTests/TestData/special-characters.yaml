@@ -1,0 +1,5 @@
+﻿# YAML with special characters and Unicode
+database:
+  host: "localhost"
+  password: "contains\ttab\nand\nnewlines"
+  special: "unicode: ñáéíóú 中文 🚀"

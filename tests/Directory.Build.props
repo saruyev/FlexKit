@@ -8,9 +8,7 @@
     <PropertyGroup>
 
         <!-- Test specific settings -->
-        <CoverageThreshold>100</CoverageThreshold>        
-        <IsPackable>false</IsPackable>
-        <IsTestProject>true</IsTestProject>
+        <CoverageThreshold>100</CoverageThreshold>   
         <GenerateDocumentationFile>false</GenerateDocumentationFile>
 
         <!-- Test-specific build settings -->

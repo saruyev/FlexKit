@@ -1,0 +1,41 @@
+﻿# Multi-environment deployment configuration with YAML anchors
+application: &app_defaults
+  name: "Enterprise Application"
+  version: "3.0.0"
+  features:
+    authentication: true
+    caching: true
+    monitoring: true
+
+database: &db_defaults
+  provider: "postgresql"
+  pool:
+    min: 5
+    max: 20
+  timeout: 30
+
+environments:
+  development:
+    application:
+      <<: *app_defaults
+      debug: true
+      logLevel: "DEBUG"
+    database:
+      <<: *db_defaults
+      host: "dev-db.company.com"
+      port: 5432
+      ssl: false
+  
+  production:
+    application:
+      <<: *app_defaults
+      debug: false
+      logLevel: "ERROR"
+    database:
+      <<: *db_defaults
+      host: "prod-db.company.com"
+      port: 5432
+      ssl: true
+      pool:
+        min: 10
+        max: 50

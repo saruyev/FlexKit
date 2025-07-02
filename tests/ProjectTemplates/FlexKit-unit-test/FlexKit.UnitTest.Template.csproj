@@ -7,6 +7,8 @@
 
     <!-- Unit tests should be fast and isolated -->
     <DefineConstants>$(DefineConstants);UNIT_TESTS</DefineConstants>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
   </PropertyGroup>
 
   <!-- Unit test specific packages (beyond what's in Directory.Build.props) -->
