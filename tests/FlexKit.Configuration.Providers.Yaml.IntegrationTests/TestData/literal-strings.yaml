@@ -1,0 +1,21 @@
+﻿# YAML with literal multi-line strings
+documentation:
+  installation: |
+    Step 1: Download the package
+    Step 2: Extract to directory
+    Step 3: Run the installer
+    Step 4: Configure settings
+  changelog: |
+    Version 1.0.0:
+    - Initial release
+    - Basic functionality
+    
+    Version 1.1.0:
+    - Bug fixes
+    - Performance improvements
+settings:
+  welcomeMessage: |
+    Welcome to our application!
+    
+    This is a multi-line welcome message
+    that preserves line breaks and formatting.

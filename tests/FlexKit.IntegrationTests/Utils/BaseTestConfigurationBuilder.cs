@@ -10,7 +10,7 @@ namespace FlexKit.IntegrationTests.Utils;
 
 public abstract class BaseTestConfigurationBuilder<T> where T : BaseTestConfigurationBuilder<T>, new()
 {
-    protected readonly List<IConfigurationSource> Sources;
+    public List<IConfigurationSource> Sources { get; }
     protected readonly Dictionary<string, string?> InMemoryData;
     protected readonly List<string> TempFiles;
     private readonly Dictionary<string, string?> _environmentVariables;

@@ -1,0 +1,7 @@
+﻿# Invalid YAML syntax - unclosed array and string
+database:
+  host: localhost
+  port: [5432, unclosed array
+    api:
+      key: "unclosed string
+      timeout: 5000

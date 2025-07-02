@@ -1,0 +1,16 @@
+﻿# YAML with various boolean and null values
+flags:
+  trueLowercase: true
+  trueUppercase: True
+  trueCaps: TRUE
+  falseLowercase: false
+  falseUppercase: False
+  falseCaps: FALSE
+  yesValue: yes
+  noValue: no
+  onValue: on
+  offValue: off
+nulls:
+  explicitNull: null
+  tildeNull: ~
+  emptyValue:

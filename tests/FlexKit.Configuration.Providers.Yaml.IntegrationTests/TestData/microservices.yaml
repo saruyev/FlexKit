@@ -1,0 +1,63 @@
+﻿# Microservices configuration with service discovery
+services:
+  gateway:
+    image: "company/api-gateway:latest"
+    port: 8080
+    routes:
+      - path: "/auth/*"
+        service: "auth-service"
+        timeout: 5000
+      - path: "/users/*"
+        service: "user-service"
+        timeout: 3000
+      - path: "/orders/*"
+        service: "order-service"
+        timeout: 10000
+  
+  auth-service:
+    image: "company/auth:v2.1.0"
+    port: 8081
+    database:
+      connection: "auth-db-connection"
+    dependencies:
+      - "redis-cache"
+    healthcheck:
+      path: "/health"
+      interval: 30
+      timeout: 5
+  
+  user-service:
+    image: "company/users:v1.5.2"
+    port: 8082
+    database:
+      connection: "users-db-connection"
+    dependencies:
+      - "auth-service"
+      - "redis-cache"
+    scaling:
+      minReplicas: 2
+      maxReplicas: 10
+      targetCpu: 70
+  
+  order-service:
+    image: "company/orders:v1.0.0"
+    port: 8083
+    database:
+      connection: "orders-db-connection"
+    dependencies:
+      - "auth-service"
+      - "user-service"
+      - "payment-gateway"
+
+infrastructure:
+  redis-cache:
+    image: "redis:alpine"
+    port: 6379
+    memory: "512Mi"
+    persistence: false
+  
+  payment-gateway:
+    external: true
+    url: "https://payments.external.com"
+    apiKey: "${PAYMENT_API_KEY}"
+    timeout: 15000

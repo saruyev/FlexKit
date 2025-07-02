@@ -1,0 +1,13 @@
+﻿# YAML with anchors and aliases
+defaults: &defaults
+  timeout: 5000
+  retries: 3
+
+development:
+  <<: *defaults
+  host: "dev.example.com"
+
+production:
+  <<: *defaults
+  host: "prod.example.com"
+  timeout: 10000

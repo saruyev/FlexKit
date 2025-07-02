@@ -1,0 +1,86 @@
+﻿# Advanced security and compliance configuration
+security:
+  authentication:
+    providers:
+      oauth2:
+        enabled: true
+        clientId: "enterprise-app-client"
+        clientSecret: "oauth-secret-placeholder"
+        authUrl: "https://auth.company.com/oauth/authorize"
+        tokenUrl: "https://auth.company.com/oauth/token"
+        scopes: ["openid", "profile", "email", "enterprise:read", "enterprise:write"]
+      
+      saml:
+        enabled: true
+        entityId: "enterprise-app"
+        ssoUrl: "https://sso.company.com/saml/login"
+        x509cert: "saml-cert-placeholder"
+        attributeMapping:
+          email: "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"
+          name: "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"
+          roles: "http://schemas.company.com/ws/2005/05/identity/claims/roles"
+  
+  authorization:
+    rbac:
+      enabled: true
+      defaultRole: "user"
+      roles:
+        admin:
+          permissions: ["*"]
+          resources: ["*"]
+        manager:
+          permissions: ["read", "write", "delete"]
+          resources: ["users", "reports", "analytics"]
+        user:
+          permissions: ["read", "write:own"]
+          resources: ["profile", "documents:own"]
+        readonly:
+          permissions: ["read"]
+          resources: ["public", "reports:summary"]
+  
+  encryption:
+    dataAtRest:
+      algorithm: "AES-256-GCM"
+      keyManagement: "HSM"
+      keyRotationDays: 90
+    dataInTransit:
+      tlsVersion: "1.3"
+      cipherSuites: ["TLS_AES_256_GCM_SHA384", "TLS_CHACHA20_POLY1305_SHA256"]
+
+compliance:
+  gdpr:
+    enabled: true
+    dataRetentionDays: 2555  # 7 years
+    consentTracking: true
+    rightToForgotten: true
+    dataProcessingLog: true
+  
+  sox:
+    enabled: true
+    auditTrail: true
+    dataIntegrity: true
+    accessControls: true
+    changeManagement: true
+  
+  hipaa:
+    enabled: false
+    # HIPAA settings would go here if enabled
+
+auditing:
+  enabled: true
+  logLevel: "INFO"
+  destinations:
+    - type: "database"
+      connection: "audit-db"
+      retention: 2555  # 7 years in days
+    - type: "siem"
+      endpoint: "https://siem.company.com/api/events"
+      apiKey: "siem-api-key-placeholder"
+  
+  events:
+    authentication: true
+    authorization: true
+    dataAccess: true
+    dataModification: true
+    systemChanges: true
+    adminActions: true

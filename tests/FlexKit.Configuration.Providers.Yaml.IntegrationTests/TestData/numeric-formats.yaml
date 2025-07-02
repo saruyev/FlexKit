@@ -1,0 +1,13 @@
+﻿# YAML with various numeric formats
+numbers:
+  integer: 42
+  negative: -17
+  float: 3.14159
+  scientific: 1.23e+4
+  octal: 0o755
+  hexadecimal: 0xFF
+  binary: 0b1010
+strings:
+  quotedNumber: "123"
+  quotedFloat: "45.67"
+  quotedBoolean: "true"

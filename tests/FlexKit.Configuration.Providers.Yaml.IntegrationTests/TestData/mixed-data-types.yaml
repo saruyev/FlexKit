@@ -1,0 +1,18 @@
+﻿# YAML with various data types
+string_value: "Hello World"
+integer_value: 42
+float_value: 3.14159
+boolean_true: true
+boolean_false: false
+null_value: null
+empty_string: ""
+date_string: "2024-01-01"
+array_mixed:
+  - "string"
+  - 123
+  - true
+  - null
+object_mixed:
+  text: "value"
+  number: 456
+  flag: false

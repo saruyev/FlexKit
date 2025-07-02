@@ -1,0 +1,18 @@
+﻿# YAML with folded multi-line strings
+messages:
+  description: >
+    This is a long description that spans
+    multiple lines in the YAML file but will
+    be rendered as a single line with spaces
+    between the words when parsed.
+  terms: >
+    By using this application you agree to
+    the terms and conditions as outlined
+    in our user agreement document which
+    can be found on our website.
+content:
+  about: >
+    Our company has been providing excellent
+    service for over 20 years and we continue
+    to innovate and improve our offerings
+    to meet customer needs.
