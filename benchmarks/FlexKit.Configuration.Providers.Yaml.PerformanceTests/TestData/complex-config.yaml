@@ -1,0 +1,231 @@
+﻿# Complex YAML configuration for advanced performance testing
+# Application metadata
+Application:
+  Name: "Complex YAML Test Application"
+  Version: "2.1.0"
+  Environment: "Production"
+  Debug: false
+  Description: |
+    This is a complex multi-line
+    description that spans across
+    multiple lines to test YAML
+    parsing performance.
+  Metadata:
+    BuildNumber: "2024.01.15.1"
+    BuildDate: "2024-01-15T10:30:00Z"
+    CommitHash: "abc123def456"
+    Branch: "main"
+
+# Database cluster configuration
+Database:
+  Primary:
+    ConnectionString: "Server=db-primary.example.com;Database=ComplexApp;User=app_user;Password=secure_pass_123"
+    Timeout: 60
+    MaxRetries: 5
+    EnableLogging: true
+    ConnectionPool:
+      MinSize: 5
+      MaxSize: 100
+      IdleTimeout: 300
+      ValidationQuery: "SELECT 1"
+  
+  Secondary:
+    - Host: "db-secondary-1.example.com"
+      Port: 5432
+      Database: "ComplexApp"
+      ReadOnly: true
+      Weight: 70
+    - Host: "db-secondary-2.example.com"
+      Port: 5432
+      Database: "ComplexApp"
+      ReadOnly: true
+      Weight: 30
+  
+  Cache:
+    Provider: "Redis"
+    ConnectionString: "redis-cluster.example.com:6379"
+    DefaultExpiration: 3600
+    KeyPrefix: "complex_app:"
+    Serialization: "MessagePack"
+
+# Multiple API configurations
+Apis:
+  Primary:
+    BaseUrl: "https://api-primary.example.com"
+    ApiKey: "primary_api_key_complex_123456789"
+    Timeout: 30000
+    MaxRetries: 3
+    EnableCompression: true
+    Headers:
+      User-Agent: "ComplexApp/2.1.0"
+      Accept: "application/json"
+      Content-Type: "application/json"
+  
+  Authentication:
+    BaseUrl: "https://auth.example.com"
+    ClientId: "complex_app_client"
+    ClientSecret: "super_secret_client_key_456"
+    Scope: "read write admin"
+    TokenEndpoint: "/oauth/token"
+  
+  External:
+    Weather:
+      BaseUrl: "https://weather-api.example.com"
+      ApiKey: "weather_api_key_789"
+      Timeout: 10000
+    
+    Payment:
+      BaseUrl: "https://payments.example.com"
+      MerchantId: "merchant_12345"
+      SecretKey: "payment_secret_key_complex"
+      Currency: "USD"
+      WebhookUrl: "https://app.example.com/webhooks/payment"
+
+# Server cluster configuration
+Servers:
+  WebServers:
+    - Name: "web01"
+      Host: "10.0.1.10"
+      Port: 8080
+      IsSecure: true
+      LoadBalancerWeight: 100
+      HealthCheckEndpoint: "/health"
+    - Name: "web02"
+      Host: "10.0.1.11"
+      Port: 8080
+      IsSecure: true
+      LoadBalancerWeight: 80
+      HealthCheckEndpoint: "/health"
+    - Name: "web03"
+      Host: "10.0.1.12"
+      Port: 8080
+      IsSecure: true
+      LoadBalancerWeight: 60
+      HealthCheckEndpoint: "/health"
+  
+  ApiServers:
+    - Name: "api01"
+      Host: "10.0.2.10"
+      Port: 9000
+      Protocol: "https"
+      CertificateThumbprint: "1234567890abcdef"
+    - Name: "api02"
+      Host: "10.0.2.11"
+      Port: 9000
+      Protocol: "https"
+      CertificateThumbprint: "1234567890abcdef"
+
+# Complex feature toggles with nested conditions
+Features:
+  Authentication:
+    OAuth2Enabled: true
+    JwtExpiration: 3600
+    RefreshTokenExpiration: 86400
+    TwoFactorAuth:
+      Enabled: true
+      Providers: ["SMS", "Email", "TOTP"]
+      GracePeriodHours: 24
+  
+  Caching:
+    InMemoryCache:
+      Enabled: true
+      MaxSize: "500MB"
+      SlidingExpiration: 1800
+    DistributedCache:
+      Enabled: true
+      Provider: "Redis"
+      Compression: true
+      Encryption: false
+  
+  Monitoring:
+    ApplicationInsights:
+      Enabled: true
+      InstrumentationKey: "ai_key_complex_monitoring_123"
+      SamplingRate: 0.1
+    CustomMetrics:
+      Enabled: true
+      FlushInterval: 60
+      BatchSize: 100
+    HealthChecks:
+      Enabled: true
+      Endpoints: ["/health", "/ready", "/live"]
+      Timeout: 5
+
+# Multi-environment settings
+Environments:
+  Development:
+    LogLevel: "Debug"
+    DetailedErrors: true
+    DatabaseTimeout: 30
+    ApiTimeout: 5000
+    CacheEnabled: false
+  
+  Staging:
+    LogLevel: "Information"
+    DetailedErrors: true
+    DatabaseTimeout: 45
+    ApiTimeout: 10000
+    CacheEnabled: true
+  
+  Production:
+    LogLevel: "Warning"
+    DetailedErrors: false
+    DatabaseTimeout: 60
+    ApiTimeout: 15000
+    CacheEnabled: true
+
+# Complex logging configuration
+Logging:
+  LogLevel:
+    Default: "Information"
+    System: "Warning"
+    Microsoft: "Warning"
+    ComplexApp: "Debug"
+  
+  Providers:
+    Console:
+      Enabled: true
+      IncludeScopes: true
+      TimestampFormat: "[yyyy-MM-dd HH:mm:ss.fff zzz] "
+      LogToStandardErrorThreshold: "Error"
+    
+    File:
+      Enabled: true
+      Path: "/var/log/complex-app/"
+      FileName: "app-{Date}.log"
+      RollingInterval: "Day"
+      RetainedFileCountLimit: 30
+      FileSizeLimitBytes: 104857600  # 100MB
+      RollOnFileSizeLimit: true
+    
+    Database:
+      Enabled: false
+      ConnectionString: "Server=log-db.example.com;Database=Logs;User=log_user;Password=log_pass"
+      TableName: "ApplicationLogs"
+      AutoCreateSqlTable: true
+    
+    ApplicationInsights:
+      Enabled: true
+      InstrumentationKey: "ai_logging_key_complex_456"
+      ApplicationVersion: "2.1.0"
+
+# Security configuration
+Security:
+  Cors:
+    AllowedOrigins: ["https://app.example.com", "https://admin.example.com"]
+    AllowedMethods: ["GET", "POST", "PUT", "DELETE"]
+    AllowedHeaders: ["Content-Type", "Authorization", "X-API-Key"]
+    AllowCredentials: true
+    MaxAge: 86400
+  
+  RateLimit:
+    PermitLimit: 100
+    WindowSize: "00:01:00"  # 1 minute
+    QueueLimit: 10
+    AutoReplenishment: true
+  
+  Headers:
+    StrictTransportSecurity: "max-age=31536000; includeSubDomains"
+    ContentSecurityPolicy: "default-src 'self'; script-src 'self' 'unsafe-inline'"
+    XFrameOptions: "DENY"
+    XContentTypeOptions: "nosniff"
