@@ -8,6 +8,8 @@ using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using NSubstitute;
 using Xunit;
+// ReSharper disable MethodTooLong
+// ReSharper disable TooManyDeclarations
 
 namespace FlexKit.Configuration.Tests.Core;
 

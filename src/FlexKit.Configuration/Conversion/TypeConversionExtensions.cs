@@ -456,9 +456,11 @@ public static class TypeConversionExtensions
     {
         ArgumentNullException.ThrowIfNull(source);
 
-        if (!type.IsGenericType ||
-            (type.GetGenericTypeDefinition() != typeof(IDictionary<,>) &&
-             type.GetGenericTypeDefinition() != typeof(Dictionary<,>)))
+        var isDictionary = type.IsGenericType &&
+                           (type.GetGenericTypeDefinition() == typeof(IDictionary<,>) ||
+                            type.GetGenericTypeDefinition() == typeof(Dictionary<,>));
+
+        if (!isDictionary)
         {
             throw new ArgumentException($"Type {type.Name} is not a supported dictionary type.", nameof(type));
         }

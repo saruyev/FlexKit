@@ -4,6 +4,10 @@ using FlexKit.Configuration.Tests.TestBase;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Xunit;
+// ReSharper disable MethodTooLong
+// ReSharper disable TooManyDeclarations
+// ReSharper disable ClassTooBig
+// ReSharper disable FlagArgument
 
 namespace FlexKit.Configuration.Tests.Sources;
 

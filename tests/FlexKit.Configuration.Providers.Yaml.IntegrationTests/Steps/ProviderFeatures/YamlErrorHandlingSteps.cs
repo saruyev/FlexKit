@@ -3,6 +3,8 @@ using FlexKit.Configuration.Providers.Yaml.IntegrationTests.Utils;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Reqnroll;
+// ReSharper disable TooManyDeclarations
+// ReSharper disable MethodTooLong
 
 namespace FlexKit.Configuration.Providers.Yaml.IntegrationTests.Steps.ProviderFeatures;
 
@@ -198,15 +200,15 @@ public class YamlErrorHandlingSteps(ScenarioContext scenarioContext)
 
         try
         {
-            // Verify that empty files result in empty but valid configuration
+            // Verify that empty files result in an empty but valid configuration
             var allKeys = _errorHandlingConfiguration!.AsEnumerable().ToList();
             _errorValidationResults.Add($"ConfigurationKeysCount: {allKeys.Count}");
 
-            // Verify FlexConfig functionality works with empty configuration
+            // Verify FlexConfig functionality works with an empty configuration
             var emptyKeyAccess = _errorHandlingFlexConfiguration!["any:key"];
             _errorValidationResults.Add($"EmptyConfigAccess: {emptyKeyAccess ?? "null"}");
 
-            // Verify dynamic access works with empty configuration
+            // Verify dynamic access works with an empty configuration
             dynamic emptyConfig = _errorHandlingFlexConfiguration;
             var dynamicEmptyAccess = YamlTestConfigurationBuilder.GetDynamicProperty(emptyConfig, "any");
             _errorValidationResults.Add($"DynamicEmptyAccess: {dynamicEmptyAccess ?? "null"}");
@@ -250,7 +252,7 @@ public class YamlErrorHandlingSteps(ScenarioContext scenarioContext)
         }
         else
         {
-            // If it didn't fail, ensure we still have valid configuration
+            // If it didn't fail, ensure we still have a valid configuration
             _errorHandlingConfiguration.Should().NotBeNull("Configuration should be built if YAML was parsed successfully");
             _errorHandlingFlexConfiguration.Should().NotBeNull("FlexConfiguration should be available if YAML was parsed successfully");
         }
@@ -271,7 +273,7 @@ public class YamlErrorHandlingSteps(ScenarioContext scenarioContext)
         _errorHandlingConfiguration.Should().NotBeNull("Configuration should be built even with missing optional files");
         _errorHandlingFlexConfiguration.Should().NotBeNull("FlexConfiguration should be available with missing optional files");
         
-        // Verify empty configuration is created
+        // Verify an empty configuration is created
         var configKeys = _errorHandlingConfiguration!.AsEnumerable().ToList();
         configKeys.Should().BeEmpty("Missing optional files should result in empty configuration");
     }
@@ -308,7 +310,7 @@ public class YamlErrorHandlingSteps(ScenarioContext scenarioContext)
         var indexerTest = () => flexConfig["test:key"];
         indexerTest.Should().NotThrow("Indexer access should not throw for missing keys");
         
-        // Verify that section access works
+        // Verify that sections access works
         var sectionTest = () => flexConfig.Configuration.GetSection("test");
         sectionTest.Should().NotThrow("Section access should not throw for missing sections");
     }

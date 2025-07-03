@@ -3,6 +3,8 @@ using FlexKit.Configuration.Core;
 using FlexKit.Configuration.Sources;
 using Reqnroll;
 using FlexKit.IntegrationTests.Utils;
+// ReSharper disable UnusedMember.Global
+// ReSharper disable MethodTooLong
 
 namespace FlexKit.Configuration.IntegrationTests.Utils;
 

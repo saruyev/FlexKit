@@ -6,6 +6,9 @@ using Microsoft.Extensions.Configuration;
 using Reqnroll;
 using FlexKit.IntegrationTests.Utils;
 using JetBrains.Annotations;
+// ReSharper disable MethodTooLong
+// ReSharper disable ComplexConditionExpression
+// ReSharper disable ClassTooBig
 
 namespace FlexKit.Configuration.IntegrationTests.Steps.DependencyInjection;
 

@@ -1,4 +1,5 @@
-﻿using Autofac;
+﻿using System.Diagnostics.CodeAnalysis;
+using Autofac;
 using AutoFixture;
 using AutoFixture.AutoNSubstitute;
 using JetBrains.Annotations;
@@ -137,6 +138,7 @@ public abstract class UnitTestBase : IDisposable
         GC.SuppressFinalize(this);
     }
 
+    [SuppressMessage("ReSharper", "FlagArgument")]
     protected virtual void Dispose(bool disposing)
     {
         if (!_disposed && disposing)

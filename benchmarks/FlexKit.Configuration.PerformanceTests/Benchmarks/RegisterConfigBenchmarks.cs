@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Autofac;
 using JetBrains.Annotations;
+// ReSharper disable ClassTooBig
 
 namespace FlexKit.Configuration.PerformanceTests.Benchmarks;
 

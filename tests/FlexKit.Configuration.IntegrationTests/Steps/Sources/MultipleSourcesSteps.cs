@@ -5,6 +5,11 @@ using Microsoft.Extensions.Configuration;
 using Reqnroll;
 using System.Diagnostics;
 using JetBrains.Annotations;
+// ReSharper disable MethodTooLong
+// ReSharper disable TooManyDeclarations
+// ReSharper disable ClassTooBig
+// ReSharper disable ComplexConditionExpression
+// ReSharper disable FlagArgument
 
 namespace FlexKit.Configuration.IntegrationTests.Steps.Sources;
 

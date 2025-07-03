@@ -2,8 +2,13 @@
 using FlexKit.Configuration.Core;
 using FlexKit.Configuration.Providers.Yaml.IntegrationTests.Utils;
 using FluentAssertions;
+using JetBrains.Annotations;
 using Microsoft.Extensions.Configuration;
 using Reqnroll;
+// ReSharper disable TooManyDeclarations
+// ReSharper disable MethodTooLong
+// ReSharper disable MemberCanBePrivate.Global
+// ReSharper disable ClassTooBig
 
 namespace FlexKit.Configuration.Providers.Yaml.IntegrationTests.Steps.DependencyInjection;
 
@@ -42,6 +47,7 @@ public class YamlFlexConfigIntegrationSteps(ScenarioContext scenarioContext)
         
         public string? GetConfigValue(string key) => Configuration[key];
         
+        // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
         public bool HasConfiguration() => Configuration != null;
     }
 
@@ -63,7 +69,7 @@ public class YamlFlexConfigIntegrationSteps(ScenarioContext scenarioContext)
     /// </summary>
     public class TestServiceWithPropertyInjection
     {
-        public IFlexConfig? FlexConfig { get; set; }
+        public IFlexConfig? FlexConfig { get; [UsedImplicitly] set; }
         public string ServiceName { get; set; } = "YamlIntegrationTestService";
         
         public bool HasPropertyInjection() => FlexConfig != null;

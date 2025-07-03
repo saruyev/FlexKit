@@ -4,6 +4,7 @@ using FluentAssertions;
 using JetBrains.Annotations;
 using Microsoft.Extensions.Configuration;
 using Reqnroll;
+// ReSharper disable ClassTooBig
 
 namespace FlexKit.Configuration.IntegrationTests.Steps.Sources;
 

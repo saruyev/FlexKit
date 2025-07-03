@@ -7,6 +7,7 @@ using JetBrains.Annotations;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Configuration.Memory;
 using Xunit;
+// ReSharper disable TooManyDeclarations
 
 namespace FlexKit.Configuration.Tests.Core;
 

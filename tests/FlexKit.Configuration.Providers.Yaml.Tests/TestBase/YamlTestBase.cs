@@ -1,4 +1,5 @@
-﻿using AutoFixture;
+﻿using System.Diagnostics.CodeAnalysis;
+using AutoFixture;
 using JetBrains.Annotations;
 
 namespace FlexKit.Configuration.Providers.Yaml.Tests.TestBase;
@@ -83,6 +84,7 @@ public abstract class YamlTestBase : IDisposable
     /// Protected dispose method for cleanup of managed resources.
     /// </summary>
     /// <param name="disposing">True if disposing managed resources.</param>
+    [SuppressMessage("ReSharper", "FlagArgument")]
     protected virtual void Dispose(bool disposing)
     {
         if (!_disposed && disposing)
