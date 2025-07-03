@@ -4,6 +4,8 @@ using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Reqnroll;
 using System.Text;
+// ReSharper disable MethodTooLong
+// ReSharper disable ClassTooBig
 
 namespace FlexKit.Configuration.Providers.Yaml.IntegrationTests.Steps.Configuration;
 
@@ -112,7 +114,7 @@ public class YamlConfigurationSteps(ScenarioContext scenarioContext)
             _configuration = _configurationBuilder!.Build();
             _flexConfiguration = _configuration.GetFlexConfiguration();
             
-            // Store in scenario context
+            // Store in a scenario context
             scenarioContext.Set(_configuration, "Configuration");
             scenarioContext.Set(_flexConfiguration, "FlexConfiguration");
         }
@@ -206,7 +208,7 @@ public class YamlConfigurationSteps(ScenarioContext scenarioContext)
             current = (Dictionary<string, object>)current[part];
         }
         
-        current[parts[parts.Length - 1]] = value;
+        current[parts[^1]] = value;
     }
 
     private static void WriteYamlSection(StringBuilder yaml, Dictionary<string, object> section, int indent)
@@ -319,7 +321,7 @@ public class YamlConfigurationSteps(ScenarioContext scenarioContext)
         _configuration.Should().NotBeNull("Configuration should be built");
         var actualValue = _configuration![key];
         
-        // Handle boolean values - YAML produces lowercase, but tests might expect titlecase
+        // Handle boolean values - YAML produces a lowercase string, but tests might expect titlecase
         if (expectedValue.Equals("True", StringComparison.OrdinalIgnoreCase) && 
             actualValue?.Equals("true", StringComparison.OrdinalIgnoreCase) == true)
         {
@@ -422,7 +424,7 @@ public class YamlConfigurationSteps(ScenarioContext scenarioContext)
         _lastException.Should().BeNull("Empty YAML files should not cause exceptions");
         _configuration.Should().NotBeNull("Configuration should still be built with empty files");
         
-        // The configuration should have been built, but may not contain any data from empty files
+        // The configuration should have been built but may not contain any data from empty files
         // This is expected behavior
         _flexConfiguration.Should().NotBeNull("FlexConfiguration should be available even with empty files");
     }

@@ -33,7 +33,7 @@ namespace FlexKit.Configuration.Providers.Aws.Sources;
 /// <strong>Integration with FlexKit:</strong>
 /// This source is designed to work seamlessly with FlexConfigurationBuilder and other FlexKit
 /// configuration components, providing AWS Parameter Store support as a first-class configuration
-/// source option that maintains all FlexKit capabilities including dynamic access and type conversion.
+/// source option that maintains all FlexKit capabilities, including dynamic access and type conversion.
 /// </para>
 ///
 /// <para>
@@ -46,7 +46,7 @@ namespace FlexKit.Configuration.Providers.Aws.Sources;
 /// <para>
 /// <strong>Configuration Source Lifecycle:</strong>
 /// <list type="number">
-/// <item>Source is created with specified path and options</item>
+/// <item>Source is created with a specified path and options</item>
 /// <item>Source is added to a ConfigurationBuilder</item>
 /// <item>When configuration is built, the Build() method is called to create provider</item>
 /// <item>Provider loads Parameter Store data and makes it available to the configuration system</item>
@@ -140,7 +140,7 @@ public class AwsParameterStoreConfigurationSource : IConfigurationSource
     /// </value>
     /// <remarks>
     /// <para>
-    /// <strong>Optional vs Required Sources:</strong>
+    /// <strong>Optional vs. Required Sources:</strong>
     /// <list type="bullet">
     /// <item><strong>Optional (true):</strong> Loading failures are logged but don't prevent application startup</item>
     /// <item><strong>Required (false):</strong> Loading failures cause exceptions and prevent application startup</item>
@@ -173,14 +173,14 @@ public class AwsParameterStoreConfigurationSource : IConfigurationSource
     /// to pick up configuration changes without requiring application restart.
     /// </summary>
     /// <value>
-    /// The interval at which to reload parameters, or null to disable automatic reloading.
+    /// The interval at which to reload parameters or null to disable automatic reloading.
     /// Default is null (no automatic reloading).
     /// </value>
     /// <remarks>
     /// <para>
     /// <strong>Automatic Reloading Benefits:</strong>
     /// <list type="bullet">
-    /// <item>Applications can pick up configuration changes without restart</item>
+    /// <item>Applications can pick up configuration changes without a restart</item>
     /// <item>Enables dynamic feature flag toggling and configuration adjustments</item>
     /// <item>Supports blue-green deployments with configuration updates</item>
     /// <item>Allows for real-time debugging and troubleshooting configuration changes</item>
@@ -192,8 +192,8 @@ public class AwsParameterStoreConfigurationSource : IConfigurationSource
     /// <list type="bullet">
     /// <item>Each reload makes API calls to AWS Parameter Store</item>
     /// <item>Frequent reloads may incur AWS API costs and rate limiting</item>
-    /// <item>Recommended minimum interval is 1 minute for production scenarios</item>
-    /// <item>Consider using AWS Parameter Store's standard vs advanced parameters for cost optimization</item>
+    /// <item>The recommended minimum interval is 1 minute for production scenarios</item>
+    /// <item>Consider using AWS Parameter Store's standard vs. advanced parameters for cost optimization</item>
     /// </list>
     /// </para>
     ///
@@ -226,7 +226,7 @@ public class AwsParameterStoreConfigurationSource : IConfigurationSource
     /// Provides control over AWS credentials, region, and other AWS SDK settings.
     /// </summary>
     /// <value>
-    /// The AWS options to use for Parameter Store access, or null to use the default
+    /// The AWS options to use it for Parameter Store access, or null to use the default
     /// AWS credential resolution chain and configuration.
     /// </value>
     /// <remarks>
@@ -284,7 +284,7 @@ public class AwsParameterStoreConfigurationSource : IConfigurationSource
     /// <item>Enables storing complex configuration structures in a single parameter</item>
     /// <item>Reduces the number of individual parameters needed</item>
     /// <item>Maintains hierarchical relationships in configuration data</item>
-    /// <item>Supports strongly-typed configuration binding for complex objects</item>
+    /// <item>Supports strongly typed configuration binding for complex objects</item>
     /// </list>
     /// </para>
     ///
@@ -308,7 +308,7 @@ public class AwsParameterStoreConfigurationSource : IConfigurationSource
     /// <list type="bullet">
     /// <item>When you have complex configuration objects that benefit from hierarchical organization</item>
     /// <item>When migrating from file-based configuration (JSON/YAML) to Parameter Store</item>
-    /// <item>When you want to use strongly-typed configuration binding with RegisterConfig</item>
+    /// <item>When you want to use strongly typed configuration binding with RegisterConfig</item>
     /// <item>When you need to store arrays or nested objects in configuration</item>
     /// </list>
     /// </para>
@@ -319,7 +319,7 @@ public class AwsParameterStoreConfigurationSource : IConfigurationSource
     /// <item>When parameters contain JSON strings that should remain as literal values</item>
     /// <item>When all configuration is simple key-value pairs</item>
     /// <item>When you want maximum control over how JSON is processed</item>
-    /// <item>When performance is critical and you want to avoid JSON parsing overhead</item>
+    /// <item>When performance is critical, and you want to avoid JSON parsing overhead</item>
     /// </list>
     /// </para>
     /// </remarks>
@@ -331,7 +331,7 @@ public class AwsParameterStoreConfigurationSource : IConfigurationSource
     /// even when JsonProcessor is enabled.
     /// </summary>
     /// <value>
-    /// An array of parameter path prefixes that should be processed as JSON,
+    /// An array of parameter path prefixes that should be processed as JSON
     /// or null to apply JSON processing to all parameters when JsonProcessor is enabled.
     /// </value>
     /// <remarks>
@@ -419,7 +419,7 @@ public class AwsParameterStoreConfigurationSource : IConfigurationSource
     public IParameterProcessor? ParameterProcessor { get; [UsedImplicitly] set; }
 
     /// <summary>
-    /// Gets or sets the error handling callback that is invoked when configuration loading fails
+    /// Gets or sets the error handling callback invoked when configuration loading fails,
     /// and the source is marked as optional.
     /// </summary>
     /// <value>
@@ -600,7 +600,7 @@ public interface IParameterProcessor
     /// The configuration key after default processing (path prefix removed, slashes converted to colons).
     /// </param>
     /// <param name="originalParameterName">
-    /// The original Parameter Store parameter name before any processing.
+    /// The original Parameters Store parameter name before any processing.
     /// </param>
     /// <returns>
     /// The final configuration key to use for this parameter in the .NET configuration system.
@@ -612,7 +612,7 @@ public interface IParameterProcessor
     /// <list type="number">
     /// <item>Path prefix is removed from the parameter name</item>
     /// <item>Leading slashes are removed</item>
-    /// <item>Remaining slashes are converted to colons</item>
+    /// <item>The remaining slashes are converted to colons</item>
     /// <item>This method is called with the transformed key</item>
     /// </list>
     /// </para>

@@ -3,9 +3,10 @@
 // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 // </copyright>
 
-using System.Text.Json;
+using System.Diagnostics.CodeAnalysis;
 using Amazon.SimpleSystemsManagement;
 using Amazon.SimpleSystemsManagement.Model;
+using FlexKit.Configuration.Providers.Aws.Extensions;
 using Microsoft.Extensions.Configuration;
 
 namespace FlexKit.Configuration.Providers.Aws.Sources;
@@ -337,9 +338,9 @@ public sealed class AwsParameterStoreConfigurationProvider : ConfigurationProvid
         var value = parameter.Value;
 
         // Check if JSON processing is enabled and this value contains JSON
-        if (_source.JsonProcessor && ShouldProcessAsJson(configKey) && IsValidJson(value))
+        if (_source.JsonProcessor && ShouldProcessAsJson(configKey) && value.IsValidJson())
         {
-            FlattenJsonValue(value, configurationData, configKey);
+            value.FlattenJsonValue(configurationData, configKey);
         }
         else
         {
@@ -404,118 +405,13 @@ public sealed class AwsParameterStoreConfigurationProvider : ConfigurationProvid
     }
 
     /// <summary>
-    /// Checks if a string value contains valid JSON that can be parsed and flattened.
-    /// Uses JSON parsing to validate the structure without throwing exceptions.
-    /// </summary>
-    /// <param name="value">The string value to check.</param>
-    /// <returns>True if the value contains valid JSON, false otherwise.</returns>
-    private static bool IsValidJson(string value)
-    {
-        if (string.IsNullOrWhiteSpace(value))
-        {
-            return false;
-        }
-
-        value = value.Trim();
-        if ((!value.StartsWith('{') || !value.EndsWith('}')) &&
-            (!value.StartsWith('[') || !value.EndsWith(']')))
-        {
-            return false;
-        }
-
-        try
-        {
-            JsonDocument.Parse(value);
-            return true;
-        }
-        catch (JsonException)
-        {
-            return false;
-        }
-    }
-
-    /// <summary>
-    /// Flattens a JSON string into hierarchical configuration keys following .NET configuration conventions.
-    /// Converts JSON objects and arrays into a flat key-value structure that can be used with strongly typed binding.
-    /// </summary>
-    /// <param name="jsonValue">The JSON string to flatten.</param>
-    /// <param name="configurationData">The dictionary to store the flattened configuration data.</param>
-    /// <param name="prefix">The key prefix to prepend to all flattened keys.</param>
-    private static void FlattenJsonValue(string jsonValue, Dictionary<string, string?> configurationData, string prefix)
-    {
-        try
-        {
-            using var document = JsonDocument.Parse(jsonValue);
-            FlattenJsonElement(document.RootElement, configurationData, prefix);
-        }
-        catch (JsonException)
-        {
-            // If JSON parsing fails, store as a simple string value
-            configurationData[prefix] = jsonValue;
-        }
-    }
-
-    /// <summary>
-    /// Recursively flattens a JSON element into configuration key-value pairs.
-    /// Handles objects, arrays, and primitive values according to .NET configuration conventions.
-    /// </summary>
-    /// <param name="element">The JSON element to flatten.</param>
-    /// <param name="configurationData">The dictionary to store the flattened configuration data.</param>
-    /// <param name="prefix">The current key prefix for nested elements.</param>
-    private static void FlattenJsonElement(JsonElement element, Dictionary<string, string?> configurationData, string prefix)
-    {
-        switch (element.ValueKind)
-        {
-            case JsonValueKind.Object:
-                foreach (var property in element.EnumerateObject())
-                {
-                    var key = string.IsNullOrEmpty(prefix) ? property.Name : $"{prefix}:{property.Name}";
-                    FlattenJsonElement(property.Value, configurationData, key);
-                }
-                break;
-
-            case JsonValueKind.Array:
-                var index = 0;
-                foreach (var item in element.EnumerateArray())
-                {
-                    var key = $"{prefix}:{index}";
-                    FlattenJsonElement(item, configurationData, key);
-                    index++;
-                }
-                break;
-
-            case JsonValueKind.String:
-                configurationData[prefix] = element.GetString();
-                break;
-
-            case JsonValueKind.Number:
-                configurationData[prefix] = element.GetRawText();
-                break;
-
-            case JsonValueKind.True:
-                configurationData[prefix] = "true";
-                break;
-
-            case JsonValueKind.False:
-                configurationData[prefix] = "false";
-                break;
-
-            case JsonValueKind.Null:
-                configurationData[prefix] = null;
-                break;
-            case JsonValueKind.Undefined:
-                break;
-            default:
-                configurationData[prefix] = element.GetRawText();
-                break;
-        }
-    }
-
-    /// <summary>
     /// Releases the unmanaged resources used by the provider and optionally releases the managed resources.
     /// Disposes of the AWS SSM client and stops the reload timer if configured.
     /// </summary>
     /// <param name="disposing">True to release both managed and unmanaged resources; false to release only unmanaged resources.</param>
+    [SuppressMessage("ReSharper", "FlagArgument", Justification =
+        "Flag argument is used to indicate whether to dispose managed resources." +
+        "No SRP violation as this is a standard pattern for IDisposable implementations.")]
     private void Dispose(bool disposing)
     {
         if (!_disposed)

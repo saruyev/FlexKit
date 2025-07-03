@@ -8,6 +8,8 @@ using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using NSubstitute;
 using Xunit;
+// ReSharper disable MethodTooLong
+// ReSharper disable ClassTooBig
 
 namespace FlexKit.Configuration.Tests.Core;
 
@@ -39,6 +41,7 @@ public class FlexConfigurationTests : UnitTestBase
     {
         // Act & Assert
         var action = () => new FlexConfiguration(null!);
+        
         action.Should().Throw<ArgumentNullException>()
             .WithParameterName("root");
     }
@@ -145,6 +148,7 @@ public class FlexConfigurationTests : UnitTestBase
 
         // Act & Assert
         var action = () => _flexConfiguration["InvalidNumber"].ToType<int>();
+        
         action.Should().Throw<FormatException>()
             .WithMessage("*not in a correct format*");
     }

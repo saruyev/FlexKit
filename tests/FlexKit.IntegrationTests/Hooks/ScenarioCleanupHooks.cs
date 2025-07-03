@@ -2,6 +2,8 @@
 using Autofac;
 using Microsoft.Extensions.Logging;
 using Reqnroll;
+// ReSharper disable ComplexConditionExpression
+// ReSharper disable MethodTooLong
 
 namespace FlexKit.IntegrationTests.Hooks;
 

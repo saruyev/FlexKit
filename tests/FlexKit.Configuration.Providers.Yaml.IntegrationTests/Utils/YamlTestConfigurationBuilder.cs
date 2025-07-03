@@ -4,6 +4,9 @@ using Reqnroll;
 using System.Text;
 using FlexKit.Configuration.Core;
 using Microsoft.Extensions.Configuration;
+// ReSharper disable MethodTooLong
+// ReSharper disable TooManyArguments
+// ReSharper disable ComplexConditionExpression
 
 namespace FlexKit.Configuration.Providers.Yaml.IntegrationTests.Utils;
 

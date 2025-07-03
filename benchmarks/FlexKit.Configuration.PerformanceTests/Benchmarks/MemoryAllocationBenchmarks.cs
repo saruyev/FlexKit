@@ -2,6 +2,7 @@
 using FlexKit.Configuration.Core;
 using FlexKit.Configuration.Conversion;
 using Microsoft.Extensions.Configuration;
+// ReSharper disable ComplexConditionExpression
 
 namespace FlexKit.Configuration.PerformanceTests.Benchmarks;
 

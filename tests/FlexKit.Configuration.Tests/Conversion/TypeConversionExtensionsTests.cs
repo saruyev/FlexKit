@@ -7,6 +7,8 @@ using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using NSubstitute;
 using Xunit;
+// ReSharper disable ClassTooBig
+// ReSharper disable MethodTooLong
 
 namespace FlexKit.Configuration.Tests.Conversion;
 
@@ -31,7 +33,8 @@ public class TypeConversionExtensionsTests : UnitTestBase
         var text = Create<string>();
 
         // Act & Assert
-        var action = () => text.ToType(null!);
+        var action = () => text.ToType(null!)!;
+        
         action.Should().Throw<ArgumentNullException>()
             .WithParameterName("type");
     }

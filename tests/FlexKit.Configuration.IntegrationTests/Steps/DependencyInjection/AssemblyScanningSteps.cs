@@ -11,6 +11,9 @@ using Autofac.Core;
 using JetBrains.Annotations;
 using Xunit;
 using Module = Autofac.Module;
+// ReSharper disable MethodTooLong
+// ReSharper disable ClassTooBig
+// ReSharper disable ComplexConditionExpression
 
 namespace FlexKit.Configuration.IntegrationTests.Steps.DependencyInjection;
 

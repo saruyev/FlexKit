@@ -4,6 +4,11 @@ using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Reqnroll;
 using System.Diagnostics;
+// ReSharper disable ComplexConditionExpression
+// ReSharper disable ExcessiveIndentation
+// ReSharper disable MethodTooLong
+// ReSharper disable TooManyDeclarations
+// ReSharper disable ClassTooBig
 
 namespace FlexKit.Configuration.IntegrationTests.Steps.RealWorld;
 

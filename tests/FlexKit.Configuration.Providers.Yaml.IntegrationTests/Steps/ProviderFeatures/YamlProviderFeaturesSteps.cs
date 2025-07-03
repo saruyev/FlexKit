@@ -3,6 +3,10 @@ using FlexKit.Configuration.Providers.Yaml.IntegrationTests.Utils;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Reqnroll;
+// ReSharper disable MethodTooLong
+// ReSharper disable TooManyDeclarations
+// ReSharper disable ClassTooBig
+// ReSharper disable ComplexConditionExpression
 
 namespace FlexKit.Configuration.Providers.Yaml.IntegrationTests.Steps.ProviderFeatures;
 

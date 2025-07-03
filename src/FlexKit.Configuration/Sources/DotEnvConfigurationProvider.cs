@@ -316,18 +316,40 @@ public class DotEnvConfigurationProvider : ConfigurationProvider
         var key = trimmed[..separatorIndex].Trim();
         var value = trimmed[(separatorIndex + 1)..].Trim();
 
-        // Remove quotes if present
-        if (value.Length >= 2 && (value.StartsWith('"') && value.EndsWith('"') || value.StartsWith('\'') && value.EndsWith('\'')))
+        data[key] = UnescapeValue(RemoveSurroundingQuotes(value));
+    }
+
+    /// <summary>
+    /// Removes surrounding single or double quotes from the given value string, if present.
+    /// Only matching quotes at both the start and end are removed.
+    /// </summary>
+    /// <param name="value">The value string to process.</param>
+    /// <returns>The value without surrounding quotes, or the original value if no matching quotes are found.</returns>
+    private static string RemoveSurroundingQuotes(string value)
+    {
+        if (value.Length >= 2)
         {
-            value = value[1..^1];
+            var isDoubleQuoted = value.StartsWith('"') && value.EndsWith('"');
+            var isSingleQuoted = value.StartsWith('\'') && value.EndsWith('\'');
+
+            if (isDoubleQuoted || isSingleQuoted)
+            {
+                return value[1..^1];
+            }
         }
 
-        // Basic escape sequence handling
-        value = value.Replace("\\n", "\n")
+        return value;
+    }
+
+    /// <summary>
+    /// Processes escape sequences in a ".env" value string.
+    /// Supports \n (newline), \t (tab), \r (carriage return), and \\ (backslash).
+    /// </summary>
+    /// <param name="value">The value string to unescape.</param>
+    /// <returns>The unescaped string with escape sequences replaced by their actual characters.</returns>
+    private static string UnescapeValue(string value) =>
+        value.Replace("\\n", "\n")
             .Replace("\\t", "\t")
             .Replace("\\r", "\r")
             .Replace("\\\\", "\\");
-
-        data[key] = value;
-    }
 }

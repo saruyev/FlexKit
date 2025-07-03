@@ -7,6 +7,8 @@ using Microsoft.Extensions.Configuration.Memory;
 using Reqnroll;
 using FlexKit.IntegrationTests.Utils;
 using JetBrains.Annotations;
+// ReSharper disable TooManyDeclarations
+// ReSharper disable ClassTooBig
 
 namespace FlexKit.Configuration.IntegrationTests.Steps.DependencyInjection;
 

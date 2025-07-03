@@ -3,8 +3,9 @@
 // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 // </copyright>
 
-using Amazon.Extensions.NETCore.Setup;
+using System.Text.Json;
 using FlexKit.Configuration.Core;
+using FlexKit.Configuration.Providers.Aws.Options;
 using FlexKit.Configuration.Providers.Aws.Sources;
 using JetBrains.Annotations;
 
@@ -17,7 +18,7 @@ namespace FlexKit.Configuration.Providers.Aws.Extensions;
 /// </summary>
 /// <remarks>
 /// These extension methods follow the FlexKit configuration pattern of providing a fluent,
-/// strongly-typed API for adding configuration sources. They maintain consistency with other
+/// strongly typed API for adding configuration sources. They maintain consistency with other
 /// FlexKit configuration providers while providing AWS-specific functionality and options.
 ///
 /// <para>
@@ -49,7 +50,7 @@ public static class AwsExtensions
     /// </summary>
     /// <param name="builder">The FlexKit configuration builder to add the Parameter Store source to.</param>
     /// <param name="path">
-    /// The Parameter Store path prefix to load parameters from.
+    /// The Parameters Store path prefix to load parameters from.
     /// Should start with a forward slash (e.g., "/myapp/", "/prod/database/").
     /// </param>
     /// <param name="optional">
@@ -128,7 +129,7 @@ public static class AwsExtensions
 
     /// <summary>
     /// Adds AWS Parameter Store as a configuration source with advanced configuration options.
-    /// Provides full control over Parameter Store integration including AWS credentials,
+    /// Provides full control over Parameter Store integration, including AWS credentials,
     /// JSON processing, automatic reloading, and custom parameter transformation.
     /// </summary>
     /// <param name="builder">The FlexKit configuration builder to add the Parameter Store source to.</param>
@@ -245,250 +246,371 @@ public static class AwsExtensions
             OnLoadException = options.OnLoadException
         });
     }
-}
-
-/// <summary>
-/// Configuration options for AWS Parameter Store integration with FlexKit configuration.
-/// Provides a strongly-typed way to configure all aspects of Parameter Store access,
-/// including AWS settings, processing options, and error handling.
-/// </summary>
-/// <remarks>
-/// This class serves as a data transfer object for Parameter Store configuration options,
-/// providing a clean API surface for the configuration lambda while maintaining type safety
-/// and IntelliSense support.
-///
-/// <para>
-/// <strong>Configuration Categories:</strong>
-/// <list type="bullet">
-/// <item><strong>AWS Settings:</strong> Credentials, region, and SDK configuration</item>
-/// <item><strong>Parameter Selection:</strong> Path filtering and recursive loading</item>
-/// <item><strong>Processing Options:</strong> JSON flattening and custom transformations</item>
-/// <item><strong>Operational Settings:</strong> Reloading, error handling, and monitoring</item>
-/// </list>
-/// </para>
-///
-/// <para>
-/// <strong>Default Values:</strong>
-/// The class provides sensible defaults for most scenarios:
-/// <list type="bullet">
-/// <item>Optional = true (non-blocking failures)</item>
-/// <item>JsonProcessor = false (simple string processing)</item>
-/// <item>ReloadAfter = null (no automatic reloading)</item>
-/// <item>AwsOptions = null (use default credential chain)</item>
-/// </list>
-/// </para>
-/// </remarks>
-/// <example>
-/// <code>
-/// // Typical production configuration
-/// var options = new AwsParameterStoreOptions
-/// {
-///     Path = "/prod/myapp/",
-///     Optional = false,
-///     JsonProcessor = true,
-///     JsonProcessorPaths = new[] { "/prod/myapp/database/" },
-///     ReloadAfter = TimeSpan.FromMinutes(15),
-///     AwsOptions = new AWSOptions { Region = RegionEndpoint.USEast1 },
-///     OnLoadException = ex => logger.LogError(ex, "Parameter Store error")
-/// };
-/// </code>
-/// </example>
-public class AwsParameterStoreOptions
-{
-    /// <summary>
-    /// Gets or sets the Parameter Store path prefix to load parameters from.
-    /// This path defines the root location in Parameter Store from which to retrieve configuration data.
-    /// </summary>
-    /// <value>
-    /// The Parameter Store path prefix (e.g., "/myapp/", "/prod/database/").
-    /// Must start with a forward slash and should typically end with a forward slash
-    /// to ensure proper parameter hierarchy matching.
-    /// </value>
-    /// <remarks>
-    /// <para>
-    /// <strong>Path Hierarchy:</strong>
-    /// Parameter Store uses forward slashes (/) to create hierarchical parameter organization.
-    /// The path acts as a filter - only parameters that start with this path will be loaded.
-    /// </para>
-    ///
-    /// <para>
-    /// <strong>Best Practices:</strong>
-    /// <list type="bullet">
-    /// <item>Use environment prefixes: "/prod/myapp/", "/dev/myapp/", "/staging/myapp/"</item>
-    /// <item>Group related parameters: "/myapp/database/", "/myapp/cache/", "/myapp/api/"</item>
-    /// <item>Always start with a forward slash</item>
-    /// <item>End with a forward slash to avoid partial matches</item>
-    /// </list>
-    /// </para>
-    /// </remarks>
-    public string? Path { get; [UsedImplicitly] set; }
 
     /// <summary>
-    /// Gets or sets a value indicating whether the Parameter Store source is optional.
-    /// When true, failures to load parameters will not cause configuration building to fail.
+    /// Adds AWS Secrets Manager as a configuration source to the FlexKit configuration builder.
+    /// Enables applications to load sensitive configuration data from AWS Secrets Manager
+    /// with support for JSON processing, binary secrets, and automatic reloading.
     /// </summary>
-    /// <value>
-    /// True if the Parameter Store source is optional; false if it's required.
+    /// <param name="builder">The FlexKit configuration builder to add the Secrets Manager source to.</param>
+    /// <param name="secretNames">
+    /// The array of secret names or ARNs to load from Secrets Manager.
+    /// Can include individual secret names or patterns using wildcards (e.g., "myapp/*").
+    /// </param>
+    /// <param name="optional">
+    /// Indicates whether the Secrets Manager source is optional.
+    /// When true, failures to load secrets will not cause configuration building to fail.
     /// Default is true.
-    /// </value>
+    /// </param>
+    /// <returns>The same FlexKit configuration builder instance to enable method chaining.</returns>
     /// <remarks>
-    /// <para>
-    /// <strong>Production Recommendations:</strong>
-    /// <list type="bullet">
-    /// <item><strong>Critical Config:</strong> Set to false for essential parameters like database connections</item>
-    /// <item><strong>Feature Flags:</strong> Set to true for optional features that have reasonable defaults</item>
-    /// <item><strong>Environment-Specific:</strong> Set to true for dev/test, false for production</item>
-    /// </list>
-    /// </para>
-    /// </remarks>
-    public bool Optional { get; [UsedImplicitly] set; } = true;
-
-    /// <summary>
-    /// Gets or sets the automatic reload interval for Parameter Store data.
-    /// When set, the provider will periodically refresh parameters from Parameter Store.
-    /// </summary>
-    /// <value>
-    /// The interval at which to reload parameters, or null to disable automatic reloading.
-    /// Default is null.
-    /// </value>
-    /// <remarks>
-    /// <para>
-    /// <strong>Cost Considerations:</strong>
-    /// Each reload operation makes API calls to AWS Parameter Store. Consider the balance
-    /// between configuration freshness and AWS API costs when setting this interval.
-    /// </para>
+    /// This is the simplest overload for adding Secrets Manager support. It uses default
+    /// AWS credential resolution and basic secret processing without JSON flattening
+    /// or automatic reloading.
     ///
     /// <para>
-    /// <strong>Recommended Values:</strong>
+    /// <strong>Default Behavior:</strong>
     /// <list type="bullet">
-    /// <item><strong>Development:</strong> 1-2 minutes for rapid iteration</item>
-    /// <item><strong>Production:</strong> 10-30 minutes for operational stability</item>
-    /// <item><strong>Critical Systems:</strong> 30+ minutes to minimize API overhead</item>
-    /// </list>
-    /// </para>
-    /// </remarks>
-    public TimeSpan? ReloadAfter { get; [UsedImplicitly] set; }
-
-    /// <summary>
-    /// Gets or sets the AWS configuration options for Parameter Store access.
-    /// Provides control over AWS credentials, region, and other SDK settings.
-    /// </summary>
-    /// <value>
-    /// The AWS options to use for Parameter Store access, or null to use defaults.
-    /// Default is null (uses AWS credential resolution chain).
-    /// </value>
-    /// <remarks>
-    /// <para>
-    /// <strong>Security Best Practices:</strong>
-    /// <list type="bullet">
-    /// <item>Use IAM roles instead of hardcoded credentials</item>
-    /// <item>Apply least-privilege permissions for Parameter Store access</item>
-    /// <item>Use different AWS profiles for different environments</item>
-    /// <item>Avoid storing credentials in application configuration</item>
-    /// </list>
-    /// </para>
-    /// </remarks>
-    public AWSOptions? AwsOptions { get; [UsedImplicitly] set; }
-
-    /// <summary>
-    /// Gets or sets a value indicating whether JSON parameters should be automatically flattened.
-    /// When enabled, String and SecureString parameters containing valid JSON will be
-    /// processed into hierarchical configuration keys.
-    /// </summary>
-    /// <value>
-    /// True to enable JSON processing; false to treat all parameters as simple strings.
-    /// Default is false.
-    /// </value>
-    /// <remarks>
-    /// <para>
-    /// <strong>JSON Processing Benefits:</strong>
-    /// <list type="bullet">
-    /// <item>Enables complex configuration structures in single parameters</item>
-    /// <item>Supports strongly-typed configuration binding</item>
-    /// <item>Reduces the total number of parameters needed</item>
-    /// <item>Maintains hierarchical relationships in configuration</item>
+    /// <item>Uses the default AWS credential resolution chain</item>
+    /// <item>Loads specified secrets by name or pattern</item>
+    /// <item>Transforms secret names from AWS format to .NET configuration keys</item>
+    /// <item>Does not process JSON secrets (treats them as simple strings)</item>
+    /// <item>Does not automatically reload secrets</item>
+    /// <item>Retrieves AWSCURRENT version of secrets</item>
     /// </list>
     /// </para>
     ///
     /// <para>
-    /// <strong>Performance Impact:</strong>
-    /// JSON processing adds parsing overhead during configuration loading.
-    /// For applications with many parameters or frequent reloading, consider
-    /// using JsonProcessorPaths to limit processing to specific parameter groups.
+    /// <strong>Secret Name Transformation Example:</strong>
+    /// <code>
+    /// // AWS Secrets Manager:
+    /// // myapp-database = '{"host": "localhost", "port": 5432}'
+    /// // myapp-api-key = "secret-api-key-12345"
+    /// // myapp-certificate (binary data)
+    ///
+    /// // Resulting configuration keys:
+    /// // myapp:database = '{"host": "localhost", "port": 5432}' (as string)
+    /// // myapp:api:key = "secret-api-key-12345"
+    /// // myapp:certificate = "base64-encoded-certificate-data"
+    /// </code>
     /// </para>
     /// </remarks>
-    public bool JsonProcessor { get; [UsedImplicitly] set; }
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="builder"/> is null.</exception>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="secretNames"/> is null or empty.</exception>
+    /// <example>
+    /// <code>
+    /// // Basic Secrets Manager configuration
+    /// var config = new FlexConfigurationBuilder()
+    ///     .AddAwsSecretsManager(new[] { "myapp-database", "myapp-api-keys" })
+    ///     .Build();
+    ///
+    /// // Access secret values
+    /// var dbSecret = config["myapp:database"];
+    /// var apiKey = config["myapp:api:keys"];
+    ///
+    /// // With pattern loading
+    /// var config = new FlexConfigurationBuilder()
+    ///     .AddAwsSecretsManager(new[] { "myapp/*" }) // Load all secrets starting with "myapp"
+    ///     .Build();
+    ///
+    /// // With other configuration sources
+    /// var config = new FlexConfigurationBuilder()
+    ///     .AddJsonFile("appsettings.json")
+    ///     .AddAwsSecretsManager(new[] { "myapp-database" })
+    ///     .AddEnvironmentVariables()
+    ///     .Build();
+    /// </code>
+    /// </example>
+    [UsedImplicitly]
+    public static FlexConfigurationBuilder AddAwsSecretsManager(
+        this FlexConfigurationBuilder builder,
+        string[] secretNames,
+        bool optional = true)
+    {
+        ArgumentNullException.ThrowIfNull(builder);
+        ArgumentNullException.ThrowIfNull(secretNames);
+
+        if (secretNames.Length == 0)
+        {
+            throw new ArgumentException("At least one secret name must be specified.", nameof(secretNames));
+        }
+
+        return builder.AddSource(new AwsSecretsManagerConfigurationSource
+        {
+            SecretNames = secretNames,
+            Optional = optional
+        });
+    }
 
     /// <summary>
-    /// Gets or sets the specific parameter paths that should have JSON processing applied.
-    /// When specified, only parameters matching these paths will be processed as JSON.
+    /// Adds AWS Secrets Manager as a configuration source with advanced configuration options.
+    /// Provides full control over Secrets Manager integration including AWS credentials,
+    /// JSON processing, automatic reloading, version stages, and custom secret transformation.
     /// </summary>
-    /// <value>
-    /// An array of parameter path prefixes for selective JSON processing,
-    /// or null to apply to all parameters when JsonProcessor is enabled.
-    /// </value>
+    /// <param name="builder">The FlexKit configuration builder to add the Secrets Manager source to.</param>
+    /// <param name="configure">
+    /// An action to configure the Secrets Manager options, including secret names, AWS settings,
+    /// JSON processing, reloading, version stages, and error handling.
+    /// </param>
+    /// <returns>The same FlexKit configuration builder instance to enable method chaining.</returns>
     /// <remarks>
+    /// This overload provides access to all Secrets Manager configuration options,
+    /// making it suitable for production scenarios that require specific AWS settings,
+    /// automatic reloading, version control, or advanced secret processing.
+    ///
     /// <para>
-    /// <strong>Selective Processing Use Cases:</strong>
+    /// <strong>Advanced Configuration Options:</strong>
     /// <list type="bullet">
-    /// <item>Mixed parameter types (some JSON, some simple strings)</item>
-    /// <item>Performance optimization for large parameter sets</item>
-    /// <item>Avoiding accidental JSON parsing of string values</item>
-    /// <item>Gradual migration from simple to complex parameters</item>
+    /// <item><strong>AWS Options:</strong> Custom credentials, regions, and SDK settings</item>
+    /// <item><strong>JSON Processing:</strong> Automatic flattening of JSON secrets</item>
+    /// <item><strong>Version Control:</strong> Specify version stages (AWSCURRENT, AWSPENDING, etc.)</item>
+    /// <item><strong>Automatic Reloading:</strong> Periodic refresh of secrets from AWS</item>
+    /// <item><strong>Custom Processing:</strong> Secret name transformation and filtering</item>
+    /// <item><strong>Error Handling:</strong> Custom logic for handling loading failures</item>
+    /// <item><strong>Selective JSON Processing:</strong> Apply JSON processing only to specific secrets</item>
     /// </list>
     /// </para>
     ///
     /// <para>
-    /// <strong>Path Format:</strong>
-    /// Use Parameter Store path format with forward slashes. These will be converted
-    /// to configuration key format for matching during processing.
+    /// <strong>Production Configuration Example:</strong>
+    /// <code>
+    /// var config = new FlexConfigurationBuilder()
+    ///     .AddAwsSecretsManager(options =>
+    ///     {
+    ///         options.SecretNames = new[] { "prod-myapp-database", "prod-myapp-api-keys" };
+    ///         options.Optional = false; // Required in production
+    ///         options.JsonProcessor = true;
+    ///         options.JsonProcessorSecrets = new[] { "prod-myapp-database" };
+    ///         options.ReloadAfter = TimeSpan.FromMinutes(15);
+    ///         options.VersionStage = "AWSCURRENT";
+    ///         options.AwsOptions = new AWSOptions
+    ///         {
+    ///             Region = RegionEndpoint.USEast1,
+    ///             Profile = "production"
+    ///         };
+    ///         options.OnLoadException = ex => logger.LogError(ex, "Secrets Manager load failed");
+    ///     })
+    ///     .Build();
+    /// </code>
     /// </para>
     /// </remarks>
-    public string[]? JsonProcessorPaths { get; [UsedImplicitly] set; }
-
-    /// <summary>
-    /// Gets or sets a custom parameter processor for transforming parameter names.
-    /// Allows for application-specific parameter name transformation logic.
-    /// </summary>
-    /// <value>
-    /// A custom parameter processor implementation, or null for default processing.
-    /// </value>
-    /// <remarks>
-    /// <para>
-    /// <strong>Custom Processing Scenarios:</strong>
-    /// <list type="bullet">
-    /// <item>Adding environment or application prefixes to all parameters</item>
-    /// <item>Implementing organization-specific naming conventions</item>
-    /// <item>Filtering or modifying parameter names based on runtime conditions</item>
-    /// <item>Mapping legacy parameter names to new configuration structures</item>
-    /// </list>
-    /// </para>
-    /// </remarks>
-    public IParameterProcessor? ParameterProcessor { get; [UsedImplicitly] set; }
-
-    /// <summary>
-    /// Gets or sets the error handling callback for optional configuration loading failures.
-    /// Invoked when parameter loading fails and the source is marked as optional.
-    /// </summary>
-    /// <value>
-    /// An action that handles configuration loading exceptions, or null for default handling.
-    /// </value>
-    /// <remarks>
-    /// <para>
-    /// <strong>Error Handling Strategies:</strong>
-    /// <list type="bullet">
-    /// <item><strong>Logging:</strong> Record failures for operational monitoring</item>
-    /// <item><strong>Metrics:</strong> Track failure rates and patterns</item>
-    /// <item><strong>Alerting:</strong> Notify operations teams of critical failures</item>
-    /// <item><strong>Fallback:</strong> Implement retry logic or fallback configurations</item>
-    /// </list>
-    /// </para>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="builder"/> or <paramref name="configure"/> is null.</exception>
+    /// <example>
+    /// <code>
+    /// // Development configuration with JSON processing and reloading
+    /// var config = new FlexConfigurationBuilder()
+    ///     .AddAwsSecretsManager(options =>
+    ///     {
+    ///         options.SecretNames = new[] { "dev-myapp/*" };
+    ///         options.Optional = true;
+    ///         options.JsonProcessor = true;
+    ///         options.ReloadAfter = TimeSpan.FromMinutes(2);
+    ///     })
+    ///     .Build();
     ///
-    /// <para>
-    /// <strong>Production Monitoring:</strong>
-    /// Implement comprehensive error handling to ensure parameter loading failures
-    /// are visible to operations teams and can be quickly diagnosed and resolved.
-    /// </para>
-    /// </remarks>
-    public Action<ConfigurationProviderException>? OnLoadException { get; [UsedImplicitly] set; }
+    /// // Production configuration with specific version and custom AWS settings
+    /// var config = new FlexConfigurationBuilder()
+    ///     .AddAwsSecretsManager(options =>
+    ///     {
+    ///         options.SecretNames = new[] { "prod-myapp-database", "prod-myapp-cache" };
+    ///         options.Optional = false;
+    ///         options.VersionStage = "AWSCURRENT";
+    ///         options.AwsOptions = new AWSOptions
+    ///         {
+    ///             Region = RegionEndpoint.USWest2,
+    ///             Profile = "production"
+    ///         };
+    ///         options.OnLoadException = ex =>
+    ///         {
+    ///             // Log to monitoring system
+    ///             logger.LogCritical(ex, "Critical Secrets Manager failure");
+    ///             // Send alert to operations team
+    ///             alertService.SendAlert("Secrets Manager Failure", ex.Message);
+    ///         };
+    ///     })
+    ///     .Build();
+    ///
+    /// // Configuration with custom secret processing and selective JSON
+    /// var config = new FlexConfigurationBuilder()
+    ///     .AddAwsSecretsManager(options =>
+    ///     {
+    ///         options.SecretNames = new[] { "shared-*" };
+    ///         options.SecretProcessor = new EnvironmentSecretProcessor("staging");
+    ///         options.JsonProcessor = true;
+    ///         options.JsonProcessorSecrets = new[] { "shared-database", "shared-cache" };
+    ///         options.ReloadAfter = TimeSpan.FromMinutes(10);
+    ///     })
+    ///     .Build();
+    /// </code>
+    /// </example>
+    [UsedImplicitly]
+    public static FlexConfigurationBuilder AddAwsSecretsManager(
+        this FlexConfigurationBuilder builder,
+        Action<AwsSecretsManagerOptions> configure)
+    {
+        ArgumentNullException.ThrowIfNull(builder);
+        ArgumentNullException.ThrowIfNull(configure);
+
+        var options = new AwsSecretsManagerOptions();
+        configure(options);
+
+        if (options.SecretNames == null || options.SecretNames.Length == 0)
+        {
+            throw new ArgumentException("At least one secret name must be specified in SecretNames.", nameof(configure));
+        }
+
+        return builder.AddSource(new AwsSecretsManagerConfigurationSource
+        {
+            SecretNames = options.SecretNames,
+            Optional = options.Optional,
+            VersionStage = options.VersionStage,
+            ReloadAfter = options.ReloadAfter,
+            AwsOptions = options.AwsOptions,
+            JsonProcessor = options.JsonProcessor,
+            JsonProcessorSecrets = options.JsonProcessorSecrets,
+            SecretProcessor = options.SecretProcessor,
+            OnLoadException = options.OnLoadException
+        });
+    }
+
+    /// <summary>
+    /// Checks if a string value contains valid JSON that can be parsed and flattened.
+    /// Uses JSON parsing to validate the structure without throwing exceptions.
+    /// </summary>
+    /// <param name="value">The string value to check.</param>
+    /// <returns>True if the value contains valid JSON, false otherwise.</returns>
+    internal static bool IsValidJson(this string value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return false;
+        }
+
+        value = value.Trim();
+        var notObject = !value.StartsWith('{') || !value.EndsWith('}');
+        var notArray = !value.StartsWith('[') || !value.EndsWith(']');
+
+        if (notObject && notArray)
+        {
+            return false;
+        }
+
+        try
+        {
+            JsonDocument.Parse(value);
+            return true;
+        }
+        catch (JsonException)
+        {
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Flattens a <see cref="JsonElement"/> into key-value pairs, storing the results in the provided dictionary.
+    /// Complex objects and arrays are traversed recursively, using <c>parentKey</c> as the prefix for each generated key.
+    /// </summary>
+    /// <param name="jsonElement">The JSON element to flatten.</param>
+    /// <param name="output">The dictionary where flattened key-value pairs will be stored.</param>
+    /// <param name="parentKey">The prefix key under which all values from this element will be stored.</param>
+    private static void FlattenJsonElement(this JsonElement jsonElement, Dictionary<string, string?> output, string parentKey)
+    {
+        switch (jsonElement.ValueKind)
+        {
+            case JsonValueKind.Object:
+                ProcessObject(jsonElement, output, parentKey);
+                break;
+            case JsonValueKind.Array:
+                ProcessArray(jsonElement, output, parentKey);
+                break;
+            case JsonValueKind.String:
+            case JsonValueKind.Number:
+            case JsonValueKind.True:
+            case JsonValueKind.False:
+            case JsonValueKind.Null:
+                ProcessPrimitive(jsonElement, output, parentKey);
+                break;
+            case JsonValueKind.Undefined:
+                // Skip undefined values.
+                break;
+            default:
+                output[parentKey] = jsonElement.GetRawText();
+                break;
+        }
+    }
+
+    /// <summary>
+    /// Processes a <see cref="JsonElement"/> of type <c>Object</c> and flattens its properties into the dictionary.
+    /// </summary>
+    /// <param name="element">The object JSON element to process.</param>
+    /// <param name="output">The target dictionary for flattened key-value pairs.</param>
+    /// <param name="parentKey">The key prefix representing the current nesting level.</param>
+    private static void ProcessObject(JsonElement element, Dictionary<string, string?> output, string parentKey)
+    {
+        const string keyDelimiter = ":";
+        foreach (var property in element.EnumerateObject())
+        {
+            var key = string.IsNullOrEmpty(parentKey) ? property.Name : $"{parentKey}{keyDelimiter}{property.Name}";
+            FlattenJsonElement(property.Value, output, key);
+        }
+    }
+
+    /// <summary>
+    /// Processes a <see cref="JsonElement"/> of type <c>Array</c> and flattens its items into the dictionary.
+    /// </summary>
+    /// <param name="element">The array JSON element to process.</param>
+    /// <param name="output">The target dictionary for flattened key-value pairs.</param>
+    /// <param name="parentKey">The key prefix representing the current nesting level.</param>
+    private static void ProcessArray(JsonElement element, Dictionary<string, string?> output, string parentKey)
+    {
+        const string keyDelimiter = ":";
+        var index = 0;
+        foreach (var item in element.EnumerateArray())
+        {
+            var key = $"{parentKey}{keyDelimiter}{index}";
+            FlattenJsonElement(item, output, key);
+            index++;
+        }
+    }
+
+    /// <summary>
+    /// Processes a primitive <see cref="JsonElement"/> (string, number, true, false, or null)
+    /// and stores its value in the dictionary using the provided key.
+    /// </summary>
+    /// <param name="element">The primitive JSON element to process.</param>
+    /// <param name="output">The target dictionary for flattened key-value pairs.</param>
+    /// <param name="key">The resulting key under which the value will be stored.</param>
+    private static void ProcessPrimitive(JsonElement element, Dictionary<string, string?> output, string key)
+    {
+        output[key] = element.ValueKind switch
+        {
+            JsonValueKind.String => element.GetString(),
+            JsonValueKind.Number => element.GetRawText(),
+            JsonValueKind.True => "true",
+            JsonValueKind.False => "false",
+            JsonValueKind.Null => null,
+            _ => output[key]
+        };
+    }
+
+    /// <summary>
+    /// Flattens a JSON string into hierarchical configuration keys following .NET configuration conventions.
+    /// Converts JSON objects and arrays into a flat key-value structure that can be used with strongly typed binding.
+    /// </summary>
+    /// <param name="jsonValue">The JSON string to flatten.</param>
+    /// <param name="configurationData">The dictionary to store the flattened configuration data.</param>
+    /// <param name="prefix">The key prefix to prepend to all flattened keys.</param>
+    internal static void FlattenJsonValue(this string jsonValue, Dictionary<string, string?> configurationData, string prefix)
+    {
+        try
+        {
+            using var document = JsonDocument.Parse(jsonValue);
+            document.RootElement.FlattenJsonElement(configurationData, prefix);
+        }
+        catch (JsonException)
+        {
+            // If JSON parsing fails, store as a simple string value
+            configurationData[prefix] = jsonValue;
+        }
+    }
 }

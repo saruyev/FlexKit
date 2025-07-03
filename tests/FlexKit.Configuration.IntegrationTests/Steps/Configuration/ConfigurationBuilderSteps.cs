@@ -5,6 +5,9 @@ using Microsoft.Extensions.Configuration;
 using Reqnroll;
 using System.Text.Json;
 using JetBrains.Annotations;
+// ReSharper disable ClassTooBig
+// ReSharper disable MethodTooLong
+// ReSharper disable TooManyDeclarations
 
 namespace FlexKit.Configuration.IntegrationTests.Steps.Configuration;
 

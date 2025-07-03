@@ -8,6 +8,7 @@ using Microsoft.Extensions.DependencyModel;
 using NSubstitute;
 using Xunit;
 using Module = Autofac.Module;
+// ReSharper disable ClassTooBig
 
 namespace FlexKit.Configuration.Tests.Assembly;
 

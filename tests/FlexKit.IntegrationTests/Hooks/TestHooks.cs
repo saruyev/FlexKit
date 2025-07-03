@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Reqnroll;
+// ReSharper disable ComplexConditionExpression
 
 namespace FlexKit.IntegrationTests.Hooks;
 

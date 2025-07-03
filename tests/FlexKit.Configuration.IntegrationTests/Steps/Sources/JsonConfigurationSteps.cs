@@ -4,6 +4,9 @@ using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Reqnroll;
 using System.Text.Json;
+// ReSharper disable MethodTooLong
+// ReSharper disable ClassTooBig
+// ReSharper disable ComplexConditionExpression
 
 namespace FlexKit.Configuration.IntegrationTests.Steps.Sources;
 

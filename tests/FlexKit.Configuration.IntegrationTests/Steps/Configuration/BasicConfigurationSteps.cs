@@ -4,6 +4,8 @@ using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Reqnroll;
 using System.Dynamic;
+// ReSharper disable ClassTooBig
+// ReSharper disable MethodTooLong
 
 namespace FlexKit.Configuration.IntegrationTests.Steps.Configuration;
 

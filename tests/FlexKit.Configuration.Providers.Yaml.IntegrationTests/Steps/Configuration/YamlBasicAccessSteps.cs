@@ -3,6 +3,8 @@ using FlexKit.Configuration.Providers.Yaml.IntegrationTests.Utils;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Reqnroll;
+// ReSharper disable ClassTooBig
+// ReSharper disable MethodTooLong
 
 namespace FlexKit.Configuration.Providers.Yaml.IntegrationTests.Steps.Configuration;
 
@@ -290,7 +292,7 @@ public class YamlBasicAccessSteps(ScenarioContext scenarioContext)
         {
             if (current == null) return null;
         
-            // Use CurrentConfig which returns IFlexConfig or null for missing sections
+            // Use CurrentConfig, which returns IFlexConfig or null for missing sections
             current = current.Configuration.CurrentConfig(property);
         }
 
@@ -301,60 +303,6 @@ public class YamlBasicAccessSteps(ScenarioContext scenarioContext)
         }
 
         return current?.ToString();
-    }
-
-    /// <summary>
-    /// Gets a property from a dynamic object, handling array indexing.
-    /// </summary>
-    /// <param name="obj">The dynamic object</param>
-    /// <param name="propertyName">The property name, possibly with an array index</param>
-    /// <returns>The property value or null if not found</returns>
-    private static object? GetYamlProperty(dynamic obj, string propertyName)
-    {
-        if (obj == null) return null;
-
-        // Handle array indexing (e.g., "Items[0]")
-        if (propertyName.Contains('[') && propertyName.Contains(']'))
-        {
-            var parts = propertyName.Split('[');
-            var baseProperty = parts[0];
-            var indexPart = parts[1].TrimEnd(']');
-            
-            if (int.TryParse(indexPart, out var index))
-            {
-                var arrayProperty = GetYamlProperty(obj, baseProperty);
-                if (arrayProperty is IFlexConfig flexConfig)
-                {
-                    return flexConfig[index.ToString()];
-                }
-            }
-        }
-
-        // Regular property access
-        try
-        {
-            var propertyInfo = obj.GetType().GetProperty(propertyName);
-            if (propertyInfo != null)
-            {
-                return propertyInfo.GetValue(obj);
-            }
-
-            // Try as a dynamic property
-            return ((IDictionary<string, object>)obj)[propertyName];
-        }
-        catch
-        {
-            try
-            {
-                // Fallback to reflection or dynamic member access
-                return obj.GetType().InvokeMember(propertyName, 
-                    System.Reflection.BindingFlags.GetProperty, null, obj, null);
-            }
-            catch
-            {
-                return null;
-            }
-        }
     }
 
     #endregion

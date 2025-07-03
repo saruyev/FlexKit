@@ -13,6 +13,9 @@ using Microsoft.Extensions.Logging;
 using Reqnroll;
 using FlexKit.Configuration.Conversion;
 using FlexKit.IntegrationTests.Utils;
+// ReSharper disable MethodTooLong
+// ReSharper disable ClassTooBig
+// ReSharper disable ExcessiveIndentation
 
 namespace FlexKit.Configuration.IntegrationTests.Steps.RealWorld;
 

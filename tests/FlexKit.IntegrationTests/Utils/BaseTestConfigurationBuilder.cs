@@ -5,6 +5,8 @@ using System.Text.Json;
 using System.IO.Abstractions;
 using FlexKit.IntegrationTests.Hooks;
 using JetBrains.Annotations;
+// ReSharper disable MemberCanBeProtected.Global
+// ReSharper disable ClassTooBig
 
 namespace FlexKit.IntegrationTests.Utils;
 

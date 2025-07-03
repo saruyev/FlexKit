@@ -5,6 +5,7 @@ using FlexKit.Configuration.Tests.TestBase;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration.Memory;
 using Xunit;
+// ReSharper disable ComplexConditionExpression
 
 namespace FlexKit.Configuration.Tests.Core;
 

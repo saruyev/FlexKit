@@ -3,6 +3,7 @@ using FlexKit.Configuration.Providers.Yaml.Extensions;
 using FlexKit.Configuration.Providers.Yaml.Tests.TestBase;
 using FluentAssertions;
 using Xunit;
+// ReSharper disable TooManyDeclarations
 
 namespace FlexKit.Configuration.Providers.Yaml.Tests.Extensions;
 
