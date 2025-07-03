@@ -1,0 +1,35 @@
+﻿{
+  "Application": {
+    "Name": "Simple JSON Test App",
+    "Version": "1.0.0",
+    "Environment": "Development",
+    "Debug": true
+  },
+  "Database": {
+    "ConnectionString": "Server=localhost;Database=SimpleTestDb;User=test;Password=test123",
+    "Timeout": 30,
+    "MaxRetries": 3,
+    "EnableLogging": false
+  },
+  "Api": {
+    "BaseUrl": "https://api.example.com",
+    "Key": "simple_api_key_12345",
+    "Timeout": 5000,
+    "EnableCompression": true
+  },
+  "Server": {
+    "Host": "localhost",
+    "Port": 8080,
+    "IsSecure": false
+  },
+  "Features": {
+    "NewFeature": false,
+    "BetaFeature": true,
+    "CacheEnabled": true
+  },
+  "Logging": {
+    "Level": "Information",
+    "Console": true,
+    "File": false
+  }
+}

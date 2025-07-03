@@ -1,0 +1,753 @@
+﻿# Large YAML configuration for enterprise-scale performance testing
+# This file contains 200+ configuration keys across 6 levels of nesting
+
+Application:
+  Name: "Enterprise YAML Performance Test Application"
+  Version: "3.2.1"
+  Environment: "Production"
+  Debug: false
+  ReleaseDate: "2024-07-03"
+  LicenseKey: "enterprise_license_key_large_config_xyz789"
+  BuildInfo:
+    BuildNumber: "2024.07.03.15"
+    BuildDate: "2024-07-03T15:30:00Z"
+    CommitHash: "abc123def456ghi789jkl012"
+    Branch: "release/3.2.1"
+    BuildAgent: "azure-agent-pool-01"
+    Compiler: "dotnet-9.0.6"
+  Metadata:
+    Vendor: "FlexKit Enterprise Solutions"
+    Copyright: "Copyright (c) 2024 FlexKit Enterprise"
+    SupportEmail: "support@flexkit-enterprise.com"
+    DocumentationUrl: "https://docs.flexkit-enterprise.com"
+    TermsOfService: "https://flexkit-enterprise.com/terms"
+    PrivacyPolicy: "https://flexkit-enterprise.com/privacy"
+
+# Multi-region database configuration
+Database:
+  Clusters:
+    Primary:
+      Region: "us-east-1"
+      Instances:
+        - Name: "db-primary-01"
+          Host: "db-primary-01.cluster-xyz.us-east-1.rds.amazonaws.com"
+          Port: 5432
+          Database: "enterprise_app"
+          Username: "app_primary_user"
+          Password: "complex_primary_password_123"
+          MaxConnections: 200
+          ConnectionTimeout: 60
+          CommandTimeout: 30
+          RetryAttempts: 5
+          RetryDelay: 1000
+          SslMode: "Require"
+          ApplicationName: "EnterpriseApp-Primary"
+        - Name: "db-primary-02"
+          Host: "db-primary-02.cluster-xyz.us-east-1.rds.amazonaws.com"
+          Port: 5432
+          Database: "enterprise_app"
+          Username: "app_primary_user"
+          Password: "complex_primary_password_123"
+          MaxConnections: 150
+          ConnectionTimeout: 60
+          CommandTimeout: 30
+          RetryAttempts: 5
+          RetryDelay: 1000
+          SslMode: "Require"
+          ApplicationName: "EnterpriseApp-Primary"
+    
+    Secondary:
+      Region: "us-west-2"
+      Instances:
+        - Name: "db-secondary-01"
+          Host: "db-secondary-01.cluster-abc.us-west-2.rds.amazonaws.com"
+          Port: 5432
+          Database: "enterprise_app"
+          Username: "app_secondary_user"
+          Password: "complex_secondary_password_456"
+          MaxConnections: 100
+          ConnectionTimeout: 45
+          CommandTimeout: 30
+          RetryAttempts: 3
+          RetryDelay: 2000
+          SslMode: "Require"
+          ApplicationName: "EnterpriseApp-Secondary"
+          ReadOnly: true
+        - Name: "db-secondary-02"
+          Host: "db-secondary-02.cluster-abc.us-west-2.rds.amazonaws.com"
+          Port: 5432
+          Database: "enterprise_app"
+          Username: "app_secondary_user"
+          Password: "complex_secondary_password_456"
+          MaxConnections: 80
+          ConnectionTimeout: 45
+          CommandTimeout: 30
+          RetryAttempts: 3
+          RetryDelay: 2000
+          SslMode: "Require"
+          ApplicationName: "EnterpriseApp-Secondary"
+          ReadOnly: true
+    
+    Analytics:
+      Region: "eu-west-1"
+      DataWarehouse:
+        Host: "analytics-dw.cluster-def.eu-west-1.redshift.amazonaws.com"
+        Port: 5439
+        Database: "enterprise_analytics"
+        Username: "analytics_user"
+        Password: "analytics_password_789"
+        MaxConnections: 50
+        QueryTimeout: 300
+        SslMode: "Require"
+      
+      TimeSeries:
+        Host: "timeseries.cluster-ghi.eu-west-1.timestream.amazonaws.com"
+        Database: "enterprise_metrics"
+        Table: "application_metrics"
+        RetentionPeriod: 8760  # 1 year in hours
+        MagneticStoreRetention: 73000  # ~8 years in hours
+  
+  ConnectionPools:
+    Primary:
+      MinPoolSize: 10
+      MaxPoolSize: 200
+      IdleTimeout: 300
+      LifeTime: 1800
+      ValidationInterval: 30
+      ValidationQuery: "SELECT 1"
+      TestOnBorrow: true
+      TestOnReturn: false
+      TestWhileIdle: true
+    
+    Secondary:
+      MinPoolSize: 5
+      MaxPoolSize: 100
+      IdleTimeout: 600
+      LifeTime: 3600
+      ValidationInterval: 60
+      ValidationQuery: "SELECT 1"
+      TestOnBorrow: true
+      TestOnReturn: false
+      TestWhileIdle: true
+  
+  Migrations:
+    AutoMigrate: false
+    MigrationsTable: "__EFMigrationsHistory"
+    CommandTimeout: 300
+    BackupBeforeMigration: true
+    BackupLocation: "/backups/database/"
+
+# Comprehensive cache configuration
+Cache:
+  Layers:
+    L1:
+      Type: "InMemory"
+      MaxSize: "2GB"
+      DefaultExpiration: 300
+      SlidingExpiration: 120
+      PriorityExpiration: true
+      CompressionThreshold: 1024
+      CompressionLevel: "Optimal"
+      Statistics:
+        Enabled: true
+        FlushInterval: 60
+    
+    L2:
+      Type: "Redis"
+      ConnectionString: "redis-cluster-primary.abc123.cache.amazonaws.com:6379"
+      Database: 0
+      KeyPrefix: "enterprise_app:"
+      DefaultExpiration: 3600
+      Serialization:
+        Type: "MessagePack"
+        Compression: true
+        CompressionLevel: "Fastest"
+      Clustering:
+        Enabled: true
+        Nodes:
+          - "redis-node-01.abc123.cache.amazonaws.com:6379"
+          - "redis-node-02.abc123.cache.amazonaws.com:6379"
+          - "redis-node-03.abc123.cache.amazonaws.com:6379"
+          - "redis-node-04.abc123.cache.amazonaws.com:6379"
+          - "redis-node-05.abc123.cache.amazonaws.com:6379"
+          - "redis-node-06.abc123.cache.amazonaws.com:6379"
+      Sentinel:
+        ServiceName: "enterprise-redis-cluster"
+        Endpoints:
+          - "sentinel-01.abc123.cache.amazonaws.com:26379"
+          - "sentinel-02.abc123.cache.amazonaws.com:26379"
+          - "sentinel-03.abc123.cache.amazonaws.com:26379"
+    
+    L3:
+      Type: "DynamoDB"
+      Region: "us-east-1"
+      TableName: "enterprise-app-cache"
+      ReadCapacityUnits: 100
+      WriteCapacityUnits: 50
+      DefaultTtl: 86400
+      LocalSecondaryIndexes:
+        - IndexName: "expires-index"
+          KeySchema:
+            PartitionKey: "pk"
+            SortKey: "expires_at"
+          Projection: "ALL"
+
+# Microservices API gateway configuration
+ApiGateway:
+  LoadBalancer:
+    Type: "ApplicationLoadBalancer"
+    Algorithm: "RoundRobin"
+    HealthChecks:
+      Enabled: true
+      Interval: 30
+      Timeout: 5
+      HealthyThreshold: 2
+      UnhealthyThreshold: 3
+      Path: "/health"
+      Protocol: "HTTPS"
+  
+  Services:
+    UserManagement:
+      Instances:
+        - Name: "user-service-01"
+          Host: "user-service-01.internal.enterprise.com"
+          Port: 9001
+          Protocol: "https"
+          Weight: 100
+          MaxConnections: 500
+          Circuit:
+            FailureThreshold: 5
+            RecoveryTimeout: 30
+            HalfOpenMaxCalls: 3
+        - Name: "user-service-02"
+          Host: "user-service-02.internal.enterprise.com"
+          Port: 9001
+          Protocol: "https"
+          Weight: 80
+          MaxConnections: 400
+          Circuit:
+            FailureThreshold: 5
+            RecoveryTimeout: 30
+            HalfOpenMaxCalls: 3
+        - Name: "user-service-03"
+          Host: "user-service-03.internal.enterprise.com"
+          Port: 9001
+          Protocol: "https"
+          Weight: 60
+          MaxConnections: 300
+          Circuit:
+            FailureThreshold: 5
+            RecoveryTimeout: 30
+            HalfOpenMaxCalls: 3
+      
+      RateLimit:
+        RequestsPerSecond: 1000
+        BurstLimit: 2000
+        WindowSize: 60
+      
+      Authentication:
+        Required: true
+        Schemes: ["Bearer", "ApiKey"]
+        JwtValidation:
+          Issuer: "https://auth.enterprise.com"
+          Audience: "enterprise-api"
+          ClockSkew: 300
+    
+    OrderProcessing:
+      Instances:
+        - Name: "order-service-01"
+          Host: "order-service-01.internal.enterprise.com"
+          Port: 9002
+          Protocol: "https"
+          Weight: 100
+          MaxConnections: 300
+          Circuit:
+            FailureThreshold: 3
+            RecoveryTimeout: 60
+            HalfOpenMaxCalls: 2
+        - Name: "order-service-02"
+          Host: "order-service-02.internal.enterprise.com"
+          Port: 9002
+          Protocol: "https"
+          Weight: 100
+          MaxConnections: 300
+          Circuit:
+            FailureThreshold: 3
+            RecoveryTimeout: 60
+            HalfOpenMaxCalls: 2
+      
+      RateLimit:
+        RequestsPerSecond: 500
+        BurstLimit: 1000
+        WindowSize: 60
+      
+      Timeout:
+        ConnectionTimeout: 10
+        RequestTimeout: 30
+        KeepAlive: 120
+    
+    PaymentProcessing:
+      Instances:
+        - Name: "payment-service-01"
+          Host: "payment-service-01.internal.enterprise.com"
+          Port: 9003
+          Protocol: "https"
+          Weight: 100
+          MaxConnections: 200
+          SslCertificate:
+            Thumbprint: "abc123def456ghi789"
+            ValidateChain: true
+            ValidateName: true
+          Circuit:
+            FailureThreshold: 2
+            RecoveryTimeout: 120
+            HalfOpenMaxCalls: 1
+        - Name: "payment-service-02"
+          Host: "payment-service-02.internal.enterprise.com"
+          Port: 9003
+          Protocol: "https"
+          Weight: 80
+          MaxConnections: 150
+          SslCertificate:
+            Thumbprint: "abc123def456ghi789"
+            ValidateChain: true
+            ValidateName: true
+          Circuit:
+            FailureThreshold: 2
+            RecoveryTimeout: 120
+            HalfOpenMaxCalls: 1
+      
+      RateLimit:
+        RequestsPerSecond: 200
+        BurstLimit: 400
+        WindowSize: 60
+      
+      Security:
+        RequireHttps: true
+        RequireClientCertificate: true
+        AllowedCertificateThumbprints:
+          - "client_cert_thumb_001"
+          - "client_cert_thumb_002"
+          - "client_cert_thumb_003"
+    
+    NotificationService:
+      Instances:
+        - Name: "notification-service-01"
+          Host: "notification-service-01.internal.enterprise.com"
+          Port: 9004
+          Protocol: "https"
+          Weight: 100
+          MaxConnections: 400
+      
+      Channels:
+        Email:
+          Provider: "SendGrid"
+          ApiKey: "sendgrid_enterprise_api_key_456"
+          FromAddress: "noreply@enterprise.com"
+          FromName: "Enterprise Application"
+          Templates:
+            Welcome: "d-abc123def456"
+            PasswordReset: "d-def456ghi789"
+            OrderConfirmation: "d-ghi789jkl012"
+        
+        SMS:
+          Provider: "Twilio"
+          AccountSid: "twilio_account_sid_789"
+          AuthToken: "twilio_auth_token_012"
+          FromNumber: "+1234567890"
+        
+        Push:
+          Provider: "Firebase"
+          ServerKey: "firebase_server_key_345"
+          SenderId: "firebase_sender_id_678"
+
+# External integrations
+ExternalServices:
+  PaymentGateways:
+    Primary:
+      Provider: "Stripe"
+      SecretKey: "stripe_secret_key_enterprise_789"
+      PublishableKey: "stripe_publishable_key_enterprise_012"
+      WebhookSecret: "stripe_webhook_secret_345"
+      ApiVersion: "2023-10-16"
+      ConnectTimeout: 30
+      ReadTimeout: 60
+      MaxRetries: 3
+    
+    Secondary:
+      Provider: "PayPal"
+      ClientId: "paypal_client_id_enterprise_456"
+      ClientSecret: "paypal_client_secret_enterprise_789"
+      Mode: "live"
+      ConnectTimeout: 30
+      ReadTimeout: 60
+      MaxRetries: 3
+  
+  EmailProviders:
+    Primary:
+      Provider: "SendGrid"
+      ApiKey: "sendgrid_enterprise_primary_key_123"
+      MaxSendRate: 1000
+      DailyLimit: 100000
+      RetryAttempts: 3
+      BackoffMultiplier: 2
+    
+    Secondary:
+      Provider: "Amazon SES"
+      Region: "us-east-1"
+      AccessKeyId: "ses_access_key_456"
+      SecretAccessKey: "ses_secret_key_789"
+      MaxSendRate: 200
+      DailyLimit: 50000
+      RetryAttempts: 2
+      BackoffMultiplier: 1.5
+  
+  SmsProviders:
+    Primary:
+      Provider: "Twilio"
+      AccountSid: "twilio_enterprise_sid_012"
+      AuthToken: "twilio_enterprise_token_345"
+      MaxConcurrentRequests: 100
+      RateLimitPerSecond: 10
+    
+    Secondary:
+      Provider: "Amazon SNS"
+      Region: "us-east-1"
+      AccessKeyId: "sns_access_key_678"
+      SecretAccessKey: "sns_secret_key_901"
+      DefaultRegion: "us-east-1"
+
+# Security and compliance configuration
+Security:
+  Authentication:
+    Jwt:
+      SecretKey: "enterprise_jwt_secret_key_super_long_and_secure_12345678901234567890"
+      Issuer: "https://auth.enterprise.com"
+      Audience: "enterprise-api"
+      ExpirationMinutes: 60
+      RefreshTokenExpirationDays: 30
+      AllowInsecureHttp: false
+      RequireHttpsMetadata: true
+      SaveToken: true
+      ValidateIssuer: true
+      ValidateAudience: true
+      ValidateLifetime: true
+      ValidateIssuerSigningKey: true
+      ClockSkew: 300
+    
+    OAuth2:
+      Providers:
+        Google:
+          ClientId: "google_oauth_client_id_enterprise"
+          ClientSecret: "google_oauth_client_secret_enterprise"
+          RedirectUri: "https://app.enterprise.com/auth/google/callback"
+          Scope: "openid profile email"
+        
+        Microsoft:
+          ClientId: "microsoft_oauth_client_id_enterprise"
+          ClientSecret: "microsoft_oauth_client_secret_enterprise"
+          RedirectUri: "https://app.enterprise.com/auth/microsoft/callback"
+          Tenant: "enterprise.onmicrosoft.com"
+          Scope: "openid profile email"
+        
+        LinkedIn:
+          ClientId: "linkedin_oauth_client_id_enterprise"
+          ClientSecret: "linkedin_oauth_client_secret_enterprise"
+          RedirectUri: "https://app.enterprise.com/auth/linkedin/callback"
+          Scope: "r_liteprofile r_emailaddress"
+  
+  Authorization:
+    Policies:
+      AdminOnly:
+        RequireRole: "Administrator"
+        RequireClaim: "admin_access"
+        RequireAuthenticatedUser: true
+      
+      UserManagement:
+        RequireRole: ["Administrator", "UserManager"]
+        RequireClaim: "user_management"
+        MinimumAge: 18
+      
+      OrderProcessing:
+        RequireRole: ["Administrator", "OrderManager", "Cashier"]
+        RequireClaim: "order_processing"
+        RequireAuthenticatedUser: true
+      
+      ReportAccess:
+        RequireRole: ["Administrator", "Manager", "Analyst"]
+        RequireClaim: "report_access"
+        MaximumSessionDuration: 480  # 8 hours
+  
+  Encryption:
+    DataAtRest:
+      Algorithm: "AES-256-GCM"
+      KeyRotationDays: 90
+      KeyProvider: "AWS KMS"
+      KeyId: "arn:aws:kms:us-east-1:123456789012:key/enterprise-key-id"
+    
+    DataInTransit:
+      MinimumTlsVersion: "1.2"
+      CipherSuites:
+        - "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"
+        - "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"
+        - "TLS_DHE_RSA_WITH_AES_256_GCM_SHA384"
+      
+      Certificate:
+        Thumbprint: "enterprise_ssl_cert_thumbprint_123456"
+        ValidFrom: "2024-01-01T00:00:00Z"
+        ValidTo: "2025-01-01T00:00:00Z"
+        KeySize: 2048
+        SignatureAlgorithm: "SHA256WithRSA"
+  
+  Compliance:
+    GDPR:
+      Enabled: true
+      DataRetentionDays: 2555  # 7 years
+      RightToErasure: true
+      DataPortability: true
+      ConsentTracking: true
+      CookieConsent: true
+      PrivacyPolicyUrl: "https://enterprise.com/privacy"
+    
+    CCPA:
+      Enabled: true
+      DoNotSellEnabled: true
+      DataDeletionEnabled: true
+      OptOutUrl: "https://enterprise.com/ccpa-opt-out"
+    
+    SOX:
+      Enabled: true
+      AuditLogging: true
+      ChangeTracking: true
+      AccessControls: true
+      DataIntegrity: true
+      FinancialReporting: true
+    
+    HIPAA:
+      Enabled: false
+      BusinessAssociateAgreement: false
+      EncryptionRequired: true
+      AccessLogging: true
+      RiskAssessment: false
+
+# Monitoring and observability
+Monitoring:
+  ApplicationInsights:
+    InstrumentationKey: "enterprise_ai_instrumentation_key_complex_monitoring_456789"
+    ConnectionString: "InstrumentationKey=enterprise_key;IngestionEndpoint=https://enterprise.applicationinsights.azure.com/"
+    SamplingRate: 0.05  # 5% sampling for high-volume production
+    EnableAdaptiveSampling: true
+    MaxTelemetryItemsPerSecond: 500
+    EnableHeartbeat: true
+    HeartbeatInterval: 900  # 15 minutes
+    EnableSqlCommandTextInstrumentation: false  # Security compliance
+    EnableDependencyTracking: true
+    EnablePerformanceCounterCollection: true
+    EnableEventCounterCollection: true
+  
+  Metrics:
+    Prometheus:
+      Enabled: true
+      Port: 9090
+      Path: "/metrics"
+      PushGateway:
+        Url: "https://prometheus-pushgateway.enterprise.com"
+        Job: "enterprise-app"
+        Instance: "instance-01"
+        PushInterval: 60
+      
+      CustomMetrics:
+        BusinessMetrics:
+          - Name: "orders_processed_total"
+            Type: "Counter"
+            Description: "Total number of orders processed"
+            Labels: ["status", "payment_method", "region"]
+
+          - Name: "revenue_total"
+            Type: "Counter"
+            Description: "Total revenue in USD"
+            Labels: ["currency", "region", "product_category"]
+
+          - Name: "user_session_duration_seconds"
+            Type: "Histogram"
+            Description: "User session duration in seconds"
+            Buckets: [60, 300, 900, 1800, 3600, 7200]
+        
+        TechnicalMetrics:
+          - Name: "http_request_duration_seconds"
+            Type: "Histogram"
+            Description: "HTTP request duration in seconds"
+            Buckets: [0.1, 0.3, 1, 3, 10, 30]
+            Labels: ["method", "endpoint", "status_code"]
+
+          - Name: "database_query_duration_seconds"
+            Type: "Histogram"
+            Description: "Database query duration in seconds"
+            Buckets: [0.01, 0.05, 0.1, 0.5, 1, 5, 10]
+            Labels: ["operation", "table", "database"]
+  
+  Distributed Tracing:
+    Jaeger:
+      Enabled: true
+      AgentHost: "jaeger-agent.enterprise.com"
+      AgentPort: 6831
+      CollectorEndpoint: "https://jaeger-collector.enterprise.com:14268/api/traces"
+      SamplingRate: 0.1
+      MaxPacketSize: 8192
+      FlushInterval: 1000
+      
+      ServiceName: "enterprise-app"
+      ServiceVersion: "3.2.1"
+      ServiceNamespace: "production"
+      
+      Tags:
+        Environment: "production"
+        DataCenter: "us-east-1"
+        Team: "platform"
+        Owner: "platform-team@enterprise.com"
+  
+  HealthChecks:
+    Enabled: true
+    Endpoints:
+      - Path: "/health"
+        Port: 8080
+        Protocol: "http"
+        Timeout: 30
+
+      - Path: "/health/ready"
+        Port: 8080
+        Protocol: "http"
+        Timeout: 10
+
+      - Path: "/health/live"
+        Port: 8080
+        Protocol: "http"
+        Timeout: 5
+    
+    Checks:
+      Database:
+        Enabled: true
+        Timeout: 15
+        Query: "SELECT 1"
+        CriticalOnFailure: true
+      
+      Redis:
+        Enabled: true
+        Timeout: 5
+        Command: "PING"
+        CriticalOnFailure: false
+      
+      ExternalApis:
+        Enabled: true
+        Timeout: 10
+        Endpoints:
+          - "https://api.stripe.com/v1"
+          - "https://api.sendgrid.com/v3"
+        CriticalOnFailure: false
+
+# Performance and optimization
+Performance:
+  Threading:
+    MinWorkerThreads: 100
+    MaxWorkerThreads: 1000
+    MinCompletionPortThreads: 100
+    MaxCompletionPortThreads: 1000
+    ThreadPoolGrowthDelay: 500
+  
+  GarbageCollection:
+    ServerGC: true
+    ConcurrentGC: true
+    RetainVM: true
+    LatencyMode: "LowLatency"
+    LOHThreshold: 85000
+  
+  Compression:
+    Enabled: true
+    Level: "Optimal"
+    MinimumBytes: 1024
+    MimeTypes:
+      - "text/html"
+      - "text/css"
+      - "text/javascript"
+      - "application/json"
+      - "application/xml"
+      - "text/xml"
+      - "text/plain"
+  
+  OutputCaching:
+    Enabled: true
+    DefaultDuration: 300
+    MaxSize: "1GB"
+    VaryByHeaders: ["Accept-Encoding", "Accept-Language"]
+    VaryByQueryKeys: ["*"]
+    
+    Profiles:
+      StaticContent:
+        Duration: 86400  # 24 hours
+        Location: "Any"
+        VaryByHeader: "Accept-Encoding"
+      
+      ApiResponses:
+        Duration: 600  # 10 minutes
+        Location: "ServerAndClient"
+        VaryByQueryKeys: ["*"]
+      
+      UserSpecific:
+        Duration: 300  # 5 minutes
+        Location: "Client"
+        VaryByHeader: "Authorization"
+
+# Development and deployment
+Development:
+  Environment: "Production"
+  EnableDeveloperExceptionPage: false
+  EnableDetailedErrors: false
+  EnableSensitiveDataLogging: false
+  
+  HotReload:
+    Enabled: false
+    WatchFiles: []
+    ExcludePatterns: []
+  
+  Swagger:
+    Enabled: false  # Disabled in production
+    Title: "Enterprise API"
+    Version: "v3.2.1"
+    Description: "Enterprise application API documentation"
+    ContactName: "API Support Team"
+    ContactEmail: "api-support@enterprise.com"
+    LicenseName: "Enterprise License"
+    LicenseUrl: "https://enterprise.com/license"
+
+Deployment:
+  Strategy: "BlueGreen"
+  RollbackOnFailure: true
+  HealthCheckGracePeriod: 300
+  MaxUnavailableInstances: 1
+  MinHealthyInstances: 2
+  
+  LoadBalancer:
+    DeregistrationDelay: 300
+    HealthCheckPath: "/health"
+    HealthCheckInterval: 30
+    HealthyThreshold: 2
+    UnhealthyThreshold: 5
+  
+  AutoScaling:
+    MinInstances: 3
+    MaxInstances: 20
+    TargetCpuUtilization: 70
+    TargetMemoryUtilization: 80
+    ScaleOutCooldown: 300
+    ScaleInCooldown: 600
+    
+    Metrics:
+      - MetricName: "RequestCount"
+        TargetValue: 1000
+        ScaleOutThreshold: 1200
+        ScaleInThreshold: 800
+
+      - MetricName: "ResponseTime"
+        TargetValue: 200
+        ScaleOutThreshold: 500
+        ScaleInThreshold: 100

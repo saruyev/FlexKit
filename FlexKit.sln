@@ -110,6 +110,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FlexKit.Configuration.Provi
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FlexKit.Configuration.Providers.Yaml.IntegrationTests", "tests\FlexKit.Configuration.Providers.Yaml.IntegrationTests\FlexKit.Configuration.Providers.Yaml.IntegrationTests.csproj", "{E8DEBEB9-E83B-4BFC-85F7-4D2A68A1EF97}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FlexKit.Configuration.Providers.Yaml.PerformanceTests", "benchmarks\FlexKit.Configuration.Providers.Yaml.PerformanceTests\FlexKit.Configuration.Providers.Yaml.PerformanceTests.csproj", "{07D68849-A2CC-49E1-8495-2E598B44DC3F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -172,6 +174,10 @@ Global
 		{E8DEBEB9-E83B-4BFC-85F7-4D2A68A1EF97}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E8DEBEB9-E83B-4BFC-85F7-4D2A68A1EF97}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E8DEBEB9-E83B-4BFC-85F7-4D2A68A1EF97}.Release|Any CPU.Build.0 = Release|Any CPU
+		{07D68849-A2CC-49E1-8495-2E598B44DC3F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{07D68849-A2CC-49E1-8495-2E598B44DC3F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{07D68849-A2CC-49E1-8495-2E598B44DC3F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{07D68849-A2CC-49E1-8495-2E598B44DC3F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{EEDA0AD3-426C-426B-8832-B34B21B1D332} = {F60C1E3A-80C0-4F52-9CE0-C3D24657A3AC}
@@ -200,5 +206,6 @@ Global
 		{11AD4093-67A3-4953-96A2-8E5A1F885401} = {07B34B71-96D5-4881-B89E-EF8C4885BF9F}
 		{A2E2A2C0-C830-4972-B0B4-86AA232111F3} = {07B34B71-96D5-4881-B89E-EF8C4885BF9F}
 		{E8DEBEB9-E83B-4BFC-85F7-4D2A68A1EF97} = {A79CA617-3F5D-4017-97AC-41C70A117F2D}
+		{07D68849-A2CC-49E1-8495-2E598B44DC3F} = {2B210941-A9AD-487A-9FBC-5DB777CFA860}
 	EndGlobalSection
 EndGlobal
