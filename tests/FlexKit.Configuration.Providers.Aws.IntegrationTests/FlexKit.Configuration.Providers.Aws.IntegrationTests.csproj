@@ -1,0 +1,127 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net9.0</TargetFramework>
+        <!-- Integration test specific settings -->
+        <CollectCoverage>false</CollectCoverage>
+
+        <!-- Integration tests work with real dependencies -->
+        <DefineConstants>$(DefineConstants);INTEGRATION_TESTS</DefineConstants>
+        <IsPackable>false</IsPackable>
+        <IsTestProject>true</IsTestProject>
+        <GenerateDocumentationFile>false</GenerateDocumentationFile>
+
+        <!-- More lenient coverage (real external calls may not be fully coverable) -->
+        <CoverageFailOnMinThreshold>false</CoverageFailOnMinThreshold>
+
+        <!-- Docker support for containers -->
+        <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+
+        <!-- BDD/Reqnroll settings -->
+        <ReqnrollOutputPath>Generated</ReqnrollOutputPath>
+        <ReqnrollProjectType>Test</ReqnrollProjectType>
+    </PropertyGroup>
+
+    <!-- Core testing packages -->
+    <ItemGroup>
+        <!-- BDD Testing -->
+        <PackageReference Include="Reqnroll" Version="[2.4.1,3.0.0)"/>
+        <PackageReference Include="Reqnroll.xUnit" Version="[2.4.1,3.0.0)"/>
+        <PackageReference Include="Reqnroll.Tools.MsBuild.Generation" Version="[2.4.1,3.0.0)"/>
+    </ItemGroup>
+
+    <!-- Microsoft Extensions packages -->
+    <ItemGroup>
+        <PackageReference Include="Microsoft.Extensions.Hosting" Version="[9.0.6,10.0.0)"/>
+        <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="[9.0.6,10.0.0)"/>
+        <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="[9.0.6,10.0.0)"/>
+        <PackageReference Include="Microsoft.Extensions.FileProviders.Physical" Version="[9.0.6,10.0.0)"/>
+        <PackageReference Include="Microsoft.Extensions.Http" Version="[9.0.6,10.0.0)"/>
+        <PackageReference Include="Microsoft.Extensions.TimeProvider.Testing" Version="[9.6.0,10.0.0)"/>
+    </ItemGroup>
+
+    <!-- ASP.NET Core testing -->
+    <ItemGroup>
+        <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="[9.0.6,10.0.0)"/>
+        <PackageReference Include="Microsoft.AspNetCore.TestHost" Version="[9.0.6,10.0.0)"/>
+    </ItemGroup>
+
+    <!-- Database testing -->
+    <ItemGroup>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="[9.0.6,10.0.0)"/>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="[9.0.6,10.0.0)"/>
+    </ItemGroup>
+
+    <!-- Testcontainers for real external dependencies -->
+    <ItemGroup>
+        <PackageReference Include="Testcontainers" Version="4.6.0"/>
+        <PackageReference Include="Testcontainers.PostgreSql" Version="4.6.0"/>
+        <PackageReference Include="Testcontainers.Redis" Version="4.6.0"/>
+    </ItemGroup>
+
+    <!-- Logging -->
+    <ItemGroup>
+        <PackageReference Include="Serilog" Version="[4.3.0,5.0.0)"/>
+        <PackageReference Include="Serilog.Sinks.Console" Version="[6.0.0,7.0.0)"/>
+        <PackageReference Include="Serilog.Sinks.File" Version="[6.0.0,7.0.0)"/>
+    </ItemGroup>
+
+    <!-- Resilience and retry testing -->
+    <ItemGroup>
+        <PackageReference Include="Polly" Version="[8.6.1,9.0.0)"/>
+        <PackageReference Include="Polly.Extensions.Http" Version="[3.0.0,4.0.0)"/>
+    </ItemGroup>
+
+    <!-- JSON support -->
+    <ItemGroup>
+        <PackageReference Include="Newtonsoft.Json" Version="[13.0.3,14.0.0)"/>
+        <PackageReference Include="System.Text.Json" Version="[9.0.6,10.0.0)"/>
+        <PackageReference Include="System.IO.Abstractions.TestingHelpers" Version="[22.0.14,23.0.0)"/>
+    </ItemGroup>
+    
+    <ItemGroup>
+        <PackageReference Include="AWSSDK.Extensions.NETCore.Setup" Version="4.0.2" />
+        <PackageReference Include="AWSSDK.SecretsManager" Version="4.0.0.12" />
+        <PackageReference Include="AWSSDK.SecretsManager.Caching" Version="2.0.0" />
+        <PackageReference Include="AWSSDK.SimpleSystemsManagement" Version="4.0.2" />
+    </ItemGroup>
+
+    <!-- Folder structure for organizing integration tests -->
+    <ItemGroup>
+        <Folder Include="Features\"/>
+        <Folder Include="Steps\"/>
+        <Folder Include="Utils\"/>
+        <Folder Include="TestData\"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <Content Include="reqnroll.json">
+            <Pack>true</Pack>
+            <PackagePath>content</PackagePath>
+        </Content>
+    </ItemGroup>
+
+    <!-- Generated files configuration to place them outside Features folder -->
+    <ItemGroup>
+        <Compile Remove="Features\**\*.cs"/>
+        <Compile Include="Generated\**\*.cs"/>
+    </ItemGroup>
+
+    <!-- Test configuration files -->
+    <ItemGroup>
+        <Content Include="TestData\**\*">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\src\FlexKit.Configuration\FlexKit.Configuration.csproj" />
+        <ProjectReference Include="..\FlexKit.IntegrationTests\FlexKit.IntegrationTests.csproj"/>
+    </ItemGroup>
+
+    <!-- Test result output configuration -->
+    <PropertyGroup>
+        <VSTestResultsDirectory>$(MSBuildThisFileDirectory)../TestResults/integration-results/</VSTestResultsDirectory>
+    </PropertyGroup>
+
+</Project>

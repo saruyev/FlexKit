@@ -11,6 +11,10 @@
     </ItemGroup>
 
     <ItemGroup>
+      <InternalsVisibleTo Include="FlexKit.Configuration.Providers.Aws.Tests" />
+    </ItemGroup>
+
+    <ItemGroup>
       <PackageReference Include="AWSSDK.Extensions.NETCore.Setup" Version="4.0.2" />
       <PackageReference Include="AWSSDK.SecretsManager" Version="4.0.0.12" />
       <PackageReference Include="AWSSDK.SecretsManager.Caching" Version="2.0.0" />
