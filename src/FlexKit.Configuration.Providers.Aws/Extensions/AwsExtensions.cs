@@ -118,7 +118,7 @@ public static class AwsExtensions
         bool optional = true)
     {
         ArgumentNullException.ThrowIfNull(builder);
-        ArgumentException.ThrowIfNullOrEmpty(path);
+        ArgumentException.ThrowIfNullOrWhiteSpace(path);
 
         return builder.AddSource(new AwsParameterStoreConfigurationSource
         {
@@ -531,10 +531,8 @@ public static class AwsExtensions
                 ProcessPrimitive(jsonElement, output, parentKey);
                 break;
             case JsonValueKind.Undefined:
-                // Skip undefined values.
-                break;
             default:
-                output[parentKey] = jsonElement.GetRawText();
+                // Skip undefined values.
                 break;
         }
     }
@@ -588,8 +586,7 @@ public static class AwsExtensions
             JsonValueKind.Number => element.GetRawText(),
             JsonValueKind.True => "true",
             JsonValueKind.False => "false",
-            JsonValueKind.Null => null,
-            _ => output[key]
+            _ => null
         };
     }
 

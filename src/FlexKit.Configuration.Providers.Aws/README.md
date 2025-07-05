@@ -665,11 +665,8 @@ Use environment-specific prefixes and names:
 4. **Use pattern loading** to minimize individual API calls
 5. **Apply selective JSON processing** to avoid unnecessary parsing overhead
 
-This comprehensive AWS integration enables you to leverage both AWS Parameter Store and Secrets Manager while maintaining the familiar FlexKit configuration experience! timeout
-└── features/
-├── caching
-└── analytics
-```
+This comprehensive AWS integration enables you to leverage both AWS Parameter Store and Secrets Manager while maintaining the familiar
+FlexKit configuration experience!
 
 ### Environment Separation
 

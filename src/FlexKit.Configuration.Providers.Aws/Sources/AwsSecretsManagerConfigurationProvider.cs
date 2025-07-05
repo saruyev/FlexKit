@@ -181,12 +181,6 @@ public sealed class AwsSecretsManagerConfigurationProvider : ConfigurationProvid
         {
             LoadAsync().GetAwaiter().GetResult();
         }
-        catch (Exception ex) when (_source.Optional)
-        {
-            // For optional sources, log the error but don't fail the configuration loading
-            _source.OnLoadException?.Invoke(new SecretsManagerConfigurationProviderException(_source, ex));
-            Data.Clear();
-        }
         catch (Exception ex)
         {
             // For required sources, wrap and re-throw the exception
@@ -277,7 +271,6 @@ public sealed class AwsSecretsManagerConfigurationProvider : ConfigurationProvid
             }
         }
     }
-
 
     /// <summary>
     /// Loads a single secret from AWS Secrets Manager and processes it into configuration data.

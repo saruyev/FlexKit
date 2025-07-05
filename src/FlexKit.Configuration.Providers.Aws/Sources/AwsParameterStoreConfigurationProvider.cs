@@ -178,12 +178,6 @@ public sealed class AwsParameterStoreConfigurationProvider : ConfigurationProvid
         {
             LoadAsync().GetAwaiter().GetResult();
         }
-        catch (Exception ex) when (_source.Optional)
-        {
-            // For optional sources, log the error but don't fail the configuration loading
-            _source.OnLoadException?.Invoke(new ConfigurationProviderException(_source, ex));
-            Data.Clear();
-        }
         catch (Exception ex)
         {
             // For required sources, wrap and re-throw the exception
