@@ -57,6 +57,7 @@
         <PackageReference Include="Testcontainers" Version="4.6.0"/>
         <PackageReference Include="Testcontainers.PostgreSql" Version="4.6.0"/>
         <PackageReference Include="Testcontainers.Redis" Version="4.6.0"/>
+        <PackageReference Include="Testcontainers.LocalStack" Version="4.6.0"/>
     </ItemGroup>
 
     <!-- Logging -->
@@ -88,10 +89,9 @@
 
     <!-- Folder structure for organizing integration tests -->
     <ItemGroup>
-        <Folder Include="Features\"/>
-        <Folder Include="Steps\"/>
-        <Folder Include="Utils\"/>
-        <Folder Include="TestData\"/>
+        <Folder Include="Steps\Integration\" />
+        <Folder Include="Steps\ParameterStore\" />
+        <Folder Include="Steps\SecretsManager\" />
     </ItemGroup>
 
     <ItemGroup>

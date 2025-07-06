@@ -1,0 +1,13 @@
+﻿{
+  "infrastructure_module": {
+    "localstack": {
+      "image": "invalid/image:latest",
+      "port": -1,
+      "services": "invalid-service-list"
+    },
+    "aws": {
+      "region": "invalid-region",
+      "credentials": null
+    }
+  }
+}

@@ -1,0 +1,10 @@
+﻿{
+  "infrastructure_module": {
+    "localstack": {
+      "services": "ssm"
+    },
+    "aws": {
+      "region": "us-east-1"
+    }
+  }
+}

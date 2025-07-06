@@ -1,0 +1,36 @@
+﻿{
+  "infrastructure_module": {
+    "test_scenarios": [
+      {
+        "name": "us-east-1-scenario",
+        "region": "us-east-1",
+        "parameters": [
+          {
+            "name": "/infrastructure-module/region/name",
+            "value": "us-east-1"
+          }
+        ]
+      },
+      {
+        "name": "eu-central-1-scenario",
+        "region": "eu-central-1",
+        "parameters": [
+          {
+            "name": "/infrastructure-module/region/name",
+            "value": "eu-central-1"
+          }
+        ]
+      },
+      {
+        "name": "ap-southeast-1-scenario",
+        "region": "ap-southeast-1",
+        "parameters": [
+          {
+            "name": "/infrastructure-module/region/name",
+            "value": "ap-southeast-1"
+          }
+        ]
+      }
+    ]
+  }
+}
