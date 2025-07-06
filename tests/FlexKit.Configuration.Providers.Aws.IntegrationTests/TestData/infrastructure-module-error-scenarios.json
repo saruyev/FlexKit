@@ -1,0 +1,59 @@
+﻿{
+  "infrastructure_module": {
+    "error_test_scenarios": [
+      {
+        "name": "invalid_json_parameter",
+        "parameter": {
+          "name": "/infrastructure-module/invalid/json",
+          "value": "{invalid json structure missing quotes and braces"
+        },
+        "expected_error": "JSON parsing error"
+      },
+      {
+        "name": "missing_required_parameter",
+        "missing_parameter": "/infrastructure-module/required/setting",
+        "expected_error": "Required parameter not found"
+      },
+      {
+        "name": "access_denied_parameter",
+        "parameter": {
+          "name": "/infrastructure-module/restricted/setting",
+          "value": "restricted-value"
+        },
+        "simulate_error": "access_denied",
+        "expected_error": "Access denied"
+      },
+      {
+        "name": "parameter_too_large",
+        "parameter": {
+          "name": "/infrastructure-module/large/parameter",
+          "value": "x".repeat(8192),
+          "expected_error": "Parameter value too large"
+        }
+      }
+    ],
+    "secret_error_scenarios": [
+      {
+        "name": "invalid_json_secret",
+        "secret": {
+          "name": "infrastructure-module-invalid-json",
+          "value": "{invalid json in secret value"
+        },
+        "expected_error": "JSON parsing error"
+      },
+      {
+        "name": "missing_required_secret",
+        "missing_secret": "infrastructure-module-required-secret",
+        "expected_error": "Required secret not found"
+      },
+      {
+        "name": "version_not_found",
+        "secret": {
+          "name": "infrastructure-module-versioned-secret",
+          "version_stage": "NONEXISTENT"
+        },
+        "expected_error": "Version not found"
+      }
+    ]
+  }
+}

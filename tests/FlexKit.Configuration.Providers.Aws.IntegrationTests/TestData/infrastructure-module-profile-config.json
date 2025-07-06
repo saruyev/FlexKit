@@ -1,0 +1,16 @@
+﻿{
+  "infrastructure_module": {
+    "aws_profiles": {
+      "testing": {
+        "region": "us-west-2",
+        "access_key": "profile-access-key",
+        "secret_key": "profile-secret-key"
+      },
+      "development": {
+        "region": "us-east-1",
+        "access_key": "dev-access-key",
+        "secret_key": "dev-secret-key"
+      }
+    }
+  }
+}

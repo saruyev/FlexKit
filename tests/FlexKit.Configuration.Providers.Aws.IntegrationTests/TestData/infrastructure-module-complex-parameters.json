@@ -1,0 +1,94 @@
+﻿{
+  "infrastructure_module": {
+    "complex_test_data": {
+      "json_parameter": {
+        "name": "/infrastructure-module/app/config",
+        "value": {
+          "database": {
+            "host": "complex-db.example.com",
+            "port": 5432,
+            "ssl": true,
+            "pool": {
+              "min": 5,
+              "max": 20,
+              "timeout": 30000
+            },
+            "features": {
+              "read_replicas": ["replica1.example.com", "replica2.example.com"],
+              "backup": {
+                "enabled": true,
+                "schedule": "0 2 * * *",
+                "retention_days": 30
+              }
+            }
+          },
+          "cache": {
+            "type": "redis",
+            "cluster": {
+              "nodes": [
+                {"host": "cache1.example.com", "port": 6379},
+                {"host": "cache2.example.com", "port": 6379},
+                {"host": "cache3.example.com", "port": 6379}
+              ],
+              "sharding": true,
+              "replication": true
+            },
+            "settings": {
+              "maxmemory": "2gb",
+              "eviction_policy": "allkeys-lru",
+              "timeout": 5000
+            }
+          },
+          "monitoring": {
+            "metrics": {
+              "enabled": true,
+              "providers": ["prometheus", "datadog"],
+              "custom_tags": {
+                "environment": "test",
+                "service": "infrastructure-module",
+                "version": "1.0.0"
+              }
+            },
+            "logging": {
+              "level": "info",
+              "structured": true,
+              "outputs": ["console", "file", "elk"]
+            }
+          }
+        }
+      },
+      "nested_array_parameter": {
+        "name": "/infrastructure-module/services/config",
+        "value": {
+          "microservices": [
+            {
+              "name": "user-service",
+              "replicas": 3,
+              "resources": {
+                "cpu": "500m",
+                "memory": "512Mi"
+              },
+              "endpoints": [
+                {"path": "/api/users", "method": "GET"},
+                {"path": "/api/users", "method": "POST"},
+                {"path": "/api/users/{id}", "method": "PUT"}
+              ]
+            },
+            {
+              "name": "order-service",
+              "replicas": 2,
+              "resources": {
+                "cpu": "1000m",
+                "memory": "1Gi"
+              },
+              "endpoints": [
+                {"path": "/api/orders", "method": "GET"},
+                {"path": "/api/orders", "method": "POST"}
+              ]
+            }
+          ]
+        }
+      }
+    }
+  }
+}

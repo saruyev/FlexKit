@@ -1,0 +1,42 @@
+﻿{
+  "infrastructure_module": {
+    "cleanup_test": {
+      "temporary_resources": [
+        {
+          "type": "parameter",
+          "name": "/infrastructure-module/temp/cleanup-test-1",
+          "value": "temporary-value-1"
+        },
+        {
+          "type": "parameter",
+          "name": "/infrastructure-module/temp/cleanup-test-2",
+          "value": "temporary-value-2"
+        },
+        {
+          "type": "secret",
+          "name": "infrastructure-module-temp-secret-1",
+          "value": "{\"temp\": \"secret1\"}"
+        },
+        {
+          "type": "secret",
+          "name": "infrastructure-module-temp-secret-2",
+          "value": "{\"temp\": \"secret2\"}"
+        }
+      ],
+      "persistent_resources": [
+        {
+          "type": "parameter",
+          "name": "/infrastructure-module/persistent/setting",
+          "value": "persistent-value"
+        }
+      ],
+      "cleanup_verification": {
+        "verify_containers_stopped": true,
+        "verify_networks_removed": true,
+        "verify_temp_parameters_deleted": true,
+        "verify_temp_secrets_deleted": true,
+        "verify_persistent_resources_remain": true
+      }
+    }
+  }
+}

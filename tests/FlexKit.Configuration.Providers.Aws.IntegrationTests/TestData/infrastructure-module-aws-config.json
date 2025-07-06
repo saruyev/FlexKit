@@ -1,0 +1,56 @@
+﻿{
+  "infrastructure_module": {
+    "localstack": {
+      "image": "localstack/localstack:latest",
+      "port": 4566,
+      "services": "ssm,secretsmanager",
+      "debug": true
+    },
+    "aws": {
+      "region": "us-east-1",
+      "test_credentials": {
+        "access_key": "test-access-key",
+        "secret_key": "test-secret-key"
+      }
+    },
+    "test_parameters": [
+      {
+        "name": "/infrastructure-module/database/host",
+        "value": "localhost",
+        "type": "String"
+      },
+      {
+        "name": "/infrastructure-module/database/port",
+        "value": "5432",
+        "type": "String"
+      },
+      {
+        "name": "/infrastructure-module/database/credentials",
+        "value": "{\"username\":\"testuser\",\"password\":\"testpass\"}",
+        "type": "SecureString"
+      },
+      {
+        "name": "/infrastructure-module/api/allowed-origins",
+        "value": "http://localhost:3000,https://test.example.com,https://api.example.com",
+        "type": "StringList"
+      }
+    ],
+    "test_secrets": [
+      {
+        "name": "infrastructure-module-database-credentials",
+        "value": "{\"host\":\"db.example.com\",\"port\":5432,\"username\":\"dbuser\",\"password\":\"dbpass123\"}",
+        "description": "Database credentials for infrastructure module testing"
+      },
+      {
+        "name": "infrastructure-module-api-keys",
+        "value": "{\"external_api_key\":\"ext-api-123\",\"payment_gateway_key\":\"pay-gw-456\"}",
+        "description": "External API keys for infrastructure module testing"
+      },
+      {
+        "name": "infrastructure-module-certificates",
+        "binary_value": "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUNuakNDQVlZQ0NRQzNBREUyTlB...",
+        "description": "Test certificates in base64 format"
+      }
+    ]
+  }
+}

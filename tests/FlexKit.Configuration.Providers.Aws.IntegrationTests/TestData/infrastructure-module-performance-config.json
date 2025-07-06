@@ -1,0 +1,40 @@
+﻿{
+  "infrastructure_module": {
+    "performance_test": {
+      "large_parameter_set": {
+        "parameter_count": 100,
+        "name_pattern": "/infrastructure-module/perf/param-{0:D3}",
+        "value_pattern": "test-value-{0:D3}",
+        "parameter_types": ["String", "StringList", "SecureString"]
+      },
+      "large_secret_set": {
+        "secret_count": 50,
+        "name_pattern": "infrastructure-module-perf-secret-{0:D2}",
+        "value_pattern": "{{\"key{0}\": \"value{0}\", \"timestamp\": \"{1}\"}}",
+        "include_binary": true
+      },
+      "reload_scenarios": [
+        {
+          "name": "frequent_reload",
+          "interval_seconds": 5,
+          "duration_minutes": 2
+        },
+        {
+          "name": "moderate_reload",
+          "interval_seconds": 30,
+          "duration_minutes": 5
+        },
+        {
+          "name": "slow_reload",
+          "interval_seconds": 300,
+          "duration_minutes": 10
+        }
+      ],
+      "concurrent_access": {
+        "thread_count": 10,
+        "operations_per_thread": 100,
+        "operation_types": ["read", "reload", "type_conversion"]
+      }
+    }
+  }
+}
