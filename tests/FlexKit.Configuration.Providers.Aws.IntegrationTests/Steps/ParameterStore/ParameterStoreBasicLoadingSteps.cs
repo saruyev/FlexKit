@@ -19,7 +19,6 @@ public class ParameterStoreBasicLoadingSteps(ScenarioContext scenarioContext)
     private IConfiguration? _parametersBasicConfiguration;
     private IFlexConfig? _parametersBasicFlexConfiguration;
     private Exception? _lastParametersBasicException;
-    private readonly List<string> _parametersBasicValidationResults = new();
 
     #region Given Steps - Setup
 
@@ -103,7 +102,7 @@ public class ParameterStoreBasicLoadingSteps(ScenarioContext scenarioContext)
             // Debug: Log all configuration keys that were loaded
             var allKeys = _parametersBasicConfiguration.AsEnumerable()
                 .Where(kvp => kvp.Value != null)
-                .Take(10) // Log first 10 keys for debugging
+                .Take(10) // Log the first 10 keys for debugging
                 .Select(kvp => $"{kvp.Key} = {kvp.Value}")
                 .ToList();
             
@@ -133,21 +132,12 @@ public class ParameterStoreBasicLoadingSteps(ScenarioContext scenarioContext)
         try
         {
             // Verify dynamic access works by accessing a known configuration value
-            var dynamicHost = AwsTestConfigurationBuilder.GetDynamicProperty(config, "infrastructure-module.database.host");
-            if (dynamicHost != null)
-            {
-                _parametersBasicValidationResults.Add($"Dynamic access successful: infrastructure-module.database.host = {dynamicHost}");
-            }
-
-            var dynamicCaching = AwsTestConfigurationBuilder.GetDynamicProperty(config, "infrastructure-module.features.caching");
-            if (dynamicCaching != null)
-            {
-                _parametersBasicValidationResults.Add($"Dynamic access successful: infrastructure-module.features.caching = {dynamicCaching}");
-            }
+            string dynamicHost = AwsTestConfigurationBuilder.GetDynamicProperty(config, "infrastructure-module.database.host");
+            dynamicHost.Should().NotBeNull("Dynamic access to infrastructure-module.database.host should return a value");
         }
         catch (Exception ex)
         {
-            _parametersBasicValidationResults.Add($"Dynamic access error: {ex.Message}");
+            throw new Exception($"Dynamic access error: {ex.Message}");
         }
     }
 
@@ -199,7 +189,7 @@ public class ParameterStoreBasicLoadingSteps(ScenarioContext scenarioContext)
     {
         _parametersBasicFlexConfiguration.Should().NotBeNull("Parameters basic FlexConfiguration should be available");
 
-        // First verify that we can access the configuration as dynamic
+        // First, verify that we can access the configuration as dynamic
         dynamic config = _parametersBasicFlexConfiguration!;
         
         var dynamicValue = AwsTestConfigurationBuilder.GetDynamicProperty(config, propertyPath);

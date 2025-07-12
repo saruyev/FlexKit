@@ -27,7 +27,8 @@
         "name": "parameter_too_large",
         "parameter": {
           "name": "/infrastructure-module/large/parameter",
-          "value": "x".repeat(8192),
+          "value": "This is a simulated large parameter value that would exceed AWS limits",
+          "simulated_size": 8192,
           "expected_error": "Parameter value too large"
         }
       }
