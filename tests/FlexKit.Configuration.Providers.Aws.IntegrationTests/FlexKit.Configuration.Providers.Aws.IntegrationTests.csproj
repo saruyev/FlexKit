@@ -89,7 +89,6 @@
 
     <!-- Folder structure for organizing integration tests -->
     <ItemGroup>
-        <Folder Include="Steps\Integration\" />
         <Folder Include="Steps\ParameterStore\" />
         <Folder Include="Steps\SecretsManager\" />
     </ItemGroup>
