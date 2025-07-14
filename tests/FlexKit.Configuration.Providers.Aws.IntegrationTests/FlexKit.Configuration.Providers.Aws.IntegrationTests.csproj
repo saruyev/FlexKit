@@ -88,9 +88,6 @@
     </ItemGroup>
 
     <!-- Folder structure for organizing integration tests -->
-    <ItemGroup>
-        <Folder Include="Steps\SecretsManager\" />
-    </ItemGroup>
 
     <ItemGroup>
         <Content Include="reqnroll.json">

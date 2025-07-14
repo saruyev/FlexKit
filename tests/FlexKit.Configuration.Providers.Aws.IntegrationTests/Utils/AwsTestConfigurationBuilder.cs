@@ -7,6 +7,7 @@ using System.Text.Json;
 using Amazon.Extensions.NETCore.Setup;
 using Amazon.Runtime;
 using FlexKit.Configuration.Providers.Aws.Extensions;
+// ReSharper disable MethodTooLong
 
 namespace FlexKit.Configuration.Providers.Aws.IntegrationTests.Utils;
 
@@ -14,7 +15,8 @@ namespace FlexKit.Configuration.Providers.Aws.IntegrationTests.Utils;
 /// Test configuration builder specifically for AWS Parameter Store and Secrets Manager configuration testing.
 /// Inherits from BaseTestConfigurationBuilder to provide AWS-specific configuration methods.
 /// </summary>
-public class AwsTestConfigurationBuilder(ScenarioContext? scenarioContext = null) : BaseTestConfigurationBuilder<AwsTestConfigurationBuilder>(scenarioContext)
+public class AwsTestConfigurationBuilder(ScenarioContext? scenarioContext = null)
+    : BaseTestConfigurationBuilder<AwsTestConfigurationBuilder>(scenarioContext)
 {
     public AwsTestConfigurationBuilder() : this(null) { }
 
@@ -34,7 +36,7 @@ public class AwsTestConfigurationBuilder(ScenarioContext? scenarioContext = null
             JsonProcessor = jsonProcessor,
             AwsOptions = CreateTestAwsOptions()
         };
-        
+
         return AddSource(parameterStoreSource);
     }
 
@@ -49,9 +51,9 @@ public class AwsTestConfigurationBuilder(ScenarioContext? scenarioContext = null
         {
             AwsOptions = CreateTestAwsOptions()
         };
-        
+
         configureOptions(parameterStoreSource);
-        
+
         return AddSource(parameterStoreSource);
     }
 
@@ -62,24 +64,27 @@ public class AwsTestConfigurationBuilder(ScenarioContext? scenarioContext = null
     /// <param name="optional">Whether the parameter store source is optional</param>
     /// <param name="jsonProcessor">Whether to enable JSON processing</param>
     /// <returns>This builder for method chaining</returns>
-    public AwsTestConfigurationBuilder AddParameterStoreFromTestData(string testDataPath, bool optional = true, bool jsonProcessor = false)
+    public AwsTestConfigurationBuilder AddParameterStoreFromTestData(
+        string testDataPath,
+        bool optional = true,
+        bool jsonProcessor = false)
     {
         var normalizedPath = testDataPath.Replace('/', Path.DirectorySeparatorChar);
-        
+
         if (!File.Exists(normalizedPath))
         {
             throw new FileNotFoundException($"Test data file not found: {normalizedPath}");
         }
 
         var jsonContent = File.ReadAllText(normalizedPath);
-        
+
         // First parse as JsonDocument to properly handle the structure
         using var document = JsonDocument.Parse(jsonContent);
         var root = document.RootElement;
-        
+
         // Simulate Parameter Store by converting test data to in-memory configuration
         var configData = new Dictionary<string, string?>();
-        
+
         // Look for infrastructure_module section
         if (root.TryGetProperty("infrastructure_module", out var infraModule))
         {
@@ -90,11 +95,10 @@ public class AwsTestConfigurationBuilder(ScenarioContext? scenarioContext = null
                 {
                     var name = paramElement.GetProperty("name").GetString() ?? "";
                     var value = paramElement.GetProperty("value").GetString();
-                    var type = paramElement.TryGetProperty("type", out var typeEl) ? 
-                        typeEl.GetString() ?? "String" : "String";
-                    
+                    var type = paramElement.TryGetProperty("type", out var typeEl) ? typeEl.GetString() ?? "String" : "String";
+
                     var configKey = ConvertParameterNameToConfigKey(name);
-                    
+
                     switch (type.ToLowerInvariant())
                     {
                         case "string":
@@ -108,19 +112,21 @@ public class AwsTestConfigurationBuilder(ScenarioContext? scenarioContext = null
                             {
                                 configData[configKey] = value;
                             }
+
                             break;
-                            
+
                         case "stringlist":
                             var values = value?.Split(',') ?? Array.Empty<string>();
                             for (int i = 0; i < values.Length; i++)
                             {
                                 configData[$"{configKey}:{i}"] = values[i].Trim();
                             }
+
                             break;
                     }
                 }
             }
-            
+
             // Handle complex_test_data structure (complex-parameters.json)
             if (infraModule.TryGetProperty("complex_test_data", out var complexDataElement))
             {
@@ -128,9 +134,9 @@ public class AwsTestConfigurationBuilder(ScenarioContext? scenarioContext = null
                 {
                     var name = jsonParamElement.GetProperty("name").GetString() ?? "";
                     var valueElement = jsonParamElement.GetProperty("value");
-                    
+
                     var configKey = ConvertParameterNameToConfigKey(name);
-                    
+
                     if (jsonProcessor)
                     {
                         // Flatten the JSON value into configuration keys
@@ -142,14 +148,14 @@ public class AwsTestConfigurationBuilder(ScenarioContext? scenarioContext = null
                         configData[configKey] = valueElement.GetRawText();
                     }
                 }
-                
+
                 if (complexDataElement.TryGetProperty("nested_array_parameter", out var arrayParamElement))
                 {
                     var name = arrayParamElement.GetProperty("name").GetString() ?? "";
                     var valueElement = arrayParamElement.GetProperty("value");
-                    
+
                     var configKey = ConvertParameterNameToConfigKey(name);
-                    
+
                     if (jsonProcessor)
                     {
                         // Flatten the JSON value into configuration keys
@@ -186,7 +192,7 @@ public class AwsTestConfigurationBuilder(ScenarioContext? scenarioContext = null
     public IFlexConfig BuildFlexConfig(Action<FlexConfigurationBuilder> configureBuilder)
     {
         ApplyEnvironmentVariables();
-        
+
         var flexBuilder = new FlexConfigurationBuilder();
 
         // Add in-memory data first
@@ -287,8 +293,9 @@ public class AwsTestConfigurationBuilder(ScenarioContext? scenarioContext = null
                     var newKey = string.IsNullOrEmpty(keyPrefix) ? property.Name : $"{keyPrefix}:{property.Name}";
                     FlattenJsonElement(property.Value, newKey, configData);
                 }
+
                 break;
-                
+
             case JsonValueKind.Array:
                 int index = 0;
                 foreach (var item in element.EnumerateArray())
@@ -297,24 +304,25 @@ public class AwsTestConfigurationBuilder(ScenarioContext? scenarioContext = null
                     FlattenJsonElement(item, newKey, configData);
                     index++;
                 }
+
                 break;
-                
+
             case JsonValueKind.String:
                 configData[keyPrefix] = element.GetString();
                 break;
-                
+
             case JsonValueKind.Number:
                 configData[keyPrefix] = element.GetRawText();
                 break;
-                
+
             case JsonValueKind.True:
                 configData[keyPrefix] = "true";
                 break;
-                
+
             case JsonValueKind.False:
                 configData[keyPrefix] = "false";
                 break;
-                
+
             case JsonValueKind.Null:
                 configData[keyPrefix] = null;
                 break;
@@ -334,7 +342,7 @@ public class AwsTestConfigurationBuilder(ScenarioContext? scenarioContext = null
 
         // Convert dot notation to colon notation for configuration keys
         var configKey = propertyPath.Replace('.', ':');
-    
+
         try
         {
             // Use FlexConfiguration's indexer access instead of nested property traversal
@@ -344,5 +352,495 @@ public class AwsTestConfigurationBuilder(ScenarioContext? scenarioContext = null
         {
             return null;
         }
+    }
+
+    /// <summary>
+    /// Adds AWS Secrets Manager as a configuration source.
+    /// </summary>
+    /// <param name="secretNames">Array of secret names to load</param>
+    /// <param name="optional">Whether the source is optional</param>
+    /// <param name="jsonProcessor">Whether to enable JSON processing</param>
+    /// <returns>This builder for method chaining</returns>
+    public AwsTestConfigurationBuilder AddAwsSecretsManager(string[] secretNames, bool optional = true, bool jsonProcessor = false)
+    {
+        var secretsManagerSource = new AwsSecretsManagerConfigurationSource
+        {
+            SecretNames = secretNames,
+            Optional = optional,
+            JsonProcessor = jsonProcessor,
+            AwsOptions = CreateTestAwsOptions()
+        };
+
+        return AddSource(secretsManagerSource);
+    }
+
+    /// <summary>
+    /// Adds AWS Secrets Manager with advanced options.
+    /// </summary>
+    /// <param name="configureOptions">Action to configure Secrets Manager options</param>
+    /// <returns>This builder for method chaining</returns>
+    public AwsTestConfigurationBuilder AddAwsSecretsManager(Action<AwsSecretsManagerConfigurationSource> configureOptions)
+    {
+        var secretsManagerSource = new AwsSecretsManagerConfigurationSource
+        {
+            AwsOptions = CreateTestAwsOptions()
+        };
+
+        configureOptions(secretsManagerSource);
+
+        return AddSource(secretsManagerSource);
+    }
+
+    /// <summary>
+    /// Creates a temporary JSON file with secrets manager test data and configures secrets manager from it.
+    /// </summary>
+    /// <param name="testDataPath">Path to JSON test data file</param>
+    /// <param name="optional">Whether the secrets manager source is optional</param>
+    /// <param name="jsonProcessor">Whether to enable JSON processing</param>
+    /// <returns>This builder for method chaining</returns>
+    public AwsTestConfigurationBuilder AddSecretsManagerFromTestData(
+        string testDataPath,
+        bool optional = true,
+        bool jsonProcessor = false)
+    {
+        var normalizedPath = testDataPath.Replace('/', Path.DirectorySeparatorChar);
+
+        if (!File.Exists(normalizedPath))
+        {
+            throw new FileNotFoundException($"Test data file not found: {normalizedPath}");
+        }
+
+        var jsonContent = File.ReadAllText(normalizedPath);
+
+        // First parse as JsonDocument to properly handle the structure
+        using var document = JsonDocument.Parse(jsonContent);
+        var root = document.RootElement;
+
+        // Simulate Secrets Manager by converting test data to in-memory configuration
+        var configData = new Dictionary<string, string?>();
+
+        // Look for infrastructure_module section
+        if (root.TryGetProperty("infrastructure_module", out var infraModule))
+        {
+            // Handle test_secrets structure (aws-config.json)
+            if (infraModule.TryGetProperty("test_secrets", out var secretsElement))
+            {
+                foreach (var secretElement in secretsElement.EnumerateArray())
+                {
+                    var name = secretElement.GetProperty("name").GetString() ?? "";
+                    var configKey = ConvertParameterNameToConfigKey(name);
+
+                    // Handle string secrets
+                    if (secretElement.TryGetProperty("value", out var valueElement))
+                    {
+                        var value = valueElement.GetString();
+
+                        if (jsonProcessor && IsValidJson(value))
+                        {
+                            // Flatten JSON into configuration keys
+                            FlattenJsonToConfiguration(value!, configKey, configData);
+                        }
+                        else
+                        {
+                            configData[configKey] = value;
+                        }
+                    }
+                    // Handle binary secrets (base64 encoded)
+                    else if (secretElement.TryGetProperty("binary_value", out var binaryElement))
+                    {
+                        var binaryValue = binaryElement.GetString();
+                        configData[configKey] = binaryValue;
+                    }
+                }
+            }
+
+            // Handle complex_test_data structure (complex-parameters.json) 
+            // Treat parameters as secrets for testing JSON processing patterns
+            if (infraModule.TryGetProperty("complex_test_data", out var complexDataElement))
+            {
+                if (complexDataElement.TryGetProperty("json_parameter", out var jsonParamElement))
+                {
+                    var name = jsonParamElement.GetProperty("name").GetString() ?? "";
+                    var valueElement = jsonParamElement.GetProperty("value");
+
+                    var configKey = ConvertParameterNameToConfigKey(name);
+
+                    if (jsonProcessor)
+                    {
+                        // Flatten the JSON value into configuration keys
+                        FlattenJsonElement(valueElement, configKey, configData);
+                    }
+                    else
+                    {
+                        // Store as JSON string
+                        configData[configKey] = valueElement.GetRawText();
+                    }
+                }
+
+                if (complexDataElement.TryGetProperty("nested_array_parameter", out var arrayParamElement))
+                {
+                    var name = arrayParamElement.GetProperty("name").GetString() ?? "";
+                    var valueElement = arrayParamElement.GetProperty("value");
+
+                    var configKey = ConvertParameterNameToConfigKey(name);
+
+                    if (jsonProcessor)
+                    {
+                        // Flatten the JSON value into configuration keys
+                        FlattenJsonElement(valueElement, configKey, configData);
+                    }
+                    else
+                    {
+                        // Store as JSON string
+                        configData[configKey] = valueElement.GetRawText();
+                    }
+                }
+            }
+        }
+
+        AddInMemoryCollection(configData);
+        return this;
+    }
+
+    /// <summary>
+    /// Converts AWS Secrets Manager secret name to .NET configuration key format.
+    /// </summary>
+    /// <param name="secretName">AWS secret name (e.g., "myapp-database-credentials")</param>
+    /// <returns>Configuration key (e.g., "myapp-database-credentials")</returns>
+    private static string ConvertSecretNameToConfigKey(string secretName)
+    {
+        // For secrets, we typically keep the original name format
+        // as the transformation from hyphens to colons is handled by the actual provider
+        return secretName;
+    }
+
+    // Extension methods to add to AwsTestConfigurationBuilder.cs
+
+    /// <summary>
+    /// Creates a temporary JSON file with secrets manager test data and configures secrets manager from it with version stage support.
+    /// This method extends the existing AddSecretsManagerFromTestData functionality to support version stages.
+    /// </summary>
+    /// <param name="testDataPath">Path to JSON test data file</param>
+    /// <param name="versionStage">Version stage to retrieve (e.g., "AWSCURRENT", "AWSPENDING", "AWSPREVIOUS")</param>
+    /// <param name="optional">Whether the secrets manager source is optional</param>
+    /// <param name="jsonProcessor">Whether to enable JSON processing</param>
+    /// <returns>This builder for method chaining</returns>
+    public AwsTestConfigurationBuilder AddSecretsManagerFromTestDataWithVersionStage(
+        string testDataPath,
+        string versionStage,
+        bool optional = true,
+        bool jsonProcessor = false)
+    {
+        if (versionStage == "MISSING_STAGE" && !optional)
+        {
+            throw new InvalidOperationException($"Required version stage '{versionStage}' not found for secrets in AWS Secrets Manager.");
+        }
+        
+        if (versionStage == "MISSING_STAGE" && optional)
+        {
+            AddInMemoryCollection(new Dictionary<string, string?>());
+            return this;
+        }
+        
+        var normalizedPath = testDataPath.Replace('/', Path.DirectorySeparatorChar);
+
+        if (!File.Exists(normalizedPath))
+        {
+            throw new FileNotFoundException($"Test data file not found: {normalizedPath}");
+        }
+
+        var jsonContent = File.ReadAllText(normalizedPath);
+
+        // First parse as JsonDocument to properly handle the structure
+        using var document = JsonDocument.Parse(jsonContent);
+        var root = document.RootElement;
+
+        // Simulate Secrets Manager by converting test data to in-memory configuration
+        var configData = new Dictionary<string, string?>();
+
+        // Look for infrastructure_module section
+        if (root.TryGetProperty("infrastructure_module", out var infraModule))
+        {
+            // Handle test_secrets structure (aws-config.json)
+            if (infraModule.TryGetProperty("test_secrets", out var secretsElement))
+            {
+                foreach (var secretElement in secretsElement.EnumerateArray())
+                {
+                    var name = secretElement.GetProperty("name").GetString() ?? "";
+                    var configKey = ConvertParameterNameToConfigKey(name);
+
+                    // Simulate different values based on version stage
+                    string? value = GetVersionedSecretValue(secretElement, versionStage);
+
+                    if (value != null)
+                    {
+                        if (jsonProcessor && IsValidJson(value))
+                        {
+                            // Flatten JSON into configuration keys
+                            FlattenJsonToConfiguration(value, configKey, configData);
+                        }
+                        else
+                        {
+                            configData[configKey] = value;
+                        }
+                    }
+                    // Handle binary secrets (base64 encoded)
+                    else if (secretElement.TryGetProperty("binary_value", out var binaryElement))
+                    {
+                        var binaryValue = binaryElement.GetString();
+                        configData[configKey] = binaryValue;
+                    }
+                }
+            }
+
+            // Handle complex_test_data structure for version-aware scenarios
+            if (infraModule.TryGetProperty("complex_test_data", out var complexDataElement))
+            {
+                if (complexDataElement.TryGetProperty("json_parameter", out var jsonParamElement))
+                {
+                    var name = jsonParamElement.GetProperty("name").GetString() ?? "";
+                    var valueElement = jsonParamElement.GetProperty("value");
+
+                    var configKey = ConvertParameterNameToConfigKey(name);
+
+                    // Apply version-specific modifications if needed
+                    var versionedValue = GetVersionedJsonValue(valueElement, versionStage);
+
+                    if (jsonProcessor)
+                    {
+                        // Flatten the versioned JSON value into configuration keys
+                        if (versionedValue != null)
+                        {
+                            FlattenJsonToConfiguration(versionedValue, configKey, configData);
+                        }
+                    }
+                    else
+                    {
+                        // Store as JSON string
+                        configData[configKey] = versionedValue ?? valueElement.GetRawText();
+                    }
+                }
+            }
+        }
+
+        // Add the configuration data as in-memory configuration
+        AddInMemoryCollection(configData);
+
+        return this;
+    }
+
+    /// <summary>
+    /// Gets a versioned secret value based on the version stage.
+    /// Simulates different secret values for different version stages in testing.
+    /// </summary>
+    /// <param name="secretElement">The secret element from test data</param>
+    /// <param name="versionStage">The version stage to simulate</param>
+    /// <returns>The versioned secret value or null if not found</returns>
+    private static string? GetVersionedSecretValue(JsonElement secretElement, string versionStage)
+    {
+        // First try to get the base value
+        if (!secretElement.TryGetProperty("value", out var valueElement))
+        {
+            return null;
+        }
+
+        var baseValue = valueElement.GetString();
+        if (baseValue == null)
+        {
+            return null;
+        }
+
+        // For testing purposes, modify the value based on version stage
+        return versionStage switch
+        {
+            "AWSCURRENT" => baseValue, // Use original value for current
+            "AWSPENDING" => ModifySecretForVersionStage(baseValue, "pending"),
+            "AWSPREVIOUS" => ModifySecretForVersionStage(baseValue, "previous"),
+            "MISSING_STAGE" => null, // Simulate missing version
+            _ when versionStage.StartsWith("CUSTOM") || versionStage == "STAGING" => ModifySecretForVersionStage(
+                baseValue,
+                "staging"),
+            _ => baseValue // Default to base value for unknown stages
+        };
+    }
+
+    /// <summary>
+    /// Gets a versioned JSON value based on the version stage.
+    /// </summary>
+    /// <param name="valueElement">The JSON value element</param>
+    /// <param name="versionStage">The version stage to simulate</param>
+    /// <returns>The versioned JSON string</returns>
+    private static string? GetVersionedJsonValue(JsonElement valueElement, string versionStage)
+    {
+        var jsonString = valueElement.GetRawText();
+
+        return versionStage switch
+        {
+            "AWSCURRENT" => jsonString,
+            "AWSPENDING" => ModifyJsonForVersionStage(jsonString, "pending"),
+            "AWSPREVIOUS" => ModifyJsonForVersionStage(jsonString, "previous"),
+            "MISSING_STAGE" => null,
+            _ when versionStage.StartsWith("CUSTOM") || versionStage == "STAGING" => ModifyJsonForVersionStage(
+                jsonString,
+                "staging"),
+            _ => jsonString
+        };
+    }
+
+    /// <summary>
+    /// Modifies a secret value for version stage simulation.
+    /// </summary>
+    /// <param name="originalValue">The original secret value</param>
+    /// <param name="stageSuffix">The stage suffix to add</param>
+    /// <returns>The modified secret value</returns>
+    private static string ModifySecretForVersionStage(string originalValue, string stageSuffix)
+    {
+        // If it's JSON, parse and modify
+        if (IsValidJson(originalValue))
+        {
+            try
+            {
+                using var document = JsonDocument.Parse(originalValue);
+                var root = document.RootElement;
+
+                var modifiedJson = new Dictionary<string, object?>();
+
+                foreach (var property in root.EnumerateObject())
+                {
+                    object? value = property.Value.ValueKind switch
+                    {
+                        JsonValueKind.String => property.Name == "host"
+                            ? $"{stageSuffix}-{property.Value.GetString()}"
+                            : property.Name == "username"
+                                ? $"{stageSuffix}user"
+                                : property.Name == "password"
+                                    ? $"{stageSuffix}pass123"
+                                    : property.Value.GetString(),
+                        JsonValueKind.Number => property.Value.GetInt32(),
+                        JsonValueKind.True => true,
+                        JsonValueKind.False => false,
+                        _ => property.Value.GetString()
+                    };
+
+                    modifiedJson[property.Name] = value;
+                }
+
+                return JsonSerializer.Serialize(modifiedJson);
+            }
+            catch
+            {
+                // Fall back to simple modification if JSON parsing fails
+            }
+        }
+
+        // Simple string modification for non-JSON values
+        return $"{stageSuffix}-{originalValue}";
+    }
+
+    /// <summary>
+    /// Modifies a JSON string for version stage simulation.
+    /// </summary>
+    /// <param name="jsonString">The original JSON string</param>
+    /// <param name="stageSuffix">The stage suffix to add</param>
+    /// <returns>The modified JSON string</returns>
+    private static string ModifyJsonForVersionStage(string jsonString, string stageSuffix)
+    {
+        try
+        {
+            using var document = JsonDocument.Parse(jsonString);
+            var root = document.RootElement;
+
+            // Create a modified version of the JSON for testing
+            var modifiedJson = new Dictionary<string, object?>();
+
+            CopyJsonElementWithModifications(root, modifiedJson, stageSuffix);
+
+            return JsonSerializer.Serialize(modifiedJson);
+        }
+        catch
+        {
+            return jsonString; // Return original if modification fails
+        }
+    }
+
+    /// <summary>
+    /// Recursively copies JSON elements while applying version-specific modifications.
+    /// </summary>
+    /// <param name="source">Source JSON element</param>
+    /// <param name="target">Target dictionary</param>
+    /// <param name="stageSuffix">Stage suffix for modifications</param>
+    private static void CopyJsonElementWithModifications(JsonElement source, Dictionary<string, object?> target, string stageSuffix)
+    {
+        foreach (var property in source.EnumerateObject())
+        {
+            switch (property.Value.ValueKind)
+            {
+                case JsonValueKind.Object:
+                    var nestedDict = new Dictionary<string, object?>();
+                    CopyJsonElementWithModifications(property.Value, nestedDict, stageSuffix);
+                    target[property.Name] = nestedDict;
+                    break;
+
+                case JsonValueKind.Array:
+                    var arrayList = new List<object?>();
+                    foreach (var arrayElement in property.Value.EnumerateArray())
+                    {
+                        if (arrayElement.ValueKind == JsonValueKind.Object)
+                        {
+                            var arrayDict = new Dictionary<string, object?>();
+                            CopyJsonElementWithModifications(arrayElement, arrayDict, stageSuffix);
+                            arrayList.Add(arrayDict);
+                        }
+                        else
+                        {
+                            arrayList.Add(GetJsonElementValue(arrayElement));
+                        }
+                    }
+
+                    target[property.Name] = arrayList;
+                    break;
+
+                case JsonValueKind.String:
+                    // Apply version-specific modifications to string values
+                    var stringValue = property.Value.GetString();
+                    if (property.Name.Contains("host", StringComparison.OrdinalIgnoreCase))
+                    {
+                        target[property.Name] = $"{stageSuffix}-{stringValue}";
+                    }
+                    else if (property.Name.Contains("name", StringComparison.OrdinalIgnoreCase) &&
+                             property.Name.Contains("user", StringComparison.OrdinalIgnoreCase))
+                    {
+                        target[property.Name] = $"{stageSuffix}user";
+                    }
+                    else
+                    {
+                        target[property.Name] = stringValue;
+                    }
+
+                    break;
+
+                default:
+                    target[property.Name] = GetJsonElementValue(property.Value);
+                    break;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets the .NET value from a JsonElement.
+    /// </summary>
+    /// <param name="element">The JSON element</param>
+    /// <returns>The corresponding .NET value</returns>
+    private static object? GetJsonElementValue(JsonElement element)
+    {
+        return element.ValueKind switch
+        {
+            JsonValueKind.String => element.GetString(),
+            JsonValueKind.Number => element.TryGetInt32(out var intVal) ? intVal : element.GetDouble(),
+            JsonValueKind.True => true,
+            JsonValueKind.False => false,
+            JsonValueKind.Null => null,
+            _ => element.GetString()
+        };
     }
 }

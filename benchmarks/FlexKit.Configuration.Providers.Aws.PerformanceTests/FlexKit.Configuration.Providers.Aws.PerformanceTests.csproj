@@ -22,6 +22,10 @@
     <!-- Performance test specific packages (beyond what's in Directory.Build.props) -->
     <ItemGroup>
         <!-- BenchmarkDotNet for micro-benchmarks -->
+        <PackageReference Include="AWSSDK.Extensions.NETCore.Setup" Version="4.0.2" />
+        <PackageReference Include="AWSSDK.SecretsManager" Version="4.0.0.13" />
+        <PackageReference Include="AWSSDK.SecretsManager.Caching" Version="2.0.0" />
+        <PackageReference Include="AWSSDK.SimpleSystemsManagement" Version="4.0.2.2" />
         <PackageReference Include="BenchmarkDotNet" Version="[0.15.2,1.0.0)"/>
         <PackageReference Include="BenchmarkDotNet.Annotations" Version="[0.15.2,1.0.0]"/>
         <PackageReference Include="BenchmarkDotNet.Diagnostics.Windows" Version="[0.15.2,1.0.0)" Condition="$([MSBuild]::IsOSPlatform('Windows'))"/>
@@ -37,6 +41,7 @@
         <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.6"/>
         <PackageReference Include="Microsoft.Extensions.Options" Version="9.0.6"/>
         <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="9.0.6"/>
+        <PackageReference Include="Testcontainers.LocalStack" Version="4.6.0" />
     </ItemGroup>
 
     <!-- Performance test specific build settings -->
@@ -69,6 +74,13 @@
         <None Update="**/*.env">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
+    </ItemGroup>
+    <ItemGroup>
+      <ProjectReference Include="..\..\src\FlexKit.Configuration.Providers.Aws\FlexKit.Configuration.Providers.Aws.csproj" />
+      <ProjectReference Include="..\..\src\FlexKit.Configuration\FlexKit.Configuration.csproj" />
+    </ItemGroup>
+    <ItemGroup>
+      <Folder Include="TestData\" />
     </ItemGroup>
 
 </Project>
