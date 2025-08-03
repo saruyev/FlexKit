@@ -3,9 +3,12 @@ using AutoFixture.Xunit2;
 using FlexKit.Configuration.Core;
 using FlexKit.Configuration.Tests.TestBase;
 using FluentAssertions;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Configuration.Memory;
 using Xunit;
 // ReSharper disable ComplexConditionExpression
+// ReSharper disable MethodTooLong
+// ReSharper disable ClassTooBig
 
 namespace FlexKit.Configuration.Tests.Core;
 
@@ -222,4 +225,233 @@ public class FlexConfigurationBuilderTests : UnitTestBase
         action.Should().Throw<InvalidOperationException>()
             .WithMessage("Cannot add sources after Build() has been called");
     }
+    
+    #region UseExistingConfiguration Tests
+    
+    [Fact]
+    public void UseExistingConfiguration_WithValidConfiguration_AddsConfigurationAsMemorySource()
+    {
+        // Arrange
+        var builder = Resolve<FlexConfigurationBuilder>();
+        var existingConfigData = new Dictionary<string, string?>
+        {
+            ["App:Name"] = "ExistingApp",
+            ["Database:ConnectionString"] = "Server=localhost;Database=Test;",
+            ["Api:Key"] = "existing-api-key"
+        };
+        
+        var existingConfig = new ConfigurationBuilder()
+            .AddInMemoryCollection(existingConfigData)
+            .Build();
+
+        // Act
+        var result = builder.UseExistingConfiguration(existingConfig);
+
+        // Assert
+        result.Should().BeSameAs(builder);
+        
+        // Verify the configuration can be built and contains the existing data
+        var flexConfig = builder.Build();
+        flexConfig.Should().NotBeNull();
+        flexConfig["App:Name"].Should().Be("ExistingApp");
+        flexConfig["Database:ConnectionString"].Should().Be("Server=localhost;Database=Test;");
+        flexConfig["Api:Key"].Should().Be("existing-api-key");
+    }
+    
+    [Fact]
+    public void UseExistingConfiguration_WithNullConfiguration_ThrowsArgumentNullException()
+    {
+        // Arrange
+        var builder = Resolve<FlexConfigurationBuilder>();
+        IConfiguration? nullConfig = null;
+
+        // Act & Assert
+        var action = () => builder.UseExistingConfiguration(nullConfig!);
+        action.Should().Throw<ArgumentNullException>()
+            .WithParameterName("configuration");
+    }
+    
+    [Fact]
+    public void UseExistingConfiguration_AfterBuild_ThrowsInvalidOperationException()
+    {
+        // Arrange
+        var builder = Resolve<FlexConfigurationBuilder>();
+        var testData = ConfigurationTestDataBuilder.CreateConfigurationDictionary();
+        builder.AddSource(new MemoryConfigurationSource { InitialData = testData! });
+        builder.Build(); // Set _isBuilt to true
+        
+        var existingConfig = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?> { ["test"] = "value" })
+            .Build();
+
+        // Act & Assert
+        var action = () => builder.UseExistingConfiguration(existingConfig);
+        action.Should().Throw<InvalidOperationException>()
+            .WithMessage("Cannot add sources after Build() has been called");
+    }
+    
+    [Fact]
+    public void UseExistingConfiguration_WithEmptyConfiguration_AddsEmptyMemorySource()
+    {
+        // Arrange
+        var builder = Resolve<FlexConfigurationBuilder>();
+        var emptyConfig = new ConfigurationBuilder().Build();
+
+        // Act
+        var result = builder.UseExistingConfiguration(emptyConfig);
+
+        // Assert
+        result.Should().BeSameAs(builder);
+        
+        // Verify the configuration can be built (should not throw)
+        var flexConfig = builder.Build();
+        flexConfig.Should().NotBeNull();
+    }
+    
+    [Fact]
+    public void UseExistingConfiguration_WithSubsequentSources_MaintainsPrecedenceOrder()
+    {
+        // Arrange
+        var builder = Resolve<FlexConfigurationBuilder>();
+        var existingConfigData = new Dictionary<string, string?>
+        {
+            ["App:Name"] = "ExistingApp",
+            ["SharedKey"] = "FromExisting"
+        };
+        
+        var existingConfig = new ConfigurationBuilder()
+            .AddInMemoryCollection(existingConfigData)
+            .Build();
+        
+        var higherPriorityData = new Dictionary<string, string?>
+        {
+            ["App:Version"] = "1.0.0",
+            ["SharedKey"] = "FromHigherPriority"
+        };
+
+        // Act
+        var result = builder
+            .UseExistingConfiguration(existingConfig)
+            .AddSource(new MemoryConfigurationSource { InitialData = higherPriorityData });
+
+        // Assert
+        result.Should().BeSameAs(builder);
+        
+        var flexConfig = builder.Build();
+        flexConfig.Should().NotBeNull();
+        
+        // Existing configuration values should be present
+        flexConfig["App:Name"].Should().Be("ExistingApp");
+        
+        // Higher priority source should override shared keys
+        flexConfig["SharedKey"].Should().Be("FromHigherPriority");
+        
+        // Higher priority source values should be present
+        flexConfig["App:Version"].Should().Be("1.0.0");
+    }
+    
+    [Fact]
+    public void UseExistingConfiguration_WithComplexHierarchicalData_PreservesStructure()
+    {
+        // Arrange
+        var builder = Resolve<FlexConfigurationBuilder>();
+        var complexConfigData = new Dictionary<string, string?>
+        {
+            ["Database:Primary:ConnectionString"] = "Server=primary;Database=Main;",
+            ["Database:Primary:Timeout"] = "30",
+            ["Database:Secondary:ConnectionString"] = "Server=secondary;Database=Backup;",
+            ["Database:Secondary:Timeout"] = "15",
+            ["Logging:LogLevel:Default"] = "Information",
+            ["Logging:LogLevel:Microsoft"] = "Warning",
+            ["Features:EnableCaching"] = "true",
+            ["Features:CacheExpiration"] = "3600"
+        };
+        
+        var existingConfig = new ConfigurationBuilder()
+            .AddInMemoryCollection(complexConfigData)
+            .Build();
+
+        // Act
+        var result = builder.UseExistingConfiguration(existingConfig);
+
+        // Assert
+        result.Should().BeSameAs(builder);
+        
+        var flexConfig = builder.Build();
+        flexConfig.Should().NotBeNull();
+        
+        // Verify all hierarchical data is preserved
+        flexConfig["Database:Primary:ConnectionString"].Should().Be("Server=primary;Database=Main;");
+        flexConfig["Database:Primary:Timeout"].Should().Be("30");
+        flexConfig["Database:Secondary:ConnectionString"].Should().Be("Server=secondary;Database=Backup;");
+        flexConfig["Database:Secondary:Timeout"].Should().Be("15");
+        flexConfig["Logging:LogLevel:Default"].Should().Be("Information");
+        flexConfig["Logging:LogLevel:Microsoft"].Should().Be("Warning");
+        flexConfig["Features:EnableCaching"].Should().Be("true");
+        flexConfig["Features:CacheExpiration"].Should().Be("3600");
+    }
+    
+    [Fact]
+    public void UseExistingConfiguration_WithNullValues_PreservesNullValues()
+    {
+        // Arrange
+        var builder = Resolve<FlexConfigurationBuilder>();
+        var configDataWithNulls = new Dictionary<string, string?>
+        {
+            ["ValidKey"] = "ValidValue",
+            ["NullKey"] = null,
+            ["EmptyKey"] = "",
+            ["WhitespaceKey"] = "   "
+        };
+        
+        var existingConfig = new ConfigurationBuilder()
+            .AddInMemoryCollection(configDataWithNulls)
+            .Build();
+
+        // Act
+        var result = builder.UseExistingConfiguration(existingConfig);
+
+        // Assert
+        result.Should().BeSameAs(builder);
+        
+        var flexConfig = builder.Build();
+        flexConfig.Should().NotBeNull();
+        
+        // Verify all values are preserved, including nulls and empty strings
+        flexConfig["ValidKey"].Should().Be("ValidValue");
+        flexConfig["NullKey"].Should().BeNull();
+        flexConfig["EmptyKey"].Should().Be("");
+        flexConfig["WhitespaceKey"].Should().Be("   ");
+    }
+    
+    [Fact]
+    public void UseExistingConfiguration_ChainedWithOtherMethods_MaintainsFluentInterface()
+    {
+        // Arrange
+        var builder = Resolve<FlexConfigurationBuilder>();
+        var existingConfig = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?> { ["Existing:Value"] = "test" })
+            .Build();
+        var testData = ConfigurationTestDataBuilder.CreateConfigurationDictionary();
+
+        // Act
+        var result = builder
+            .UseExistingConfiguration(existingConfig)
+            .AddEnvironmentVariables()
+            .AddSource(new MemoryConfigurationSource { InitialData = testData! })
+            .AddJsonFile("test.json", optional: true)
+            .AddDotEnvFile();
+
+        // Assert
+        result.Should().BeSameAs(builder);
+        
+        // Verify the builder can still build with all sources
+        var flexConfig = result.Build();
+        flexConfig.Should().NotBeNull();
+        
+        // Verify the existing configuration is present
+        flexConfig["Existing:Value"].Should().Be("test");
+    }
+    
+    #endregion
 }

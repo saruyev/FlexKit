@@ -440,7 +440,6 @@ dotnet_diagnostic.RCS1005.severity = suggestion # Simplify nested using statemen
 dotnet_diagnostic.RCS1006.severity = suggestion # Merge else clause with nested if statement
 dotnet_diagnostic.RCS1007.severity = error # Add braces
 dotnet_diagnostic.RCS1010.severity = suggestion # Use var instead of explicit type (context dependent)
-dotnet_diagnostic.RCS1012.severity = suggestion # Use explicit type instead of var (context dependent)
 dotnet_diagnostic.RCS1014.severity = suggestion # Use explicitly typed array
 dotnet_diagnostic.RCS1015.severity = warning # Use nameof operator
 dotnet_diagnostic.RCS1018.severity = error # Add accessibility modifier

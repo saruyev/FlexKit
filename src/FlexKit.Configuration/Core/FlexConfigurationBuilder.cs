@@ -8,6 +8,7 @@ using JetBrains.Annotations;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Configuration.EnvironmentVariables;
 using Microsoft.Extensions.Configuration.Json;
+using Microsoft.Extensions.Configuration.Memory;
 
 namespace FlexKit.Configuration.Core;
 
@@ -424,6 +425,127 @@ public class FlexConfigurationBuilder
         }
 
         _sources.Add(source);
+        return this;
+    }
+
+    /// <summary>
+    /// Adds an existing IConfiguration instance as the base configuration source.
+    /// This method allows FlexConfigurationBuilder to build upon an already configured
+    /// IConfiguration instance, enabling integration with existing .NET hosting and
+    /// configuration setups while still allowing additional FlexKit-specific sources.
+    /// </summary>
+    /// <param name="configuration">
+    /// The existing IConfiguration instance to use as the base configuration.
+    /// All key-value pairs from this configuration will be included in the final FlexConfig.
+    /// </param>
+    /// <returns>The same builder instance to enable method chaining.</returns>
+    /// <remarks>
+    /// This method is particularly useful for integrating FlexConfig with existing
+    /// hosting scenarios where an IConfiguration has already been built with standard
+    /// .NET configuration sources (JSON files, environment variables, command line args, etc.).
+    ///
+    /// <para>
+    /// <strong>Usage Pattern:</strong>
+    /// The existing configuration acts as the foundation, with any subsequently added
+    /// sources taking precedence over values from the existing configuration:
+    /// <code>
+    /// // In a generic host builder context
+    /// builder.ConfigureContainer&lt;ContainerBuilder&gt;((context, containerBuilder) =>
+    /// {
+    ///     containerBuilder.AddFlexConfig(config => config
+    ///         .UseExistingConfiguration(context.Configuration) // Base from host
+    ///         .AddDotEnvFile(".env", optional: true)           // FlexKit-specific
+    ///         .AddYamlFile("config.yaml", optional: true));    // Additional sources
+    /// });
+    /// </code>
+    /// </para>
+    ///
+    /// <para>
+    /// <strong>Source Precedence:</strong>
+    /// The existing configuration is added as the first (lowest precedence) source.
+    /// Any sources added after this method call will override values from the
+    /// existing configuration for matching keys.
+    /// </para>
+    ///
+    /// <para>
+    /// <strong>Implementation Details:</strong>
+    /// The method converts the existing IConfiguration into a MemoryConfigurationSource
+    /// by enumerating all its key-value pairs. This ensures that all configuration
+    /// data is preserved while allowing the FlexConfigurationBuilder to manage
+    /// the final configuration composition.
+    /// </para>
+    ///
+    /// <para>
+    /// <strong>Performance Considerations:</strong>
+    /// The method performs a one-time enumeration of the existing configuration
+    /// at builder setup time. The resulting configuration access performance
+    /// is equivalent to other FlexKit configuration sources.
+    /// </para>
+    /// </remarks>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="configuration"/> is null.</exception>
+    /// <exception cref="InvalidOperationException">Thrown when called after Build() has been called.</exception>
+    /// <example>
+    /// <code>
+    /// // Basic usage with existing configuration
+    /// var existingConfig = new ConfigurationBuilder()
+    ///     .AddJsonFile("appsettings.json")
+    ///     .AddEnvironmentVariables()
+    ///     .Build();
+    ///
+    /// var flexConfig = new FlexConfigurationBuilder()
+    ///     .UseExistingConfiguration(existingConfig)
+    ///     .AddDotEnvFile(".env")
+    ///     .Build();
+    /// </code>
+    ///
+    /// <code>
+    /// // Integration with ASP.NET Core host builder
+    /// builder.Host.ConfigureContainer&lt;ContainerBuilder&gt;((context, containerBuilder) =>
+    /// {
+    ///     containerBuilder.AddFlexConfig(config => config
+    ///         .UseExistingConfiguration(context.Configuration)
+    ///         .AddYamlFile("features.yaml", optional: true));
+    /// });
+    /// </code>
+    ///
+    /// <code>
+    /// // Console application with Host.CreateDefaultBuilder
+    /// var builder = Host.CreateDefaultBuilder(args);
+    /// builder.ConfigureContainer&lt;ContainerBuilder&gt;((context, containerBuilder) =>
+    /// {
+    ///     containerBuilder.AddFlexConfig(config => config
+    ///         .UseExistingConfiguration(context.Configuration)
+    ///         .AddDotEnvFile(".env", optional: true));
+    /// });
+    /// </code>
+    /// </example>
+    [UsedImplicitly]
+    public FlexConfigurationBuilder UseExistingConfiguration(IConfiguration configuration)
+    {
+        ArgumentNullException.ThrowIfNull(configuration);
+
+        if (_isBuilt)
+        {
+            throw new InvalidOperationException("Cannot add sources after Build() has been called");
+        }
+
+        // Convert the existing IConfiguration to a dictionary for MemoryConfigurationSource
+        var configurationData = new Dictionary<string, string?>();
+
+        // Enumerate all configuration key-value pairs
+        foreach (var pair in configuration.AsEnumerable())
+        {
+            configurationData[pair.Key] = pair.Value;
+        }
+
+        // Add as a MemoryConfigurationSource (the lowest precedence since it's added first)
+        var memorySource = new MemoryConfigurationSource
+        {
+            InitialData = configurationData
+        };
+
+        _sources.Insert(0, memorySource);
+
         return this;
     }
 
