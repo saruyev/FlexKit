@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(./benchmarks/benchmarks.sh:*)",
+      "Bash(./benchmarks.sh:*)"
+    ],
+    "deny": []
+  }
+}
