@@ -213,8 +213,8 @@ public sealed record MappingConfig
         }
 
         return Prefix == other.Prefix &&
-               (Names == null && other.Names == null ||
-                Names != null && other.Names != null && Names.SequenceEqual(other.Names));
+               ((Names == null && other.Names == null) ||
+                (Names != null && other.Names != null && Names.SequenceEqual(other.Names)));
     }
 
     /// <summary>
@@ -233,7 +233,7 @@ public sealed record MappingConfig
     /// <list type="number">
     /// <item>Starts with the hash code of the <see cref="Prefix"/> property</item>
     /// <item>For non-null <see cref="Names"/> collections, incorporates the hash code of each element</item>
-    /// <item>Uses <see cref="HashCode"/> struct for efficient and collision-resistant hash combination</item>
+    /// <item>Uses <see cref="HashCode"/> struct for an efficient and collision-resistant hash combination</item>
     /// <item>Handles null collections appropriately to maintain consistency with <see cref="Equals(MappingConfig?)"/></item>
     /// </list>
     /// </para>
