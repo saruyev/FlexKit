@@ -3,7 +3,9 @@ using FlexKit.Configuration.Providers.Aws.IntegrationTests.Utils;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Reqnroll;
-using System.Text.Json;
+// ReSharper disable ComplexConditionExpression
+// ReSharper disable InconsistentNaming
+// ReSharper disable CollectionNeverQueried.Local
 
 namespace FlexKit.Configuration.Providers.Aws.IntegrationTests.Steps.SecretsManager;
 
@@ -11,7 +13,7 @@ namespace FlexKit.Configuration.Providers.Aws.IntegrationTests.Steps.SecretsMana
 /// Step definitions for Secrets Manager versions scenarios.
 /// Tests secret version management including AWSCURRENT, AWSPENDING, AWSPREVIOUS stages,
 /// custom version stages, and version-aware configuration loading.
-/// Uses distinct step patterns ("secrets versions module") to avoid conflicts with other step classes.
+/// Uses distinct step patterns ("secrets' versions module") to avoid conflicts with other step classes.
 /// </summary>
 [Binding]
 public class SecretsManagerVersionsSteps(ScenarioContext scenarioContext)
@@ -358,9 +360,6 @@ public class SecretsManagerVersionsSteps(ScenarioContext scenarioContext)
                         dynamicValue.Should().Contain("previous", "AWSPREVIOUS stage should return previous version data");
                     }
                     break;
-                default:
-                    // Custom version stage
-                    break;
             }
         }
         
@@ -377,7 +376,7 @@ public class SecretsManagerVersionsSteps(ScenarioContext scenarioContext)
         var configurationIsUsable = false;
         try
         {
-            var keys = _secretsVersionsConfiguration!.AsEnumerable().ToList();
+            _ = _secretsVersionsConfiguration!.AsEnumerable().ToList();
             configurationIsUsable = true; // If we can enumerate, configuration is usable
         }
         catch
@@ -408,7 +407,7 @@ public class SecretsManagerVersionsSteps(ScenarioContext scenarioContext)
     {
         _secretsVersionsConfiguration.Should().NotBeNull("Configuration should contain secrets from current version");
         
-        // Check for configuration keys that would come from AWSCURRENT stage
+        // Check for configuration keys that would come from the AWSCURRENT stage
         var hasCurrentVersionSecrets = _secretsVersionsConfiguration!.AsEnumerable()
             .Any(kvp => kvp.Key.Contains("infrastructure-module-database-credentials") && kvp.Value != null);
         

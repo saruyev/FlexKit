@@ -5,7 +5,7 @@ using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Reqnroll;
 
-namespace FlexKit.Configuration.Providers.Aws.IntegrationTests.Steps;
+namespace FlexKit.Configuration.Providers.Aws.IntegrationTests.Steps.Infrastructure;
 
 [Binding]
 public class SimpleLocalStackVerificationSteps

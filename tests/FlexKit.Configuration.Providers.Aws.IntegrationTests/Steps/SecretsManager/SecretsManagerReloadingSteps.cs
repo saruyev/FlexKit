@@ -10,7 +10,7 @@ namespace FlexKit.Configuration.Providers.Aws.IntegrationTests.Steps.SecretsMana
 /// Step definitions for Secrets Manager reloading scenarios.
 /// Tests automatic secret reloading functionality including timer initialization,
 /// reload interval configuration, error handling during reloads, and proper cleanup.
-/// Uses distinct step patterns ("secrets reload controller") to avoid conflicts with other step classes.
+/// Uses distinct step patterns ("secrets' reload controller") to avoid conflicts with other step classes.
 /// </summary>
 [Binding]
 public class SecretsManagerReloadingSteps(ScenarioContext scenarioContext)
@@ -171,9 +171,6 @@ public class SecretsManagerReloadingSteps(ScenarioContext scenarioContext)
     public void WhenIVerifySecretsReloadControllerDynamicAccessCapabilities()
     {
         _secretsReloadFlexConfiguration.Should().NotBeNull("Secrets reload FlexConfiguration should be built");
-
-        // Test dynamic access to configuration values
-        dynamic config = _secretsReloadFlexConfiguration!;
    
         try
         {
@@ -242,7 +239,7 @@ public class SecretsManagerReloadingSteps(ScenarioContext scenarioContext)
         // Verify JSON processing functionality
         var hasJsonProcessedData = false;
         
-        // Check if configuration contains hierarchical keys that would result from JSON processing
+        // Check if the configuration contains hierarchical keys that would result from JSON processing
         foreach (var kvp in _secretsReloadConfiguration!.AsEnumerable())
         {
             if (kvp.Key.Contains(':') && kvp.Key.Contains("infrastructure-module"))
@@ -271,7 +268,7 @@ public class SecretsManagerReloadingSteps(ScenarioContext scenarioContext)
         var configurationIsUsable = false;
         try
         {
-            var keys = _secretsReloadConfiguration!.AsEnumerable().ToList();
+            _ = _secretsReloadConfiguration!.AsEnumerable().ToList();
             configurationIsUsable = true; // If we can enumerate, configuration is usable
         }
         catch
@@ -353,11 +350,10 @@ public class SecretsManagerReloadingSteps(ScenarioContext scenarioContext)
         try
         {
             // In a real scenario, the provider would implement IDisposable and clean up timers
-            // For this test, we verify that the configuration remains stable
+            // For this test we verify that the configuration remains stable
             var testKey = _secretsReloadConfiguration!.AsEnumerable().FirstOrDefault().Key;
             if (!string.IsNullOrEmpty(testKey))
             {
-                var testValue = _secretsReloadConfiguration![testKey];
                 // If we can still access values, disposal support is working
                 disposalSuccessful = true;
             }

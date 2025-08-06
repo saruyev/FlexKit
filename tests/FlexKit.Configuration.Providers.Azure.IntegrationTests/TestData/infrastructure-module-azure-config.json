@@ -1,0 +1,113 @@
+{
+  "localStack": {
+    "services": "keyvault,appconfig",
+    "debug": true,
+    "port": 4566
+  },
+  "azure": {
+    "region": "eastus",
+    "keyVault": {
+      "uri": "https://test-vault.vault.azure.net/",
+      "jsonProcessor": true,
+      "optional": false,
+      "reloadAfterMinutes": 5
+    },
+    "appConfiguration": {
+      "connectionString": "Endpoint=https://test-appconfig.azconfig.io;Id=test;Secret=test",
+      "label": "production",
+      "keyFilter": "myapp:*",
+      "optional": false,
+      "reloadAfterMinutes": 10
+    }
+  },
+  "keyVaultSecrets": {
+    "myapp--database--host": "localhost",
+    "myapp--database--port": "5432",
+    "myapp--database--username": "testuser",
+    "myapp--database--password": "testpass123",
+    "myapp--api--key": "sk-test-api-key-12345",
+    "myapp--features--cache--enabled": "true",
+    "myapp--features--cache--ttl": "300",
+    "myapp--features--logging--level": "Information",
+    "myapp--features--logging--enabled": "true",
+    "infrastructure-module-database-credentials": "{\"host\":\"db.example.com\",\"port\":5432,\"username\":\"admin\",\"password\":\"secure123\",\"ssl\":true}",
+    "infrastructure-module-api-config": "{\"baseUrl\":\"https://api.example.com\",\"timeout\":60,\"retries\":3,\"authentication\":{\"type\":\"bearer\",\"token\":\"secret-token\"}}",
+    "infrastructure-module-cache-settings": "{\"redis\":{\"host\":\"redis.example.com\",\"port\":6379,\"database\":0},\"ttl\":3600,\"enabled\":true}"
+  },
+  "jsonSecrets": {
+    "database-config": {
+      "host": "db.example.com",
+      "port": 5432,
+      "ssl": true,
+      "connectionTimeout": 30,
+      "maxConnections": 100
+    },
+    "api-settings": {
+      "baseUrl": "https://api.example.com",
+      "timeout": 60,
+      "retries": 3,
+      "authentication": {
+        "type": "bearer",
+        "refreshToken": "refresh-token-12345"
+      }
+    },
+    "feature-config": {
+      "caching": {
+        "enabled": true,
+        "provider": "redis",
+        "ttl": 3600
+      },
+      "logging": {
+        "level": "Information",
+        "structured": true,
+        "targets": ["console", "file"]
+      }
+    }
+  },
+  "appConfigurationSettings": {
+    "myapp:api:timeout": "30",
+    "myapp:api:baseUrl": "https://api.example.com",
+    "myapp:api:retries": "3",
+    "myapp:logging:level": "Information",
+    "myapp:logging:provider": "serilog",
+    "myapp:cache:enabled": "true",
+    "myapp:cache:provider": "redis",
+    "myapp:cache:ttl": "1800",
+    "myapp:security:cors:enabled": "true",
+    "myapp:security:cors:origins": "https://localhost:3000,https://app.example.com",
+    "infrastructure-module:environment": "production",
+    "infrastructure-module:version": "1.2.3",
+    "infrastructure-module:deployment:region": "eastus",
+    "infrastructure-module:deployment:scale": "standard"
+  },
+  "labeledAppConfigurationSettings": {
+    "production": {
+      "myapp:database:connectionString": "Server=prod-db.example.com;Database=myapp;Integrated Security=true;",
+      "myapp:logging:level": "Warning",
+      "myapp:cache:ttl": "3600",
+      "myapp:api:baseUrl": "https://prod-api.example.com"
+    },
+    "development": {
+      "myapp:database:connectionString": "Server=dev-db.example.com;Database=myapp_dev;Integrated Security=true;",
+      "myapp:logging:level": "Debug",
+      "myapp:cache:ttl": "300",
+      "myapp:api:baseUrl": "https://dev-api.example.com"
+    },
+    "staging": {
+      "myapp:database:connectionString": "Server=staging-db.example.com;Database=myapp_staging;Integrated Security=true;",
+      "myapp:logging:level": "Information",
+      "myapp:cache:ttl": "1800",
+      "myapp:api:baseUrl": "https://staging-api.example.com"
+    }
+  },
+  "featureFlags": {
+    "NewUI": true,
+    "BetaFeatures": false,
+    "AdvancedReporting": true,
+    "ExperimentalFeatures": false,
+    "A/B Testing": true,
+    "DarkMode": true,
+    "PerformanceOptimizations": true,
+    "LegacySupport": false
+  }
+}

@@ -7,6 +7,7 @@ using System.Diagnostics.CodeAnalysis;
 using Azure.Identity;
 using Azure.Security.KeyVault.Secrets;
 using FlexKit.Configuration.Providers.Azure.Extensions;
+using JetBrains.Annotations;
 using Microsoft.Extensions.Configuration;
 
 namespace FlexKit.Configuration.Providers.Azure.Sources;
@@ -58,8 +59,27 @@ public sealed class AzureKeyVaultConfigurationProvider : ConfigurationProvider, 
 {
     private readonly AzureKeyVaultConfigurationSource _source;
     private readonly SecretClient _secretClient;
-    private readonly Timer? _reloadTimer;
+    private Timer? _reloadTimer;
     private bool _disposed;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="AzureKeyVaultConfigurationProvider"/> class with an existing secret client.
+    /// This constructor is primarily used for testing scenarios where a pre-configured client is provided.
+    /// </summary>
+    /// <param name="source">The configuration source that contains the Key Vault access configuration.</param>
+    /// <param name="secretClient">The pre-configured Azure Key Vault secret client to use.</param>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="source"/> or <paramref name="secretClient"/> is null.</exception>
+    [UsedImplicitly]
+    internal AzureKeyVaultConfigurationProvider(AzureKeyVaultConfigurationSource source, SecretClient secretClient)
+    {
+        ArgumentNullException.ThrowIfNull(source);
+        ArgumentNullException.ThrowIfNull(secretClient);
+
+        _source = source;
+        _secretClient = secretClient;
+
+        SetupReloadTimer();
+    }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="AzureKeyVaultConfigurationProvider"/> class.
@@ -72,32 +92,47 @@ public sealed class AzureKeyVaultConfigurationProvider : ConfigurationProvider, 
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="source"/> is null.</exception>
     /// <exception cref="InvalidOperationException">Thrown when Azure credentials cannot be resolved or Key Vault client creation fails.</exception>
     public AzureKeyVaultConfigurationProvider(AzureKeyVaultConfigurationSource source)
+        : this(source, CreateSecretClient(source))
     {
-        ArgumentNullException.ThrowIfNull(source);
+    }
 
-        _source = source;
-
+    /// <summary>
+    /// Creates an Azure Key Vault secret client based on the provided source configuration.
+    /// Uses the configured credential or defaults to DefaultAzureCredential for authentication.
+    /// </summary>
+    /// <param name="source">The configuration source containing the vault URI and credential details.</param>
+    /// <returns>A configured <see cref="SecretClient"/> instance.</returns>
+    /// <exception cref="InvalidOperationException">Thrown when the client cannot be created due to invalid configuration or credential issues.</exception>
+    private static SecretClient CreateSecretClient(AzureKeyVaultConfigurationSource source)
+    {
         try
         {
-            // Create the Azure Key Vault client using the credential resolution chain
-            var credential = _source.Credential ?? new DefaultAzureCredential();
-            _secretClient = new SecretClient(new Uri(_source.VaultUri), credential);
+            var credential = source.Credential ?? new DefaultAzureCredential();
+            return new SecretClient(new Uri(source.VaultUri), credential);
         }
         catch (Exception ex)
         {
             throw new InvalidOperationException(
                 "Failed to create Azure Key Vault client. Ensure Azure credentials are properly configured.", ex);
         }
+    }
 
-        // Set up automatic reloading if configured
-        if (_source.ReloadAfter.HasValue)
+    /// <summary>
+    /// Sets up the automatic reload timer if a reload interval is specified in the source configuration.
+    /// The timer will periodically trigger configuration reloading to keep secrets synchronized with Azure Key Vault.
+    /// </summary>
+    private void SetupReloadTimer()
+    {
+        if (!_source.ReloadAfter.HasValue)
         {
-            _reloadTimer = new Timer(
-                callback: _ => LoadAsync().ConfigureAwait(false),
-                state: null,
-                dueTime: _source.ReloadAfter.Value,
-                period: _source.ReloadAfter.Value);
+            return;
         }
+
+        _reloadTimer = new Timer(
+            callback: _ => LoadAsync().ConfigureAwait(false),
+            state: null,
+            dueTime: _source.ReloadAfter.Value,
+            period: _source.ReloadAfter.Value);
     }
 
     /// <summary>

@@ -1,15 +1,17 @@
-﻿using FlexKit.Configuration.Core;
+﻿using System.Diagnostics;
+using FlexKit.Configuration.Core;
 using FlexKit.Configuration.Providers.Aws.IntegrationTests.Utils;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Reqnroll;
-using System.Diagnostics;
-using System.Threading.Tasks;
+
 // ReSharper disable ClassTooBig
 // ReSharper disable MethodTooLong
 // ReSharper disable TooManyDeclarations
+// ReSharper disable FlagArgument
+// ReSharper disable ComplexConditionExpression
 
-namespace FlexKit.Configuration.Providers.Aws.IntegrationTests.Steps.Performance;
+namespace FlexKit.Configuration.Providers.Aws.IntegrationTests.Steps.Integration;
 
 /// <summary>
 /// Step definitions for AWS Performance scenarios.
@@ -35,8 +37,7 @@ public class AwsPerformanceSteps(ScenarioContext scenarioContext)
     private bool _jsonProcessingEnabled;
     private bool _reloadingEnabled;
     private bool _concurrentAccessTested;
-    private readonly List<Task> _concurrentTasks = new();
-    private readonly object _performanceLock = new();
+    private readonly Lock _performanceLock = new();
 
     #region Given Steps - Setup
 
@@ -224,7 +225,7 @@ public class AwsPerformanceSteps(ScenarioContext scenarioContext)
             _performanceStopwatch.Stop();
             _configurationBuildTime = _performanceStopwatch.Elapsed;
             
-            // Record memory usage after configuration build
+            // Record memory usage after a configuration build
             _memoryUsageAfter = GC.GetTotalMemory(forceFullCollection: false);
             
             // Store performance metrics
@@ -241,7 +242,7 @@ public class AwsPerformanceSteps(ScenarioContext scenarioContext)
             
             foreach (var debugKey in configKeys)
             {
-                System.Diagnostics.Debug.WriteLine($"Performance config loaded: {debugKey}");
+                Debug.WriteLine($"Performance config loaded: {debugKey}");
             }
 
             scenarioContext.Set(_awsPerformanceConfiguration, "AwsPerformanceConfiguration");
@@ -275,7 +276,7 @@ public class AwsPerformanceSteps(ScenarioContext scenarioContext)
                 try
                 {
                     // Test various dynamic access patterns
-                    var infrastructure = config.infrastructure_module;
+                    _ = config.infrastructure_module;
                     
                     if (_jsonProcessingEnabled)
                     {
@@ -375,7 +376,8 @@ public class AwsPerformanceSteps(ScenarioContext scenarioContext)
             _performanceMetrics["ConcurrentAccessTime"] = _concurrentAccessTime;
             _performanceMetrics["TotalConcurrentOperations"] = totalOperations;
             _performanceMetrics["SuccessfulConcurrentOperations"] = successfulOperations;
-            _performanceMetrics["ConcurrentAccessSuccessRate"] = totalOperations > 0 ? (double)successfulOperations / totalOperations : 0.0;
+            _performanceMetrics["ConcurrentAccessSuccessRate"] =
+                totalOperations > 0 ? (double)successfulOperations / totalOperations : 0.0;
             
             _concurrentAccessTested = true;
             scenarioContext.Set("true", "ConcurrentAccessTested");
@@ -418,7 +420,7 @@ public class AwsPerformanceSteps(ScenarioContext scenarioContext)
     [Then(@"the aws performance controller should handle large parameter sets efficiently")]
     public void ThenTheAwsPerformanceControllerShouldHandleLargeParameterSetsEfficiently()
     {
-        // Large parameter sets should still load within reasonable time
+        // Large parameter sets should still load within a reasonable time
         _configurationBuildTime.Should().BeLessThan(TimeSpan.FromSeconds(30), 
             "Large parameter sets should load within 30 seconds");
         
@@ -466,7 +468,7 @@ public class AwsPerformanceSteps(ScenarioContext scenarioContext)
     [Then(@"the aws performance controller should handle large secret sets efficiently")]
     public void ThenTheAwsPerformanceControllerShouldHandleLargeSecretSetsEfficiently()
     {
-        // Large secret sets should still load within reasonable time
+        // Large secret sets should still load within a reasonable time
         _configurationBuildTime.Should().BeLessThan(TimeSpan.FromSeconds(30), 
             "Large secret sets should load within 30 seconds");
         
@@ -485,7 +487,7 @@ public class AwsPerformanceSteps(ScenarioContext scenarioContext)
     [Then(@"the aws performance controller should demonstrate efficient combined source loading")]
     public void ThenTheAwsPerformanceControllerShouldDemonstrateEfficientCombinedSourceLoading()
     {
-        // Combined sources should load within reasonable time
+        // Combined sources should load within a reasonable time
         _configurationBuildTime.Should().BeLessThan(TimeSpan.FromSeconds(15), 
             "Combined Parameter Store and Secrets Manager sources should load within 15 seconds");
         
@@ -579,71 +581,6 @@ public class AwsPerformanceSteps(ScenarioContext scenarioContext)
         
         _awsPerformanceValidationResults.Add($"Memory usage: {memoryBefore / 1024 / 1024}MB → {memoryAfter / 1024 / 1024}MB (Δ{memoryDelta / 1024 / 1024}MB)");
         scenarioContext.Set(_awsPerformanceValidationResults, "AwsPerformanceValidationResults");
-    }
-
-    #endregion
-
-    #region Helper Methods
-
-    /// <summary>
-    /// Gets the current memory usage in bytes with optional garbage collection.
-    /// </summary>
-    /// <param name="forceGC">Whether to force garbage collection before measurement</param>
-    /// <returns>Current memory usage in bytes</returns>
-    private static long GetCurrentMemoryUsage(bool forceGC = false)
-    {
-        if (forceGC)
-        {
-            GC.Collect();
-            GC.WaitForPendingFinalizers();
-            GC.Collect();
-        }
-        
-        return GC.GetTotalMemory(false);
-    }
-
-    /// <summary>
-    /// Measures the time taken to execute an action.
-    /// </summary>
-    /// <param name="action">The action to execute and measure</param>
-    /// <returns>The time taken to execute the action</returns>
-    private static TimeSpan MeasureExecutionTime(Action action)
-    {
-        var stopwatch = Stopwatch.StartNew();
-        action();
-        stopwatch.Stop();
-        return stopwatch.Elapsed;
-    }
-
-    /// <summary>
-    /// Validates that performance metrics are within acceptable ranges.
-    /// </summary>
-    /// <param name="metricName">Name of the metric to validate</param>
-    /// <param name="actualValue">Actual measured value</param>
-    /// <param name="maxAcceptableValue">Maximum acceptable value</param>
-    /// <param name="units">Units for the metric (for error messages)</param>
-    private void ValidatePerformanceMetric(string metricName, double actualValue, double maxAcceptableValue, string units)
-    {
-        actualValue.Should().BeLessThanOrEqualTo(maxAcceptableValue, 
-            $"{metricName} should be within acceptable limits ({maxAcceptableValue} {units})");
-        
-        _performanceMetrics[$"{metricName}_Validation"] = $"{actualValue:F2} {units} (limit: {maxAcceptableValue} {units})";
-    }
-
-    /// <summary>
-    /// Records a performance benchmark result for later analysis.
-    /// </summary>
-    /// <param name="benchmarkName">Name of the benchmark</param>
-    /// <param name="value">Measured value</param>
-    /// <param name="units">Units of measurement</param>
-    private void RecordBenchmark(string benchmarkName, object value, string units)
-    {
-        _performanceMetrics[$"Benchmark_{benchmarkName}"] = $"{value} {units}";
-        
-        var logMessage = $"Performance Benchmark - {benchmarkName}: {value} {units}";
-        System.Diagnostics.Debug.WriteLine(logMessage);
-        
-        _awsPerformanceValidationResults.Add(logMessage);
     }
 
     #endregion

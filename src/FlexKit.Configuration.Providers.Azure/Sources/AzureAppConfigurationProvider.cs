@@ -6,6 +6,7 @@
 using System.Diagnostics.CodeAnalysis;
 using Azure.Data.AppConfiguration;
 using Azure.Identity;
+using JetBrains.Annotations;
 using Microsoft.Extensions.Configuration;
 
 namespace FlexKit.Configuration.Providers.Azure.Sources;
@@ -41,8 +42,27 @@ public sealed class AzureAppConfigurationProvider : ConfigurationProvider, IDisp
 {
     private readonly AzureAppConfigurationSource _source;
     private readonly ConfigurationClient _configClient;
-    private readonly Timer? _reloadTimer;
+    private Timer? _reloadTimer;
     private bool _disposed;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="AzureAppConfigurationProvider"/> class with an existing configuration client.
+    /// This constructor is primarily used for testing scenarios where a pre-configured client is provided.
+    /// </summary>
+    /// <param name="source">The configuration source that contains the App Configuration access configuration.</param>
+    /// <param name="configClient">The pre-configured Azure App Configuration client to use.</param>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="source"/> or <paramref name="configClient"/> is null.</exception>
+    [UsedImplicitly]
+    internal AzureAppConfigurationProvider(AzureAppConfigurationSource source, ConfigurationClient configClient)
+    {
+        ArgumentNullException.ThrowIfNull(source);
+        ArgumentNullException.ThrowIfNull(configClient);
+
+        _source = source;
+        _configClient = configClient;
+
+        SetupReloadTimer();
+    }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="AzureAppConfigurationProvider"/> class.
@@ -55,23 +75,31 @@ public sealed class AzureAppConfigurationProvider : ConfigurationProvider, IDisp
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="source"/> is null.</exception>
     /// <exception cref="InvalidOperationException">Thrown when Azure credentials cannot be resolved or App Configuration client creation fails.</exception>
     public AzureAppConfigurationProvider(AzureAppConfigurationSource source)
+        : this(source, CreateConfigurationClient(source))
     {
-        ArgumentNullException.ThrowIfNull(source);
+    }
 
-        _source = source;
-
+    /// <summary>
+    /// Creates an Azure App Configuration client based on the provided source configuration.
+    /// Handles both connection string and endpoint URI with credential-based authentication.
+    /// </summary>
+    /// <param name="source">The configuration source containing connection details.</param>
+    /// <returns>A configured <see cref="ConfigurationClient"/> instance.</returns>
+    /// <exception cref="InvalidOperationException">Thrown when the client cannot be created due to invalid configuration or credential issues.</exception>
+    private static ConfigurationClient CreateConfigurationClient(AzureAppConfigurationSource source)
+    {
         try
         {
             // Create Azure App Configuration client
-            if (IsConnectionString(_source.ConnectionString))
+            if (IsConnectionString(source.ConnectionString))
             {
-                _configClient = new ConfigurationClient(_source.ConnectionString);
+                return new ConfigurationClient(source.ConnectionString);
             }
             else
             {
                 // Treat as endpoint URI and use credential
-                var credential = _source.Credential ?? new DefaultAzureCredential();
-                _configClient = new ConfigurationClient(new Uri(_source.ConnectionString), credential);
+                var credential = source.Credential ?? new DefaultAzureCredential();
+                return new ConfigurationClient(new Uri(source.ConnectionString), credential);
             }
         }
         catch (Exception ex)
@@ -79,16 +107,24 @@ public sealed class AzureAppConfigurationProvider : ConfigurationProvider, IDisp
             throw new InvalidOperationException(
                 "Failed to create Azure App Configuration client. Ensure connection string or credentials are properly configured.", ex);
         }
+    }
 
-        // Set up automatic reloading if configured
-        if (_source.ReloadAfter.HasValue)
+    /// <summary>
+    /// Sets up the automatic reload timer if a reload interval is specified in the source configuration.
+    /// The timer will periodically trigger configuration reloading to keep data synchronized with Azure App Configuration.
+    /// </summary>
+    private void SetupReloadTimer()
+    {
+        if (!_source.ReloadAfter.HasValue)
         {
-            _reloadTimer = new Timer(
-                callback: _ => LoadAsync().ConfigureAwait(false),
-                state: null,
-                dueTime: _source.ReloadAfter.Value,
-                period: _source.ReloadAfter.Value);
+            return;
         }
+
+        _reloadTimer = new Timer(
+            callback: _ => LoadAsync().ConfigureAwait(false),
+            state: null,
+            dueTime: _source.ReloadAfter.Value,
+            period: _source.ReloadAfter.Value);
     }
 
     /// <summary>

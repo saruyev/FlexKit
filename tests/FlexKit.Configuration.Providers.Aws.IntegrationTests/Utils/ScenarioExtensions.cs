@@ -1,5 +1,6 @@
 ﻿using FlexKit.IntegrationTests.Utils;
 using Reqnroll;
+// ReSharper disable ComplexConditionExpression
 
 namespace FlexKit.Configuration.Providers.Aws.IntegrationTests.Utils;
 
