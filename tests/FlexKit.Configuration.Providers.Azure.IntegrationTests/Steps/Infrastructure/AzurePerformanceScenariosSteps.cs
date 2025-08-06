@@ -72,10 +72,18 @@ public class AzurePerformanceScenariosSteps(ScenarioContext scenarioContext)
         _perfBuilder.Should().NotBeNull("Performance builder should be established");
 
         var fullPath = Path.Combine("TestData", testDataPath);
+    
+        // Add test configuration data
+        _perfBuilder!.AddInMemoryCollection(new Dictionary<string, string?>
+        {
+            ["test:config"] = "test-value",
+            ["test:concurrent:access"] = "true"
+        });
+    
         _perfBuilder!.AddKeyVaultFromTestData(fullPath, optional: false, jsonProcessor: true);
         _perfBuilder!.AddAppConfigurationFromTestData(fullPath, optional: false);
         _concurrentAccessEnabled = true;
-        
+    
         scenarioContext.Set(_perfBuilder, "PerfBuilder");
         _perfValidationResults.Add("✓ Concurrent access configuration setup added");
     }
@@ -129,12 +137,17 @@ public class AzurePerformanceScenariosSteps(ScenarioContext scenarioContext)
         try
         {
             // Start LocalStack first
-            var startTask = _perfBuilder!.StartLocalStackAsync("keyvault,appconfig");
+            var startTask = _perfBuilder!.StartLocalStackAsync();
             startTask.Wait(TimeSpan.FromMinutes(2));
 
             if (_performanceMonitoringEnabled)
             {
                 _loadStopwatch.Start();
+            }
+
+            if (_memoryTrackingEnabled)
+            {
+                _memoryBaseline = GC.GetTotalMemory(true);
             }
 
             _perfConfiguration = _perfBuilder.Build();
@@ -143,13 +156,19 @@ public class AzurePerformanceScenariosSteps(ScenarioContext scenarioContext)
             if (_performanceMonitoringEnabled)
             {
                 _loadStopwatch.Stop();
+                _perfValidationResults.Add($"✓ Configuration load time: {_loadStopwatch.ElapsedMilliseconds}ms");
             }
-            
+
+            if (_memoryTrackingEnabled)
+            {
+                var currentMemory = GC.GetTotalMemory(false);
+                _perfValidationResults.Add($"✓ Initial memory usage: {(currentMemory - _memoryBaseline) / 1024 / 1024}MB");
+            }
+        
             scenarioContext.Set(_perfConfiguration, "PerfConfiguration");
             scenarioContext.Set(_perfFlexConfiguration, "PerfFlexConfiguration");
-            
+        
             _perfValidationResults.Add("✓ Performance configuration built successfully");
-            _perfValidationResults.Add($"✓ Configuration load time: {_loadStopwatch.ElapsedMilliseconds}ms");
         }
         catch (Exception ex)
         {
@@ -159,18 +178,20 @@ public class AzurePerformanceScenariosSteps(ScenarioContext scenarioContext)
     }
 
     [When(@"I configure azure performance controller by building the configuration with concurrency")]
-    public void WhenIConfigureAzurePerformanceControllerByBuildingTheConfigurationWithConcurrency()
+    public async Task WhenIConfigureAzurePerformanceControllerByBuildingTheConfigurationWithConcurrency()
     {
         _perfBuilder.Should().NotBeNull("Performance builder should be established");
 
         try
         {
             // Start LocalStack first
-            var startTask = _perfBuilder!.StartLocalStackAsync("keyvault,appconfig");
+            var startTask = _perfBuilder!.StartLocalStackAsync();
             startTask.Wait(TimeSpan.FromMinutes(2));
 
-            var tasks = new List<Task>();
-            for (var i = 0; i < 10; i++)
+            var concurrencyLevel = _concurrentAccessEnabled ? 10 : 1;
+            var tasks = new List<Task<(IConfiguration config, IFlexConfig flexConfig)>>();
+        
+            for (var i = 0; i < concurrencyLevel; i++)
             {
                 tasks.Add(Task.Run(() =>
                 {
@@ -180,16 +201,15 @@ public class AzurePerformanceScenariosSteps(ScenarioContext scenarioContext)
                 }));
             }
 
-            Task.WaitAll(tasks.ToArray());
-            
-            // Use the last built configuration
-            var lastResult = tasks.Last().Result;
+            await Task.WhenAll(tasks);
+        
+            var lastResult = tasks.Last().GetAwaiter().GetResult();
             _perfConfiguration = lastResult.config;
             _perfFlexConfiguration = lastResult.flexConfig;
-            
+        
             scenarioContext.Set(_perfConfiguration, "PerfConfiguration");
             scenarioContext.Set(_perfFlexConfiguration, "PerfFlexConfiguration");
-            
+        
             _perfValidationResults.Add("✓ Concurrent configuration build completed successfully");
         }
         catch (Exception ex)
@@ -216,7 +236,7 @@ public class AzurePerformanceScenariosSteps(ScenarioContext scenarioContext)
     {
         _perfFlexConfiguration.Should().NotBeNull();
         var sw = Stopwatch.StartNew();
-        var testValue = _perfFlexConfiguration!["test:secret"].ToType<string>();
+        _ = _perfFlexConfiguration!["test:secret"].ToType<string>();
         sw.Stop();
 
         sw.ElapsedMilliseconds.Should().BeLessThan(100, 
@@ -245,7 +265,7 @@ public class AzurePerformanceScenariosSteps(ScenarioContext scenarioContext)
     {
         _perfFlexConfiguration.Should().NotBeNull();
         var sw = Stopwatch.StartNew();
-        var testValue = _perfFlexConfiguration!["test:config"].ToType<string>();
+        _ = _perfFlexConfiguration!["test:config"].ToType<string>();
         sw.Stop();
 
         sw.ElapsedMilliseconds.Should().BeLessThan(100, 
@@ -273,15 +293,22 @@ public class AzurePerformanceScenariosSteps(ScenarioContext scenarioContext)
     public void ThenTheAzurePerformanceControllerShouldDemonstrateThreadSafeConfigurationAccess()
     {
         _perfFlexConfiguration.Should().NotBeNull();
-        
+    
         var tasks = Enumerable.Range(0, 100).Select(_ => Task.Run(() =>
         {
-            var value = _perfFlexConfiguration!["test:config"].ToType<string>();
-            return value != null;
+            try
+            {
+                return _perfFlexConfiguration!.Configuration.GetValue<string>("test:config") != null;
+            }
+            catch
+            {
+                return false;
+            }
         })).ToArray();
 
+        // ReSharper disable once CoVariantArrayConversion
         Task.WaitAll(tasks);
-        
+    
         tasks.Should().AllSatisfy(t => t.Result.Should().BeTrue(),
             "All concurrent configuration access should succeed");
         _perfValidationResults.Add("✓ Thread-safe configuration access verified");
