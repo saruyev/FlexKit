@@ -4,6 +4,8 @@ using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Reqnroll;
 using System.Diagnostics;
+// ReSharper disable ClassTooBig
+// ReSharper disable ComplexConditionExpression
 
 namespace FlexKit.Configuration.Providers.Aws.IntegrationTests.Steps.Integration;
 

@@ -3,6 +3,7 @@ using FlexKit.Configuration.Providers.Aws.IntegrationTests.Utils;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Reqnroll;
+// ReSharper disable ComplexConditionExpression
 
 namespace FlexKit.Configuration.Providers.Aws.IntegrationTests.Steps.SecretsManager;
 
@@ -10,7 +11,7 @@ namespace FlexKit.Configuration.Providers.Aws.IntegrationTests.Steps.SecretsMana
 /// Step definitions for Secrets Manager JSON processing scenarios.
 /// Tests automatic JSON secret processing, hierarchical key flattening,
 /// complex object navigation, and dynamic access to JSON-processed configuration data.
-/// Uses distinct step patterns ("secrets json processor") to avoid conflicts with other step classes.
+/// Uses distinct step patterns ("secrets JSON processor") to avoid conflicts with other step classes.
 /// </summary>
 [Binding]
 public class SecretsManagerJsonProcessingSteps(ScenarioContext scenarioContext)

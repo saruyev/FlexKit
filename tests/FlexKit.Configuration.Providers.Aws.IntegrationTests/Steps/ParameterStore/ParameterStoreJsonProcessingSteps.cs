@@ -3,6 +3,7 @@ using FlexKit.Configuration.Providers.Aws.IntegrationTests.Utils;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Reqnroll;
+// ReSharper disable ComplexConditionExpression
 
 namespace FlexKit.Configuration.Providers.Aws.IntegrationTests.Steps.ParameterStore;
 

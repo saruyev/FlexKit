@@ -209,12 +209,12 @@ public class AwsSecretsManagerConfigurationSourceTests
         provider2.Should().BeOfType<AwsSecretsManagerConfigurationProvider>();
     }
 
-    private static Amazon.Extensions.NETCore.Setup.AWSOptions CreateMockedAwsOptions()
+    private static AWSOptions CreateMockedAwsOptions()
     {
         var mockCredentials = Substitute.For<Amazon.Runtime.AWSCredentials>();
         mockCredentials.GetCredentials().Returns(new Amazon.Runtime.ImmutableCredentials("fake-key", "fake-secret", "fake-token"));
 
-        return new Amazon.Extensions.NETCore.Setup.AWSOptions
+        return new AWSOptions
         {
             Credentials = mockCredentials,
             Region = Amazon.RegionEndpoint.USEast1
@@ -254,10 +254,11 @@ public class AwsSecretsManagerConfigurationSourceTests
     public void JsonProcessorSecrets_WithEmptyArray_SetsEmptyArray()
     {
         // Arrange
-        var source = new AwsSecretsManagerConfigurationSource();
-
-        // Act
-        source.JsonProcessorSecrets = [];
+        var source = new AwsSecretsManagerConfigurationSource
+        {
+            // Act
+            JsonProcessorSecrets = []
+        };
 
         // Assert
         source.JsonProcessorSecrets.Should().NotBeNull();
@@ -268,10 +269,11 @@ public class AwsSecretsManagerConfigurationSourceTests
     public void SecretNames_WithEmptyArray_SetsEmptyArray()
     {
         // Arrange
-        var source = new AwsSecretsManagerConfigurationSource();
-
-        // Act
-        source.SecretNames = [];
+        var source = new AwsSecretsManagerConfigurationSource
+        {
+            // Act
+            SecretNames = []
+        };
 
         // Assert
         source.SecretNames.Should().NotBeNull();
@@ -282,10 +284,11 @@ public class AwsSecretsManagerConfigurationSourceTests
     public void ReloadAfter_WithZeroTimeSpan_AllowsZeroValue()
     {
         // Arrange
-        var source = new AwsSecretsManagerConfigurationSource();
-
-        // Act
-        source.ReloadAfter = TimeSpan.Zero;
+        var source = new AwsSecretsManagerConfigurationSource
+        {
+            // Act
+            ReloadAfter = TimeSpan.Zero
+        };
 
         // Assert
         source.ReloadAfter.Should().Be(TimeSpan.Zero);
@@ -295,10 +298,11 @@ public class AwsSecretsManagerConfigurationSourceTests
     public void ReloadAfter_WithNegativeTimeSpan_AllowsNegativeValue()
     {
         // Arrange
-        var source = new AwsSecretsManagerConfigurationSource();
-
-        // Act
-        source.ReloadAfter = TimeSpan.FromMinutes(-1);
+        var source = new AwsSecretsManagerConfigurationSource
+        {
+            // Act
+            ReloadAfter = TimeSpan.FromMinutes(-1)
+        };
 
         // Assert
         source.ReloadAfter.Should().Be(TimeSpan.FromMinutes(-1));
@@ -313,10 +317,11 @@ public class AwsSecretsManagerConfigurationSourceTests
     public void VersionStage_WithVariousValues_StoresCorrectly(string? versionStage)
     {
         // Arrange
-        var source = new AwsSecretsManagerConfigurationSource();
-
-        // Act
-        source.VersionStage = versionStage;
+        var source = new AwsSecretsManagerConfigurationSource
+        {
+            // Act
+            VersionStage = versionStage
+        };
 
         // Assert
         source.VersionStage.Should().Be(versionStage);

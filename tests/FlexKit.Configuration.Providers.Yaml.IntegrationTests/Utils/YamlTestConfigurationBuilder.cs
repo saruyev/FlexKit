@@ -7,6 +7,7 @@ using Microsoft.Extensions.Configuration;
 // ReSharper disable MethodTooLong
 // ReSharper disable TooManyArguments
 // ReSharper disable ComplexConditionExpression
+// ReSharper disable TooManyDeclarations
 
 namespace FlexKit.Configuration.Providers.Yaml.IntegrationTests.Utils;
 

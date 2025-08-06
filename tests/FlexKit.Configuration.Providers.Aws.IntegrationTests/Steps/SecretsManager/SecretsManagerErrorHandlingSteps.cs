@@ -8,6 +8,7 @@ using System.Text.Json;
 // ReSharper disable MethodTooLong
 // ReSharper disable TooManyDeclarations
 // ReSharper disable ClassTooBig
+// ReSharper disable ComplexConditionExpression
 
 namespace FlexKit.Configuration.Providers.Aws.IntegrationTests.Steps.SecretsManager;
 
@@ -15,7 +16,7 @@ namespace FlexKit.Configuration.Providers.Aws.IntegrationTests.Steps.SecretsMana
 /// Step definitions for Secrets Manager error handling scenarios.
 /// Tests error conditions including invalid JSON, access denied, missing secrets,
 /// network failures, and edge cases that should be handled gracefully by the AWS provider.
-/// Uses distinct step patterns ("secrets error handler") to avoid conflicts with other step classes.
+/// Uses distinct step patterns ("secrets' error handler") to avoid conflicts with other step classes.
 /// </summary>
 [Binding]
 public class SecretsManagerErrorHandlingSteps(ScenarioContext scenarioContext)
@@ -241,7 +242,7 @@ public class SecretsManagerErrorHandlingSteps(ScenarioContext scenarioContext)
 
         try
         {
-            // For missing required secret scenario, always throw
+            // For missing the required secret scenario, always throw
             var missingSecret = scenarioContext.GetValueOrDefault("MissingRequiredSecret", "infrastructure-module-required-secret");
             var requiredSecretException = new InvalidOperationException(
                 $"Failed to load configuration from AWS Secrets Manager. Required secret '{missingSecret}' was not found.");
@@ -446,12 +447,11 @@ public class SecretsManagerErrorHandlingSteps(ScenarioContext scenarioContext)
     {
         _secretsErrorConfiguration.Should().NotBeNull("Configuration should be built despite JSON errors");
         
-        // Verify that valid configuration is still accessible
-        var hasValidConfig = false;
+        // Verify that a valid configuration is still accessible
         try
         {
             var testValue = _secretsErrorConfiguration!["infrastructure-module:database:host"];
-            hasValidConfig = !string.IsNullOrEmpty(testValue);
+            _ = !string.IsNullOrEmpty(testValue);
         }
         catch
         {
@@ -497,19 +497,18 @@ public class SecretsManagerErrorHandlingSteps(ScenarioContext scenarioContext)
     {
         _secretsErrorConfiguration.Should().NotBeNull("Fallback configuration should be available");
         
-        // Verify fallback mechanism by checking if any configuration is available
-        var configurationProvided = false;
+        // Verify the fallback mechanism by checking if any configuration is available
         try
         {
             var keys = _secretsErrorConfiguration!.AsEnumerable().ToList();
-            configurationProvided = keys.Any();
+            _ = keys.Any();
         }
         catch
         {
             // Expected if no fallback values
         }
         
-        // At minimum, configuration object should exist
+        // At minimum, the configuration object should exist
         _secretsErrorConfiguration.Should().NotBeNull("Fallback configuration mechanism should be available");
     }
 
@@ -552,11 +551,11 @@ public class SecretsManagerErrorHandlingSteps(ScenarioContext scenarioContext)
     {
         _secretsErrorConfiguration.Should().NotBeNull("Configuration should be built despite missing optional secrets");
         
-        // Verify that missing secrets are skipped by checking that configuration still works
+        // Verify that missing secrets are skipped by checking that the configuration still works
         var configurationIsUsable = false;
         try
         {
-            var keys = _secretsErrorConfiguration!.AsEnumerable().ToList();
+            _ = _secretsErrorConfiguration!.AsEnumerable().ToList();
             configurationIsUsable = true; // If we can enumerate, configuration is usable
         }
         catch
@@ -604,11 +603,10 @@ public class SecretsManagerErrorHandlingSteps(ScenarioContext scenarioContext)
         _secretsErrorConfiguration.Should().NotBeNull("Configuration should continue processing despite size violations");
         
         // Verify that other secrets can still be processed
-        var hasOtherSecrets = false;
         try
         {
             var keys = _secretsErrorConfiguration!.AsEnumerable().ToList();
-            hasOtherSecrets = keys.Any();
+            _ = keys.Any();
         }
         catch
         {
@@ -669,7 +667,7 @@ public class SecretsManagerErrorHandlingSteps(ScenarioContext scenarioContext)
         try
         {
             // Attempt to access potentially failed secrets
-            var result = AwsTestConfigurationBuilder.GetDynamicProperty(
+            _ = AwsTestConfigurationBuilder.GetDynamicProperty(
                 _secretsErrorFlexConfiguration!, 
                 "non-existent-or-failed-secret");
             
@@ -677,7 +675,7 @@ public class SecretsManagerErrorHandlingSteps(ScenarioContext scenarioContext)
         }
         catch (Exception ex)
         {
-            // If exception is thrown, it should be handled gracefully
+            // If an exception is thrown, it should be handled gracefully
             canHandleFailures = ex.Message.Contains("graceful", StringComparison.OrdinalIgnoreCase) ||
                                ex.GetType().Name.Contains("Configuration", StringComparison.OrdinalIgnoreCase);
         }

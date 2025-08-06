@@ -8,6 +8,7 @@ using System.Text.Json;
 // ReSharper disable ClassTooBig
 // ReSharper disable MethodTooLong
 // ReSharper disable TooManyDeclarations
+// ReSharper disable ComplexConditionExpression
 
 namespace FlexKit.Configuration.Providers.Aws.IntegrationTests.Steps.Integration;
 
@@ -247,14 +248,9 @@ public class AwsFlexKitIntegrationSteps(ScenarioContext scenarioContext)
         
             // Test that we can actually use the dynamic object
             var testValue = config["infrastructure-module:database:host"];
-            if (testValue == null)
-            {
-                _integrationValidationResults.Add("⚠ Dynamic access works but test key not found");
-            }
-            else
-            {
-                _integrationValidationResults.Add("✓ FlexKit dynamic access patterns verified");
-            }
+            _integrationValidationResults.Add(testValue == null
+                ? "⚠ Dynamic access works but test key not found"
+                : "✓ FlexKit dynamic access patterns verified");
         }
         catch (Exception ex)
         {
@@ -332,7 +328,7 @@ public class AwsFlexKitIntegrationSteps(ScenarioContext scenarioContext)
             secretValue.Should().NotBeNullOrEmpty("Secret should contain JSON data");
             
             // Try to parse as JSON to verify structure
-            using var document = JsonDocument.Parse(secretValue!);
+            using var document = JsonDocument.Parse(secretValue);
             document.RootElement.ValueKind.Should().Be(JsonValueKind.Object, "Secret should be valid JSON");
             
             _integrationValidationResults.Add("✓ JSON secret processing with FlexKit verified");
@@ -379,9 +375,9 @@ public class AwsFlexKitIntegrationSteps(ScenarioContext scenarioContext)
         try
         {
             // Verify configuration sources are loaded in the correct precedence order
-            var allKeys = _integrationConfiguration!.AsEnumerable()
-                .Where(kvp => kvp.Value != null)
-                .Count();
+            var allKeys = _integrationConfiguration!
+                .AsEnumerable()
+                .Count(kvp => kvp.Value != null);
                 
             allKeys.Should().BeGreaterThan(0, "Configuration should contain values from multiple sources");
             
@@ -405,13 +401,13 @@ public class AwsFlexKitIntegrationSteps(ScenarioContext scenarioContext)
         try
         {
             // Verify integration of both AWS services
-            var parameterKeys = _integrationConfiguration!.AsEnumerable()
-                .Where(kvp => kvp.Key.StartsWith("infrastructure-module:") && kvp.Value != null)
-                .Count();
+            var parameterKeys = _integrationConfiguration!
+                .AsEnumerable()
+                .Count(kvp => kvp.Key.StartsWith("infrastructure-module:") && kvp.Value != null);
                 
-            var secretKeys = _integrationConfiguration.AsEnumerable()
-                .Where(kvp => kvp.Key.Contains("infrastructure-module-") && !kvp.Key.Contains(":") && kvp.Value != null)
-                .Count();
+            var secretKeys = _integrationConfiguration
+                .AsEnumerable()
+                .Count(kvp => kvp.Key.Contains("infrastructure-module-") && !kvp.Key.Contains(":") && kvp.Value != null);
             
             parameterKeys.Should().BeGreaterThan(0, "Should have Parameter Store keys");
             secretKeys.Should().BeGreaterThan(0, "Should have Secrets Manager keys");
@@ -435,9 +431,9 @@ public class AwsFlexKitIntegrationSteps(ScenarioContext scenarioContext)
         try
         {
             // Look for hierarchical JSON processing results
-            var hierarchicalKeys = _integrationConfiguration!.AsEnumerable()
-                .Where(kvp => kvp.Key.Contains(':') && kvp.Value != null)
-                .Count();
+            var hierarchicalKeys = _integrationConfiguration!
+                .AsEnumerable()
+                .Count(kvp => kvp.Key.Contains(':') && kvp.Value != null);
                 
             hierarchicalKeys.Should().BeGreaterThan(0, "Should have hierarchical keys from JSON processing");
             
@@ -547,7 +543,7 @@ public class AwsFlexKitIntegrationSteps(ScenarioContext scenarioContext)
             section.Should().NotBeNull("Section navigation should work");
             
             // Try to navigate to a nested section
-            var subsection = section?.Configuration.CurrentConfig("database");
+            _ = section.Configuration.CurrentConfig("database");
             // Note: subsection might be null if the structure doesn't exist, which is fine
             
             _integrationValidationResults.Add("✓ Complex configuration navigation verified");

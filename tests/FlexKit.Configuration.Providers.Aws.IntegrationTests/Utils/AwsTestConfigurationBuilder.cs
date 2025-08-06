@@ -2,12 +2,14 @@
 using FlexKit.IntegrationTests.Utils;
 using Reqnroll;
 using FlexKit.Configuration.Core;
-using Microsoft.Extensions.Configuration;
 using System.Text.Json;
 using Amazon.Extensions.NETCore.Setup;
 using Amazon.Runtime;
-using FlexKit.Configuration.Providers.Aws.Extensions;
+
 // ReSharper disable MethodTooLong
+// ReSharper disable ComplexConditionExpression
+// ReSharper disable FlagArgument
+// ReSharper disable TooManyArguments
 
 namespace FlexKit.Configuration.Providers.Aws.IntegrationTests.Utils;
 
@@ -78,7 +80,7 @@ public class AwsTestConfigurationBuilder(ScenarioContext? scenarioContext = null
 
         var jsonContent = File.ReadAllText(normalizedPath);
 
-        // First parse as JsonDocument to properly handle the structure
+        // First, parse as JsonDocument to properly handle the structure
         using var document = JsonDocument.Parse(jsonContent);
         var root = document.RootElement;
 
@@ -116,7 +118,7 @@ public class AwsTestConfigurationBuilder(ScenarioContext? scenarioContext = null
                             break;
 
                         case "stringlist":
-                            var values = value?.Split(',') ?? Array.Empty<string>();
+                            var values = value?.Split(',') ?? [];
                             for (int i = 0; i < values.Length; i++)
                             {
                                 configData[$"{configKey}:{i}"] = values[i].Trim();
@@ -412,7 +414,7 @@ public class AwsTestConfigurationBuilder(ScenarioContext? scenarioContext = null
 
         var jsonContent = File.ReadAllText(normalizedPath);
 
-        // First parse as JsonDocument to properly handle the structure
+        // First, parse as JsonDocument to properly handle the structure
         using var document = JsonDocument.Parse(jsonContent);
         var root = document.RootElement;
 
@@ -502,18 +504,6 @@ public class AwsTestConfigurationBuilder(ScenarioContext? scenarioContext = null
         return this;
     }
 
-    /// <summary>
-    /// Converts AWS Secrets Manager secret name to .NET configuration key format.
-    /// </summary>
-    /// <param name="secretName">AWS secret name (e.g., "myapp-database-credentials")</param>
-    /// <returns>Configuration key (e.g., "myapp-database-credentials")</returns>
-    private static string ConvertSecretNameToConfigKey(string secretName)
-    {
-        // For secrets, we typically keep the original name format
-        // as the transformation from hyphens to colons is handled by the actual provider
-        return secretName;
-    }
-
     // Extension methods to add to AwsTestConfigurationBuilder.cs
 
     /// <summary>
@@ -551,7 +541,7 @@ public class AwsTestConfigurationBuilder(ScenarioContext? scenarioContext = null
 
         var jsonContent = File.ReadAllText(normalizedPath);
 
-        // First parse as JsonDocument to properly handle the structure
+        // First, parse as JsonDocument to properly handle the structure
         using var document = JsonDocument.Parse(jsonContent);
         var root = document.RootElement;
 
@@ -569,7 +559,7 @@ public class AwsTestConfigurationBuilder(ScenarioContext? scenarioContext = null
                     var name = secretElement.GetProperty("name").GetString() ?? "";
                     var configKey = ConvertParameterNameToConfigKey(name);
 
-                    // Simulate different values based on version stage
+                    // Simulate different values based on the version stage
                     string? value = GetVersionedSecretValue(secretElement, versionStage);
 
                     if (value != null)
@@ -623,7 +613,7 @@ public class AwsTestConfigurationBuilder(ScenarioContext? scenarioContext = null
             }
         }
 
-        // Add the configuration data as in-memory configuration
+        // Add the configuration data as an in-memory configuration
         AddInMemoryCollection(configData);
 
         return this;
@@ -638,7 +628,7 @@ public class AwsTestConfigurationBuilder(ScenarioContext? scenarioContext = null
     /// <returns>The versioned secret value or null if not found</returns>
     private static string? GetVersionedSecretValue(JsonElement secretElement, string versionStage)
     {
-        // First try to get the base value
+        // First, try to get the base value
         if (!secretElement.TryGetProperty("value", out var valueElement))
         {
             return null;
@@ -650,7 +640,7 @@ public class AwsTestConfigurationBuilder(ScenarioContext? scenarioContext = null
             return null;
         }
 
-        // For testing purposes, modify the value based on version stage
+        // For testing purposes, modify the value based on the version stage
         return versionStage switch
         {
             "AWSCURRENT" => baseValue, // Use original value for current

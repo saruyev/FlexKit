@@ -16,7 +16,7 @@ public abstract class BaseTestConfigurationBuilder<T> where T : BaseTestConfigur
     protected readonly Dictionary<string, string?> InMemoryData;
     protected readonly List<string> TempFiles;
     private readonly Dictionary<string, string?> _environmentVariables;
-    private ScenarioContext? _scenarioContext;
+    protected ScenarioContext? ScenarioContext;
     private IFileSystem? _fileSystem;
 
     /// <summary>
@@ -29,7 +29,7 @@ public abstract class BaseTestConfigurationBuilder<T> where T : BaseTestConfigur
         InMemoryData = new Dictionary<string, string?>();
         TempFiles = new List<string>();
         _environmentVariables = new Dictionary<string, string?>();
-        _scenarioContext = scenarioContext;
+        ScenarioContext = scenarioContext;
     }
 
     /// <summary>
@@ -39,7 +39,7 @@ public abstract class BaseTestConfigurationBuilder<T> where T : BaseTestConfigur
     /// <returns>New TestConfigurationBuilder instance</returns>
     public static T Create(ScenarioContext scenarioContext)
     {
-        return new T{ _scenarioContext = scenarioContext };
+        return new T{ ScenarioContext = scenarioContext };
     }
 
     /// <summary>
@@ -341,9 +341,9 @@ public abstract class BaseTestConfigurationBuilder<T> where T : BaseTestConfigur
         TempFiles.Add(tempPath);
         
         // Register for cleanup if a scenario context is available
-        if (_scenarioContext != null)
+        if (ScenarioContext != null)
         {
-            ScenarioCleanupHooks.RegisterTempFile(_scenarioContext, tempPath);
+            ScenarioCleanupHooks.RegisterTempFile(ScenarioContext, tempPath);
         }
 
         return tempPath;
@@ -353,9 +353,9 @@ public abstract class BaseTestConfigurationBuilder<T> where T : BaseTestConfigur
     {
         foreach (var kvp in _environmentVariables)
         {
-            if (_scenarioContext != null)
+            if (ScenarioContext != null)
             {
-                _scenarioContext.SetEnvironmentVariable(kvp.Key, kvp.Value);
+                ScenarioContext.SetEnvironmentVariable(kvp.Key, kvp.Value);
             }
             else
             {
