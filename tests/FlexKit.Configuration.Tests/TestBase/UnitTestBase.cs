@@ -4,6 +4,7 @@ using AutoFixture;
 using AutoFixture.AutoNSubstitute;
 using JetBrains.Annotations;
 using NSubstitute;
+// ReSharper disable NullableWarningSuppressionIsUsed
 
 namespace FlexKit.Configuration.Tests.TestBase;
 

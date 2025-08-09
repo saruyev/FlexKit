@@ -4,6 +4,7 @@ using FlexKit.Configuration.Providers.Yaml.Tests.TestBase;
 using FluentAssertions;
 using Xunit;
 // ReSharper disable TooManyDeclarations
+// ReSharper disable NullableWarningSuppressionIsUsed
 
 namespace FlexKit.Configuration.Providers.Yaml.Tests.Extensions;
 

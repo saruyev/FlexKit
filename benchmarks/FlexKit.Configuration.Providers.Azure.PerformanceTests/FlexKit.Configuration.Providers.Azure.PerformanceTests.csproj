@@ -26,6 +26,7 @@
         <PackageReference Include="Azure.Extensions.AspNetCore.Configuration.Secrets" Version="1.4.0" />
         <PackageReference Include="Azure.Identity" Version="1.14.2" />
         <PackageReference Include="Azure.Security.KeyVault.Secrets" Version="4.8.0" />
+        <PackageReference Include="AzureKeyVaultEmulator.TestContainers" Version="2.5.3" />
         <PackageReference Include="BenchmarkDotNet" Version="[0.15.2,1.0.0)"/>
         <PackageReference Include="BenchmarkDotNet.Annotations" Version="[0.15.2,1.0.0]"/>
         <PackageReference Include="BenchmarkDotNet.Diagnostics.Windows" Version="[0.15.2,1.0.0)" Condition="$([MSBuild]::IsOSPlatform('Windows'))"/>
@@ -39,9 +40,9 @@
         <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="9.0.6"/>
         <PackageReference Include="Microsoft.Extensions.DependencyModel" Version="9.0.6"/>
         <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.6"/>
+        <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="9.0.6" />
         <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="9.0.6"/>
         <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-        <PackageReference Include="Testcontainers.LocalStack" Version="4.6.0" />
     </ItemGroup>
 
     <!-- Performance test specific build settings -->

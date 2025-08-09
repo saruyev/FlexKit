@@ -6,6 +6,7 @@ using Xunit;
 // ReSharper disable TooManyDeclarations
 // ReSharper disable MethodTooLong
 // ReSharper disable ClassTooBig
+// ReSharper disable NullableWarningSuppressionIsUsed
 
 namespace FlexKit.Configuration.Providers.Yaml.Tests.Sources;
 

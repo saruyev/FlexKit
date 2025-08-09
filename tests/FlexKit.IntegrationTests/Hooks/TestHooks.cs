@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Logging;
 using Reqnroll;
 // ReSharper disable ComplexConditionExpression
+// ReSharper disable NullableWarningSuppressionIsUsed
 
 namespace FlexKit.IntegrationTests.Hooks;
 

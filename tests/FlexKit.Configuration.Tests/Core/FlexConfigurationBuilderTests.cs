@@ -9,6 +9,7 @@ using Xunit;
 // ReSharper disable ComplexConditionExpression
 // ReSharper disable MethodTooLong
 // ReSharper disable ClassTooBig
+// ReSharper disable NullableWarningSuppressionIsUsed
 
 namespace FlexKit.Configuration.Tests.Core;
 

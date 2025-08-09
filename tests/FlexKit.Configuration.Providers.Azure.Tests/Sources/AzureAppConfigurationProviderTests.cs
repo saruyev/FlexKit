@@ -10,6 +10,7 @@ using NSubstitute.ExceptionExtensions;
 using Xunit;
 // ReSharper disable ClassTooBig
 // ReSharper disable FlagArgument
+// ReSharper disable NullableWarningSuppressionIsUsed
 
 namespace FlexKit.Configuration.Providers.Azure.Tests.Sources;
 

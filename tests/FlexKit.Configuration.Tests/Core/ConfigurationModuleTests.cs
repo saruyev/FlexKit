@@ -9,6 +9,7 @@ using JetBrains.Annotations;
 using Microsoft.Extensions.Configuration.Memory;
 using NSubstitute;
 using Xunit;
+// ReSharper disable NullableWarningSuppressionIsUsed
 
 namespace FlexKit.Configuration.Tests.Core;
 

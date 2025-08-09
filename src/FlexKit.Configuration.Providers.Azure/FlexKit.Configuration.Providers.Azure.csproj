@@ -12,6 +12,7 @@
 
     <ItemGroup>
       <InternalsVisibleTo Include="FlexKit.Configuration.Providers.Azure.Tests" />
+      <InternalsVisibleTo Include="FlexKit.Configuration.Providers.Azure.PerformanceTests" />
     </ItemGroup>
 
     <ItemGroup>

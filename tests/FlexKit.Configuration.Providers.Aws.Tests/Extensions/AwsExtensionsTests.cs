@@ -9,6 +9,7 @@ using Xunit;
 // ReSharper disable TooManyDeclarations
 // ReSharper disable ComplexConditionExpression
 // ReSharper disable ClassTooBig
+// ReSharper disable NullableWarningSuppressionIsUsed
 
 namespace FlexKit.Configuration.Providers.Aws.Tests.Extensions;
 

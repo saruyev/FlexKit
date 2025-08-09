@@ -4,6 +4,7 @@
 // </copyright>
 
 using Azure.Core;
+using Azure.Security.KeyVault.Secrets;
 using JetBrains.Annotations;
 using Microsoft.Extensions.Configuration;
 
@@ -117,6 +118,16 @@ public class AzureKeyVaultConfigurationSource : IConfigurationSource
     public Action<KeyVaultConfigurationProviderException>? OnLoadException { get; [UsedImplicitly] set; }
 
     /// <summary>
+    /// Gets or sets a pre-configured Azure Key Vault SecretClient for testing scenarios.
+    /// When provided, this client will be used instead of creating a new one from the vault URI and credentials.
+    /// </summary>
+    /// <value>
+    /// A configured SecretClient instance, or null to create a new client using the vault URI and credentials.
+    /// Default is null.
+    /// </value>
+    public SecretClient? SecretClient { get; [UsedImplicitly] set; }
+
+    /// <summary>
     /// Creates a new Azure Key Vault configuration provider that will load data from this source.
     /// This method is called by the .NET configuration system when building the configuration
     /// from all registered sources.
@@ -133,7 +144,9 @@ public class AzureKeyVaultConfigurationSource : IConfigurationSource
     public IConfigurationProvider Build(IConfigurationBuilder builder)
     {
         ArgumentNullException.ThrowIfNull(builder);
-        return new AzureKeyVaultConfigurationProvider(this);
+        return SecretClient != null
+            ? new AzureKeyVaultConfigurationProvider(this, SecretClient)
+            : new AzureKeyVaultConfigurationProvider(this);
     }
 }
 

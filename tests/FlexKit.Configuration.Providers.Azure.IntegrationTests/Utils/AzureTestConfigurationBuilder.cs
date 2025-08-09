@@ -1,11 +1,14 @@
-using Azure.Data.AppConfiguration;
 using FlexKit.Configuration.Core;
-using FlexKit.Configuration.Providers.Azure.Extensions;
 using FlexKit.Configuration.Providers.Azure.Sources;
 using FlexKit.IntegrationTests.Utils;
-using Microsoft.Extensions.Configuration;
 using Reqnroll;
 using System.Text.Json;
+using JetBrains.Annotations;
+// ReSharper disable TooManyArguments
+// ReSharper disable NullableWarningSuppressionIsUsed
+
+// ReSharper disable MethodTooLong
+// ReSharper disable FlagArgument
 
 namespace FlexKit.Configuration.Providers.Azure.IntegrationTests.Utils;
 
@@ -15,48 +18,17 @@ namespace FlexKit.Configuration.Providers.Azure.IntegrationTests.Utils;
 /// </summary>
 public class AzureTestConfigurationBuilder : BaseTestConfigurationBuilder<AzureTestConfigurationBuilder>
 {
-    private LocalStackContainerHelper? _localStackHelper;
-
+    private AppConfigurationEmulatorContainer _appConfiguration;
     /// <summary>
     /// Initializes a new instance of AzureTestConfigurationBuilder.
     /// </summary>
     /// <param name="scenarioContext">Optional scenario context for automatic cleanup</param>
     public AzureTestConfigurationBuilder(ScenarioContext? scenarioContext = null) : base(scenarioContext)
     {
+        _appConfiguration = new AppConfigurationEmulatorContainer();
     }
 
     public AzureTestConfigurationBuilder() : this(null) { }
-
-    /// <summary>
-    /// Adds Azure Key Vault as a configuration source.
-    /// </summary>
-    /// <param name="vaultUri">Key Vault URI</param>
-    /// <param name="optional">Whether the source is optional</param>
-    /// <param name="jsonProcessor">Whether to enable JSON processing</param>
-    /// <returns>This builder for method chaining</returns>
-    public AzureTestConfigurationBuilder AddAzureKeyVault(string vaultUri, bool optional = true, bool jsonProcessor = false)
-    {
-        var keyVaultSource = new AzureKeyVaultConfigurationSource
-        {
-            VaultUri = vaultUri,
-            Optional = optional,
-            JsonProcessor = jsonProcessor
-        };
-
-        return AddSource(keyVaultSource);
-    }
-
-    /// <summary>
-    /// Adds Azure Key Vault with advanced options.
-    /// </summary>
-    /// <param name="configureOptions">Action to configure Key Vault options</param>
-    /// <returns>This builder for method chaining</returns>
-    public AzureTestConfigurationBuilder AddAzureKeyVault(Action<AzureKeyVaultConfigurationSource> configureOptions)
-    {
-        var keyVaultSource = new AzureKeyVaultConfigurationSource();
-        configureOptions(keyVaultSource);
-        return AddSource(keyVaultSource);
-    }
 
     /// <summary>
     /// Creates a temporary JSON file with Key Vault test data and configures Key Vault from it.
@@ -82,8 +54,6 @@ public class AzureTestConfigurationBuilder : BaseTestConfigurationBuilder<AzureT
             return AddSource(failingSource);
         }
         
-        // Instead of trying to use LocalStack Azure (which may not work properly),
-        // let's create an in-memory configuration source using the test data
         var keyVaultData = ExtractKeyVaultData(testData, jsonProcessor);
         
         // Create an in-memory configuration source with the test data
@@ -113,7 +83,7 @@ public class AzureTestConfigurationBuilder : BaseTestConfigurationBuilder<AzureT
                 var secretName = kvp.Key.Substring("keyVaultSecrets:".Length);
                 var secretValue = kvp.Value;
                 
-                // Transform secret name from Azure format (-- separators) to configuration format (: separators)
+                // Transform a secret name from Azure format (-- separators) to configuration format (: separators)
                 var configKey = secretName.Replace("--", ":");
                 
                 // Check if this is a JSON secret and JSON processing is enabled
@@ -121,7 +91,7 @@ public class AzureTestConfigurationBuilder : BaseTestConfigurationBuilder<AzureT
                 {
                     try
                     {
-                        var jsonData = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(secretValue!);
+                        var jsonData = JsonSerializer.Deserialize<Dictionary<string, object>>(secretValue!);
                         if (jsonData != null)
                         {
                             var flattened = FlattenConfiguration(jsonData, configKey);
@@ -193,29 +163,9 @@ public class AzureTestConfigurationBuilder : BaseTestConfigurationBuilder<AzureT
     /// <param name="label">Configuration label filter</param>
     /// <param name="keyFilter">Key filter pattern</param>
     /// <returns>This builder for method chaining</returns>
-    public AzureTestConfigurationBuilder AddAzureAppConfiguration(string connectionString, bool optional = true, string? label = null, string? keyFilter = null)
+    public async void StartAzureAppConfiguration()
     {
-        var appConfigSource = new AzureAppConfigurationSource
-        {
-            ConnectionString = connectionString,
-            Optional = optional,
-            Label = label,
-            KeyFilter = keyFilter
-        };
-
-        return AddSource(appConfigSource);
-    }
-
-    /// <summary>
-    /// Adds Azure App Configuration with advanced options.
-    /// </summary>
-    /// <param name="configureOptions">Action to configure App Configuration options</param>
-    /// <returns>This builder for method chaining</returns>
-    public AzureTestConfigurationBuilder AddAzureAppConfiguration(Action<AzureAppConfigurationSource> configureOptions)
-    {
-        var appConfigSource = new AzureAppConfigurationSource();
-        configureOptions(appConfigSource);
-        return AddSource(appConfigSource);
+        await _appConfiguration.StartAsync();
     }
 
     /// <summary>
@@ -228,10 +178,8 @@ public class AzureTestConfigurationBuilder : BaseTestConfigurationBuilder<AzureT
     /// <param name="keyFilter">Key filter pattern</param>
     /// <param name="simulateFailure">Whether to simulate a failure for error testing</param>
     /// <returns>This builder for method chaining</returns>
-    public AzureTestConfigurationBuilder AddAppConfigurationFromTestData(string testDataPath, bool optional = true, string? label = null, string? keyFilter = null, bool simulateFailure = false)
+    public async void AddAppConfigurationFromTestData(string testDataPath, bool optional = true, string? label = null, string? keyFilter = null, bool simulateFailure = false)
     {
-        var testData = LoadTestDataFromFile(testDataPath);
-        
         if (simulateFailure && !optional)
         {
             // For error scenarios, create a source that will fail during Build()
@@ -240,20 +188,12 @@ public class AzureTestConfigurationBuilder : BaseTestConfigurationBuilder<AzureT
                 ErrorMessage = "Failed to load configuration from Azure App Configuration 'Endpoint=http://localhost:63657/;Id=test;Secret=test'. Simulated failure for testing.",
                 SourceType = "App Configuration"
             };
-            return AddSource(failingSource);
+            AddSource(failingSource);
         }
-        
-        // Instead of trying to use LocalStack Azure (which may not work properly),
-        // let's create an in-memory configuration source using the test data
-        var appConfigData = ExtractAppConfigurationData(testData, label, keyFilter);
-        
-        // Create an in-memory configuration source with the test data
-        var memorySource = new Microsoft.Extensions.Configuration.Memory.MemoryConfigurationSource
+        else
         {
-            InitialData = appConfigData
-        };
-        
-        return AddSource(memorySource);
+            await _appConfiguration.CreateTestDataAsync(testDataPath);
+        }
     }
     
     /// <summary>
@@ -284,7 +224,7 @@ public class AzureTestConfigurationBuilder : BaseTestConfigurationBuilder<AzureT
             }
         }
         
-        // Extract labeled settings if label is specified
+        // Extract labeled settings if the label is specified
         if (!string.IsNullOrEmpty(label))
         {
             var labelPrefix = $"labeledAppConfigurationSettings:{label}:";
@@ -361,7 +301,7 @@ public class AzureTestConfigurationBuilder : BaseTestConfigurationBuilder<AzureT
     }
 
     /// <summary>
-    /// Creates a temporary JSON file with App Configuration test data using specific label.
+    /// Creates a temporary JSON file with App Configuration test data using a specific label.
     /// </summary>
     /// <param name="testDataPath">Path to test data JSON file</param>
     /// <param name="label">Configuration label</param>
@@ -383,43 +323,11 @@ public class AzureTestConfigurationBuilder : BaseTestConfigurationBuilder<AzureT
     }
 
     /// <summary>
-    /// Builds a FlexConfiguration using FlexConfigurationBuilder with Azure sources.
-    /// </summary>
-    /// <returns>The built FlexConfiguration</returns>
-    public IFlexConfig BuildFlexConfigFromFlexBuilder()
-    {
-        var flexBuilder = new FlexConfigurationBuilder();
-        
-        // Add all registered sources to FlexConfigurationBuilder
-        foreach (var source in Sources)
-        {
-            if (source is AzureKeyVaultConfigurationSource keyVaultSource)
-            {
-                flexBuilder.AddAzureKeyVault(keyVaultSource.VaultUri!, keyVaultSource.Optional);
-            }
-            else if (source is AzureAppConfigurationSource appConfigSource)
-            {
-                flexBuilder.AddAzureAppConfiguration(appConfigSource.ConnectionString!, appConfigSource.Optional);
-            }
-            else
-            {
-                // Handle other source types using UseExistingConfiguration
-                var builder = new ConfigurationBuilder();
-                builder.Add(source);
-                var tempConfig = builder.Build();
-                flexBuilder.UseExistingConfiguration(tempConfig);
-            }
-        }
-        
-        return flexBuilder.Build();
-    }
-
-    /// <summary>
     /// Loads test configuration data from a JSON file.
     /// </summary>
     /// <param name="testDataPath">Path to the test data file</param>
     /// <returns>Dictionary of configuration data</returns>
-    public static Dictionary<string, string?> LoadTestDataFromFile(string testDataPath)
+    private static Dictionary<string, string?> LoadTestDataFromFile(string testDataPath)
     {
         if (!File.Exists(testDataPath))
         {
@@ -438,7 +346,7 @@ public class AzureTestConfigurationBuilder : BaseTestConfigurationBuilder<AzureT
     /// <param name="data">Nested configuration data</param>
     /// <param name="prefix">Key prefix for nested data</param>
     /// <returns>Flattened configuration dictionary</returns>
-    public static Dictionary<string, string?> FlattenConfiguration(Dictionary<string, object> data, string prefix = "")
+    private static Dictionary<string, string?> FlattenConfiguration(Dictionary<string, object> data, string prefix = "")
     {
         var result = new Dictionary<string, string?>();
 
@@ -460,7 +368,7 @@ public class AzureTestConfigurationBuilder : BaseTestConfigurationBuilder<AzureT
             }
             else
             {
-                result[key] = kvp.Value?.ToString();
+                result[key] = kvp.Value.ToString();
             }
         }
 
@@ -535,91 +443,9 @@ public class AzureTestConfigurationBuilder : BaseTestConfigurationBuilder<AzureT
     }
 
     /// <summary>
-    /// Creates test secrets data for Key Vault testing.
-    /// </summary>
-    /// <param name="secrets">Dictionary of secret names and values</param>
-    /// <returns>This builder for method chaining</returns>
-    public AzureTestConfigurationBuilder WithTestSecrets(Dictionary<string, string> secrets)
-    {
-        var localStackHelper = GetOrCreateLocalStackHelper();
-        
-        Task.Run(async () =>
-        {
-            var secretClient = localStackHelper.CreateKeyVaultClient();
-            foreach (var secret in secrets)
-            {
-                await secretClient.SetSecretAsync(secret.Key, secret.Value);
-            }
-        });
-
-        return this;
-    }
-
-    /// <summary>
-    /// Creates test configuration settings for App Configuration testing.
-    /// </summary>
-    /// <param name="settings">Dictionary of setting keys and values</param>
-    /// <param name="label">Optional label for settings</param>
-    /// <returns>This builder for method chaining</returns>
-    public AzureTestConfigurationBuilder WithTestConfigurationSettings(Dictionary<string, string> settings, string? label = null)
-    {
-        var localStackHelper = GetOrCreateLocalStackHelper();
-        
-        Task.Run(async () =>
-        {
-            var configClient = localStackHelper.CreateAppConfigurationClient();
-            foreach (var setting in settings)
-            {
-                var configSetting = new ConfigurationSetting(setting.Key, setting.Value)
-                {
-                    Label = label
-                };
-                await configClient.SetConfigurationSettingAsync(configSetting);
-            }
-        });
-
-        return this;
-    }
-
-    /// <summary>
-    /// Starts LocalStack container if not already running.
-    /// For testing purposes, this now just simulates the startup since we're using in-memory configuration.
-    /// </summary>
-    /// <param name="services">Azure services to enable (not used in in-memory mode)</param>
-    /// <returns>Task that completes immediately</returns>
-    public async Task StartLocalStackAsync(string services = "keyvault,appconfig")
-    {
-        // For Azure integration tests, we're now using in-memory configuration instead of LocalStack
-        // This method is kept for compatibility with existing test steps
-        await Task.CompletedTask;
-    }
-
-    /// <summary>
-    /// Gets or creates the LocalStack container helper.
-    /// </summary>
-    /// <returns>LocalStack container helper instance</returns>
-    private LocalStackContainerHelper GetOrCreateLocalStackHelper()
-    {
-        if (_localStackHelper == null)
-        {
-            _localStackHelper = new LocalStackContainerHelper(ScenarioContext);
-        }
-        
-        return _localStackHelper;
-    }
-
-    /// <summary>
-    /// Gets the LocalStack helper if it exists.
-    /// </summary>
-    /// <returns>LocalStack helper or null if not created</returns>
-    public LocalStackContainerHelper? GetLocalStackHelper()
-    {
-        return _localStackHelper;
-    }
-
-    /// <summary>
     /// Disposes resources including LocalStack container.
     /// </summary>
+    [UsedImplicitly]
     protected void Dispose(bool disposing)
     {
         if (disposing)

@@ -4,6 +4,7 @@ using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Reqnroll;
 // ReSharper disable MethodTooLong
+// ReSharper disable NullableWarningSuppressionIsUsed
 
 namespace FlexKit.Configuration.Providers.Azure.IntegrationTests.Steps.Infrastructure;
 

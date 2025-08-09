@@ -1,15 +1,20 @@
 using System.Reflection;
 using System.Text.Json;
+using Azure;
 using Azure.Core;
+using Azure.Data.AppConfiguration;
+using Azure.Security.KeyVault.Secrets;
 using FlexKit.Configuration.Core;
 using FlexKit.Configuration.Providers.Azure.Extensions;
 using FlexKit.Configuration.Providers.Azure.Sources;
+using FlexKit.Configuration.Providers.Azure.Tests.Sources;
 using FluentAssertions;
 using NSubstitute;
 using Xunit;
 // ReSharper disable MethodTooLong
 // ReSharper disable ComplexConditionExpression
 // ReSharper disable ClassTooBig
+// ReSharper disable NullableWarningSuppressionIsUsed
 
 namespace FlexKit.Configuration.Providers.Azure.Tests.Extensions;
 
@@ -201,6 +206,37 @@ public class AzureExtensionsTests
         action.Should().Throw<ArgumentNullException>()
             .WithParameterName("configure");
     }
+    
+    [Fact]
+    public void AddAzureKeyVault_WithInjectedSecretClient_LoadsSecretsFromMockClient()
+    {
+        // Arrange
+        var builder = new FlexConfigurationBuilder();
+    
+        // Setup mock client with test data
+        var secretProperties = new[] { new SecretProperties("test--secret") { Enabled = true } };
+        var pageable = AsyncPageable<SecretProperties>.FromPages([
+            Page<SecretProperties>.FromValues(secretProperties, null, Substitute.For<Response>())
+        ]);
+        var secrets = new Dictionary<string, KeyVaultSecret>
+        {
+            ["test--secret"] = new("test--secret", "test-value")
+        };
+        var mockClient = new MockSecretClient(pageable, secrets);
+
+        // Act
+        var config = builder.AddAzureKeyVault(options =>
+            {
+                options.VaultUri = "https://test-vault.vault.azure.net/";
+                options.SecretClient = mockClient;
+                options.Optional = false;
+            })
+            .Build();
+
+        // Assert
+        var value = config["test:secret"];
+        value.Should().Be("test-value");
+    }
 
     #endregion
 
@@ -371,6 +407,35 @@ public class AzureExtensionsTests
 
         action.Should().Throw<ArgumentNullException>()
             .WithParameterName("configure");
+    }
+    
+    [Fact]
+    public void AddAzureAppConfiguration_WithInjectedSecretClient_LoadsSecretsFromMockClient()
+    {
+        // Arrange
+        var builder = new FlexConfigurationBuilder();
+        var mockClient = Substitute.For<ConfigurationClient>();
+        var firstSetting = new ConfigurationSetting("test:secret", "test-value");
+        var firstSettings = AsyncPageable<ConfigurationSetting>.FromPages([
+            Page<ConfigurationSetting>.FromValues([firstSetting], null, Substitute.For<Response>())
+        ]);
+
+        // First load
+        mockClient?.GetConfigurationSettingsAsync(Arg.Any<SettingSelector>(), CancellationToken.None)
+            .Returns(firstSettings);
+
+        // Act
+        var config = builder.AddAzureAppConfiguration(options =>
+            {
+                options.ConnectionString = "https://test-vault.vault.azure.net/";
+                options.ConfigurationClient = mockClient;
+                options.Optional = false;
+            })
+            .Build();
+
+        // Assert
+        var value = config["test:secret"];
+        value.Should().Be("test-value");
     }
 
     #endregion

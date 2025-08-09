@@ -4,6 +4,7 @@
 // </copyright>
 
 using Azure.Core;
+using Azure.Data.AppConfiguration;
 using JetBrains.Annotations;
 using Microsoft.Extensions.Configuration;
 
@@ -108,6 +109,16 @@ public class AzureAppConfigurationSource : IConfigurationSource
     public Action<AppConfigurationProviderException>? OnLoadException { get; [UsedImplicitly] set; }
 
     /// <summary>
+    /// Gets or sets a pre-configured Azure App Configuration client for testing scenarios.
+    /// When provided, this client will be used instead of creating a new one from the App Configuration URI and credentials.
+    /// </summary>
+    /// <value>
+    /// A configured ConfigurationClient instance, or null to create a new client using the App Configuration URI and credentials.
+    /// Default is null.
+    /// </value>
+    public ConfigurationClient? ConfigurationClient { get; [UsedImplicitly] set; }
+
+    /// <summary>
     /// Creates a new Azure App Configuration provider that will load data from this source.
     /// This method is called by the .NET configuration system when building the configuration
     /// from all registered sources.
@@ -124,7 +135,9 @@ public class AzureAppConfigurationSource : IConfigurationSource
     public IConfigurationProvider Build(IConfigurationBuilder builder)
     {
         ArgumentNullException.ThrowIfNull(builder);
-        return new AzureAppConfigurationProvider(this);
+        return ConfigurationClient != null
+            ? new AzureAppConfigurationProvider(this, ConfigurationClient)
+            : new AzureAppConfigurationProvider(this);
     }
 }
 

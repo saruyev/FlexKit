@@ -1,6 +1,7 @@
 using FlexKit.Configuration.Providers.Azure.Sources;
 using FluentAssertions;
 using Xunit;
+// ReSharper disable NullableWarningSuppressionIsUsed
 
 namespace FlexKit.Configuration.Providers.Azure.Tests.Sources;
 

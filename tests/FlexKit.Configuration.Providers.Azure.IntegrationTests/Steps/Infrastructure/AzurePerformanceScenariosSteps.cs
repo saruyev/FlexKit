@@ -6,6 +6,7 @@ using Microsoft.Extensions.Configuration;
 using Reqnroll;
 using System.Diagnostics;
 using FlexKit.Configuration.Conversion;
+// ReSharper disable NullableWarningSuppressionIsUsed
 
 // ReSharper disable MethodTooLong
 // ReSharper disable ClassTooBig

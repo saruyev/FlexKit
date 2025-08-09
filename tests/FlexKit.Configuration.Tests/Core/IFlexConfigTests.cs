@@ -10,6 +10,7 @@ using NSubstitute;
 using Xunit;
 // ReSharper disable MethodTooLong
 // ReSharper disable TooManyDeclarations
+// ReSharper disable NullableWarningSuppressionIsUsed
 
 namespace FlexKit.Configuration.Tests.Core;
 

@@ -6,6 +6,7 @@ using Microsoft.Extensions.Configuration;
 using Reqnroll;
 // ReSharper disable MethodTooLong
 // ReSharper disable TooManyDeclarations
+// ReSharper disable NullableWarningSuppressionIsUsed
 
 namespace FlexKit.Configuration.Providers.Azure.IntegrationTests.Steps.KeyVault;
 

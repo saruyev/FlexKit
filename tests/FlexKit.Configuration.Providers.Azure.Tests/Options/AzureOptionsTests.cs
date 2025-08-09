@@ -7,6 +7,7 @@ using NSubstitute;
 using Xunit;
 // ReSharper disable ComplexConditionExpression
 // ReSharper disable ClassTooBig
+// ReSharper disable NullableWarningSuppressionIsUsed
 
 namespace FlexKit.Configuration.Providers.Azure.Tests.Options;
 

@@ -6,6 +6,7 @@ using FluentAssertions;
 using NSubstitute;
 using Xunit;
 // ReSharper disable AccessToDisposedClosure
+// ReSharper disable NullableWarningSuppressionIsUsed
 
 namespace FlexKit.Configuration.Providers.Azure.Tests.Sources;
 

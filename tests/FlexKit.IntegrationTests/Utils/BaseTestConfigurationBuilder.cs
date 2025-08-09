@@ -7,6 +7,7 @@ using FlexKit.IntegrationTests.Hooks;
 using JetBrains.Annotations;
 // ReSharper disable MemberCanBeProtected.Global
 // ReSharper disable ClassTooBig
+// ReSharper disable NullableWarningSuppressionIsUsed
 
 namespace FlexKit.IntegrationTests.Utils;
 

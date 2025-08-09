@@ -4,12 +4,15 @@ using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Reqnroll;
 using Microsoft.Extensions.Logging;
+// ReSharper disable NotAccessedField.Local
+// ReSharper disable CollectionNeverQueried.Local
+// ReSharper disable NullableWarningSuppressionIsUsed
 
 namespace FlexKit.Configuration.Providers.Azure.IntegrationTests.Steps.Infrastructure;
 
 /// <summary>
 /// Step definitions for Azure Configuration reloading scenarios.
-/// Tests automatic reloading functionality for Key Vault and App Configuration including timer initialization,
+/// Tests automatic reloading functionality for Key Vault and App Configuration, including timer initialization,
 /// reload interval configuration, error handling during reloads, and proper cleanup.
 /// Uses distinct step patterns ("reloading controller") to avoid conflicts with other step classes.
 /// </summary>
@@ -118,7 +121,7 @@ public class AzureConfigurationReloadingSteps(ScenarioContext scenarioContext)
             // Initialize LocalStack if using it
             if (_localStackHelper != null)
             {
-                var startTask = _localStackHelper.StartAsync("keyvault,appconfig");
+                var startTask = _localStackHelper.StartAsync();
                 startTask.Wait(TimeSpan.FromMinutes(2));
                 
                 if (!startTask.IsCompletedSuccessfully)
@@ -231,8 +234,8 @@ public class AzureConfigurationReloadingSteps(ScenarioContext scenarioContext)
 
         try
         {
-            // In real scenarios, this would wait for the actual reload timer
-            // For integration tests, we simulate the reload by waiting a short period
+            // In real scenarios, this would wait for the actual reload timer.
+            // For integration tests we simulate the reload by waiting a short period
             // and then verifying that the reload mechanism would work
             
             var waitTime = _errorRecoveryEnabled ? TimeSpan.FromSeconds(5) : TimeSpan.FromSeconds(2);
@@ -335,15 +338,15 @@ public class AzureConfigurationReloadingSteps(ScenarioContext scenarioContext)
         try
         {
             // Test that configuration can be accessed dynamically
-            dynamic config = _reloadingFlexConfiguration!;
+            dynamic _ = _reloadingFlexConfiguration!;
             
-            // Verify configuration structure exists for the keys we would update
+            // Verify the configuration structure exists for the keys we would update
             var testKeys = new[] { "database:host", "api:key", "cache:timeout" };
             
             foreach (var key in testKeys)
             {
                 var value = _reloadingFlexConfiguration![key];
-                // We don't assert specific values since we're using in-memory configuration
+                // We don't assert specific values since we're using in-memory configuration,
                 // but we verify the configuration structure supports these keys
                 _logger.LogDebug($"Configuration key '{key}' accessible: {!string.IsNullOrEmpty(value)}");
             }
@@ -407,9 +410,9 @@ public class AzureConfigurationReloadingSteps(ScenarioContext scenarioContext)
         try
         {
             // Test that configuration can be accessed dynamically
-            dynamic config = _reloadingFlexConfiguration!;
+            dynamic _ = _reloadingFlexConfiguration!;
             
-            // Verify configuration structure exists for the App Configuration keys we would update
+            // Verify the configuration structure exists for the App Configuration keys we would update
             var testKeys = new[] { "feature:caching", "app:timeout", "logging:level" };
             
             foreach (var key in testKeys)
@@ -443,7 +446,7 @@ public class AzureConfigurationReloadingSteps(ScenarioContext scenarioContext)
             var testResult = config != null;
             ((bool)testResult).Should().BeTrue("Dynamic configuration access should work");
             
-            // Verify reload interval is properly configured
+            // Verify the reload interval is properly configured
             _configuredReloadInterval.Should().NotBeNull("Reload interval should be configured");
             _configuredReloadInterval!.Value.Should().BeGreaterThan(TimeSpan.Zero, "Reload interval should be positive");
             
@@ -518,7 +521,7 @@ public class AzureConfigurationReloadingSteps(ScenarioContext scenarioContext)
             configuration.Should().NotBeNull("Configuration should be ConfigurationRoot");
             
             // Verify that configuration providers are ordered correctly
-            var providers = configuration!.Providers.ToList();
+            var providers = configuration.Providers.ToList();
             providers.Should().NotBeEmpty("Configuration should have providers");
             
             _reloadingValidationResults.Add($"✓ Configuration precedence maintained with {providers.Count} providers");
@@ -628,7 +631,7 @@ public class AzureConfigurationReloadingSteps(ScenarioContext scenarioContext)
                 .Where(kvp => !string.IsNullOrEmpty(kvp.Key) && !string.IsNullOrEmpty(kvp.Value))
                 .ToList();
 
-            // Store the first few configuration values we find, or create some defaults if none exist
+            // Store the first few configuration values we find or create some defaults if none exist
             if (allConfigurationPairs.Any())
             {
                 foreach (var kvp in allConfigurationPairs.Take(5)) // Store up to 5 values

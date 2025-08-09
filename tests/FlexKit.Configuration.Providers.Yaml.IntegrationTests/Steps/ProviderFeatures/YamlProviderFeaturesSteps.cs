@@ -7,6 +7,7 @@ using Reqnroll;
 // ReSharper disable TooManyDeclarations
 // ReSharper disable ClassTooBig
 // ReSharper disable ComplexConditionExpression
+// ReSharper disable NullableWarningSuppressionIsUsed
 
 namespace FlexKit.Configuration.Providers.Yaml.IntegrationTests.Steps.ProviderFeatures;
 

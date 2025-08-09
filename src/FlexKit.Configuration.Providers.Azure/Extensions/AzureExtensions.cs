@@ -190,7 +190,8 @@ public static class AzureExtensions
             JsonProcessor = options.JsonProcessor,
             JsonProcessorSecrets = options.JsonProcessorSecrets,
             SecretProcessor = options.SecretProcessor,
-            OnLoadException = options.OnLoadException
+            OnLoadException = options.OnLoadException,
+            SecretClient = options.SecretClient
         });
     }
 
@@ -306,7 +307,8 @@ public static class AzureExtensions
             Label = options.Label,
             ReloadAfter = options.ReloadAfter,
             Credential = options.Credential,
-            OnLoadException = options.OnLoadException
+            OnLoadException = options.OnLoadException,
+            ConfigurationClient = options.ConfigurationClient
         });
     }
 

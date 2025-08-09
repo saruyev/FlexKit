@@ -8,6 +8,7 @@ using Microsoft.Extensions.Configuration.Memory;
 using Xunit;
 // ReSharper disable TooManyDeclarations
 // ReSharper disable MethodTooLong
+// ReSharper disable NullableWarningSuppressionIsUsed
 
 namespace FlexKit.Configuration.Tests.Core;
 

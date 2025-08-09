@@ -5,6 +5,7 @@ using Microsoft.Extensions.Configuration;
 using NSubstitute;
 using Xunit;
 // ReSharper disable ClassTooBig
+// ReSharper disable NullableWarningSuppressionIsUsed
 
 namespace FlexKit.Configuration.Providers.Azure.Tests.Sources;
 
