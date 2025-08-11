@@ -16,6 +16,7 @@ using FlexKit.IntegrationTests.Utils;
 // ReSharper disable MethodTooLong
 // ReSharper disable ClassTooBig
 // ReSharper disable ExcessiveIndentation
+// ReSharper disable NullableWarningSuppressionIsUsed
 
 namespace FlexKit.Configuration.IntegrationTests.Steps.RealWorld;
 

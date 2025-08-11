@@ -9,6 +9,7 @@ using FlexKit.IntegrationTests.Utils;
 using JetBrains.Annotations;
 // ReSharper disable TooManyDeclarations
 // ReSharper disable ClassTooBig
+// ReSharper disable NullableWarningSuppressionIsUsed
 
 namespace FlexKit.Configuration.IntegrationTests.Steps.DependencyInjection;
 

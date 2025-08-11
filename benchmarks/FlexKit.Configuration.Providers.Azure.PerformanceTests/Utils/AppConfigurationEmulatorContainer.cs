@@ -1,22 +1,31 @@
-using System.Net;
 using Azure.Data.AppConfiguration;
-using Azure.Identity;
 using DotNet.Testcontainers.Builders;
 using DotNet.Testcontainers.Containers;
-using DotNet.Testcontainers.Networks;
-using Newtonsoft.Json;
+
+// ReSharper disable RedundantSuppressNullableWarningExpression
+
+// ReSharper disable NullableWarningSuppressionIsUsed
+// ReSharper disable TooManyArguments
+
 // ReSharper disable ComplexConditionExpression
 
 namespace FlexKit.Configuration.Providers.Azure.PerformanceTests.Utils;
 
 public class AppConfigurationEmulatorContainer : IAsyncDisposable
 {
-    private IContainer _container;
+    private readonly IContainer _container = new ContainerBuilder()
+        .WithImage("tnc1997/azure-app-configuration-emulator:latest")
+        .WithPortBinding(8080, true)
+        .WithEnvironment("ASPNETCORE_HTTP_PORTS", "8080")
+        .WithEnvironment("Authentication__Schemes__Hmac__Credential", "abcd")
+        .WithEnvironment("Authentication__Schemes__Hmac__Secret", "c2VjcmV0")
+        .WithWaitStrategy(Wait.ForUnixContainer().UntilPortIsAvailable(8080))
+        .Build();
     private ConfigurationClient? _configurationClient;
     
     /// <summary>
     /// Gets the ConfigurationClient configured for the emulator.
-    /// This can be injected into FlexKit configuration for testing.
+    /// This can be injected into the FlexKit configuration for testing.
     /// </summary>
     public ConfigurationClient ConfigurationClient 
     {
@@ -31,18 +40,6 @@ public class AppConfigurationEmulatorContainer : IAsyncDisposable
         }
     }
 
-    public AppConfigurationEmulatorContainer()
-    {
-        _container = new ContainerBuilder()
-            .WithImage("tnc1997/azure-app-configuration-emulator:latest")
-            .WithPortBinding(8080, true)
-            .WithEnvironment("ASPNETCORE_HTTP_PORTS", "8080")
-            .WithEnvironment("Authentication__Schemes__Hmac__Credential", "abcd")
-            .WithEnvironment("Authentication__Schemes__Hmac__Secret", "c2VjcmV0")
-            .WithWaitStrategy(Wait.ForUnixContainer().UntilPortIsAvailable(8080))
-            .Build();
-    }
-
     public async Task StartAsync()
     {
         await _container.StartAsync();
@@ -51,12 +48,7 @@ public class AppConfigurationEmulatorContainer : IAsyncDisposable
 
     public async ValueTask DisposeAsync()
     {
-        if (_configurationClient != null)
-        {
-            // ConfigurationClient doesn't implement IDisposable, but we should null it
-            _configurationClient = null;
-        }
-        
+        _configurationClient = null;
         await _container.StopAsync();
         await _container.DisposeAsync();
         Console.WriteLine("App Configuration Emulator stopped.");
@@ -76,26 +68,11 @@ public class AppConfigurationEmulatorContainer : IAsyncDisposable
         Console.WriteLine($"Configuration '{key}' set with value '{value}'" + 
                          (label != null ? $" and label '{label}'" : ""));
     }
-
-    public async Task<string?> GetConfigurationAsync(string key, string? label = null)
-    {
-        try
-        {
-            var response = await ConfigurationClient.GetConfigurationSettingAsync(key, label);
-            Console.WriteLine($"Configuration '{key}' retrieved with value '{response.Value.Value}'");
-            return response.Value.Value;
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Failed to retrieve configuration '{key}': {ex.Message}");
-            return null;
-        }
-    }
     
     public async Task CreateTestDataAsync(string configFilePath)
     {
         var jsonContent = await File.ReadAllTextAsync(configFilePath);
-        var json = JsonConvert.DeserializeObject<Dictionary<string, object>>(jsonContent);
+        var json = (Dictionary<string, object>)JsonHelper.Deserialize(jsonContent);
         await CreateAppConfigurationSettingsAsync(json!);
     }
     
@@ -103,25 +80,23 @@ public class AppConfigurationEmulatorContainer : IAsyncDisposable
     {
         foreach (var setting in settings)
         {
-            // Handle hierarchical settings by converting nested objects to flat keys
             await ProcessSettingAsync(setting.Key, setting.Value);
         }
     }
     
-    private async Task ProcessSettingAsync(string key, object value, string? label = null)
+    private async Task ProcessSettingAsync(string key, object value)
     {
         if (value is Dictionary<string, object> nestedSettings)
         {
-            // Handle nested configuration
             foreach (var nested in nestedSettings)
             {
                 var nestedKey = $"{key}:{nested.Key}";
-                await ProcessSettingAsync(nestedKey, nested.Value, label);
+                await ProcessSettingAsync(nestedKey, nested.Value);
             }
         }
         else
         {
-            await SetConfigurationAsync(key, value.ToString()!, label);
+            await SetConfigurationAsync(key, value.ToString()!);
         }
     }
 }

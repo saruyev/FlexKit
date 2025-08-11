@@ -5,8 +5,9 @@ using Microsoft.Extensions.Configuration;
 using Reqnroll;
 using System.Diagnostics;
 using FlexKit.Configuration.Providers.Azure.Extensions;
-using FlexKit.Configuration.Providers.Azure.Sources;
+
 // ReSharper disable NullableWarningSuppressionIsUsed
+// ReSharper disable RedundantSuppressNullableWarningExpression
 
 // ReSharper disable MethodTooLong
 // ReSharper disable ComplexConditionExpression
@@ -200,7 +201,7 @@ public class AzureConfigurationChainingSteps(ScenarioContext scenarioContext)
         {
             scenarioContext.Set(ex, "ChainingException");
             _chainingValidationResults.Add($"✗ Chained configuration build failed: {ex.Message}");
-            throw; // Re-throw to ensure test fails properly
+            throw; // Re-throw to ensure the test fails properly
         }
     }
 
@@ -228,7 +229,6 @@ public class AzureConfigurationChainingSteps(ScenarioContext scenarioContext)
     {
         _chainingConfiguration.Should().NotBeNull("Chaining configuration should be built");
         _configurationSources.Should().HaveCountGreaterThan(1, "Should have multiple sources to test precedence");
-        var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
 
         try
         {
@@ -266,7 +266,7 @@ public class AzureConfigurationChainingSteps(ScenarioContext scenarioContext)
 
         try
         {
-            // Test JSON configuration processing with scenario prefix
+            // Test JSON configuration processing with a scenario prefix
             var jsonTests = new List<(string description, string key, Func<bool> validation)>
             {
                 ("JSON Key Vault secret processing", $"{scenarioPrefix}:infrastructure-module:database-credentials:host", () => 
@@ -351,7 +351,7 @@ public class AzureConfigurationChainingSteps(ScenarioContext scenarioContext)
 
         try
         {
-            // Test FlexConfig dynamic access with scenario prefix
+            // Test FlexConfig dynamic access with a scenario prefix
             dynamic config = _chainingFlexConfiguration!;
 
             var dynamicTests = new List<(string description, Func<bool> validation)>
@@ -422,11 +422,10 @@ public class AzureConfigurationChainingSteps(ScenarioContext scenarioContext)
         _chainingConfiguration.Should().NotBeNull("Chaining configuration should be built");
         _configurationSources.Should().Contain("Key Vault", "Key Vault should be configured");
         _configurationSources.Should().Contain("App Configuration", "App Configuration should be configured");
-        var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
 
         try
         {
-            // Test that App Configuration values override Key Vault values for the same keys with scenario prefix
+            // Test that App Configuration values override Key Vault values for the same keys with the scenario prefix
             var priorityTests = new List<(string description, string key, string expectedSource)>
             {
                 ("API timeout override", "appConfigurationSettings:myapp:api:timeout", "App Configuration"),
@@ -457,11 +456,10 @@ public class AzureConfigurationChainingSteps(ScenarioContext scenarioContext)
     public void ThenTheChainingControllerShouldSupportFlexKitDynamicAccessPatterns()
     {
         _chainingFlexConfiguration.Should().NotBeNull("FlexConfig should be built");
-        var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
 
         try
         {
-            // Test FlexConfig dynamic access patterns with scenario prefix
+            // Test FlexConfig dynamic access patterns with a scenario prefix
             dynamic config = _chainingFlexConfiguration!;
 
             var dynamicTests = new List<(string description, Func<bool> validation)>
@@ -510,11 +508,10 @@ public class AzureConfigurationChainingSteps(ScenarioContext scenarioContext)
     {
         _chainingConfiguration.Should().NotBeNull("Chaining configuration should be built");
         _jsonProcessingEnabled.Should().BeTrue("JSON processing should be enabled");
-        var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
 
         try
         {
-            // Test cross-source JSON processing capabilities with scenario prefix
+            // Test cross-source JSON processing capabilities with a scenario prefix
             var jsonTests = new List<(string description, string key, Func<bool> validation)>
             {
                 ("Key Vault JSON secret processing", "keyVaultSecrets:infrastructure-module-database-credentials:host", () => 
@@ -556,11 +553,10 @@ public class AzureConfigurationChainingSteps(ScenarioContext scenarioContext)
     {
         _chainingConfiguration.Should().NotBeNull("Chaining configuration should be built");
         _jsonProcessingEnabled.Should().BeTrue("JSON processing should be enabled");
-        var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
 
         try
         {
-            // Test complex JSON chaining scenarios with scenario prefix
+            // Test complex JSON chaining scenarios with a scenario prefix
             var complexTests = new List<(string description, string key, Func<bool> validation)>
             {
                 ("Nested JSON object access", "keyVaultSecrets:infrastructure-module-cache-settings:redis:host", () => 
@@ -602,7 +598,6 @@ public class AzureConfigurationChainingSteps(ScenarioContext scenarioContext)
     {
         _chainingConfiguration.Should().NotBeNull("Chaining configuration should be built");
         _jsonProcessingEnabled.Should().BeTrue("JSON processing should be enabled");
-        var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
 
         try
         {

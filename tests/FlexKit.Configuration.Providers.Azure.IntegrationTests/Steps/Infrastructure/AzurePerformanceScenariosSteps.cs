@@ -1,12 +1,14 @@
 using FlexKit.Configuration.Core;
 using FlexKit.Configuration.Providers.Azure.IntegrationTests.Utils;
 using FlexKit.Configuration.Providers.Azure.Extensions;
-using FlexKit.Configuration.Providers.Azure.Sources;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Reqnroll;
 using System.Diagnostics;
 using FlexKit.Configuration.Conversion;
+// ReSharper disable RedundantSuppressNullableWarningExpression
+// ReSharper disable ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
+// ReSharper disable TooManyDeclarations
 
 // ReSharper disable NullableWarningSuppressionIsUsed
 // ReSharper disable MethodTooLong
@@ -42,9 +44,6 @@ public class AzurePerformanceScenariosSteps(ScenarioContext scenarioContext)
         var appConfigEmulator = scenarioContext.GetAppConfigEmulator();
         var keyVaultEmulator = scenarioContext.GetKeyVaultEmulator();
         var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
-        
-        keyVaultEmulator = new KeyVaultEmulatorContainer();
-        appConfigEmulator = new AppConfigurationEmulatorContainer();
         _memoryBaseline = GC.GetTotalMemory(true);
         
         scenarioContext.Set(keyVaultEmulator, "KeyVaultEmulator");
@@ -65,7 +64,7 @@ public class AzurePerformanceScenariosSteps(ScenarioContext scenarioContext)
         var createTask = keyVaultEmulator!.CreateTestDataAsync(fullPath, scenarioPrefix);
         createTask.Wait(TimeSpan.FromMinutes(1));
         
-        // Add additional secrets to simulate a large Key Vault with scenario prefix
+        // Add additional secrets to simulate a large Key Vault with a scenario prefix
         var largeBatchTasks = new List<Task>();
         for (int i = 0; i < 50; i++)
         {
@@ -117,12 +116,12 @@ public class AzurePerformanceScenariosSteps(ScenarioContext scenarioContext)
 
         var fullPath = Path.Combine("TestData", testDataPath);
         
-        // Load test data into both emulators with scenario prefix
+        // Load test data into both emulators with the scenario prefix
         var keyVaultTask = keyVaultEmulator!.CreateTestDataAsync(fullPath, scenarioPrefix);
         var appConfigTask = appConfigEmulator!.CreateTestDataAsync(fullPath, scenarioPrefix);
         Task.WaitAll([keyVaultTask, appConfigTask], TimeSpan.FromMinutes(1));
         
-        // Add specific concurrent access test data with scenario prefix
+        // Add specific concurrent access test data with a scenario prefix
         var concurrentTestTasks = new List<Task>
         {
             keyVaultEmulator.SetSecretAsync("test--secret", "test-value", scenarioPrefix),
@@ -149,7 +148,7 @@ public class AzurePerformanceScenariosSteps(ScenarioContext scenarioContext)
 
         var fullPath = Path.Combine("TestData", testDataPath);
         
-        // Load test data for memory monitoring with scenario prefix
+        // Load test data for memory monitoring with a scenario prefix
         var keyVaultTask = keyVaultEmulator!.CreateTestDataAsync(fullPath, scenarioPrefix);
         var appConfigTask = appConfigEmulator!.CreateTestDataAsync(fullPath, scenarioPrefix);
         Task.WaitAll([keyVaultTask, appConfigTask], TimeSpan.FromMinutes(1));
@@ -362,7 +361,7 @@ public class AzurePerformanceScenariosSteps(ScenarioContext scenarioContext)
         
         var sw = Stopwatch.StartNew();
         
-        // Test retrieving a known secret that should exist with scenario prefix
+        // Test retrieving a known secret that should exist with a scenario prefix
         var testValue = _perfFlexConfiguration![$"{scenarioPrefix}:test:secret"]?.ToType<string>();
         
         sw.Stop();
@@ -412,7 +411,7 @@ public class AzurePerformanceScenariosSteps(ScenarioContext scenarioContext)
         
         var sw = Stopwatch.StartNew();
         
-        // Test retrieving a known configuration that should exist with scenario prefix
+        // Test retrieving a known configuration that should exist with a scenario prefix
         var testValue = _perfFlexConfiguration![$"{scenarioPrefix}:test:config"]?.ToType<string>();
         
         sw.Stop();

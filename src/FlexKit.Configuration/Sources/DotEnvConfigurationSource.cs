@@ -272,8 +272,6 @@ public class DotEnvConfigurationSource : IConfigurationSource
     /// provider.Load(); // Manually load .env file data
     /// </code>
     /// </example>
-    public IConfigurationProvider Build(IConfigurationBuilder builder)
-    {
-        return new DotEnvConfigurationProvider(this);
-    }
+    public IConfigurationProvider Build(IConfigurationBuilder builder) =>
+        new DotEnvConfigurationProvider(this);
 }

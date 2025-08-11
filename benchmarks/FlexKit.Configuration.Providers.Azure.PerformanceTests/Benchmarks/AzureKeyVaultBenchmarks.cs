@@ -31,44 +31,57 @@ public class AzureKeyVaultBenchmarks // : IDisposable
     [GlobalSetup]
     public async Task GlobalSetup()
     {
-        // var emulatorContainer = new KeyVaultEmulatorContainer();
-        // await emulatorContainer.StartAsync();
-        //
-        // // Add some test secrets
-        // await emulatorContainer.SetSecretAsync("database--host", "localhost");
-        // await emulatorContainer.SetSecretAsync("database--port", "5432");
-        // await emulatorContainer.SetSecretAsync("api--config", """{"baseUrl": "https://api.test.com", "timeout": 30}""");
-        //
-        // // Build configuration using the emulator client
-        // var config = new FlexConfigurationBuilder()
-        //     .AddAzureKeyVault(options =>
-        //     {
-        //         options.VaultUri = "https://test-vault.vault.azure.net/"; // This gets ignored when SecretClient is provided
-        //         options.SecretClient = emulatorContainer.SecretClient; // Use emulator client instead
-        //         options.JsonProcessor = true; // Enable JSON processing for api--config
-        //         options.Optional = false;
-        //     })
-        //     .Build();
-        //
-        // // Access configuration values
-        // var dbHost = config["database:host"];
-        // var dbPort = config["database:port"];
-        // var apiBaseUrl = config["api:config:baseUrl"];
-        // var apiTimeout = config["api:config:timeout"];
-        //
-        // Console.WriteLine($"Database Host: {dbHost}");
-        // Console.WriteLine($"Database Port: {dbPort}");
-        // Console.WriteLine($"API Base URL: {apiBaseUrl}");
-        // Console.WriteLine($"API Timeout: {apiTimeout}");
-        //
-        // await emulatorContainer.DisposeAsync();
+        var keyVaultEmulator = new KeyVaultEmulatorContainer();
+        await keyVaultEmulator.StartAsync();
 
-        var emulatorContainer = new AppConfigurationEmulatorContainer();
-        await emulatorContainer.StartAsync();
-        await emulatorContainer.SetConfigurationAsync("database", "localhost");
-        var dbHost = emulatorContainer.GetConfigurationAsync("database");
-        Console.WriteLine($"Database Host: {dbHost}");
-        await emulatorContainer.DisposeAsync();
+        var appConfigEmulator = new AppConfigurationEmulatorContainer();
+        await appConfigEmulator.StartAsync();
+        
+        // Add some test secrets
+        await keyVaultEmulator.SetSecretAsync("database--host", "localhost");
+        await keyVaultEmulator.SetSecretAsync("database--port", "5432");
+        await keyVaultEmulator.SetSecretAsync("api--config", """{"baseUrl": "https://api.test.com", "timeout": 30}""");
+        
+        await appConfigEmulator.SetConfigurationAsync("app:config:db", """{"baseUrl": "https://api.test.com", "timeout": 30}""");
+        await appConfigEmulator.SetConfigurationAsync("app:config:port", "1234");
+        
+        // Build configuration using the emulator client
+        var config = new FlexConfigurationBuilder()
+            .AddAzureKeyVault(options =>
+            {
+                options.VaultUri = "https://test-vault.vault.azure.net/";
+                options.SecretClient = keyVaultEmulator.SecretClient;
+                options.JsonProcessor = true;
+                options.Optional = false;
+            })
+            .AddAzureAppConfiguration(options =>
+            {
+                options.ConnectionString = appConfigEmulator.GetConnectionString();
+                options.ConfigurationClient = appConfigEmulator.ConfigurationClient;
+                options.Optional = false;
+            })
+            .Build();
+        
+        // Access configuration values
+        var dbHost = config["database:host"];
+        var dbPort = config["database:port"];
+        var apiBaseUrl = config["api:config:baseUrl"];
+        var apiTimeout = config["api:config:timeout"];
+        
+        var appConfigDbBaseUrl = config["app:config:db:baseUrl"];
+        var appConfigDbTimeout = config["app:config:db:timeout"];
+        var appConfigPort = config["app:config:port"];
+        
+        Console.WriteLine($"(Key Vault)Database Host: {dbHost}");
+        Console.WriteLine($"(Key Vault)Database Port: {dbPort}");
+        Console.WriteLine($"(Key Vault)API Base URL: {apiBaseUrl}");
+        Console.WriteLine($"(Key Vault)API Timeout: {apiTimeout}");
+        Console.WriteLine($"(App Config)DB Base URL: {appConfigDbBaseUrl}");
+        Console.WriteLine($"(App Config)DB Timeout: {appConfigDbTimeout}");
+        Console.WriteLine($"(App Config)Port: {appConfigPort}");
+        
+        await keyVaultEmulator.DisposeAsync();
+        await appConfigEmulator.DisposeAsync();
     }
 
     /// <summary>

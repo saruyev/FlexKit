@@ -2,7 +2,6 @@ using Azure.Security.KeyVault.Secrets;
 using AzureKeyVaultEmulator.TestContainers;
 using AzureKeyVaultEmulator.TestContainers.Helpers;
 using FlexKit.Configuration.Providers.Azure.Sources;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 // ReSharper disable NullableWarningSuppressionIsUsed
@@ -19,7 +18,7 @@ public class KeyVaultEmulatorContainer : IAsyncDisposable
         forceCleanupCertificates: false);
     
     // Static lock to synchronize access across all instances
-    private static readonly SemaphoreSlim _secretCreationLock = new(1, 1);
+    private static readonly SemaphoreSlim SecretCreationLock = new(1, 1);
     
     /// <summary>
     /// Gets the SecretClient configured for the emulator.
@@ -64,21 +63,21 @@ public class KeyVaultEmulatorContainer : IAsyncDisposable
     public async Task CreateTestDataAsync(string configFilePath, string prefix)
     {
         // Use the static semaphore to ensure only one feature can create secrets at a time
-        await _secretCreationLock.WaitAsync();
+        await SecretCreationLock.WaitAsync();
         try
         {
             Console.WriteLine($"[{prefix}] Acquiring secret creation lock...");
             
             var jsonContent = await File.ReadAllTextAsync(configFilePath);
             var json = (Dictionary<string, object>)JsonHelper.Deserialize(jsonContent);
-            await CreateKeyVaultSecretsAsync(json!, prefix);
+            await CreateKeyVaultSecretsAsync(json, prefix);
             
             Console.WriteLine($"[{prefix}] Secret creation completed successfully.");
         }
         finally
         {
             Console.WriteLine($"[{prefix}] Releasing secret creation lock...");
-            _secretCreationLock.Release();
+            SecretCreationLock.Release();
         }
     }
     
@@ -128,7 +127,7 @@ public static class JsonHelper
         return ToObject(JToken.Parse(json));
     }
 
-    public static object ToObject(JToken token)
+    private static object ToObject(JToken token)
     {
         switch (token.Type)
         {

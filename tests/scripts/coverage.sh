@@ -1,8 +1,12 @@
-﻿#!/bin/bash
+#!/bin/bash
 
 # coverage.sh - Test coverage reporter for FlexKit projects
 # chmod +x tests/scripts/coverage.sh
-# Usage: ./coverage.sh
+# Usage: ./coverage.sh [project_path]
+# Examples:
+#   ./coverage.sh                           # Run from current directory
+#   ./coverage.sh ../FlexKit.Core.Tests     # Run for specific project
+#   ./coverage.sh /path/to/project          # Run with absolute path
 
 set -euo pipefail
 
@@ -12,7 +16,20 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
-echo "Running test coverage analysis..."
+# Default to current directory if no parameter provided
+PROJECT_PATH=${1:-.}
+
+echo "Running test coverage analysis for: $PROJECT_PATH"
+
+# Change to project directory if not current
+if [[ "$PROJECT_PATH" != "." ]]; then
+    if [[ ! -d "$PROJECT_PATH" ]]; then
+        printf "${RED}Error: Project path does not exist: %s${NC}\n" "$PROJECT_PATH"
+        exit 1
+    fi
+    echo "Changing to project directory: $PROJECT_PATH"
+    cd "$PROJECT_PATH"
+fi
 
 # Clean previous results
 if [[ -d "./TestResults" ]]; then
@@ -58,7 +75,7 @@ if [[ -n "$coverage_files" ]]; then
     report_path="./TestResults/CoverageReport/index.html"
     if [[ -f "$report_path" ]]; then
         printf "${GREEN}Coverage report generated successfully!${NC}\n"
-        printf "${GREEN}Report location: %s${NC}\n" "$report_path"
+        printf "${GREEN}Report location: %s${NC}\n" "$(pwd)/$report_path"
         
         # Try to open report (different commands for different platforms)
         if command -v open >/dev/null 2>&1; then
@@ -74,7 +91,7 @@ if [[ -n "$coverage_files" ]]; then
             printf "${GREEN}Opening coverage report...${NC}\n"
             start "$report_path"
         else
-            printf "${YELLOW}Cannot auto-open report. Please open manually: %s${NC}\n" "$report_path"
+            printf "${YELLOW}Cannot auto-open report. Please open manually: %s${NC}\n" "$(pwd)/$report_path"
         fi
     else
         printf "${RED}Report generation may have failed. Report not found at: %s${NC}\n" "$report_path"

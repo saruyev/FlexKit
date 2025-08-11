@@ -30,5 +30,11 @@
   "plugins": [],
   "bindingCulture": {
     "name": "en-US"
+  },
+  "bindingAssemblies": [
+  ],
+  "livingDocExecutionDataCollector": {
+    "enabled": true,
+    "filepath": "TestExecution.json"
   }
 }

@@ -9,6 +9,7 @@ using Newtonsoft.Json;
 // ReSharper disable MethodTooLong
 // ReSharper disable TooManyDeclarations
 // ReSharper disable NullableWarningSuppressionIsUsed
+// ReSharper disable ComplexConditionExpression
 
 namespace FlexKit.Configuration.Providers.Azure.IntegrationTests.Steps.AppConfiguration;
 
@@ -50,7 +51,7 @@ public class AppConfigurationBasicOperationsSteps(ScenarioContext scenarioContex
         var jsonContent = await File.ReadAllTextAsync(fullPath);
         _testData = JsonConvert.DeserializeObject<Dictionary<string, object>>(jsonContent)!;
         
-        // Load App Configuration settings from test data with scenario prefix
+        // Load App Configuration settings from test data with the scenario prefix
         if (_testData.TryGetValue("appConfigurationSettings", out var settingsObj) && settingsObj is Newtonsoft.Json.Linq.JObject settingsJson)
         {
             foreach (var setting in settingsJson)
@@ -72,7 +73,7 @@ public class AppConfigurationBasicOperationsSteps(ScenarioContext scenarioContex
         var jsonContent = await File.ReadAllTextAsync(fullPath);
         _testData = JsonConvert.DeserializeObject<Dictionary<string, object>>(jsonContent)!;
         
-        // Load labeled App Configuration settings from test data with scenario prefix
+        // Load labeled App Configuration settings from test data with the scenario prefix
         if (_testData.TryGetValue("labeledAppConfigurationSettings", out var labeledSettingsObj) && labeledSettingsObj is Newtonsoft.Json.Linq.JObject labeledSettingsJson)
         {
             foreach (var labelGroup in labeledSettingsJson)
@@ -110,7 +111,7 @@ public class AppConfigurationBasicOperationsSteps(ScenarioContext scenarioContex
         var jsonContent = await File.ReadAllTextAsync(fullPath);
         _testData = JsonConvert.DeserializeObject<Dictionary<string, object>>(jsonContent)!;
         
-        // Load App Configuration settings from test data with scenario prefix
+        // Load App Configuration settings from test data with the scenario prefix
         if (_testData.TryGetValue("appConfigurationSettings", out var settingsObj) && settingsObj is Newtonsoft.Json.Linq.JObject settingsJson)
         {
             foreach (var setting in settingsJson)
@@ -119,7 +120,7 @@ public class AppConfigurationBasicOperationsSteps(ScenarioContext scenarioContex
             }
         }
         
-        // Load feature flags as configuration settings with scenario prefix
+        // Load feature flags as configuration settings with the scenario prefix
         if (_testData.TryGetValue("featureFlags", out var featureFlagsObj) && featureFlagsObj is Newtonsoft.Json.Linq.JObject featureFlagsJson)
         {
             foreach (var featureFlag in featureFlagsJson)
@@ -198,7 +199,7 @@ public class AppConfigurationBasicOperationsSteps(ScenarioContext scenarioContex
 
         try
         {
-            // Test dynamic access patterns specific to FlexKit with scenario prefix
+            // Test dynamic access patterns specific to FlexKit with a scenario prefix
             dynamic config = _appConfigFlexConfiguration!;
             
             // Test various FlexKit access patterns with prefixed keys
@@ -413,7 +414,7 @@ public class AppConfigurationBasicOperationsSteps(ScenarioContext scenarioContex
         _appConfigConfiguration.Should().NotBeNull("App config configuration should be built");
         var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
 
-        // Expected prefix should include scenario prefix
+        // Expected prefix should include a scenario prefix
         var expectedFullPrefix = $"{scenarioPrefix}:{keyPrefix}";
 
         var allKeys = _appConfigConfiguration!.AsEnumerable()
@@ -471,7 +472,7 @@ public class AppConfigurationBasicOperationsSteps(ScenarioContext scenarioContex
 
         try
         {
-            // Test feature flag access with scenario prefix
+            // Test feature flag access with a scenario prefix
             var featureFlagTests = new List<(string description, string key, bool expectedValue)>
             {
                 ("New UI feature", $"{scenarioPrefix}:FeatureFlags:NewUI", true),

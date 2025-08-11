@@ -80,23 +80,18 @@ namespace FlexKit.Configuration.Sources;
 /// MULTILINE_TEXT="Line 1\nLine 2\nLine 3"
 /// </code>
 /// </example>
-public class DotEnvConfigurationProvider : ConfigurationProvider
+/// <remarks>
+/// Initializes a new instance of the DotEnvConfigurationProvider class.
+/// </remarks>
+/// <param name="source">The configuration source containing .env file settings and options.</param>
+/// <exception cref="ArgumentNullException">Thrown when the source is null.</exception>
+public class DotEnvConfigurationProvider(DotEnvConfigurationSource source) : ConfigurationProvider
 {
     /// <summary>
     /// The configuration source that defines the .env file location and loading options.
     /// Used to access a file path, optional flag, and other source-specific settings.
     /// </summary>
-    private readonly DotEnvConfigurationSource _source;
-
-    /// <summary>
-    /// Initializes a new instance of the DotEnvConfigurationProvider class.
-    /// </summary>
-    /// <param name="source">The configuration source containing .env file settings and options.</param>
-    /// <exception cref="ArgumentNullException">Thrown when the source is null.</exception>
-    public DotEnvConfigurationProvider(DotEnvConfigurationSource source)
-    {
-        _source = source;
-    }
+    private readonly DotEnvConfigurationSource _source = source;
 
     /// <summary>
     /// Loads configuration data from the .env file specified in the configuration source.
@@ -327,18 +322,15 @@ public class DotEnvConfigurationProvider : ConfigurationProvider
     /// <returns>The value without surrounding quotes, or the original value if no matching quotes are found.</returns>
     private static string RemoveSurroundingQuotes(string value)
     {
-        if (value.Length >= 2)
+        if (value.Length < 2)
         {
-            var isDoubleQuoted = value.StartsWith('"') && value.EndsWith('"');
-            var isSingleQuoted = value.StartsWith('\'') && value.EndsWith('\'');
-
-            if (isDoubleQuoted || isSingleQuoted)
-            {
-                return value[1..^1];
-            }
+            return value;
         }
 
-        return value;
+        var isDoubleQuoted = value.StartsWith('"') && value.EndsWith('"');
+        var isSingleQuoted = value.StartsWith('\'') && value.EndsWith('\'');
+
+        return isDoubleQuoted || isSingleQuoted ? value[1..^1] : value;
     }
 
     /// <summary>

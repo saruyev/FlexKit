@@ -218,23 +218,20 @@ public interface IKeyVaultSecretProcessor
 /// Represents an exception that occurs during Key Vault configuration provider loading.
 /// Used to provide context about configuration loading failures for error handling and logging.
 /// </summary>
-public class KeyVaultConfigurationProviderException : Exception
+/// <remarks>
+/// Initializes a new instance of the <see cref="KeyVaultConfigurationProviderException"/> class.
+/// </remarks>
+/// <param name="source">The configuration source that caused the exception.</param>
+/// <param name="innerException">The exception that is the cause of the current exception.</param>
+public class KeyVaultConfigurationProviderException(AzureKeyVaultConfigurationSource source, Exception innerException) : Exception($"Failed to load configuration from Azure Key Vault source: {source.VaultUri}", innerException)
 {
-    private readonly string _source;
+    /// <summary>
+    /// The configuration source that caused the exception.
+    /// </summary>
+    private readonly string _source = source.VaultUri;
 
     /// <summary>
     /// Gets the source of the exception (the Key Vault URI).
     /// </summary>
     public override string Source => _source;
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="KeyVaultConfigurationProviderException"/> class.
-    /// </summary>
-    /// <param name="source">The configuration source that caused the exception.</param>
-    /// <param name="innerException">The exception that is the cause of the current exception.</param>
-    public KeyVaultConfigurationProviderException(AzureKeyVaultConfigurationSource source, Exception innerException)
-        : base($"Failed to load configuration from Azure Key Vault source: {source.VaultUri}", innerException)
-    {
-        _source = source.VaultUri;
-    }
 }

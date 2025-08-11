@@ -1,7 +1,8 @@
 using Azure.Data.AppConfiguration;
 using DotNet.Testcontainers.Builders;
 using DotNet.Testcontainers.Containers;
-using Newtonsoft.Json;
+// ReSharper disable RedundantSuppressNullableWarningExpression
+
 // ReSharper disable NullableWarningSuppressionIsUsed
 // ReSharper disable TooManyArguments
 

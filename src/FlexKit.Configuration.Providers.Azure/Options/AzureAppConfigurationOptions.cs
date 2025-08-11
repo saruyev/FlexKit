@@ -253,4 +253,31 @@ public class AzureAppConfigurationOptions
     /// </para>
     /// </remarks>
     public ConfigurationClient? ConfigurationClient { get; [UsedImplicitly] set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether JSON configuration settings should be automatically flattened.
+    /// When enabled, configuration settings values containing valid JSON will be
+    /// processed into hierarchical configuration keys.
+    /// </summary>
+    /// <value>
+    /// True to enable JSON processing; false to treat all configuration settings  as simple strings.
+    /// Default is false.
+    /// </value>
+    /// <remarks>
+    /// <para>
+    /// <strong>JSON Processing Benefits:</strong>
+    /// <list type="bullet">
+    /// <item>Enables complex configuration structures in single configuration setting</item>
+    /// <item>Supports strongly typed configuration binding</item>
+    /// <item>Reduces the total number of configuration settings needed</item>
+    /// <item>Maintains hierarchical relationships in configuration</item>
+    /// </list>
+    /// </para>
+    ///
+    /// <para>
+    /// <strong>Performance Impact:</strong>
+    /// JSON processing adds parsing overhead during configuration loading.
+    /// </para>
+    /// </remarks>
+    public bool JsonProcessor { get; [UsedImplicitly] set; }
 }

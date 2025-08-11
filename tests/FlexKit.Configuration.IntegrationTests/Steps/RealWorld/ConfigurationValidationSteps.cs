@@ -8,6 +8,7 @@ using System.Globalization;
 // ReSharper disable TooManyDeclarations
 // ReSharper disable MethodTooLong
 // ReSharper disable ClassTooBig
+// ReSharper disable NullableWarningSuppressionIsUsed
 
 namespace FlexKit.Configuration.IntegrationTests.Steps.RealWorld;
 

@@ -8,6 +8,7 @@ using System.Diagnostics;
 using Xunit;
 // ReSharper disable MethodTooLong
 // ReSharper disable ClassTooBig
+// ReSharper disable NullableWarningSuppressionIsUsed
 
 namespace FlexKit.Configuration.IntegrationTests.Steps.Configuration;
 

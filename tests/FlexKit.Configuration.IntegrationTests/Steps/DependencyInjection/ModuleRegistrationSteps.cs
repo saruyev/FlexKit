@@ -6,6 +6,7 @@ using Microsoft.Extensions.Configuration;
 using Reqnroll;
 using FlexKit.IntegrationTests.Utils;
 using JetBrains.Annotations;
+// ReSharper disable NullableWarningSuppressionIsUsed
 
 namespace FlexKit.Configuration.IntegrationTests.Steps.DependencyInjection;
 

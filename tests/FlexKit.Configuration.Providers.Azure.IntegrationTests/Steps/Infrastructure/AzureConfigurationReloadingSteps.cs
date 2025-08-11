@@ -1,11 +1,12 @@
 using FlexKit.Configuration.Core;
 using FlexKit.Configuration.Providers.Azure.IntegrationTests.Utils;
 using FlexKit.Configuration.Providers.Azure.Extensions;
-using FlexKit.Configuration.Providers.Azure.Sources;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Reqnroll;
 using Microsoft.Extensions.Logging;
+// ReSharper disable RedundantSuppressNullableWarningExpression
+// ReSharper disable ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
 
 // ReSharper disable NotAccessedField.Local
 // ReSharper disable CollectionNeverQueried.Local
@@ -45,8 +46,6 @@ public class AzureConfigurationReloadingSteps(ScenarioContext scenarioContext)
     {
         var appConfigEmulator = scenarioContext.GetAppConfigEmulator();
         var keyVaultEmulator = scenarioContext.GetKeyVaultEmulator();
-        keyVaultEmulator = new KeyVaultEmulatorContainer();
-        appConfigEmulator = new AppConfigurationEmulatorContainer();
         
         scenarioContext.Set(keyVaultEmulator, "KeyVaultEmulator");
         scenarioContext.Set(appConfigEmulator, "AppConfigEmulator");
@@ -206,13 +205,13 @@ public class AzureConfigurationReloadingSteps(ScenarioContext scenarioContext)
 
         try
         {
-            // Actually update secrets in the Key Vault emulator with scenario prefix
-            var updateTasks = new[]
-            {
+            // Actually update secrets in the Key Vault emulator with the scenario prefix
+            Task[] updateTasks =
+            [
                 keyVaultEmulator!.SetSecretAsync("database--host", "updated-database-host.azure.com", scenarioPrefix),
                 keyVaultEmulator.SetSecretAsync("api--key", "updated-api-key-12345", scenarioPrefix),
                 keyVaultEmulator.SetSecretAsync("cache--timeout", "120", scenarioPrefix)
-            };
+            ];
 
             Task.WaitAll(updateTasks, TimeSpan.FromSeconds(30));
 
@@ -243,13 +242,13 @@ public class AzureConfigurationReloadingSteps(ScenarioContext scenarioContext)
 
         try
         {
-            // Actually update configuration in the App Configuration emulator with scenario prefix
-            var updateTasks = new[]
-            {
+            // Actually update configuration in the App Configuration emulator with the scenario prefix
+            Task[] updateTasks =
+            [
                 appConfigEmulator!.SetConfigurationAsync($"{scenarioPrefix}:feature:caching", "false"),
                 appConfigEmulator.SetConfigurationAsync($"{scenarioPrefix}:app:timeout", "60"),
                 appConfigEmulator.SetConfigurationAsync($"{scenarioPrefix}:logging:level", "Debug")
-            };
+            ];
 
             Task.WaitAll(updateTasks, TimeSpan.FromSeconds(30));
 

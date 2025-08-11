@@ -6,6 +6,7 @@ using Microsoft.Extensions.Options;
 using Autofac;
 using JetBrains.Annotations;
 // ReSharper disable ClassTooBig
+// ReSharper disable NullableWarningSuppressionIsUsed
 
 namespace FlexKit.Configuration.PerformanceTests.Benchmarks;
 

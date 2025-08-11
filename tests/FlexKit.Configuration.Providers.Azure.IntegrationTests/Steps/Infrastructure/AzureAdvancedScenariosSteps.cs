@@ -6,6 +6,7 @@ using Microsoft.Extensions.Configuration;
 using Reqnroll;
 using System.Diagnostics;
 using System.Text.Json;
+// ReSharper disable RedundantSuppressNullableWarningExpression
 
 // ReSharper disable MethodTooLong
 // ReSharper disable ClassTooBig
@@ -477,7 +478,7 @@ public class AzureAdvancedScenariosSteps(ScenarioContext scenarioContext)
             {
                 _configurationExport[kv.Key] = kv.Value;
 
-                // Apply migration to Key Vault emulator with scenario prefix
+                // Apply migration to Key Vault emulator with a scenario prefix
                 var setTask = keyVaultEmulator!.SetSecretAsync(kv.Key, kv.Value.ToString()!, scenarioPrefix);
                 setTask.Wait(TimeSpan.FromSeconds(30));
             }

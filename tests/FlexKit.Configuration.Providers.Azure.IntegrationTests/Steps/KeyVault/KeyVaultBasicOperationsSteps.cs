@@ -2,7 +2,6 @@ using FlexKit.Configuration.Core;
 using FlexKit.Configuration.Providers.Azure.IntegrationTests.Utils;
 using FlexKit.Configuration.Conversion;
 using FlexKit.Configuration.Providers.Azure.Extensions;
-using FlexKit.Configuration.Providers.Azure.Sources;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Reqnroll;
@@ -50,7 +49,7 @@ public class KeyVaultBasicOperationsSteps(ScenarioContext scenarioContext)
         var jsonContent = await File.ReadAllTextAsync(fullPath);
         _testData = JsonConvert.DeserializeObject<Dictionary<string, object>>(jsonContent)!;
         
-        // Load Key Vault secrets from test data with scenario prefix
+        // Load Key Vault secrets from test data with a scenario prefix
         if (_testData.TryGetValue("keyVaultSecrets", out var secretsObj) && secretsObj is Newtonsoft.Json.Linq.JObject secretsJson)
         {
             foreach (var secret in secretsJson)
@@ -80,7 +79,7 @@ public class KeyVaultBasicOperationsSteps(ScenarioContext scenarioContext)
         var jsonContent = await File.ReadAllTextAsync(fullPath);
         _testData = JsonConvert.DeserializeObject<Dictionary<string, object>>(jsonContent)!;
         
-        // Load Key Vault secrets from test data with scenario prefix
+        // Load Key Vault secrets from test data with a scenario prefix
         if (_testData.TryGetValue("keyVaultSecrets", out var secretsObj) && secretsObj is Newtonsoft.Json.Linq.JObject secretsJson)
         {
             foreach (var secret in secretsJson)
@@ -89,7 +88,7 @@ public class KeyVaultBasicOperationsSteps(ScenarioContext scenarioContext)
             }
         }
         
-        // Load JSON secrets for JSON processing tests with scenario prefix
+        // Load JSON secrets for JSON processing tests with a scenario prefix
         if (_testData.TryGetValue("jsonSecrets", out var jsonSecretsObj) && jsonSecretsObj is Newtonsoft.Json.Linq.JObject jsonSecretsJson)
         {
             foreach (var jsonSecret in jsonSecretsJson)

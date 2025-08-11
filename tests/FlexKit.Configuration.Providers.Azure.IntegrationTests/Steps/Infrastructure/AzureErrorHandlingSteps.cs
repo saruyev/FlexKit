@@ -1,10 +1,10 @@
 using FlexKit.Configuration.Core;
 using FlexKit.Configuration.Providers.Azure.IntegrationTests.Utils;
 using FlexKit.Configuration.Providers.Azure.Extensions;
-using FlexKit.Configuration.Providers.Azure.Sources;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Reqnroll;
+// ReSharper disable RedundantSuppressNullableWarningExpression
 
 // ReSharper disable TooManyDeclarations
 // ReSharper disable MethodTooLong
@@ -45,9 +45,6 @@ public class AzureErrorHandlingSteps(ScenarioContext scenarioContext)
         var appConfigEmulator = scenarioContext.GetAppConfigEmulator();
         var keyVaultEmulator = scenarioContext.GetKeyVaultEmulator();
         var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
-        
-        keyVaultEmulator = new KeyVaultEmulatorContainer();
-        appConfigEmulator = new AppConfigurationEmulatorContainer();
         scenarioContext.Set(keyVaultEmulator, "KeyVaultEmulator");
         scenarioContext.Set(appConfigEmulator, "AppConfigEmulator");
         
@@ -66,7 +63,7 @@ public class AzureErrorHandlingSteps(ScenarioContext scenarioContext)
         
         try
         {
-            // Load test data for network failure scenarios with scenario prefix
+            // Load test data for network failure scenarios with a scenario prefix
             var createTask = keyVaultEmulator!.CreateTestDataAsync(fullPath, scenarioPrefix);
             createTask.Wait(TimeSpan.FromMinutes(1));
             _networkFailureSimulated = true;
@@ -93,7 +90,7 @@ public class AzureErrorHandlingSteps(ScenarioContext scenarioContext)
         
         try
         {
-            // For invalid App Configuration, we'll simulate failure during build with scenario prefix
+            // For invalid App Configuration, we'll simulate failure during build with a scenario prefix
             var createTask = appConfigEmulator!.CreateTestDataAsync(fullPath, scenarioPrefix);
             createTask.Wait(TimeSpan.FromMinutes(1));
             _invalidConfigurationSimulated = true;
@@ -121,7 +118,7 @@ public class AzureErrorHandlingSteps(ScenarioContext scenarioContext)
         
         try
         {
-            // Load test data, but it will reference non-existent secrets with scenario prefix
+            // Load test data, but it will reference non-existent secrets with the scenario prefix
             var createTask = keyVaultEmulator!.CreateTestDataAsync(fullPath, scenarioPrefix);
             createTask.Wait(TimeSpan.FromMinutes(1));
             
@@ -174,7 +171,7 @@ public class AzureErrorHandlingSteps(ScenarioContext scenarioContext)
         
         try
         {
-            // Load test data for rate limiting scenarios with scenario prefix
+            // Load test data for rate limiting scenarios with a scenario prefix
             var createTask = keyVaultEmulator!.CreateTestDataAsync(fullPath, scenarioPrefix);
             createTask.Wait(TimeSpan.FromMinutes(1));
             _rateLimitingSimulated = true;
@@ -498,7 +495,7 @@ public class AzureErrorHandlingSteps(ScenarioContext scenarioContext)
         
         try
         {
-            // Test fallback mechanisms with scenario prefix
+            // Test fallback mechanisms with a scenario prefix
             if (_errorHandlingFlexConfiguration != null)
             {
                 // Test that FlexKit can provide fallback values or handle missing configuration
@@ -682,7 +679,7 @@ public class AzureErrorHandlingSteps(ScenarioContext scenarioContext)
         {
             if (_errorHandlingFlexConfiguration != null)
             {
-                // Test access to potentially missing secrets with scenario prefix
+                // Test access to potentially missing secrets with a scenario prefix
                 var missingSecretTests = new List<(string description, string key)>
                 {
                     ("Missing database secret", $"{scenarioPrefix}:myapp:database:missing-secret"),

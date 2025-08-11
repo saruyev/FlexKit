@@ -331,6 +331,7 @@ public static class ContainerBuilderConfigurationExtensions
             builder.Register(c =>
             {
                 var configuration = c.Resolve<IConfiguration>();
+                // ReSharper disable once NullableWarningSuppressionIsUsed - blow up if config type is not compatible
                 return configuration.GetSection(sectionPath).Get(configType) ?? Activator.CreateInstance(configType)!;
             }).As(configType).SingleInstance();
         }

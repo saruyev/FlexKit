@@ -1,11 +1,12 @@
 using FlexKit.Configuration.Core;
 using FlexKit.Configuration.Providers.Azure.IntegrationTests.Utils;
 using FlexKit.Configuration.Providers.Azure.Extensions;
-using FlexKit.Configuration.Providers.Azure.Sources;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Reqnroll;
 using Microsoft.Extensions.Configuration.Memory;
+// ReSharper disable RedundantSuppressNullableWarningExpression
+// ReSharper disable ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
 
 // ReSharper disable MethodTooLong
 // ReSharper disable NullableWarningSuppressionIsUsed
@@ -41,9 +42,6 @@ public class AzureSecurityScenariosSteps(ScenarioContext scenarioContext)
         var keyVaultEmulator = scenarioContext.GetKeyVaultEmulator();
         var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
         
-        keyVaultEmulator = new KeyVaultEmulatorContainer();
-        appConfigEmulator = new AppConfigurationEmulatorContainer();
-        
         scenarioContext.Set(keyVaultEmulator, "KeyVaultEmulator");
         scenarioContext.Set(appConfigEmulator, "AppConfigEmulator");
         
@@ -62,7 +60,7 @@ public class AzureSecurityScenariosSteps(ScenarioContext scenarioContext)
         var createTask = keyVaultEmulator!.CreateTestDataAsync(fullPath, scenarioPrefix);
         createTask.Wait(TimeSpan.FromMinutes(1));
         
-        // Add security-specific test secrets with scenario prefix
+        // Add security-specific test secrets with the scenario prefix
         var securitySecretTasks = new[]
         {
             keyVaultEmulator.SetSecretAsync("test--secure--secret", "test-secure-value", scenarioPrefix),
@@ -72,7 +70,7 @@ public class AzureSecurityScenariosSteps(ScenarioContext scenarioContext)
         
         Task.WaitAll(securitySecretTasks, TimeSpan.FromSeconds(30));
         
-        // Store authentication configuration with scenario prefix
+        // Store authentication configuration with a scenario prefix
         _authenticationConfig[$"{scenarioPrefix}:Azure:Authentication:Type"] = "ManagedIdentity";
         _authenticationConfig[$"{scenarioPrefix}:Azure:Authentication:ResourceId"] = "test-resource-id";
         _securityTestData[$"{scenarioPrefix}:test:secure:secret"] = "test-secure-value";
@@ -93,7 +91,7 @@ public class AzureSecurityScenariosSteps(ScenarioContext scenarioContext)
         var createTask = appConfigEmulator!.CreateTestDataAsync(fullPath, scenarioPrefix);
         createTask.Wait(TimeSpan.FromMinutes(1));
         
-        // Add security-specific configuration settings with scenario prefix
+        // Add security-specific configuration settings with the scenario prefix
         var securityConfigTasks = new[]
         {
             appConfigEmulator.SetConfigurationAsync($"{scenarioPrefix}:Azure:Authentication:Type", "ServicePrincipal"),
@@ -104,7 +102,7 @@ public class AzureSecurityScenariosSteps(ScenarioContext scenarioContext)
         
         Task.WaitAll(securityConfigTasks, TimeSpan.FromSeconds(30));
         
-        // Store authentication configuration with scenario prefix
+        // Store authentication configuration with a scenario prefix
         _authenticationConfig[$"{scenarioPrefix}:Azure:Authentication:Type"] = "ServicePrincipal";
         _authenticationConfig[$"{scenarioPrefix}:Azure:Authentication:ClientId"] = "test-client-id";
         _authenticationConfig[$"{scenarioPrefix}:Azure:Authentication:TenantId"] = "test-tenant-id";
@@ -126,12 +124,12 @@ public class AzureSecurityScenariosSteps(ScenarioContext scenarioContext)
 
         var fullPath = Path.Combine("TestData", testDataPath);
         
-        // Load test data into both emulators with scenario prefix
+        // Load test data into both emulators with the scenario prefix
         var keyVaultTask = keyVaultEmulator!.CreateTestDataAsync(fullPath, scenarioPrefix);
         var appConfigTask = appConfigEmulator!.CreateTestDataAsync(fullPath, scenarioPrefix);
         Task.WaitAll([keyVaultTask, appConfigTask], TimeSpan.FromMinutes(1));
         
-        // Add RBAC and permission testing data with scenario prefix
+        // Add RBAC and permission testing data with the scenario prefix
         var rbacTestTasks = new List<Task>
         {
             keyVaultEmulator.SetSecretAsync("test--readable--value", "test-readable-value", scenarioPrefix),
@@ -143,7 +141,7 @@ public class AzureSecurityScenariosSteps(ScenarioContext scenarioContext)
         
         Task.WaitAll([.. rbacTestTasks], TimeSpan.FromSeconds(30));
         
-        // Store RBAC configuration with scenario prefix
+        // Store RBAC configuration with a scenario prefix
         _authenticationConfig[$"{scenarioPrefix}:Azure:RBAC:Permissions"] = "Limited";
         _authenticationConfig[$"{scenarioPrefix}:Azure:RBAC:Roles"] = "Reader";
         _securityTestData[$"{scenarioPrefix}:test:readable:value"] = "test-readable-value";
@@ -164,7 +162,7 @@ public class AzureSecurityScenariosSteps(ScenarioContext scenarioContext)
         var createTask = keyVaultEmulator!.CreateTestDataAsync(fullPath, scenarioPrefix);
         createTask.Wait(TimeSpan.FromMinutes(1));
         
-        // Add access-denied test data with scenario prefix - only public values should be accessible
+        // Add access-denied test data with a scenario prefix-only public values should be accessible
         var accessDeniedTasks = new[]
         {
             keyVaultEmulator.SetSecretAsync("test--public--value", "test-public-value", scenarioPrefix),
@@ -377,7 +375,7 @@ public class AzureSecurityScenariosSteps(ScenarioContext scenarioContext)
         _securityFlexConfiguration!.Configuration.GetValue<string>($"{scenarioPrefix}:Azure:Authentication:Type")
             .Should().Be("ManagedIdentity");
         
-        // Verify managed identity specific configuration with scenario prefix
+        // Verify managed identity-specific configuration with scenario prefix
         _securityFlexConfiguration.Configuration.GetValue<string>($"{scenarioPrefix}:Azure:Authentication:ResourceId")
             .Should().Be("test-resource-id");
             
@@ -391,7 +389,7 @@ public class AzureSecurityScenariosSteps(ScenarioContext scenarioContext)
         
         _securityFlexConfiguration.Should().NotBeNull();
         
-        // Test access to secure secrets from the Key Vault emulator with scenario prefix
+        // Test access to secure secrets from the Key Vault emulator with a scenario prefix
         var secureSecret = _securityFlexConfiguration![$"{scenarioPrefix}:test:secure:secret"];
         secureSecret.Should().NotBeNullOrEmpty("Secure secret should be accessible");
         
@@ -451,7 +449,7 @@ public class AzureSecurityScenariosSteps(ScenarioContext scenarioContext)
         _securityConfiguration[$"{scenarioPrefix}:Azure:Authentication:Password"].Should().BeNull("Password should not be exposed");
         _securityConfiguration[$"{scenarioPrefix}:Azure:Authentication:Key"].Should().BeNull("Key should not be exposed");
         
-        // Verify that the authentication type is properly configured with scenario prefix
+        // Verify that the authentication type is properly configured with the scenario prefix
         var authType = _securityConfiguration[$"{scenarioPrefix}:Azure:Authentication:Type"];
         if (_managedIdentityEnabled)
         {
@@ -484,7 +482,7 @@ public class AzureSecurityScenariosSteps(ScenarioContext scenarioContext)
         
         _securityFlexConfiguration.Should().NotBeNull();
         
-        // Test access to configuration data from the App Configuration emulator with scenario prefix
+        // Test access to configuration data from the App Configuration emulator with a scenario prefix
         var configValue = _securityFlexConfiguration![$"{scenarioPrefix}:test:config:value"];
         configValue.Should().NotBeNullOrEmpty("Configuration data should be accessible");
         configValue.Should().Be("test-configuration-value");
@@ -502,7 +500,7 @@ public class AzureSecurityScenariosSteps(ScenarioContext scenarioContext)
         // Verify credential management for service principal with scenario prefix
         _securityConfiguration![$"{scenarioPrefix}:Azure:Authentication:ClientSecret"].Should().BeNull("Client secret should not be stored in configuration");
         
-        // Verify that only non-sensitive authentication data is accessible with scenario prefix
+        // Verify that only non-sensitive authentication data is accessible with the scenario prefix
         var clientId = _securityConfiguration[$"{scenarioPrefix}:Azure:Authentication:ClientId"];
         if (_servicePrincipalEnabled)
         {
@@ -519,11 +517,11 @@ public class AzureSecurityScenariosSteps(ScenarioContext scenarioContext)
         
         _securityFlexConfiguration.Should().NotBeNull();
         
-        // Test access to readable values under RBAC restrictions with scenario prefix
+        // Test access to readable values under RBAC restrictions with a scenario prefix
         var readableValue = _securityFlexConfiguration![$"{scenarioPrefix}:test:readable:value"];
         readableValue.Should().NotBeNullOrEmpty("Readable value should be accessible with limited permissions");
         
-        // Verify RBAC configuration is properly loaded with scenario prefix
+        // Verify RBAC configuration is properly loaded with the scenario prefix
         var rbacPermissions = _securityFlexConfiguration[$"{scenarioPrefix}:Azure:RBAC:Permissions"];
         rbacPermissions.Should().Be("Limited");
         
@@ -540,18 +538,18 @@ public class AzureSecurityScenariosSteps(ScenarioContext scenarioContext)
         
         _securityFlexConfiguration.Should().NotBeNull();
         
-        // Should have access to readable values with scenario prefix
+        // Should have access to readable values with a scenario prefix
         var readableValue = _securityFlexConfiguration![$"{scenarioPrefix}:test:readable:value"];
         readableValue.Should().NotBeNullOrEmpty("Readable value should be accessible");
         
-        // Should have access to public configuration with scenario prefix
+        // Should have access to public configuration with a scenario prefix
         var publicConfig = _securityFlexConfiguration[$"{scenarioPrefix}:test:public:config"];
         if (!string.IsNullOrEmpty(publicConfig))
         {
             publicConfig.Should().Be("public-config-value");
         }
         
-        // Restricted values should not be accessible (null or empty) with scenario prefix
+        // Restricted values should not be accessible (null or empty) with the scenario prefix
         var restrictedValue = _securityFlexConfiguration[$"{scenarioPrefix}:test:restricted:value"];
         restrictedValue.Should().BeNullOrEmpty("Restricted value should not be accessible with limited permissions");
         
@@ -566,7 +564,7 @@ public class AzureSecurityScenariosSteps(ScenarioContext scenarioContext)
         _securityValidationResults.Should().Contain(x => x.Contains("Limited permissions") || x.Contains("RBAC"), 
             "Should report limited permissions or RBAC restrictions");
             
-        // Verify that RBAC status is properly reported in configuration with scenario prefix
+        // Verify that RBAC status is properly reported in configuration with a scenario prefix
         if (_rbacRestrictionsEnabled && _securityFlexConfiguration != null)
         {
             var rbacEnabled = _securityFlexConfiguration[$"{scenarioPrefix}:Azure:RBAC:Enabled"];
@@ -590,7 +588,7 @@ public class AzureSecurityScenariosSteps(ScenarioContext scenarioContext)
         var publicValue = _securityFlexConfiguration![$"{scenarioPrefix}:test:public:value"];
         publicValue.Should().NotBeNullOrEmpty("Public value should be accessible even with access denied");
         
-        // Verify access denied status is recorded with scenario prefix
+        // Verify access denied status is recorded with a scenario prefix
         var authStatus = _securityFlexConfiguration[$"{scenarioPrefix}:Azure:Authentication:Status"];
         if (_accessDeniedSimulated)
         {

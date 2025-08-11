@@ -2,14 +2,14 @@ using FlexKit.Configuration.Core;
 using FlexKit.Configuration.Providers.Azure.IntegrationTests.Utils;
 using FlexKit.Configuration.Conversion;
 using FlexKit.Configuration.Providers.Azure.Extensions;
-using FlexKit.Configuration.Providers.Azure.Sources;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Reqnroll;
-using Newtonsoft.Json;
+
 // ReSharper disable MethodTooLong
 // ReSharper disable ComplexConditionExpression
 // ReSharper disable TooManyDeclarations
+// ReSharper disable NullableWarningSuppressionIsUsed
 
 namespace FlexKit.Configuration.Providers.Azure.IntegrationTests.Steps.Integration;
 
@@ -246,7 +246,7 @@ public class AzureFlexKitIntegrationSteps(ScenarioContext scenarioContext)
 
         try
         {
-            // Test dynamic access capabilities with scenario prefix
+            // Test dynamic access capabilities with a scenario prefix
             dynamic config = _integrationFlexConfiguration!;
             
             // Test various FlexKit access patterns - using scenario prefix for keys
@@ -302,7 +302,7 @@ public class AzureFlexKitIntegrationSteps(ScenarioContext scenarioContext)
 
         try
         {
-            // Test FlexKit dynamic access patterns with scenario prefix
+            // Test FlexKit dynamic access patterns with a scenario prefix
             dynamic config = _integrationFlexConfiguration!;
 
             var dynamicTests = new List<(string description, Func<bool> validation)>
@@ -325,7 +325,7 @@ public class AzureFlexKitIntegrationSteps(ScenarioContext scenarioContext)
                 ("Null-safe dynamic access", () => 
                 {
                     _ = config[$"{scenarioPrefix}:nonexistent:nested:value"];
-                    return true; // Should not throw even if path doesn't exist
+                    return true; // Should not throw even if a path doesn't exist
                 })
             };
 
@@ -350,7 +350,6 @@ public class AzureFlexKitIntegrationSteps(ScenarioContext scenarioContext)
     public void ThenTheIntegrationControllerConfigurationShouldContainWithValue(string key, string expectedValue)
     {
         _integrationConfiguration.Should().NotBeNull("Configuration should be built");
-        var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
 
         try
         {
@@ -371,11 +370,10 @@ public class AzureFlexKitIntegrationSteps(ScenarioContext scenarioContext)
     public void ThenTheIntegrationControllerShouldDemonstrateFlexKitTypeConversionCapabilities()
     {
         _integrationFlexConfiguration.Should().NotBeNull("FlexKit configuration should be available");
-        var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
 
         try
         {
-            // Test type conversion capabilities with scenario prefix
+            // Test type conversion capabilities with a scenario prefix
             var conversionTests = new List<(string description, Func<bool> validation)>
             {
                 ("String to int conversion", () => 
@@ -422,11 +420,10 @@ public class AzureFlexKitIntegrationSteps(ScenarioContext scenarioContext)
     public void ThenTheIntegrationControllerShouldSupportFlexKitDynamicAccessToConfiguration()
     {
         _integrationFlexConfiguration.Should().NotBeNull("FlexKit configuration should be available");
-        var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
 
         try
         {
-            // Test comprehensive dynamic access with scenario prefix
+            // Test comprehensive dynamic access with a scenario prefix
             dynamic config = _integrationFlexConfiguration!;
 
             var accessTests = new List<(string description, Func<bool> validation)>
@@ -474,11 +471,10 @@ public class AzureFlexKitIntegrationSteps(ScenarioContext scenarioContext)
     public void ThenTheIntegrationControllerShouldDemonstrateAdvancedFlexKitFeatures()
     {
         _integrationFlexConfiguration.Should().NotBeNull("FlexKit configuration should be available");
-        var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
 
         try
         {
-            // Test advanced FlexKit features with scenario prefix
+            // Test advanced FlexKit features with a scenario prefix
             var advancedTests = new List<(string description, Func<bool> validation)>
             {
                 ("Configuration section binding", () => 
@@ -528,11 +524,10 @@ public class AzureFlexKitIntegrationSteps(ScenarioContext scenarioContext)
         _integrationConfiguration.Should().NotBeNull("Configuration should be built");
         _keyVaultConfigured.Should().BeTrue("Key Vault should be configured");
         _appConfigurationConfigured.Should().BeTrue("App Configuration should be configured");
-        var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
 
         try
         {
-            // Verify integration of both Azure services with scenario prefix
+            // Verify integration of both Azure services with the scenario prefix
             var integrationTests = new List<(string description, string key, Func<bool> validation)>
             {
                 ("Key Vault integration", "keyVaultSecrets:myapp:database:host", () => 
@@ -584,7 +579,7 @@ public class AzureFlexKitIntegrationSteps(ScenarioContext scenarioContext)
                 ("Standard configuration precedence", $"appConfigurationSettings:myapp:api:timeout", () => 
                 {
                     var standardValue = _integrationConfiguration![$"appConfigurationSettings:myapp:api:timeout"];
-                    var flexValue = _integrationFlexConfiguration![$"appConfigurationSettings:myapp:api:timeout"]?.ToString();
+                    var flexValue = _integrationFlexConfiguration![$"appConfigurationSettings:myapp:api:timeout"];
                     return standardValue == flexValue;
                 }),
                 ("Dynamic access precedence", $"{scenarioPrefix}:myapp:database:host", () => 
@@ -623,11 +618,10 @@ public class AzureFlexKitIntegrationSteps(ScenarioContext scenarioContext)
     public void ThenTheIntegrationControllerShouldSupportComprehensiveJsonProcessing()
     {
         _integrationConfiguration.Should().NotBeNull("Configuration should be built");
-        var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
 
         try
         {
-            // Test comprehensive JSON processing across Azure sources with scenario prefix
+            // Test comprehensive JSON processing across Azure sources with a scenario prefix
             var jsonTests = new List<(string description, string key, Func<bool> validation)>
             {
                 ("Key Vault JSON processing", $"keyVaultSecrets:infrastructure-module-database-credentials:host", () => 
@@ -669,11 +663,10 @@ public class AzureFlexKitIntegrationSteps(ScenarioContext scenarioContext)
     {
         _integrationConfiguration.Should().NotBeNull("Configuration should be built");
         _integrationFlexConfiguration.Should().NotBeNull("FlexConfig should be built");
-        var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
 
         try
         {
-            // Test handling of complex data structures with scenario prefix
+            // Test handling of complex data structures with a scenario prefix
             var complexTests = new List<(string description, Func<bool> validation)>
             {
                 ("Nested object access via FlexKit", () => 
@@ -723,7 +716,6 @@ public class AzureFlexKitIntegrationSteps(ScenarioContext scenarioContext)
     public void ThenTheIntegrationControllerShouldDemonstrateFlexKitJsonIntegrationCapabilities()
     {
         _integrationFlexConfiguration.Should().NotBeNull("FlexKit configuration should be available");
-        var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
 
         try
         {
@@ -782,13 +774,10 @@ public class AzureFlexKitIntegrationSteps(ScenarioContext scenarioContext)
             // Test that the integration works even with optional sources
             var errorToleranceTests = new List<(string description, Func<bool> validation)>
             {
-                ("Configuration built despite optional failures", () => 
-                {
-                    return _integrationConfiguration != null;
-                }),
+                ("Configuration built despite optional failures", () => _integrationConfiguration != null),
                 ("FlexKit operational with error tolerance", () => 
                 {
-                    dynamic config = _integrationFlexConfiguration!;
+                    dynamic _ = _integrationFlexConfiguration!;
                     return TryDynamicAccess();
                 }),
                 ("Available configuration accessible", () => 

@@ -309,7 +309,8 @@ public static class AzureExtensions
             ReloadAfter = options.ReloadAfter,
             Credential = options.Credential,
             OnLoadException = options.OnLoadException,
-            ConfigurationClient = options.ConfigurationClient
+            ConfigurationClient = options.ConfigurationClient,
+            JsonProcessor = options.JsonProcessor
         });
     }
 
@@ -417,7 +418,7 @@ public static class AzureExtensions
     /// <param name="element">The array JSON element to process.</param>
     /// <param name="output">The target dictionary for flattened key-value pairs.</param>
     /// <param name="parentKey">The key prefix representing the current nesting level.</param>
-    private static void ProcessArray(JsonElement element, ConcurrentDictionary<string, string?> output, string parentKey)
+    private static void ProcessArray(in JsonElement element, ConcurrentDictionary<string, string?> output, string parentKey)
     {
         const string keyDelimiter = ":";
         var index = 0;
@@ -436,7 +437,7 @@ public static class AzureExtensions
     /// <param name="element">The primitive JSON element to process.</param>
     /// <param name="output">The target dictionary for flattened key-value pairs.</param>
     /// <param name="key">The resulting key under which the value will be stored.</param>
-    private static void ProcessPrimitive(JsonElement element, ConcurrentDictionary<string, string?> output, string key)
+    private static void ProcessPrimitive(in JsonElement element, ConcurrentDictionary<string, string?> output, string key)
     {
         output[key] = element.ValueKind switch
         {

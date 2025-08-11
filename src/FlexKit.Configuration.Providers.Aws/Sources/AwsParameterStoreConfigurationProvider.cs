@@ -408,48 +408,44 @@ public sealed class AwsParameterStoreConfigurationProvider : ConfigurationProvid
         "No SRP violation as this is a standard pattern for IDisposable implementations.")]
     private void Dispose(bool disposing)
     {
-        if (!_disposed)
+        if (_disposed)
         {
-            if (disposing)
-            {
-                _reloadTimer?.Dispose();
-                _ssmClient.Dispose();
-            }
-
-            _disposed = true;
+            return;
         }
+
+        if (disposing)
+        {
+            _reloadTimer?.Dispose();
+            _ssmClient.Dispose();
+        }
+
+        _disposed = true;
     }
 
     /// <summary>
     /// Releases all resources used by the current instance of the <see cref="AwsParameterStoreConfigurationProvider"/> class.
     /// </summary>
-    public void Dispose()
-    {
-        Dispose(disposing: true);
-    }
+    public void Dispose() => Dispose(disposing: true);
 }
 
 /// <summary>
 /// Represents an exception that occurs during configuration provider loading.
 /// Used to provide context about configuration loading failures for error handling and logging.
 /// </summary>
-public class ConfigurationProviderException : Exception
+/// <remarks>
+/// Initializes a new instance of the <see cref="ConfigurationProviderException"/> class.
+/// </remarks>
+/// <param name="source">The configuration source that caused the exception.</param>
+/// <param name="innerException">The exception that is the cause of the current exception.</param>
+public class ConfigurationProviderException(AwsParameterStoreConfigurationSource source, Exception innerException) : Exception($"Failed to load configuration from AWS Parameter Store source: {source.Path}", innerException)
 {
-    private readonly string _source;
+    /// <summary>
+    /// Source of the exception (the Parameter Store path).
+    /// </summary>
+    private readonly string _source = source.Path;
 
     /// <summary>
     /// Gets the source of the exception (the Parameter Store path).
     /// </summary>
     public override string Source => _source;
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="ConfigurationProviderException"/> class.
-    /// </summary>
-    /// <param name="source">The configuration source that caused the exception.</param>
-    /// <param name="innerException">The exception that is the cause of the current exception.</param>
-    public ConfigurationProviderException(AwsParameterStoreConfigurationSource source, Exception innerException)
-        : base($"Failed to load configuration from AWS Parameter Store source: {source.Path}", innerException)
-    {
-        _source = source.Path; // Store in a private field, not virtual property
-    }
 }

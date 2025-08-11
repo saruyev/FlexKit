@@ -11,6 +11,7 @@ using FlexKit.IntegrationTests.Utils;
 using Microsoft.Extensions.Logging;
 // ReSharper disable HollowTypeName
 // ReSharper disable MethodTooLong
+// ReSharper disable NullableWarningSuppressionIsUsed
 
 namespace FlexKit.Configuration.Providers.Aws.IntegrationTests.Utils;
 

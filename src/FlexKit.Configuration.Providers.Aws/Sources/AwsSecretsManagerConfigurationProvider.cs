@@ -423,17 +423,13 @@ public sealed class AwsSecretsManagerConfigurationProvider : ConfigurationProvid
     /// <summary>
     /// Processes a SecretBinary value by converting it to a Base64-encoded string.
     /// This enables storage of binary data (certificates, keystores, etc.) in the configuration system.
+    /// Converts binary data to Base64 string for compatibility with the configuration system.
     /// </summary>
     /// <param name="secretBinary">The SecretBinary value to process.</param>
     /// <param name="configurationData">The dictionary to store the processed configuration data.</param>
     /// <param name="configKey">The configuration key for this secret.</param>
-    private static void ProcessSecretBinary(MemoryStream secretBinary, Dictionary<string, string?> configurationData, string configKey)
-    {
-        // Convert binary data to Base64 string for compatibility with the configuration system
-        var binaryData = secretBinary.ToArray();
-        var base64String = Convert.ToBase64String(binaryData);
-        configurationData[configKey] = base64String;
-    }
+    private static void ProcessSecretBinary(MemoryStream secretBinary, Dictionary<string, string?> configurationData, string configKey) =>
+        configurationData[configKey] = Convert.ToBase64String(secretBinary.ToArray());
 
     /// <summary>
     /// Determines whether a configuration key should be processed as JSON based on the provider configuration.
@@ -466,48 +462,45 @@ public sealed class AwsSecretsManagerConfigurationProvider : ConfigurationProvid
         "No SRP violation as this is a standard pattern for IDisposable implementations.")]
     private void Dispose(bool disposing)
     {
-        if (!_disposed)
+        if (_disposed)
         {
-            if (disposing)
-            {
-                _reloadTimer?.Dispose();
-                _secretsClient.Dispose();
-            }
-
-            _disposed = true;
+            return;
         }
+
+        if (disposing)
+        {
+            _reloadTimer?.Dispose();
+            _secretsClient.Dispose();
+        }
+
+        _disposed = true;
     }
 
     /// <summary>
     /// Releases all resources used by the current instance of the <see cref="AwsSecretsManagerConfigurationProvider"/> class.
     /// </summary>
-    public void Dispose()
-    {
-        Dispose(disposing: true);
-    }
+    public void Dispose() => Dispose(disposing: true);
 }
 
 /// <summary>
 /// Represents an exception that occurs during Secrets Manager configuration provider loading.
 /// Used to provide context about configuration loading failures for error handling and logging.
 /// </summary>
-public class SecretsManagerConfigurationProviderException : Exception
+/// <remarks>
+/// Initializes a new instance of the <see cref="SecretsManagerConfigurationProviderException"/> class.
+/// </remarks>
+/// <param name="source">The configuration source that caused the exception.</param>
+/// <param name="innerException">The exception that is the cause of the current exception.</param>
+public class SecretsManagerConfigurationProviderException(AwsSecretsManagerConfigurationSource source, Exception innerException) :
+    Exception($"Failed to load configuration from AWS Secrets Manager", innerException)
 {
-    private readonly string _source;
+    /// <summary>
+    /// The configuration source that caused the exception.
+    /// </summary>
+    private readonly string _source = $"SecretsManager[{string.Join(",", source.SecretNames ?? [])}]";
 
     /// <summary>
     /// Gets the source of the exception (the Secrets Manager configuration details).
     /// </summary>
     public override string Source => _source;
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="SecretsManagerConfigurationProviderException"/> class.
-    /// </summary>
-    /// <param name="source">The configuration source that caused the exception.</param>
-    /// <param name="innerException">The exception that is the cause of the current exception.</param>
-    public SecretsManagerConfigurationProviderException(AwsSecretsManagerConfigurationSource source, Exception innerException)
-        : base($"Failed to load configuration from AWS Secrets Manager", innerException)
-    {
-        _source = $"SecretsManager[{string.Join(",", source.SecretNames ?? [])}]";
-    }
 }

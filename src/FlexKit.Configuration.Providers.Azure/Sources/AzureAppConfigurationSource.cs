@@ -119,6 +119,17 @@ public class AzureAppConfigurationSource : IConfigurationSource
     public ConfigurationClient? ConfigurationClient { get; [UsedImplicitly] set; }
 
     /// <summary>
+    /// Gets or sets a value indicating whether JSON configuration settings should be automatically flattened.
+    /// When enabled, configuration settings values containing valid JSON will be
+    /// processed into hierarchical configuration keys.
+    /// </summary>
+    /// <value>
+    /// True to enable JSON processing; false to treat all configuration settings as simple strings.
+    /// Default is false.
+    /// </value>
+    public bool JsonProcessor { get; [UsedImplicitly] set; }
+
+    /// <summary>
     /// Creates a new Azure App Configuration provider that will load data from this source.
     /// This method is called by the .NET configuration system when building the configuration
     /// from all registered sources.
@@ -145,23 +156,20 @@ public class AzureAppConfigurationSource : IConfigurationSource
 /// Represents an exception that occurs during App Configuration provider loading.
 /// Used to provide context about configuration loading failures for error handling and logging.
 /// </summary>
-public class AppConfigurationProviderException : Exception
+/// <remarks>
+/// Initializes a new instance of the <see cref="AppConfigurationProviderException"/> class.
+/// </remarks>
+/// <param name="source">The configuration source that caused the exception.</param>
+/// <param name="innerException">The exception that is the cause of the current exception.</param>
+public class AppConfigurationProviderException(AzureAppConfigurationSource source, Exception innerException) : Exception($"Failed to load configuration from Azure App Configuration source: {source.ConnectionString}", innerException)
 {
-    private readonly string _source;
+    /// <summary>
+    /// The configuration source that caused the exception.
+    /// </summary>
+    private readonly string _source = source.ConnectionString;
 
     /// <summary>
     /// Gets the source of the exception (the App Configuration connection string).
     /// </summary>
     public override string Source => _source;
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="AppConfigurationProviderException"/> class.
-    /// </summary>
-    /// <param name="source">The configuration source that caused the exception.</param>
-    /// <param name="innerException">The exception that is the cause of the current exception.</param>
-    public AppConfigurationProviderException(AzureAppConfigurationSource source, Exception innerException)
-        : base($"Failed to load configuration from Azure App Configuration source: {source.ConnectionString}", innerException)
-    {
-        _source = source.ConnectionString;
-    }
 }

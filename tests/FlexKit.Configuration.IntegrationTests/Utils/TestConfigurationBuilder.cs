@@ -5,6 +5,7 @@ using Reqnroll;
 using FlexKit.IntegrationTests.Utils;
 // ReSharper disable UnusedMember.Global
 // ReSharper disable MethodTooLong
+// ReSharper disable NullableWarningSuppressionIsUsed
 
 namespace FlexKit.Configuration.IntegrationTests.Utils;
 

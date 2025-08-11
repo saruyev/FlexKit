@@ -513,7 +513,7 @@ public static class AwsExtensions
     /// <param name="jsonElement">The JSON element to flatten.</param>
     /// <param name="output">The dictionary where flattened key-value pairs will be stored.</param>
     /// <param name="parentKey">The prefix key under which all values from this element will be stored.</param>
-    private static void FlattenJsonElement(this JsonElement jsonElement, Dictionary<string, string?> output, string parentKey)
+    private static void FlattenJsonElement(this in JsonElement jsonElement, Dictionary<string, string?> output, string parentKey)
     {
         switch (jsonElement.ValueKind)
         {
@@ -543,7 +543,7 @@ public static class AwsExtensions
     /// <param name="element">The object JSON element to process.</param>
     /// <param name="output">The target dictionary for flattened key-value pairs.</param>
     /// <param name="parentKey">The key prefix representing the current nesting level.</param>
-    private static void ProcessObject(JsonElement element, Dictionary<string, string?> output, string parentKey)
+    private static void ProcessObject(in JsonElement element, Dictionary<string, string?> output, string parentKey)
     {
         const string keyDelimiter = ":";
         foreach (var property in element.EnumerateObject())
@@ -559,7 +559,7 @@ public static class AwsExtensions
     /// <param name="element">The array JSON element to process.</param>
     /// <param name="output">The target dictionary for flattened key-value pairs.</param>
     /// <param name="parentKey">The key prefix representing the current nesting level.</param>
-    private static void ProcessArray(JsonElement element, Dictionary<string, string?> output, string parentKey)
+    private static void ProcessArray(in JsonElement element, Dictionary<string, string?> output, string parentKey)
     {
         const string keyDelimiter = ":";
         var index = 0;
@@ -578,7 +578,7 @@ public static class AwsExtensions
     /// <param name="element">The primitive JSON element to process.</param>
     /// <param name="output">The target dictionary for flattened key-value pairs.</param>
     /// <param name="key">The resulting key under which the value will be stored.</param>
-    private static void ProcessPrimitive(JsonElement element, Dictionary<string, string?> output, string key)
+    private static void ProcessPrimitive(in JsonElement element, Dictionary<string, string?> output, string key)
     {
         output[key] = element.ValueKind switch
         {

@@ -632,11 +632,6 @@ public sealed class FlexConfiguration(IConfiguration root) : DynamicObject, IFle
         var genericType = binder.Type.GetGenericTypeDefinition();
         var isExpectedType = genericType == typeof(IDictionary<,>);
 
-        if (isExpectedType || genericType == typeof(Dictionary<,>))
-        {
-            return section?.GetChildren().ToDictionary(binder.Type);
-        }
-
-        return null;
+        return isExpectedType || genericType == typeof(Dictionary<,>) ? section?.GetChildren().ToDictionary(binder.Type) : null;
     }
 }

@@ -135,23 +135,18 @@ namespace FlexKit.Configuration.Providers.Yaml.Sources;
 ///     timeout: 3000
 /// </code>
 /// </example>
-public class YamlConfigurationProvider : ConfigurationProvider
+/// <remarks>
+/// Initializes a new instance of the YamlConfigurationProvider class.
+/// </remarks>
+/// <param name="source">The configuration source containing YAML file settings and options.</param>
+/// <exception cref="ArgumentNullException">Thrown when the source is null.</exception>
+public class YamlConfigurationProvider(YamlConfigurationSource source) : ConfigurationProvider
 {
     /// <summary>
     /// The configuration source that defines the YAML file location and loading options.
     /// Used to access a file path, optional flag, and other source-specific settings.
     /// </summary>
-    private readonly YamlConfigurationSource _source;
-
-    /// <summary>
-    /// Initializes a new instance of the YamlConfigurationProvider class.
-    /// </summary>
-    /// <param name="source">The configuration source containing YAML file settings and options.</param>
-    /// <exception cref="ArgumentNullException">Thrown when the source is null.</exception>
-    public YamlConfigurationProvider(YamlConfigurationSource source)
-    {
-        _source = source ?? throw new ArgumentNullException(nameof(source));
-    }
+    private readonly YamlConfigurationSource _source = source ?? throw new ArgumentNullException(nameof(source));
 
     /// <summary>
     /// Loads configuration data from the YAML file specified in the configuration source.
@@ -242,6 +237,7 @@ public class YamlConfigurationProvider : ConfigurationProvider
     /// Validates if the YAML file exists and handles the optional file logic.
     /// </summary>
     /// <returns>True if processing should continue, false if empty configuration should be loaded.</returns>
+    /// <exception cref="FileNotFoundException">The configuration file was not found.</exception>
     private bool ValidateFileExists()
     {
         if (File.Exists(_source.Path))
@@ -249,13 +245,14 @@ public class YamlConfigurationProvider : ConfigurationProvider
             return true;
         }
 
-        if (_source.Optional)
+        if (!_source.Optional)
         {
-            Data = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
-            return false;
+            throw new FileNotFoundException(
+                $"The configuration file '{_source.Path}' was not found and is not optional.");
         }
 
-        throw new FileNotFoundException($"The configuration file '{_source.Path}' was not found and is not optional.");
+        Data = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
+        return false;
     }
 
     /// <summary>
@@ -370,17 +367,24 @@ public class YamlConfigurationProvider : ConfigurationProvider
     /// <summary>
     /// Handles null values in the YAML structure.
     /// </summary>
+    /// <param name="data">The dictionary to store the flattened key-value pairs.</param>
+    /// <param name="prefix">The current key prefix for nested objects (used recursively).</param>
     private static void HandleNullValue(Dictionary<string, string?> data, string prefix)
     {
-        if (!string.IsNullOrEmpty(prefix))
+        if (string.IsNullOrEmpty(prefix))
         {
-            data[prefix] = null;
+            return;
         }
+
+        data[prefix] = null;
     }
 
     /// <summary>
     /// Handles dictionary/object structures in the YAML.
     /// </summary>
+    /// <param name="dict">The YAML dictionary to flatten.</param>
+    /// <param name="data">The dictionary to store the flattened key-value pairs.</param>
+    /// <param name="prefix">The current key prefix for nested objects (used recursively).</param>
     private static void HandleDictionary(IDictionary<object, object> dict, Dictionary<string, string?> data, string prefix)
     {
         foreach (var kvp in dict)
@@ -394,6 +398,9 @@ public class YamlConfigurationProvider : ConfigurationProvider
     /// <summary>
     /// Handles array/list structures in the YAML.
     /// </summary>
+    /// <param name="list">The YAML list to flatten.</param>
+    /// <param name="data">The dictionary to store the flattened key-value pairs.</param>
+    /// <param name="prefix">The current key prefix for nested objects (used recursively).</param>
     private static void HandleArray(IList<object> list, Dictionary<string, string?> data, string prefix)
     {
         for (var i = 0; i < list.Count; i++)
@@ -406,5 +413,9 @@ public class YamlConfigurationProvider : ConfigurationProvider
     /// <summary>
     /// Handles scalar values (strings, numbers, booleans) in the YAML.
     /// </summary>
-    private static void HandleScalarValue(object obj, Dictionary<string, string?> data, string prefix) => data[prefix] = obj.ToString();
+    /// <param name="obj">The YAML scalar value to flatten.</param>
+    /// <param name="data">The dictionary to store the flattened key-value pairs.</param>
+    /// <param name="prefix">The current key prefix for nested objects (used recursively).</param>
+    private static void HandleScalarValue(object obj, Dictionary<string, string?> data, string prefix) =>
+        data[prefix] = obj.ToString();
 }

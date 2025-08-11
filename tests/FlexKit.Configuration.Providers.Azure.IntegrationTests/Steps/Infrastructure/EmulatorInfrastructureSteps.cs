@@ -1,11 +1,11 @@
 using FlexKit.Configuration.Providers.Azure.IntegrationTests.Utils;
 using FluentAssertions;
-using Microsoft.Extensions.Logging;
 using Reqnroll;
 // ReSharper disable MethodTooLong
 // ReSharper disable ArrangeRedundantParentheses
 // ReSharper disable ComplexConditionExpression
 // ReSharper disable NullableWarningSuppressionIsUsed
+// ReSharper disable RedundantSuppressNullableWarningExpression
 
 namespace FlexKit.Configuration.Providers.Azure.IntegrationTests.Steps.Infrastructure;
 
@@ -22,8 +22,6 @@ public class EmulatorInfrastructureSteps(ScenarioContext scenarioContext)
     private readonly List<string> _infrastructureValidationResults = new();
     private bool _emulatorsStarted;
     private string _testDataPath = string.Empty;
-    private readonly ILogger _logger = 
-        LoggerFactory.Create(builder => builder.AddConsole()).CreateLogger<EmulatorInfrastructureSteps>();
 
     #region Given Steps - Setup
 
@@ -33,9 +31,6 @@ public class EmulatorInfrastructureSteps(ScenarioContext scenarioContext)
         var appConfigEmulator = scenarioContext.GetAppConfigEmulator();
         var keyVaultEmulator = scenarioContext.GetKeyVaultEmulator();
         var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
-        
-        keyVaultEmulator = new KeyVaultEmulatorContainer();
-        appConfigEmulator = new AppConfigurationEmulatorContainer();
         
         scenarioContext.Set(keyVaultEmulator, "KeyVaultEmulator");
         scenarioContext.Set(appConfigEmulator, "AppConfigEmulator");
@@ -49,10 +44,6 @@ public class EmulatorInfrastructureSteps(ScenarioContext scenarioContext)
         var appConfigEmulator = scenarioContext.GetAppConfigEmulator();
         var keyVaultEmulator = scenarioContext.GetKeyVaultEmulator();
         var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
-        
-        // Create and prepare emulators
-        keyVaultEmulator = new KeyVaultEmulatorContainer();
-        appConfigEmulator = new AppConfigurationEmulatorContainer();
         
         scenarioContext.Set(keyVaultEmulator, "KeyVaultEmulator");
         scenarioContext.Set(appConfigEmulator, "AppConfigEmulator");
@@ -90,7 +81,7 @@ public class EmulatorInfrastructureSteps(ScenarioContext scenarioContext)
             // Use the path as provided
             _testDataPath = testDataPath;
             
-            // Load test data with scenario prefix for isolation
+            // Load test data with a scenario prefix for isolation
             await keyVaultEmulator!.CreateTestDataAsync(_testDataPath, scenarioPrefix);
             await appConfigEmulator!.CreateTestDataAsync(_testDataPath, scenarioPrefix);
             
@@ -159,18 +150,13 @@ public class EmulatorInfrastructureSteps(ScenarioContext scenarioContext)
         
         try
         {
-            // Basic validation that test data path was set
+            // Basic validation that a test data path was set
             _testDataPath.Should().NotBeNullOrEmpty("Test data path should be configured");
             
             // Check that the test data file exists
-            if (File.Exists(_testDataPath))
-            {
-                _infrastructureValidationResults.Add($"✓ Test data file exists and is accessible with prefix '{scenarioPrefix}'");
-            }
-            else
-            {
-                _infrastructureValidationResults.Add($"⚠ Test data file not found, but emulators may still work with prefix '{scenarioPrefix}'");
-            }
+            _infrastructureValidationResults.Add(File.Exists(_testDataPath)
+                ? $"✓ Test data file exists and is accessible with prefix '{scenarioPrefix}'"
+                : $"⚠ Test data file not found, but emulators may still work with prefix '{scenarioPrefix}'");
         }
         catch (Exception ex)
         {
@@ -187,7 +173,6 @@ public class EmulatorInfrastructureSteps(ScenarioContext scenarioContext)
         
         try
         {
-            var keyVaultEmulator = scenarioContext.GetKeyVaultEmulator();
             if (_emulatorsStarted)
             {
                 _emulatorsStarted = false;
@@ -239,18 +224,13 @@ public class EmulatorInfrastructureSteps(ScenarioContext scenarioContext)
         {
             keyVaultEmulator!.SecretClient.Should().NotBeNull("Key Vault client should be created");
             
-            // Try to verify some test data exists by attempting to get a common test secret with scenario prefix
+            // Try to verify some test data exists by attempting to get a common test secret with a scenario prefix
             try
             {
                 var testSecret = await keyVaultEmulator.GetSecretAsync($"{scenarioPrefix}:myapp--database--host");
-                if (!string.IsNullOrEmpty(testSecret))
-                {
-                    _infrastructureValidationResults.Add($"✓ Key Vault test data verification successful for prefix '{scenarioPrefix}'");
-                }
-                else
-                {
-                    _infrastructureValidationResults.Add($"⚠ No test data found for prefix '{scenarioPrefix}', but Key Vault client is working");
-                }
+                _infrastructureValidationResults.Add(!string.IsNullOrEmpty(testSecret)
+                    ? $"✓ Key Vault test data verification successful for prefix '{scenarioPrefix}'"
+                    : $"⚠ No test data found for prefix '{scenarioPrefix}', but Key Vault client is working");
             }
             catch
             {
