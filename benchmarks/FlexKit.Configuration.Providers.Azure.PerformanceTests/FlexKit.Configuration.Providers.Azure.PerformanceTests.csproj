@@ -81,7 +81,7 @@
         <None Update="TestData\large-secret.json">
           <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
-        <None Update="TestData\secrets-config.json">
+        <None Update="TestData\simple-config.json">
           <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
     </ItemGroup>
