@@ -1,10 +1,12 @@
 using FlexKit.Configuration.Core;
 using FlexKit.Configuration.Providers.Azure.IntegrationTests.Utils;
+using FlexKit.Configuration.Providers.Azure.Extensions;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Reqnroll;
 using System.Diagnostics;
 using System.Text.Json;
+
 // ReSharper disable MethodTooLong
 // ReSharper disable ClassTooBig
 // ReSharper disable ComplexConditionExpression
@@ -24,7 +26,6 @@ namespace FlexKit.Configuration.Providers.Azure.IntegrationTests.Steps.Infrastru
 [Binding]
 public class AzureAdvancedScenariosSteps(ScenarioContext scenarioContext)
 {
-    private AzureTestConfigurationBuilder? _advancedBuilder;
     private IConfiguration? _advancedConfiguration;
     private IFlexConfig? _advancedFlexConfiguration;
 
@@ -50,22 +51,16 @@ public class AzureAdvancedScenariosSteps(ScenarioContext scenarioContext)
 
     #region Given Steps - Setup
 
-    [Given(@"I have established an advanced controller environment")]
-    public void GivenIHaveEstablishedAnAdvancedControllerEnvironment()
-    {
-        _advancedBuilder = new AzureTestConfigurationBuilder(scenarioContext);
-        _performanceStopwatch = new Stopwatch();
-        scenarioContext.Set(_advancedBuilder, "AdvancedBuilder");
-        _advancedValidationResults.Add("✓ Advanced controller environment established");
-    }
-
     [Given(@"I have advanced controller configuration with versioned Key Vault from ""(.*)""")]
     public void GivenIHaveAdvancedControllerConfigurationWithVersionedKeyVaultFrom(string testDataPath)
     {
-        _advancedBuilder.Should().NotBeNull("Advanced builder should be established");
+        var keyVaultEmulator = scenarioContext.GetKeyVaultEmulator();
+        var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
+        keyVaultEmulator.Should().NotBeNull("Key Vault emulator should be established");
 
         var fullPath = Path.Combine("TestData", testDataPath);
-        _advancedBuilder!.AddKeyVaultFromTestData(fullPath, optional: false, jsonProcessor: true);
+        var createTask = keyVaultEmulator!.CreateTestDataAsync(fullPath, scenarioPrefix);
+        createTask.Wait(TimeSpan.FromMinutes(1));
         _secretVersioningEnabled = true;
 
         // Simulate secret versioning
@@ -73,17 +68,20 @@ public class AzureAdvancedScenariosSteps(ScenarioContext scenarioContext)
         _secretVersions["myapp--api--key"] = "v2.1.0";
         _secretVersions["infrastructure-module-database-credentials"] = "v1.5.2";
 
-        scenarioContext.Set(_advancedBuilder, "AdvancedBuilder");
-        _advancedValidationResults.Add("✓ Versioned Key Vault configuration added");
+        _advancedValidationResults.Add(
+            $"✓ Versioned Key Vault configuration added to emulator with prefix '{scenarioPrefix}'");
     }
 
     [Given(@"I have advanced controller configuration with snapshot App Configuration from ""(.*)""")]
     public void GivenIHaveAdvancedControllerConfigurationWithSnapshotAppConfigurationFrom(string testDataPath)
     {
-        _advancedBuilder.Should().NotBeNull("Advanced builder should be established");
+        var appConfigEmulator = scenarioContext.GetAppConfigEmulator();
+        var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
+        appConfigEmulator.Should().NotBeNull("App Configuration emulator should be established");
 
         var fullPath = Path.Combine("TestData", testDataPath);
-        _advancedBuilder!.AddAppConfigurationFromTestData(fullPath, optional: false);
+        var createTask = appConfigEmulator!.CreateTestDataAsync(fullPath, scenarioPrefix);
+        createTask.Wait(TimeSpan.FromMinutes(1));
         _configurationSnapshotsEnabled = true;
 
         // Simulate configuration snapshots
@@ -92,82 +90,105 @@ public class AzureAdvancedScenariosSteps(ScenarioContext scenarioContext)
         _configurationSnapshots["production-snapshot-2"] = now.AddHours(-12);
         _configurationSnapshots["production-snapshot-current"] = now;
 
-        scenarioContext.Set(_advancedBuilder, "AdvancedBuilder");
-        _advancedValidationResults.Add("✓ Snapshot App Configuration added");
+        _advancedValidationResults.Add(
+            $"✓ Snapshot App Configuration added to emulator with prefix '{scenarioPrefix}'");
     }
 
     [Given("I have advanced controller configuration with multi-tenant setup from \"(.*)\"")]
     public void GivenIHaveAdvancedControllerConfigurationWithMultiTenantSetupFrom(string testDataPath)
     {
-        _advancedBuilder.Should().NotBeNull("Advanced builder should be established");
+        var appConfigEmulator = scenarioContext.GetAppConfigEmulator();
+        var keyVaultEmulator = scenarioContext.GetKeyVaultEmulator();
+        var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
+        keyVaultEmulator.Should().NotBeNull("Key Vault emulator should be established");
+        appConfigEmulator.Should().NotBeNull("App Configuration emulator should be established");
 
         var fullPath = Path.Combine("TestData", testDataPath);
-        _advancedBuilder!.AddAppConfigurationFromTestData(fullPath, optional: false);
-        _advancedBuilder!.AddKeyVaultFromTestData(fullPath, optional: false, jsonProcessor: true);
+        var keyVaultTask = keyVaultEmulator!.CreateTestDataAsync(fullPath, scenarioPrefix);
+        var appConfigTask = appConfigEmulator!.CreateTestDataAsync(fullPath, scenarioPrefix);
+        Task.WaitAll([keyVaultTask, appConfigTask], TimeSpan.FromMinutes(1));
         _multiTenantEnabled = true;
 
         // Simulate multiple tenants
         _tenantIds.AddRange(["tenant-corp", "tenant-startup", "tenant-enterprise"]);
 
-        scenarioContext.Set(_advancedBuilder, "AdvancedBuilder");
-        _advancedValidationResults.Add("✓ Multi-tenant configuration added");
+        _advancedValidationResults.Add(
+            $"✓ Multi-tenant configuration added to emulators with prefix '{scenarioPrefix}'");
     }
 
     [Given("I have advanced controller configuration with cross-region setup from \"(.*)\"")]
     public void GivenIHaveAdvancedControllerConfigurationWithCrossRegionSetupFrom(string testDataPath)
     {
-        _advancedBuilder.Should().NotBeNull("Advanced builder should be established");
+        var appConfigEmulator = scenarioContext.GetAppConfigEmulator();
+        var keyVaultEmulator = scenarioContext.GetKeyVaultEmulator();
+        var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
+        keyVaultEmulator.Should().NotBeNull("Key Vault emulator should be established");
+        appConfigEmulator.Should().NotBeNull("App Configuration emulator should be established");
 
         var fullPath = Path.Combine("TestData", testDataPath);
-        _advancedBuilder!.AddAppConfigurationFromTestData(fullPath, optional: false);
-        _advancedBuilder!.AddKeyVaultFromTestData(fullPath, optional: false, jsonProcessor: true);
+        var keyVaultTask = keyVaultEmulator!.CreateTestDataAsync(fullPath, scenarioPrefix);
+        var appConfigTask = appConfigEmulator!.CreateTestDataAsync(fullPath, scenarioPrefix);
+        Task.WaitAll([keyVaultTask, appConfigTask], TimeSpan.FromMinutes(1));
         _crossRegionEnabled = true;
 
         // Simulate multiple regions
         _regions.AddRange(["eastus", "westus2", "eastus2", "centralus"]);
 
-        scenarioContext.Set(_advancedBuilder, "AdvancedBuilder");
-        _advancedValidationResults.Add("✓ Cross-region configuration added");
+        _advancedValidationResults.Add(
+            $"✓ Cross-region configuration added to emulators with prefix '{scenarioPrefix}'");
     }
 
     [Given("I have advanced controller configuration with large data sets from \"(.*)\"")]
     public void GivenIHaveAdvancedControllerConfigurationWithLargeDataSetsFrom(string testDataPath)
     {
-        _advancedBuilder.Should().NotBeNull("Advanced builder should be established");
+        var keyVaultEmulator = scenarioContext.GetKeyVaultEmulator();
+        var appConfigEmulator = scenarioContext.GetAppConfigEmulator();
+        var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
+        keyVaultEmulator.Should().NotBeNull("Key Vault emulator should be established");
+        appConfigEmulator.Should().NotBeNull("App Configuration emulator should be established");
 
         var fullPath = Path.Combine("TestData", testDataPath);
-        _advancedBuilder!.AddAppConfigurationFromTestData(fullPath, optional: false);
-        _advancedBuilder!.AddKeyVaultFromTestData(fullPath, optional: false, jsonProcessor: true);
+        var keyVaultTask = keyVaultEmulator!.CreateTestDataAsync(fullPath, scenarioPrefix);
+        var appConfigTask = appConfigEmulator!.CreateTestDataAsync(fullPath, scenarioPrefix);
+        Task.WaitAll([keyVaultTask, appConfigTask], TimeSpan.FromMinutes(1));
         _largeDataSetsEnabled = true;
 
         // Simulate large data set processing
         _largeDataSetSize = 10000; // Simulate 10k configuration items
 
-        scenarioContext.Set(_advancedBuilder, "AdvancedBuilder");
-        _advancedValidationResults.Add("✓ Large data sets configuration added");
+        _advancedValidationResults.Add(
+            $"✓ Large data sets configuration added to emulators with prefix '{scenarioPrefix}'");
     }
 
     [Given("I have advanced controller configuration with import/export capabilities from \"(.*)\"")]
     public void GivenIHaveAdvancedControllerConfigurationWithImportExportCapabilitiesFrom(string testDataPath)
     {
-        _advancedBuilder.Should().NotBeNull("Advanced builder should be established");
+        var keyVaultEmulator = scenarioContext.GetKeyVaultEmulator();
+        var appConfigEmulator = scenarioContext.GetAppConfigEmulator();
+        var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
+        keyVaultEmulator.Should().NotBeNull("Key Vault emulator should be established");
+        appConfigEmulator.Should().NotBeNull("App Configuration emulator should be established");
 
         var fullPath = Path.Combine("TestData", testDataPath);
-        _advancedBuilder!.AddAppConfigurationFromTestData(fullPath, optional: false);
-        _advancedBuilder!.AddKeyVaultFromTestData(fullPath, optional: false, jsonProcessor: true);
+        var keyVaultTask = keyVaultEmulator!.CreateTestDataAsync(fullPath, scenarioPrefix);
+        var appConfigTask = appConfigEmulator!.CreateTestDataAsync(fullPath, scenarioPrefix);
+        Task.WaitAll([keyVaultTask, appConfigTask], TimeSpan.FromMinutes(1));
         _importExportEnabled = true;
 
-        scenarioContext.Set(_advancedBuilder, "AdvancedBuilder");
-        _advancedValidationResults.Add("✓ Import/Export configuration added");
+        _advancedValidationResults.Add(
+            $"✓ Import/Export configuration added to emulators with prefix '{scenarioPrefix}'");
     }
 
     [Given("I have advanced controller configuration with A/B testing setup from \"(.*)\"")]
     public void GivenIHaveAdvancedControllerConfigurationWithABTestingSetupFrom(string testDataPath)
     {
-        _advancedBuilder.Should().NotBeNull("Advanced builder should be established");
+        var appConfigEmulator = scenarioContext.GetAppConfigEmulator();
+        var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
+        appConfigEmulator.Should().NotBeNull("App Configuration emulator should be established");
 
         var fullPath = Path.Combine("TestData", testDataPath);
-        _advancedBuilder!.AddAppConfigurationFromTestData(fullPath, optional: false);
+        var createTask = appConfigEmulator!.CreateTestDataAsync(fullPath, scenarioPrefix);
+        createTask.Wait(TimeSpan.FromMinutes(1));
         _abTestingEnabled = true;
 
         // Simulate A/B testing groups
@@ -176,11 +197,124 @@ public class AzureAdvancedScenariosSteps(ScenarioContext scenarioContext)
             ["groupA"] = new { percentage = 50, enabled = true },
             ["groupB"] = new { percentage = 50, enabled = false }
         };
+
+        _advancedValidationResults.Add($"✓ A/B testing configuration added to emulator with prefix '{scenarioPrefix}'");
+    }
+
+    [Given(@"I have established an advanced controller environment")]
+    public void GivenIHaveEstablishedAnAdvancedControllerEnvironment()
+    {
+        var keyVaultEmulator = scenarioContext.GetKeyVaultEmulator();
+        var appConfigEmulator = scenarioContext.GetAppConfigEmulator();
+        _performanceStopwatch = new Stopwatch();
+        scenarioContext.Set(keyVaultEmulator, "KeyVaultEmulator");
+        scenarioContext.Set(appConfigEmulator, "AppConfigEmulator");
+        _advancedValidationResults.Add("✓ Advanced controller environment established with emulators");
     }
 
     #endregion
 
     #region When Steps - Actions
+    
+    [When(@"I configure advanced controller by building the configuration")]
+    public void WhenIConfigureAdvancedControllerByBuildingTheConfiguration()
+    {
+        var appConfigEmulator = scenarioContext.GetAppConfigEmulator();
+        var keyVaultEmulator = scenarioContext.GetKeyVaultEmulator();
+        var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
+        keyVaultEmulator.Should().NotBeNull("Key Vault emulator should be established");
+        appConfigEmulator.Should().NotBeNull("App Configuration emulator should be established");
+
+        try
+        {
+            _performanceStopwatch?.Start();
+
+            _advancedFlexConfiguration = new FlexConfigurationBuilder()
+                .AddAzureKeyVault(options =>
+                {
+                    options.VaultUri = "https://test-vault.vault.azure.net/";
+                    options.SecretClient = keyVaultEmulator.SecretClient;
+                    options.JsonProcessor = true;
+                    options.Optional = false;
+                    options.SecretProcessor = new ScenarioPrefixSecretProcessor(scenarioPrefix);
+                })
+                .AddAzureAppConfiguration(options =>
+                {
+                    options.ConnectionString = appConfigEmulator.GetConnectionString();
+                    options.ConfigurationClient = appConfigEmulator.ConfigurationClient;
+                    options.Optional = false;
+                    options.KeyFilter = $"{scenarioPrefix}:*";
+                })
+                .Build();
+            _advancedConfiguration = _advancedFlexConfiguration.Configuration;
+
+            _performanceStopwatch?.Stop();
+
+            scenarioContext.Set(_advancedConfiguration, "AdvancedConfiguration");
+            scenarioContext.Set(_advancedFlexConfiguration, "AdvancedFlexConfiguration");
+
+            _advancedValidationResults.Add("✓ Advanced emulator configuration built successfully");
+        }
+        catch (Exception ex)
+        {
+            scenarioContext.Set(ex, "AdvancedException");
+            _advancedValidationResults.Add($"✗ Advanced emulator configuration failed: {ex.Message}");
+        }
+    }
+
+    // Another When step that builds configuration with failover - needs scenario prefix
+    [When(@"I configure advanced controller by building the configuration with failover testing")]
+    public void WhenIConfigureAdvancedControllerByBuildingTheConfigurationWithFailoverTesting()
+    {
+        var appConfigEmulator = scenarioContext.GetAppConfigEmulator();
+        var keyVaultEmulator = scenarioContext.GetKeyVaultEmulator();
+        var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
+        keyVaultEmulator.Should().NotBeNull("Key Vault emulator should be established");
+        appConfigEmulator.Should().NotBeNull("App Configuration emulator should be established");
+        _crossRegionEnabled.Should().BeTrue("Cross-region should be enabled for failover testing");
+
+        try
+        {
+            _performanceStopwatch?.Start();
+
+            // Simulate failover scenario
+            var primaryRegion = _regions.FirstOrDefault() ?? "eastus";
+            var failoverRegion = _regions.Skip(1).FirstOrDefault() ?? "westus2";
+
+            _advancedValidationResults.Add($"✓ Testing failover from {primaryRegion} to {failoverRegion}");
+
+            _advancedFlexConfiguration = new FlexConfigurationBuilder()
+                .AddAzureKeyVault(options =>
+                {
+                    options.VaultUri = "https://test-vault.vault.azure.net/";
+                    options.SecretClient = keyVaultEmulator.SecretClient;
+                    options.JsonProcessor = true;
+                    options.Optional = false;
+                    options.SecretProcessor = new ScenarioPrefixSecretProcessor(scenarioPrefix);
+                })
+                .AddAzureAppConfiguration(options =>
+                {
+                    options.ConnectionString = appConfigEmulator.GetConnectionString();
+                    options.ConfigurationClient = appConfigEmulator.ConfigurationClient;
+                    options.Optional = false;
+                    options.KeyFilter = $"{scenarioPrefix}:*";
+                })
+                .Build();
+            _advancedConfiguration = _advancedFlexConfiguration.Configuration;
+
+            _performanceStopwatch?.Stop();
+
+            scenarioContext.Set(_advancedConfiguration, "AdvancedConfiguration");
+            scenarioContext.Set(_advancedFlexConfiguration, "AdvancedFlexConfiguration");
+
+            _advancedValidationResults.Add("✓ Failover emulator configuration established successfully");
+        }
+        catch (Exception ex)
+        {
+            scenarioContext.Set(ex, "AdvancedException");
+            _advancedValidationResults.Add($"✗ Failover emulator configuration failed: {ex.Message}");
+        }
+    }
 
     [When(@"I configure advanced controller with specific secret versions")]
     public void WhenIConfigureAdvancedControllerWithSpecificSecretVersions()
@@ -208,37 +342,6 @@ public class AzureAdvancedScenariosSteps(ScenarioContext scenarioContext)
         }
     }
 
-    [When(@"I configure advanced controller by building the configuration")]
-    public void WhenIConfigureAdvancedControllerByBuildingTheConfiguration()
-    {
-        _advancedBuilder.Should().NotBeNull("Advanced builder should be established");
-
-        try
-        {
-            _performanceStopwatch?.Start();
-
-            // Start LocalStack for Azure services (simulated)
-            var startTask = _advancedBuilder!.StartLocalStackAsync();
-            startTask.Wait(TimeSpan.FromMinutes(2));
-
-            // Build configuration with advanced features
-            _advancedConfiguration = _advancedBuilder.Build();
-            _advancedFlexConfiguration = _advancedBuilder.BuildFlexConfig();
-
-            _performanceStopwatch?.Stop();
-
-            scenarioContext.Set(_advancedConfiguration, "AdvancedConfiguration");
-            scenarioContext.Set(_advancedFlexConfiguration, "AdvancedFlexConfiguration");
-
-            _advancedValidationResults.Add("✓ Advanced configuration built successfully");
-        }
-        catch (Exception ex)
-        {
-            scenarioContext.Set(ex, "AdvancedException");
-            _advancedValidationResults.Add($"✗ Advanced configuration build failed: {ex.Message}");
-        }
-    }
-
     [When(@"I configure advanced controller with tenant isolation")]
     public void WhenIConfigureAdvancedControllerWithTenantIsolation()
     {
@@ -260,43 +363,6 @@ public class AzureAdvancedScenariosSteps(ScenarioContext scenarioContext)
         foreach (var region in _regions)
         {
             _advancedValidationResults.Add($"✓ Region {region} failover configured");
-        }
-    }
-
-    [When(@"I configure advanced controller by building the configuration with failover testing")]
-    public void WhenIConfigureAdvancedControllerByBuildingTheConfigurationWithFailoverTesting()
-    {
-        _advancedBuilder.Should().NotBeNull("Advanced builder should be established");
-        _crossRegionEnabled.Should().BeTrue("Cross-region should be enabled for failover testing");
-
-        try
-        {
-            _performanceStopwatch?.Start();
-
-            // Simulate failover scenario
-            var primaryRegion = _regions.FirstOrDefault() ?? "eastus";
-            var failoverRegion = _regions.Skip(1).FirstOrDefault() ?? "westus2";
-
-            _advancedValidationResults.Add($"✓ Testing failover from {primaryRegion} to {failoverRegion}");
-
-            // Build configuration with failover simulation
-            var startTask = _advancedBuilder!.StartLocalStackAsync();
-            startTask.Wait(TimeSpan.FromMinutes(2));
-
-            _advancedConfiguration = _advancedBuilder.Build();
-            _advancedFlexConfiguration = _advancedBuilder.BuildFlexConfig();
-
-            _performanceStopwatch?.Stop();
-
-            scenarioContext.Set(_advancedConfiguration, "AdvancedConfiguration");
-            scenarioContext.Set(_advancedFlexConfiguration, "AdvancedFlexConfiguration");
-
-            _advancedValidationResults.Add("✓ Failover configuration built successfully");
-        }
-        catch (Exception ex)
-        {
-            scenarioContext.Set(ex, "AdvancedException");
-            _advancedValidationResults.Add($"✗ Failover configuration build failed: {ex.Message}");
         }
     }
 
@@ -339,6 +405,97 @@ public class AzureAdvancedScenariosSteps(ScenarioContext scenarioContext)
 
     #region Then Steps - Assertions
 
+    [Then(@"the advanced controller should demonstrate configuration import capabilities")]
+    public void ThenTheAdvancedControllerShouldDemonstrateConfigurationImportCapabilities()
+    {
+        var appConfigEmulator = scenarioContext.GetAppConfigEmulator();
+        var keyVaultEmulator = scenarioContext.GetKeyVaultEmulator();
+        var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
+        keyVaultEmulator.Should().NotBeNull("Key Vault emulator should be established");
+        appConfigEmulator.Should().NotBeNull("App Configuration emulator should be established");
+        _importExportEnabled.Should().BeTrue("Import/Export features should be enabled for this scenario");
+
+        try
+        {
+            // Simulate import by adding new configuration data to emulators
+            var importedSecrets = new Dictionary<string, object>
+            {
+                { "imported-key", "imported-value" },
+                { "feature-flag-x", "true" },
+                { "connection-string", "imported-sql://" }
+            };
+
+            // Add imported secrets to Key Vault emulator with scenario prefix
+            foreach (var secret in importedSecrets)
+            {
+                var setTask = keyVaultEmulator!.SetSecretAsync(secret.Key, secret.Value.ToString()!, scenarioPrefix);
+                setTask.Wait(TimeSpan.FromSeconds(30));
+                _configurationExport[secret.Key] = secret.Value; // Add to export for test verification
+            }
+
+            _advancedValidationResults.Add("✓ Configuration import capabilities demonstrated");
+
+            // Assert expected keys are present after import
+            _configurationExport.Should().ContainKeys(importedSecrets.Keys);
+        }
+        catch (Exception ex)
+        {
+            _advancedValidationResults.Add($"✗ Configuration import failed: {ex.Message}");
+        }
+
+        scenarioContext.Set(_advancedValidationResults, "AdvancedValidationResults");
+    }
+
+    [Then(@"the advanced controller should handle configuration migration scenarios")]
+    public void ThenTheAdvancedControllerShouldHandleConfigurationMigrationScenarios()
+    {
+        var appConfigEmulator = scenarioContext.GetAppConfigEmulator();
+        var keyVaultEmulator = scenarioContext.GetKeyVaultEmulator();
+        var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
+        keyVaultEmulator.Should().NotBeNull("Key Vault emulator should be established");
+        appConfigEmulator.Should().NotBeNull("App Configuration emulator should be established");
+        _importExportEnabled.Should().BeTrue("Import/Export should be enabled");
+
+        try
+        {
+            // Simulate migration: move keys from an "old" export to a "new" schema format
+            var oldConfig = new Dictionary<string, object>
+            {
+                { "legacy-key", "legacy-value" }
+            };
+            var migratedConfig = new Dictionary<string, object>();
+
+            // Example - migration logic (rename, transform, or promote keys)
+            foreach (var kv in oldConfig)
+            {
+                var migratedKey = kv.Key.Replace("legacy", "current");
+                migratedConfig[migratedKey] = kv.Value;
+            }
+
+            // Record migration result for test verification and apply to emulators
+            foreach (var kv in migratedConfig)
+            {
+                _configurationExport[kv.Key] = kv.Value;
+
+                // Apply migration to Key Vault emulator with scenario prefix
+                var setTask = keyVaultEmulator!.SetSecretAsync(kv.Key, kv.Value.ToString()!, scenarioPrefix);
+                setTask.Wait(TimeSpan.FromSeconds(30));
+            }
+
+            _advancedValidationResults.Add("✓ Configuration migration scenario handled");
+
+            // Assert migration succeeded (old key gone, new key presented)
+            _configurationExport.Should().NotContainKey("legacy-key");
+            _configurationExport.Should().ContainKey("current-key");
+        }
+        catch (Exception ex)
+        {
+            _advancedValidationResults.Add($"✗ Configuration migration failed: {ex.Message}");
+        }
+
+        scenarioContext.Set(_advancedValidationResults, "AdvancedValidationResults");
+    }
+
     [Then(@"the advanced controller should access specific secret versions")]
     public void ThenTheAdvancedControllerShouldAccessSpecificSecretVersions()
     {
@@ -347,7 +504,7 @@ public class AzureAdvancedScenariosSteps(ScenarioContext scenarioContext)
 
         try
         {
-            // Test version-specific secret access
+            // Test version-specific secret access using an emulator
             var versionTests = new List<(string description, string key, Func<bool> test)>
             {
                 ("Database password version", "myapp:database:password", () =>
@@ -1365,64 +1522,6 @@ public class AzureAdvancedScenariosSteps(ScenarioContext scenarioContext)
 
         scenarioContext.Set(_advancedValidationResults, "AdvancedValidationResults");
     }
-
-    [Then(@"the advanced controller should demonstrate configuration import capabilities")]
-    public void ThenTheAdvancedControllerShouldDemonstrateConfigurationImportCapabilities()
-    {
-        _advancedBuilder.Should().NotBeNull("Advanced controller environment must have been established");
-        _importExportEnabled.Should().BeTrue("Import/Export features should be enabled for this scenario");
-        // Simulate import by loading a config export blob into builder again
-        var importedConfig = new Dictionary<string, object>
-        {
-            { "imported-key", "imported-value" },
-            { "feature-flag-x", true },
-            { "connection-string", "imported-sql://" }
-        };
-
-        // "Import" values into the current builder / configuration
-        foreach (var kv in importedConfig)
-        {
-            _configurationExport[kv.Key] = kv.Value; // Add to export for test verification
-            // Assume builder could import directly if needed for a real case
-        }
-
-        _advancedValidationResults.Add("✓ Configuration import capabilities demonstrated");
-
-        // Assert expected keys are present after import
-        _configurationExport.Should().ContainKeys(importedConfig.Keys);
-    }
-
-    [Then(@"the advanced controller should handle configuration migration scenarios")]
-    public void ThenTheAdvancedControllerShouldHandleConfigurationMigrationScenarios()
-    {
-        _advancedBuilder.Should().NotBeNull();
-        _importExportEnabled.Should().BeTrue();
-
-        // Simulate migration: move keys from an "old" export to a "new" schema format
-        var oldConfig = new Dictionary<string, object>
-        {
-            { "legacy-key", "legacy-value" }
-        };
-        var migratedConfig = new Dictionary<string, object>();
-
-        // Example - migration logic (rename, transform, or promote keys)
-        foreach (var kv in oldConfig)
-        {
-            var migratedKey = kv.Key.Replace("legacy", "current");
-            migratedConfig[migratedKey] = kv.Value;
-        }
-
-        // Record migration result for test verification
-        foreach (var kv in migratedConfig)
-            _configurationExport[kv.Key] = kv.Value;
-
-        _advancedValidationResults.Add("✓ Configuration migration scenario handled");
-
-        // Assert migration succeeded (old key gone, new key presented)
-        _configurationExport.Should().NotContainKey("legacy-key");
-        _configurationExport.Should().ContainKey("current-key");
-    }
-
 
     #endregion
 }

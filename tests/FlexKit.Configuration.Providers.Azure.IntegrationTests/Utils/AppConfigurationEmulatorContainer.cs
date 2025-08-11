@@ -3,6 +3,7 @@ using DotNet.Testcontainers.Builders;
 using DotNet.Testcontainers.Containers;
 using Newtonsoft.Json;
 // ReSharper disable NullableWarningSuppressionIsUsed
+// ReSharper disable TooManyArguments
 
 // ReSharper disable ComplexConditionExpression
 
@@ -10,7 +11,14 @@ namespace FlexKit.Configuration.Providers.Azure.IntegrationTests.Utils;
 
 public class AppConfigurationEmulatorContainer : IAsyncDisposable
 {
-    private IContainer _container;
+    private readonly IContainer _container = new ContainerBuilder()
+        .WithImage("tnc1997/azure-app-configuration-emulator:latest")
+        .WithPortBinding(8080, true)
+        .WithEnvironment("ASPNETCORE_HTTP_PORTS", "8080")
+        .WithEnvironment("Authentication__Schemes__Hmac__Credential", "abcd")
+        .WithEnvironment("Authentication__Schemes__Hmac__Secret", "c2VjcmV0")
+        .WithWaitStrategy(Wait.ForUnixContainer().UntilPortIsAvailable(8080))
+        .Build();
     private ConfigurationClient? _configurationClient;
     
     /// <summary>
@@ -28,18 +36,6 @@ public class AppConfigurationEmulatorContainer : IAsyncDisposable
             }
             return _configurationClient;
         }
-    }
-
-    public AppConfigurationEmulatorContainer()
-    {
-        _container = new ContainerBuilder()
-            .WithImage("tnc1997/azure-app-configuration-emulator:latest")
-            .WithPortBinding(8080, true)
-            .WithEnvironment("ASPNETCORE_HTTP_PORTS", "8080")
-            .WithEnvironment("Authentication__Schemes__Hmac__Credential", "abcd")
-            .WithEnvironment("Authentication__Schemes__Hmac__Secret", "c2VjcmV0")
-            .WithWaitStrategy(Wait.ForUnixContainer().UntilPortIsAvailable(8080))
-            .Build();
     }
 
     public async Task StartAsync()
@@ -71,34 +67,35 @@ public class AppConfigurationEmulatorContainer : IAsyncDisposable
                          (label != null ? $" and label '{label}'" : ""));
     }
     
-    public async Task CreateTestDataAsync(string configFilePath)
+    public async Task CreateTestDataAsync(string configFilePath, string prefix)
     {
         var jsonContent = await File.ReadAllTextAsync(configFilePath);
-        var json = JsonConvert.DeserializeObject<Dictionary<string, object>>(jsonContent);
-        await CreateAppConfigurationSettingsAsync(json!);
+        var json = (Dictionary<string, object>)JsonHelper.Deserialize(jsonContent);
+        await CreateAppConfigurationSettingsAsync(json!, prefix);
     }
     
-    private async Task CreateAppConfigurationSettingsAsync(Dictionary<string, object> settings)
+    private async Task CreateAppConfigurationSettingsAsync(Dictionary<string, object> settings, string prefix)
     {
         foreach (var setting in settings)
         {
-            await ProcessSettingAsync(setting.Key, setting.Value);
+            await ProcessSettingAsync(setting.Key, setting.Value, prefix);
         }
     }
     
-    private async Task ProcessSettingAsync(string key, object value, string? label = null)
+    private async Task ProcessSettingAsync(string key, object value, string prefix, string? label = null)
     {
         if (value is Dictionary<string, object> nestedSettings)
         {
             foreach (var nested in nestedSettings)
             {
                 var nestedKey = $"{key}:{nested.Key}";
-                await ProcessSettingAsync(nestedKey, nested.Value, label);
+                await ProcessSettingAsync(nestedKey, nested.Value, prefix, label);
             }
         }
         else
         {
-            await SetConfigurationAsync(key, value.ToString()!, label);
+            var prefixedKey =$"{prefix}:{key}";
+            await SetConfigurationAsync(prefixedKey, value.ToString()!, label);
         }
     }
 }

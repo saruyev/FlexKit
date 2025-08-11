@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Reflection;
 using System.Text.Json;
 using Azure;
@@ -623,7 +624,7 @@ public class AzureExtensionsTests
         // Arrange
         var json = "{\"host\": \"localhost\", \"port\": 5432}";
         var prefix = "database";
-        var result = new Dictionary<string, string?>();
+        var result = new ConcurrentDictionary<string, string?>();
 
         // Act
         json.FlattenJsonValue(result, prefix);
@@ -640,7 +641,7 @@ public class AzureExtensionsTests
         // Arrange
         var json = "{\"database\": {\"host\": \"localhost\", \"port\": 5432}}";
         var prefix = "config";
-        var result = new Dictionary<string, string?>();
+        var result = new ConcurrentDictionary<string, string?>();
 
         // Act
         json.FlattenJsonValue(result, prefix);
@@ -657,7 +658,7 @@ public class AzureExtensionsTests
         // Arrange
         var json = "{\"items\": [\"first\", \"second\", \"third\"]}";
         var prefix = "config";
-        var result = new Dictionary<string, string?>();
+        var result = new ConcurrentDictionary<string, string?>();
 
         // Act
         json.FlattenJsonValue(result, prefix);
@@ -688,7 +689,7 @@ public class AzureExtensionsTests
                    }
                    """;
         var prefix = "config";
-        var result = new Dictionary<string, string?>();
+        var result = new ConcurrentDictionary<string, string?>();
 
         // Act
         json.FlattenJsonValue(result, prefix);
@@ -708,7 +709,7 @@ public class AzureExtensionsTests
         // Arrange
         var json = "{}";
         var prefix = "config";
-        var result = new Dictionary<string, string?>();
+        var result = new ConcurrentDictionary<string, string?>();
 
         // Act
         json.FlattenJsonValue(result, prefix);
@@ -723,7 +724,7 @@ public class AzureExtensionsTests
         // Arrange
         var json = "{\"items\": []}";
         var prefix = "config";
-        var result = new Dictionary<string, string?>();
+        var result = new ConcurrentDictionary<string, string?>();
 
         // Act
         json.FlattenJsonValue(result, prefix);
@@ -738,7 +739,7 @@ public class AzureExtensionsTests
         // Arrange
         var json = "{\"key1\": null, \"key2\": \"value\"}";
         var prefix = "config";
-        var result = new Dictionary<string, string?>();
+        var result = new ConcurrentDictionary<string, string?>();
 
         // Act
         json.FlattenJsonValue(result, prefix);
@@ -755,7 +756,7 @@ public class AzureExtensionsTests
         // Arrange
         var json = "{ invalid json";
         var prefix = "config";
-        var result = new Dictionary<string, string?>();
+        var result = new ConcurrentDictionary<string, string?>();
 
         // Act
         json.FlattenJsonValue(result, prefix);
@@ -776,7 +777,7 @@ public class AzureExtensionsTests
         // Arrange
         var json = $"{{\"key\": {jsonValue}}}";
         var prefix = "config";
-        var result = new Dictionary<string, string?>();
+        var result = new ConcurrentDictionary<string, string?>();
 
         // Act
         json.FlattenJsonValue(result, prefix);
@@ -815,7 +816,7 @@ public class AzureExtensionsTests
     {
         // Arrange
         var prefix = "config";
-        var result = new Dictionary<string, string?>();
+        var result = new ConcurrentDictionary<string, string?>();
     
         // Create a JsonElement with Undefined ValueKind using reflection
         var jsonElement = default(JsonElement); // This creates a JsonElement with ValueKind.Undefined
