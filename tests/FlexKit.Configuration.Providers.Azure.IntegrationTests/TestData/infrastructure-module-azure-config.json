@@ -1,9 +1,4 @@
 {
-  "localStack": {
-    "services": "keyvault,appconfig",
-    "debug": true,
-    "port": 4566
-  },
   "azure": {
     "region": "eastus",
     "keyVault": {
@@ -105,7 +100,7 @@
     "BetaFeatures": false,
     "AdvancedReporting": true,
     "ExperimentalFeatures": false,
-    "A/B Testing": true,
+    "A_B Testing": true,
     "DarkMode": true,
     "PerformanceOptimizations": true,
     "LegacySupport": false

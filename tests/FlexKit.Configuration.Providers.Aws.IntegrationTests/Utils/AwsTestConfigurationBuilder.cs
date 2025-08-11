@@ -5,6 +5,7 @@ using FlexKit.Configuration.Core;
 using System.Text.Json;
 using Amazon.Extensions.NETCore.Setup;
 using Amazon.Runtime;
+// ReSharper disable NullableWarningSuppressionIsUsed
 
 // ReSharper disable MethodTooLong
 // ReSharper disable ComplexConditionExpression

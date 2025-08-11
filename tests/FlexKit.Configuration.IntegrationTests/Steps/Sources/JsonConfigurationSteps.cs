@@ -7,6 +7,7 @@ using System.Text.Json;
 // ReSharper disable MethodTooLong
 // ReSharper disable ClassTooBig
 // ReSharper disable ComplexConditionExpression
+// ReSharper disable NullableWarningSuppressionIsUsed
 
 namespace FlexKit.Configuration.IntegrationTests.Steps.Sources;
 

@@ -6,6 +6,7 @@ using Reqnroll;
 // ReSharper disable ComplexConditionExpression
 // ReSharper disable InconsistentNaming
 // ReSharper disable CollectionNeverQueried.Local
+// ReSharper disable NullableWarningSuppressionIsUsed
 
 namespace FlexKit.Configuration.Providers.Aws.IntegrationTests.Steps.SecretsManager;
 

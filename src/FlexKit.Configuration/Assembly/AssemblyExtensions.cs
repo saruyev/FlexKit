@@ -207,14 +207,14 @@ public static class AssemblyExtensions
         var config = configuration?.GetSection(MappingSectionName).Get<MappingConfig>();
 
         // Process runtime libraries through the resolution pipeline
-        return context!.RuntimeLibraries
+        // ReSharper disable once NullableWarningSuppressionIsUsed - we already checked the issue
+        return [.. context!.RuntimeLibraries
             .Select(lib => lib.ConvertToCompilation()) // Convert to a compilation library for resolution
             .Where(lib => FilterLibraries(lib.Name, config)) // Apply name-based filtering
             .Where(lib => !lib.Name.Equals("FlexKit.Configuration", StringComparison.OrdinalIgnoreCase)) // Exclude self
             .SelectMany(ResolveReferencePaths) // Resolve to file paths
             .Where(File.Exists) // Ensure files exist
-            .Select(AssemblyLoadContext.Default.LoadFromAssemblyPath) // Load assemblies
-            .ToList();
+            .Select(AssemblyLoadContext.Default.LoadFromAssemblyPath)];
     }
 
     /// <summary>

@@ -1,12 +1,15 @@
 using FlexKit.Configuration.Core;
 using FlexKit.Configuration.Providers.Azure.IntegrationTests.Utils;
 using FlexKit.Configuration.Conversion;
+using FlexKit.Configuration.Providers.Azure.Extensions;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Reqnroll;
+
 // ReSharper disable MethodTooLong
 // ReSharper disable ComplexConditionExpression
 // ReSharper disable TooManyDeclarations
+// ReSharper disable NullableWarningSuppressionIsUsed
 
 namespace FlexKit.Configuration.Providers.Azure.IntegrationTests.Steps.Integration;
 
@@ -19,12 +22,10 @@ namespace FlexKit.Configuration.Providers.Azure.IntegrationTests.Steps.Integrati
 [Binding]
 public class AzureFlexKitIntegrationSteps(ScenarioContext scenarioContext)
 {
-    private AzureTestConfigurationBuilder? _integrationBuilder;
+    private FlexConfigurationBuilder? _integrationBuilder;
     private IConfiguration? _integrationConfiguration;
     private IFlexConfig? _integrationFlexConfiguration;
-    private Exception? _lastIntegrationException;
     private readonly List<string> _integrationValidationResults = new();
-    private bool _jsonProcessingEnabled;
     private bool _errorToleranceEnabled;
     private bool _keyVaultConfigured;
     private bool _appConfigurationConfigured;
@@ -34,68 +35,153 @@ public class AzureFlexKitIntegrationSteps(ScenarioContext scenarioContext)
     [Given(@"I have established an integration controller environment")]
     public void GivenIHaveEstablishedAnIntegrationControllerEnvironment()
     {
-        _integrationBuilder = new AzureTestConfigurationBuilder(scenarioContext);
+        _integrationBuilder = new FlexConfigurationBuilder();
         scenarioContext.Set(_integrationBuilder, "IntegrationBuilder");
     }
 
     [Given(@"I have integration controller configuration with Key Vault from ""(.*)""")]
-    public void GivenIHaveIntegrationControllerConfigurationWithKeyVaultFrom(string testDataPath)
+    public async Task GivenIHaveIntegrationControllerConfigurationWithKeyVaultFrom(string testDataPath)
     {
         _integrationBuilder.Should().NotBeNull("Integration builder should be established");
 
+        var keyVaultEmulator = scenarioContext.GetKeyVaultEmulator();
+        var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
+
         var fullPath = Path.Combine("TestData", testDataPath);
-        _integrationBuilder!.AddKeyVaultFromTestData(fullPath, optional: false, jsonProcessor: false);
+        await keyVaultEmulator.CreateTestDataAsync(fullPath, scenarioPrefix);
+
+        _integrationBuilder!.AddAzureKeyVault(options =>
+        {
+            options.VaultUri = "https://test-vault.vault.azure.net/";
+            options.SecretClient = keyVaultEmulator.SecretClient;
+            options.JsonProcessor = true;
+            options.Optional = false;
+            // Use a custom secret processor to filter by scenario prefix
+            options.SecretProcessor = new ScenarioPrefixSecretProcessor(scenarioPrefix);
+        });
+
         _keyVaultConfigured = true;
         
         scenarioContext.Set(_integrationBuilder, "IntegrationBuilder");
     }
 
     [Given(@"I have integration controller configuration with App Configuration from ""(.*)""")]
-    public void GivenIHaveIntegrationControllerConfigurationWithAppConfigurationFrom(string testDataPath)
+    public async Task GivenIHaveIntegrationControllerConfigurationWithAppConfigurationFrom(string testDataPath)
     {
+        var keyVaultEmulator = scenarioContext.GetKeyVaultEmulator();
+        var appConfigEmulator = scenarioContext.GetAppConfigEmulator();
+        var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
         _integrationBuilder.Should().NotBeNull("Integration builder should be established");
 
         var fullPath = Path.Combine("TestData", testDataPath);
-        _integrationBuilder!.AddAppConfigurationFromTestData(fullPath, optional: false);
+        await appConfigEmulator.CreateTestDataAsync(fullPath, scenarioPrefix);
+        await keyVaultEmulator.CreateTestDataAsync(fullPath, scenarioPrefix);
+
+        _integrationBuilder!.AddAzureAppConfiguration(options =>
+        {
+            options.ConnectionString = appConfigEmulator.GetConnectionString();
+            options.ConfigurationClient = appConfigEmulator.ConfigurationClient;
+            options.Optional = false;
+            // Use scenario prefix as key filter to isolate this scenario's data
+            options.KeyFilter = $"{scenarioPrefix}:*";
+        });
+        _integrationBuilder!.AddAzureKeyVault(options =>
+        {
+            options.VaultUri = "https://test-vault.vault.azure.net/";
+            options.SecretClient = keyVaultEmulator.SecretClient;
+            options.JsonProcessor = true;
+            options.Optional = false;
+            // Use a custom secret processor to filter by scenario prefix
+            options.SecretProcessor = new ScenarioPrefixSecretProcessor(scenarioPrefix);
+        });
+
         _appConfigurationConfigured = true;
         
         scenarioContext.Set(_integrationBuilder, "IntegrationBuilder");
     }
 
     [Given(@"I have integration controller configuration with JSON-enabled Key Vault from ""(.*)""")]
-    public void GivenIHaveIntegrationControllerConfigurationWithJsonEnabledKeyVaultFrom(string testDataPath)
+    public async Task GivenIHaveIntegrationControllerConfigurationWithJsonEnabledKeyVaultFrom(string testDataPath)
     {
         _integrationBuilder.Should().NotBeNull("Integration builder should be established");
 
+        var keyVaultEmulator = scenarioContext.GetKeyVaultEmulator();
+        var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
+
         var fullPath = Path.Combine("TestData", testDataPath);
-        _integrationBuilder!.AddKeyVaultFromTestDataWithJsonProcessing(fullPath, optional: false, jsonProcessor: true);
+        await keyVaultEmulator.CreateTestDataAsync(fullPath, scenarioPrefix);
+
+        _integrationBuilder!.AddAzureKeyVault(options =>
+        {
+            options.VaultUri = "https://test-vault.vault.azure.net/";
+            options.SecretClient = keyVaultEmulator.SecretClient;
+            options.JsonProcessor = true; // Enable JSON processing
+            options.Optional = false;
+            // Use a custom secret processor to filter by scenario prefix
+            options.SecretProcessor = new ScenarioPrefixSecretProcessor(scenarioPrefix);
+        });
+
         _keyVaultConfigured = true;
-        _jsonProcessingEnabled = true;
         
         scenarioContext.Set(_integrationBuilder, "IntegrationBuilder");
     }
 
     [Given(@"I have integration controller configuration with JSON-enabled App Configuration from ""(.*)""")]
-    public void GivenIHaveIntegrationControllerConfigurationWithJsonEnabledAppConfigurationFrom(string testDataPath)
+    public async Task GivenIHaveIntegrationControllerConfigurationWithJsonEnabledAppConfigurationFrom(string testDataPath)
     {
         _integrationBuilder.Should().NotBeNull("Integration builder should be established");
 
+        var appConfigEmulator = scenarioContext.GetAppConfigEmulator();
+        var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
+
         var fullPath = Path.Combine("TestData", testDataPath);
-        _integrationBuilder!.AddAppConfigurationFromTestData(fullPath, optional: false);
+        await appConfigEmulator.CreateTestDataAsync(fullPath, scenarioPrefix);
+
+        _integrationBuilder!.AddAzureAppConfiguration(options =>
+        {
+            options.ConnectionString = appConfigEmulator.GetConnectionString();
+            options.ConfigurationClient = appConfigEmulator.ConfigurationClient;
+            options.Optional = false;
+            // Use scenario prefix as key filter to isolate this scenario's data
+            options.KeyFilter = $"{scenarioPrefix}:*";
+        });
+
         _appConfigurationConfigured = true;
-        _jsonProcessingEnabled = true;
         
         scenarioContext.Set(_integrationBuilder, "IntegrationBuilder");
     }
 
     [Given(@"I have integration controller configuration with optional Azure sources from ""(.*)""")]
-    public void GivenIHaveIntegrationControllerConfigurationWithOptionalAzureSourcesFrom(string testDataPath)
+    public async Task GivenIHaveIntegrationControllerConfigurationWithOptionalAzureSourcesFrom(string testDataPath)
     {
         _integrationBuilder.Should().NotBeNull("Integration builder should be established");
 
+        var keyVaultEmulator = scenarioContext.GetKeyVaultEmulator();
+        var appConfigEmulator = scenarioContext.GetAppConfigEmulator();
+        var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
+
         var fullPath = Path.Combine("TestData", testDataPath);
-        _integrationBuilder!.AddKeyVaultFromTestData(fullPath, optional: true, jsonProcessor: false);
-        _integrationBuilder.AddAppConfigurationFromTestData(fullPath, optional: true);
+        await keyVaultEmulator.CreateTestDataAsync(fullPath, scenarioPrefix);
+        await appConfigEmulator.CreateTestDataAsync(fullPath, scenarioPrefix);
+
+        _integrationBuilder!.AddAzureKeyVault(options =>
+        {
+            options.VaultUri = "https://test-vault.vault.azure.net/";
+            options.SecretClient = keyVaultEmulator.SecretClient;
+            options.JsonProcessor = false;
+            options.Optional = true; // Optional for error tolerance testing
+            // Use a custom secret processor to filter by scenario prefix
+            options.SecretProcessor = new ScenarioPrefixSecretProcessor(scenarioPrefix);
+        });
+
+        _integrationBuilder.AddAzureAppConfiguration(options =>
+        {
+            options.ConnectionString = appConfigEmulator.GetConnectionString();
+            options.ConfigurationClient = appConfigEmulator.ConfigurationClient;
+            options.Optional = true; // Optional for error tolerance testing
+            // Use scenario prefix as key filter to isolate this scenario's data
+            options.KeyFilter = $"{scenarioPrefix}:*";
+        });
         
         _keyVaultConfigured = true;
         _appConfigurationConfigured = true;
@@ -114,16 +200,8 @@ public class AzureFlexKitIntegrationSteps(ScenarioContext scenarioContext)
 
         try
         {
-            // Start LocalStack with both services
-            var services = new List<string>();
-            if (_keyVaultConfigured) services.Add("keyvault");
-            if (_appConfigurationConfigured) services.Add("appconfig");
-            
-            var startTask = _integrationBuilder!.StartLocalStackAsync(string.Join(",", services));
-            startTask.Wait(TimeSpan.FromMinutes(3));
-
-            _integrationConfiguration = _integrationBuilder.Build();
-            _integrationFlexConfiguration = _integrationBuilder.BuildFlexConfig();
+            _integrationFlexConfiguration = _integrationBuilder.Build();
+            _integrationConfiguration = _integrationFlexConfiguration.Configuration;
             
             scenarioContext.Set(_integrationConfiguration, "IntegrationConfiguration");
             scenarioContext.Set(_integrationFlexConfiguration, "IntegrationFlexConfiguration");
@@ -132,7 +210,6 @@ public class AzureFlexKitIntegrationSteps(ScenarioContext scenarioContext)
         }
         catch (Exception ex)
         {
-            _lastIntegrationException = ex;
             scenarioContext.Set(ex, "IntegrationException");
             _integrationValidationResults.Add($"✗ Integration configuration build failed: {ex.Message}");
         }
@@ -146,16 +223,8 @@ public class AzureFlexKitIntegrationSteps(ScenarioContext scenarioContext)
 
         try
         {
-            // Start LocalStack with both services
-            var services = new List<string>();
-            if (_keyVaultConfigured) services.Add("keyvault");
-            if (_appConfigurationConfigured) services.Add("appconfig");
-            
-            var startTask = _integrationBuilder!.StartLocalStackAsync(string.Join(",", services));
-            startTask.Wait(TimeSpan.FromMinutes(3));
-
-            _integrationConfiguration = _integrationBuilder.Build();
-            _integrationFlexConfiguration = _integrationBuilder.BuildFlexConfig();
+            _integrationFlexConfiguration = _integrationBuilder.Build();
+            _integrationConfiguration = _integrationFlexConfiguration.Configuration;
             
             scenarioContext.Set(_integrationConfiguration, "IntegrationConfiguration");
             scenarioContext.Set(_integrationFlexConfiguration, "IntegrationFlexConfiguration");
@@ -164,7 +233,6 @@ public class AzureFlexKitIntegrationSteps(ScenarioContext scenarioContext)
         }
         catch (Exception ex)
         {
-            _lastIntegrationException = ex;
             scenarioContext.Set(ex, "IntegrationException");
             _integrationValidationResults.Add($"✗ Integration configuration build failed even with error tolerance: {ex.Message}");
         }
@@ -174,48 +242,49 @@ public class AzureFlexKitIntegrationSteps(ScenarioContext scenarioContext)
     public void WhenIVerifyIntegrationControllerAdvancedFlexKitCapabilities()
     {
         _integrationFlexConfiguration.Should().NotBeNull("FlexKit configuration should be available");
+        var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
 
         try
         {
-            // Test dynamic access capabilities
+            // Test dynamic access capabilities with a scenario prefix
             dynamic config = _integrationFlexConfiguration!;
             
-            // Test various FlexKit access patterns
+            // Test various FlexKit access patterns - using scenario prefix for keys
             var dynamicTests = new List<(string description, Func<object?> test)>
             {
-                ("Basic property access", () => config["myapp:database:host"]),
-                ("Nested property navigation", () => _integrationFlexConfiguration.Configuration.GetSection("myapp")),
-                ("Section access", () => _integrationFlexConfiguration.Configuration.GetSection("infrastructure-module")),
-                ("Dynamic casting", () => (string?)config["myapp:api:baseUrl"])
+                ("Basic property access", () => config[$"{scenarioPrefix}:myapp:database:host"]),
+                ("Nested property navigation", () => _integrationFlexConfiguration.Configuration.GetSection($"{scenarioPrefix}:myapp")),
+                ("Section access", () => _integrationFlexConfiguration.Configuration.GetSection($"{scenarioPrefix}:infrastructure-module")),
+                ("Dynamic casting", () => (string?)config[$"appConfigurationSettings:myapp:api:timeout"])
             };
 
-            var successfulTests = 0;
-            foreach (var (description, test) in dynamicTests)
+            var successfulAdvancedFeatures = 0;
+            foreach (var test in dynamicTests)
             {
                 try
                 {
-                    var result = test();
+                    var result = test.test();
                     if (result != null)
                     {
-                        successfulTests++;
-                        _integrationValidationResults.Add($"✓ {description}: success");
+                        successfulAdvancedFeatures++;
+                        _integrationValidationResults.Add($"✓ {test.description}: success");
                     }
                     else
                     {
-                        _integrationValidationResults.Add($"⚠ {description}: null result");
+                        _integrationValidationResults.Add($"⚠ {test.description}: null result");
                     }
                 }
                 catch (Exception ex)
                 {
-                    _integrationValidationResults.Add($"✗ {description}: {ex.Message}");
+                    _integrationValidationResults.Add($"✗ {test.description}: {ex.Message}");
                 }
             }
 
-            _integrationValidationResults.Add($"Advanced capabilities verification: {successfulTests}/{dynamicTests.Count} tests passed");
+            _integrationValidationResults.Add($"Advanced FlexKit features verification: {successfulAdvancedFeatures}/{dynamicTests.Count} tests passed");
         }
         catch (Exception ex)
         {
-            _integrationValidationResults.Add($"✗ Advanced capabilities verification failed: {ex.Message}");
+            _integrationValidationResults.Add($"✗ Advanced FlexKit features verification failed: {ex.Message}");
         }
         
         scenarioContext.Set(_integrationValidationResults, "IntegrationValidationResults");
@@ -229,63 +298,72 @@ public class AzureFlexKitIntegrationSteps(ScenarioContext scenarioContext)
     public void ThenTheIntegrationControllerShouldSupportFlexKitDynamicAccessPatterns()
     {
         _integrationFlexConfiguration.Should().NotBeNull("FlexKit configuration should be available");
+        var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
 
         try
         {
-            // Test dynamic access patterns specific to FlexKit
+            // Test FlexKit dynamic access patterns with a scenario prefix
             dynamic config = _integrationFlexConfiguration!;
-            
-            // Test various FlexKit access patterns
-            var dynamicTests = new List<(string description, Func<object?> test)>
+
+            var dynamicTests = new List<(string description, Func<bool> validation)>
             {
-                ("Basic property access", () => config["myapp:database:host"]),
-                ("Nested property navigation", () => AzureTestConfigurationBuilder.GetDynamicProperty(_integrationFlexConfiguration, "myapp.database.host")),
-                ("Section access", () => _integrationFlexConfiguration.Configuration.GetSection("myapp")),
-                ("Configuration enumeration", () => _integrationFlexConfiguration.Configuration.AsEnumerable().Count())
+                ("Bracket notation access", () => 
+                {
+                    var value = config["keyVaultSecrets:myapp:database:host"];
+                    return value != null;
+                }),
+                ("Dot notation access via dynamic", () => 
+                {
+                    var value = config.keyVaultSecrets.myapp.database.host;
+                    return value != null;
+                }),
+                ("Section-based access", () => 
+                {
+                    var section = _integrationFlexConfiguration.Configuration.GetSection("keyVaultSecrets:myapp");
+                    return section.Exists();
+                }),
+                ("Null-safe dynamic access", () => 
+                {
+                    _ = config[$"{scenarioPrefix}:nonexistent:nested:value"];
+                    return true; // Should not throw even if a path doesn't exist
+                })
             };
 
-            var successfulTests = 0;
-            foreach (var (description, test) in dynamicTests)
+            foreach (var test in dynamicTests)
             {
-                try
-                {
-                    var result = test();
-                    if (result != null)
-                    {
-                        successfulTests++;
-                        _integrationValidationResults.Add($"✓ {description}: success");
-                    }
-                    else
-                    {
-                        _integrationValidationResults.Add($"⚠ {description}: null result");
-                    }
-                }
-                catch (Exception ex)
-                {
-                    _integrationValidationResults.Add($"✗ {description}: {ex.Message}");
-                }
+                var passed = test.validation();
+                _integrationValidationResults.Add(passed 
+                    ? $"✓ {test.description} test passed"
+                    : $"✗ {test.description} test failed");
+                
+                passed.Should().BeTrue($"{test.description} validation should pass");
             }
-
-            _integrationValidationResults.Add($"Dynamic access patterns verification: {successfulTests}/{dynamicTests.Count} tests passed");
         }
         catch (Exception ex)
         {
-            _integrationValidationResults.Add($"✗ Dynamic access patterns verification failed: {ex.Message}");
+            _integrationValidationResults.Add($"✗ FlexKit dynamic access pattern testing failed: {ex.Message}");
+            throw;
         }
-        
-        scenarioContext.Set(_integrationValidationResults, "IntegrationValidationResults");
     }
 
     [Then(@"the integration controller configuration should contain ""(.*)"" with value ""(.*)""")]
-    public void ThenTheIntegrationControllerConfigurationShouldContainWithValue(string expectedKey, string expectedValue)
+    public void ThenTheIntegrationControllerConfigurationShouldContainWithValue(string key, string expectedValue)
     {
         _integrationConfiguration.Should().NotBeNull("Configuration should be built");
 
-        var actualValue = _integrationConfiguration![expectedKey];
-        actualValue.Should().Be(expectedValue, $"Configuration key '{expectedKey}' should have the expected value");
-        
-        _integrationValidationResults.Add($"✓ Configuration validation passed: {expectedKey} = {expectedValue}");
-        scenarioContext.Set(_integrationValidationResults, "IntegrationValidationResults");
+        try
+        {
+            // Use prefixed key for lookup
+            var actualValue = _integrationConfiguration![key];
+            actualValue.Should().Be(expectedValue, $"Configuration key '{key}' should have the expected value");
+            
+            _integrationValidationResults.Add($"✓ Configuration contains '{key}' with value '{expectedValue}'");
+        }
+        catch (Exception ex)
+        {
+            _integrationValidationResults.Add($"✗ Configuration value verification failed for '{key}': {ex.Message}");
+            throw;
+        }
     }
 
     [Then(@"the integration controller should demonstrate FlexKit type conversion capabilities")]
@@ -295,90 +373,98 @@ public class AzureFlexKitIntegrationSteps(ScenarioContext scenarioContext)
 
         try
         {
-            // Test type conversion capabilities
-            var typeConversionTests = new List<(string description, Func<object> test)>
+            // Test type conversion capabilities with a scenario prefix
+            var conversionTests = new List<(string description, Func<bool> validation)>
             {
-                ("String to int conversion", () => _integrationFlexConfiguration!["myapp:database:port"].ToType<int>()),
-                ("String to bool conversion", () => _integrationFlexConfiguration!["myapp:features:cache:enabled"].ToType<bool>()),
-                ("String to int for timeout", () => _integrationFlexConfiguration!["myapp:api:timeout"].ToType<int>()),
-                ("Direct string access", () => _integrationFlexConfiguration!["myapp:database:host"] ?? "null")
+                ("String to int conversion", () => 
+                {
+                    var value = _integrationFlexConfiguration![$"keyVaultSecrets:infrastructure-module-database-credentials:port"].ToType<int>();
+                    return value > 0;
+                }),
+                ("String to bool conversion", () => 
+                {
+                    var value = _integrationFlexConfiguration!["keyVaultSecrets:myapp:features:cache:enabled"].ToType<bool>();
+                    return value;
+                }),
+                ("String to TimeSpan conversion", () => 
+                {
+                    var timeout = _integrationFlexConfiguration!["appConfigurationSettings:myapp:api:timeout"].ToType<int>();
+                    return timeout > 0;
+                }),
+                ("Dynamic type inference", () => 
+                {
+                    dynamic config = _integrationFlexConfiguration!;
+                    var host = (string?)config[$"keyVaultSecrets:myapp:database:host"];
+                    return !string.IsNullOrEmpty(host);
+                })
             };
 
-            var successfulConversions = 0;
-            foreach (var (description, test) in typeConversionTests)
+            foreach (var test in conversionTests)
             {
-                try
-                {
-                    var result = test();
-                    result.Should().NotBeNull($"{description} should return a value");
-                    successfulConversions++;
-                    _integrationValidationResults.Add($"✓ {description}: success");
-                }
-                catch (Exception ex)
-                {
-                    _integrationValidationResults.Add($"✗ {description}: {ex.Message}");
-                }
+                var passed = test.validation();
+                _integrationValidationResults.Add(passed 
+                    ? $"✓ {test.description} test passed"
+                    : $"✗ {test.description} test failed");
+                
+                passed.Should().BeTrue($"{test.description} validation should pass");
             }
-
-            _integrationValidationResults.Add($"Type conversion verification: {successfulConversions}/{typeConversionTests.Count} tests passed");
         }
         catch (Exception ex)
         {
-            _integrationValidationResults.Add($"✗ Type conversion verification failed: {ex.Message}");
+            _integrationValidationResults.Add($"✗ FlexKit type conversion testing failed: {ex.Message}");
+            throw;
         }
-        
-        scenarioContext.Set(_integrationValidationResults, "IntegrationValidationResults");
     }
 
     [Then(@"the integration controller should support FlexKit dynamic access to configuration")]
     public void ThenTheIntegrationControllerShouldSupportFlexKitDynamicAccessToConfiguration()
     {
         _integrationFlexConfiguration.Should().NotBeNull("FlexKit configuration should be available");
-        _appConfigurationConfigured.Should().BeTrue("App Configuration should be configured");
 
         try
         {
-            // Test App Configuration specific dynamic access
+            // Test comprehensive dynamic access with a scenario prefix
             dynamic config = _integrationFlexConfiguration!;
-            
-            var appConfigTests = new List<(string description, Func<object?> test)>
+
+            var accessTests = new List<(string description, Func<bool> validation)>
             {
-                ("API timeout access", () => config["myapp:api:timeout"]),
-                ("Base URL access", () => config["myapp:api:baseUrl"]),
-                ("Cache settings access", () => config["myapp:cache:enabled"]),
-                ("Logging configuration", () => config["myapp:logging:level"])
+                ("Direct key access", () => 
+                {
+                    var value = config["appConfigurationSettings:myapp:api:timeout"];
+                    return !string.IsNullOrEmpty(value?.ToString());
+                }),
+                ("Nested object navigation via config", () => 
+                {
+                    var value = config.appConfigurationSettings.myapp.api.timeout;
+                    return value != null;
+                }),
+                ("Safe navigation chains", () => 
+                {
+                    _ = config["nonexistent:deeply:nested:value"];
+                    return true; // Should not throw
+                }),
+                ("Mixed access patterns", () => 
+                {
+                    var section = _integrationFlexConfiguration.Configuration.GetSection($"appConfigurationSettings:myapp:api");
+                    return section.Exists();
+                })
             };
 
-            var successfulTests = 0;
-            foreach (var (description, test) in appConfigTests)
+            foreach (var test in accessTests)
             {
-                try
-                {
-                    var result = test();
-                    if (result != null)
-                    {
-                        successfulTests++;
-                        _integrationValidationResults.Add($"✓ {description}: success");
-                    }
-                    else
-                    {
-                        _integrationValidationResults.Add($"⚠ {description}: null result");
-                    }
-                }
-                catch (Exception ex)
-                {
-                    _integrationValidationResults.Add($"✗ {description}: {ex.Message}");
-                }
+                var passed = test.validation();
+                _integrationValidationResults.Add(passed 
+                    ? $"✓ {test.description} test passed"
+                    : $"✗ {test.description} test failed");
+                
+                passed.Should().BeTrue($"{test.description} validation should pass");
             }
-
-            _integrationValidationResults.Add($"App Configuration dynamic access verification: {successfulTests}/{appConfigTests.Count} tests passed");
         }
         catch (Exception ex)
         {
-            _integrationValidationResults.Add($"✗ App Configuration dynamic access verification failed: {ex.Message}");
+            _integrationValidationResults.Add($"✗ FlexKit dynamic access testing failed: {ex.Message}");
+            throw;
         }
-        
-        scenarioContext.Set(_integrationValidationResults, "IntegrationValidationResults");
     }
 
     [Then(@"the integration controller should demonstrate advanced FlexKit features")]
@@ -388,45 +474,48 @@ public class AzureFlexKitIntegrationSteps(ScenarioContext scenarioContext)
 
         try
         {
-            // Test advanced FlexKit features
-            var advancedTests = new List<(string description, Func<object?> test)>
+            // Test advanced FlexKit features with a scenario prefix
+            var advancedTests = new List<(string description, Func<bool> validation)>
             {
-                ("Configuration sections", () => _integrationFlexConfiguration!.Configuration.GetChildren().Count()),
-                ("Key enumeration", () => _integrationFlexConfiguration.Configuration.AsEnumerable().Count()),
-                ("Section binding", () => _integrationFlexConfiguration.Configuration.GetSection("myapp").Exists()),
-                ("Hierarchical access", () => _integrationFlexConfiguration.Configuration["myapp:database:host"])
+                ("Configuration section binding", () => 
+                {
+                    var section = _integrationFlexConfiguration!.Configuration.GetSection("appConfigurationSettings:myapp");
+                    return section.Exists() && section.GetChildren().Any();
+                }),
+                ("Hierarchical configuration access", () => 
+                {
+                    var keys = _integrationFlexConfiguration!.Configuration.AsEnumerable()
+                        .Where(kvp => kvp.Key.StartsWith("appConfigurationSettings:myapp:"))
+                        .ToList();
+                    return keys.Count > 0;
+                }),
+                ("Dynamic property enumeration", () => 
+                {
+                    var hasMyApp = TryDynamicAccess();
+                    return hasMyApp;
+                }),
+                ("Type-safe configuration access", () => 
+                {
+                    var timeout = _integrationFlexConfiguration!["appConfigurationSettings:myapp:api:timeout"].ToType<string>();
+                    return !string.IsNullOrEmpty(timeout);
+                })
             };
 
-            var successfulAdvancedFeatures = 0;
-            foreach (var (description, test) in advancedTests)
+            foreach (var test in advancedTests)
             {
-                try
-                {
-                    var result = test();
-                    if (result != null)
-                    {
-                        successfulAdvancedFeatures++;
-                        _integrationValidationResults.Add($"✓ {description}: success");
-                    }
-                    else
-                    {
-                        _integrationValidationResults.Add($"⚠ {description}: null result");
-                    }
-                }
-                catch (Exception ex)
-                {
-                    _integrationValidationResults.Add($"✗ {description}: {ex.Message}");
-                }
+                var passed = test.validation();
+                _integrationValidationResults.Add(passed 
+                    ? $"✓ {test.description} test passed"
+                    : $"✗ {test.description} test failed");
+                
+                passed.Should().BeTrue($"{test.description} validation should pass");
             }
-
-            _integrationValidationResults.Add($"Advanced FlexKit features verification: {successfulAdvancedFeatures}/{advancedTests.Count} tests passed");
         }
         catch (Exception ex)
         {
-            _integrationValidationResults.Add($"✗ Advanced FlexKit features verification failed: {ex.Message}");
+            _integrationValidationResults.Add($"✗ Advanced FlexKit features testing failed: {ex.Message}");
+            throw;
         }
-        
-        scenarioContext.Set(_integrationValidationResults, "IntegrationValidationResults");
     }
 
     [Then(@"the integration controller configuration should demonstrate integrated Azure configuration")]
@@ -438,276 +527,303 @@ public class AzureFlexKitIntegrationSteps(ScenarioContext scenarioContext)
 
         try
         {
-            // Verify integration of both Azure services
-            var keyVaultKeys = _integrationConfiguration!
-                .AsEnumerable()
-                .Count(kvp => kvp.Key.StartsWith("myapp:database:") && kvp.Value != null);
+            // Verify integration of both Azure services with the scenario prefix
+            var integrationTests = new List<(string description, string key, Func<bool> validation)>
+            {
+                ("Key Vault integration", "keyVaultSecrets:myapp:database:host", () => 
+                {
+                    var value = _integrationConfiguration!["keyVaultSecrets:myapp:database:host"];
+                    return !string.IsNullOrEmpty(value);
+                }),
+                ("App Configuration integration", "appConfigurationSettings:myapp:api:timeout", () => 
+                {
+                    var value = _integrationConfiguration!["appConfigurationSettings:myapp:api:timeout"];
+                    return !string.IsNullOrEmpty(value);
+                }),
+                ("Cross-service configuration", "appConfigurationSettings:infrastructure-module:environment", () => 
+                {
+                    var value = _integrationConfiguration!["appConfigurationSettings:infrastructure-module:environment"];
+                    return !string.IsNullOrEmpty(value);
+                })
+            };
+
+            foreach (var test in integrationTests)
+            {
+                var passed = test.validation();
+                _integrationValidationResults.Add(passed 
+                    ? $"✓ {test.description} test passed for key '{test.key}'"
+                    : $"✗ {test.description} test failed for key '{test.key}'");
                 
-            var appConfigKeys = _integrationConfiguration
-                .AsEnumerable()
-                .Count(kvp => kvp.Key.StartsWith("myapp:api:") && kvp.Value != null);
-            
-            keyVaultKeys.Should().BeGreaterThan(0, "Should have Key Vault keys");
-            appConfigKeys.Should().BeGreaterThan(0, "Should have App Configuration keys");
-            
-            _integrationValidationResults.Add($"✓ Integrated Azure configuration verified: {keyVaultKeys} Key Vault keys, {appConfigKeys} App Config keys");
+                passed.Should().BeTrue($"{test.description} validation should pass");
+            }
         }
         catch (Exception ex)
         {
-            _integrationValidationResults.Add($"✗ Integrated Azure configuration verification failed: {ex.Message}");
+            _integrationValidationResults.Add($"✗ Integrated Azure configuration testing failed: {ex.Message}");
+            throw;
         }
-        
-        scenarioContext.Set(_integrationValidationResults, "IntegrationValidationResults");
     }
 
     [Then(@"the integration controller should demonstrate FlexKit precedence handling")]
     public void ThenTheIntegrationControllerShouldDemonstrateFlexKitPrecedenceHandling()
     {
         _integrationConfiguration.Should().NotBeNull("Configuration should be built");
-        _keyVaultConfigured.Should().BeTrue("Key Vault should be configured");
-        _appConfigurationConfigured.Should().BeTrue("App Configuration should be configured");
+        _integrationFlexConfiguration.Should().NotBeNull("FlexConfig should be built");
+        var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
 
         try
         {
-            // Test configuration precedence - App Configuration should typically override Key Vault
-            // due to being added later in the configuration pipeline
-            var precedenceTests = new List<(string description, string key, string expectedSource)>
+            // Test that FlexKit maintains proper precedence from underlying configuration with scenario prefix
+            var precedenceTests = new List<(string description, string key, Func<bool> validation)>
             {
-                ("API timeout precedence", "myapp:api:timeout", "AppConfiguration"),
-                ("Database host precedence", "myapp:database:host", "KeyVault"),
-                ("Cache enabled precedence", "myapp:cache:enabled", "AppConfiguration")
+                ("Standard configuration precedence", $"appConfigurationSettings:myapp:api:timeout", () => 
+                {
+                    var standardValue = _integrationConfiguration![$"appConfigurationSettings:myapp:api:timeout"];
+                    var flexValue = _integrationFlexConfiguration![$"appConfigurationSettings:myapp:api:timeout"];
+                    return standardValue == flexValue;
+                }),
+                ("Dynamic access precedence", $"{scenarioPrefix}:myapp:database:host", () => 
+                {
+                    dynamic config = _integrationFlexConfiguration!;
+                    var dynamicValue = config[$"{scenarioPrefix}:myapp:database:host"]?.ToString();
+                    var standardValue = _integrationConfiguration![$"{scenarioPrefix}:myapp:database:host"];
+                    return dynamicValue == standardValue;
+                }),
+                ("Section-based precedence", $"{scenarioPrefix}:infrastructure-module:environment", () => 
+                {
+                    var flexSection = _integrationFlexConfiguration!.Configuration.GetSection($"{scenarioPrefix}:infrastructure-module");
+                    var standardSection = _integrationConfiguration!.GetSection($"{scenarioPrefix}:infrastructure-module");
+                    return flexSection.Exists() == standardSection.Exists();
+                })
             };
 
-            var successfulPrecedenceTests = 0;
-            foreach (var (description, key, expectedSource) in precedenceTests)
+            foreach (var test in precedenceTests)
             {
-                try
-                {
-                    var value = _integrationConfiguration![key];
-                    if (!string.IsNullOrEmpty(value))
-                    {
-                        successfulPrecedenceTests++;
-                        _integrationValidationResults.Add($"✓ {description}: value from {expectedSource}");
-                    }
-                    else
-                    {
-                        _integrationValidationResults.Add($"⚠ {description}: no value found");
-                    }
-                }
-                catch (Exception ex)
-                {
-                    _integrationValidationResults.Add($"✗ {description}: {ex.Message}");
-                }
+                var passed = test.validation();
+                _integrationValidationResults.Add(passed 
+                    ? $"✓ {test.description} test passed for key '{test.key}'"
+                    : $"✗ {test.description} test failed for key '{test.key}'");
+                
+                passed.Should().BeTrue($"{test.description} validation should pass");
             }
-
-            _integrationValidationResults.Add($"Precedence handling verification: {successfulPrecedenceTests}/{precedenceTests.Count} tests passed");
         }
         catch (Exception ex)
         {
-            _integrationValidationResults.Add($"✗ Precedence handling verification failed: {ex.Message}");
+            _integrationValidationResults.Add($"✗ FlexKit precedence handling testing failed: {ex.Message}");
+            throw;
         }
-        
-        scenarioContext.Set(_integrationValidationResults, "IntegrationValidationResults");
     }
 
     [Then(@"the integration controller should support comprehensive JSON processing")]
     public void ThenTheIntegrationControllerShouldSupportComprehensiveJsonProcessing()
     {
-        _integrationFlexConfiguration.Should().NotBeNull("FlexKit configuration should be available");
-        _jsonProcessingEnabled.Should().BeTrue("JSON processing should be enabled");
+        _integrationConfiguration.Should().NotBeNull("Configuration should be built");
 
         try
         {
-            // Test JSON processing from both sources
-            var jsonProcessingTests = new List<(string description, string key)>
+            // Test comprehensive JSON processing across Azure sources with a scenario prefix
+            var jsonTests = new List<(string description, string key, Func<bool> validation)>
             {
-                ("Database config from Key Vault", "database-config:host"),
-                ("API settings from Key Vault", "api-settings:baseUrl"),
-                ("Feature config caching", "feature-config:caching:enabled"),
-                ("Infrastructure module database", "infrastructure-module-database-credentials:host")
+                ("Key Vault JSON processing", $"keyVaultSecrets:infrastructure-module-database-credentials:host", () => 
+                {
+                    var value = _integrationConfiguration!["keyVaultSecrets:infrastructure-module-database-credentials:host"];
+                    return !string.IsNullOrEmpty(value);
+                }),
+                ("Nested JSON structure", "keyVaultSecrets:infrastructure-module-api-config:authentication:type", () => 
+                {
+                    var value = _integrationConfiguration!["keyVaultSecrets:infrastructure-module-api-config:authentication:type"];
+                    return value == "bearer";
+                }),
+                ("JSON array elements", "keyVaultSecrets:infrastructure-module-cache-settings:redis:host", () => 
+                {
+                    var value = _integrationConfiguration!["keyVaultSecrets:infrastructure-module-cache-settings:redis:host"];
+                    return !string.IsNullOrEmpty(value);
+                })
             };
 
-            var successfulJsonProcessing = 0;
-            foreach (var (description, key) in jsonProcessingTests)
+            foreach (var test in jsonTests)
             {
-                try
-                {
-                    var value = _integrationFlexConfiguration![key];
-                    if (!string.IsNullOrEmpty(value))
-                    {
-                        successfulJsonProcessing++;
-                        _integrationValidationResults.Add($"✓ {description}: {value}");
-                    }
-                    else
-                    {
-                        _integrationValidationResults.Add($"⚠ {description}: not found or empty");
-                    }
-                }
-                catch (Exception ex)
-                {
-                    _integrationValidationResults.Add($"✗ {description}: {ex.Message}");
-                }
+                var passed = test.validation();
+                _integrationValidationResults.Add(passed 
+                    ? $"✓ {test.description} test passed for key '{test.key}'"
+                    : $"✗ {test.description} test failed for key '{test.key}'");
+                
+                passed.Should().BeTrue($"{test.description} validation should pass");
             }
-
-            _integrationValidationResults.Add($"JSON processing verification: {successfulJsonProcessing}/{jsonProcessingTests.Count} tests passed");
         }
         catch (Exception ex)
         {
-            _integrationValidationResults.Add($"✗ JSON processing verification failed: {ex.Message}");
+            _integrationValidationResults.Add($"✗ Comprehensive JSON processing testing failed: {ex.Message}");
+            throw;
         }
-        
-        scenarioContext.Set(_integrationValidationResults, "IntegrationValidationResults");
     }
 
     [Then(@"the integration controller configuration should demonstrate complex data structure handling")]
     public void ThenTheIntegrationControllerConfigurationShouldDemonstrateComplexDataStructureHandling()
     {
-        _integrationFlexConfiguration.Should().NotBeNull("FlexKit configuration should be available");
+        _integrationConfiguration.Should().NotBeNull("Configuration should be built");
+        _integrationFlexConfiguration.Should().NotBeNull("FlexConfig should be built");
 
         try
         {
-            // Test complex nested structure access
-            var complexStructureTests = new List<(string description, string key)>
+            // Test handling of complex data structures with a scenario prefix
+            var complexTests = new List<(string description, Func<bool> validation)>
             {
-                ("Nested database configuration", "database-config:connectionTimeout"),
-                ("Authentication configuration", "api-settings:authentication:type"),
-                ("Logging targets configuration", "feature-config:logging:structured"),
-                ("Cache provider settings", "feature-config:caching:provider")
+                ("Nested object access via FlexKit", () => 
+                {
+                    dynamic config = _integrationFlexConfiguration!;
+                    var value = config[$"keyVaultSecrets:infrastructure-module-database-credentials:port"];
+                    return value != null;
+                }),
+                ("Deep hierarchy navigation", () => 
+                {
+                    var value = _integrationConfiguration!["keyVaultSecrets:infrastructure-module-api-config:authentication:token"];
+                    return !string.IsNullOrEmpty(value);
+                }),
+                ("Complex structure enumeration", () => 
+                {
+                    var keys = _integrationConfiguration!.AsEnumerable()
+                        .Where(kvp => kvp.Key.StartsWith($"keyVaultSecrets:infrastructure-module-api-config:") && kvp.Key.Contains(":"))
+                        .ToList();
+                    return keys.Count > 0;
+                }),
+                ("FlexKit dynamic complex access", () => 
+                {
+                    dynamic config = _integrationFlexConfiguration!;
+                    var section = config["appConfigurationSettings:myapp:cache:ttl"];
+                    return section != null;
+                })
             };
 
-            var successfulComplexStructures = 0;
-            foreach (var (description, key) in complexStructureTests)
+            foreach (var test in complexTests)
             {
-                try
-                {
-                    var value = _integrationFlexConfiguration![key];
-                    if (!string.IsNullOrEmpty(value))
-                    {
-                        successfulComplexStructures++;
-                        _integrationValidationResults.Add($"✓ {description}: {value}");
-                    }
-                    else
-                    {
-                        _integrationValidationResults.Add($"⚠ {description}: not found or empty");
-                    }
-                }
-                catch (Exception ex)
-                {
-                    _integrationValidationResults.Add($"✗ {description}: {ex.Message}");
-                }
+                var passed = test.validation();
+                _integrationValidationResults.Add(passed 
+                    ? $"✓ {test.description} test passed"
+                    : $"✗ {test.description} test failed");
+                
+                passed.Should().BeTrue($"{test.description} validation should pass");
             }
-
-            _integrationValidationResults.Add($"Complex data structure handling verification: {successfulComplexStructures}/{complexStructureTests.Count} tests passed");
         }
         catch (Exception ex)
         {
-            _integrationValidationResults.Add($"✗ Complex data structure handling verification failed: {ex.Message}");
+            _integrationValidationResults.Add($"✗ Complex data structure handling testing failed: {ex.Message}");
+            throw;
         }
-        
-        scenarioContext.Set(_integrationValidationResults, "IntegrationValidationResults");
     }
 
     [Then(@"the integration controller should demonstrate FlexKit JSON integration capabilities")]
     public void ThenTheIntegrationControllerShouldDemonstrateFlexKitJsonIntegrationCapabilities()
     {
         _integrationFlexConfiguration.Should().NotBeNull("FlexKit configuration should be available");
-        _jsonProcessingEnabled.Should().BeTrue("JSON processing should be enabled");
 
         try
         {
-            // Test FlexKit-specific JSON integration features
-            dynamic _ = _integrationFlexConfiguration!;
-            
-            var jsonIntegrationTests = new List<(string description, Func<object?> test)>
+            // Test FlexKit's integration with JSON-processed Azure configuration with scenario prefix
+            dynamic config = _integrationFlexConfiguration!;
+
+            var jsonIntegrationTests = new List<(string description, Func<bool> validation)>
             {
-                ("Dynamic JSON property access", () => AzureTestConfigurationBuilder.GetDynamicProperty(_integrationFlexConfiguration, "database-config.host")),
-                ("Type conversion on JSON values", () => _integrationFlexConfiguration["database-config:port"].ToType<int>()),
-                ("Boolean JSON values", () => _integrationFlexConfiguration["database-config:ssl"].ToType<bool>()),
-                ("Nested JSON object access", () => _integrationFlexConfiguration["api-settings:authentication:type"])
+                ("JSON to dynamic property mapping", () => 
+                {
+                    var value = config["keyVaultSecrets:infrastructure-module-database-credentials:ssl"];
+                    return value != null;
+                }),
+                ("Nested JSON dynamic access", () => 
+                {
+                    var value = config.appConfigurationSettings.myapp.api.baseUrl;
+                    return !string.IsNullOrEmpty(value?.ToString());
+                }),
+                ("JSON array to configuration mapping", () => 
+                {
+                    var value = config[$"keyVaultSecrets:myapp:features:cache:enabled"];
+                    return value != null;
+                }),
+                ("Type-safe JSON access", () => 
+                {
+                    var port = _integrationFlexConfiguration!["jsonSecrets:database-config:port"].ToType<string>();
+                    return !string.IsNullOrEmpty(port);
+                })
             };
 
-            var successfulJsonIntegration = 0;
-            foreach (var (description, test) in jsonIntegrationTests)
+            foreach (var test in jsonIntegrationTests)
             {
-                try
-                {
-                    var result = test();
-                    if (result != null)
-                    {
-                        successfulJsonIntegration++;
-                        _integrationValidationResults.Add($"✓ {description}: success");
-                    }
-                    else
-                    {
-                        _integrationValidationResults.Add($"⚠ {description}: null result");
-                    }
-                }
-                catch (Exception ex)
-                {
-                    _integrationValidationResults.Add($"✗ {description}: {ex.Message}");
-                }
+                var passed = test.validation();
+                _integrationValidationResults.Add(passed 
+                    ? $"✓ {test.description} test passed"
+                    : $"✗ {test.description} test failed");
+                
+                passed.Should().BeTrue($"{test.description} validation should pass");
             }
-
-            _integrationValidationResults.Add($"FlexKit JSON integration verification: {successfulJsonIntegration}/{jsonIntegrationTests.Count} tests passed");
         }
         catch (Exception ex)
         {
-            _integrationValidationResults.Add($"✗ FlexKit JSON integration verification failed: {ex.Message}");
+            _integrationValidationResults.Add($"✗ FlexKit JSON integration testing failed: {ex.Message}");
+            throw;
         }
-        
-        scenarioContext.Set(_integrationValidationResults, "IntegrationValidationResults");
     }
 
     [Then(@"the integration controller should demonstrate error-tolerant Azure integration")]
     public void ThenTheIntegrationControllerShouldDemonstrateErrorTolerantAzureIntegration()
     {
         _errorToleranceEnabled.Should().BeTrue("Error tolerance should be enabled");
-        
+        _integrationFlexConfiguration.Should().NotBeNull("FlexConfig should be built despite potential errors");
+
         try
         {
-            // Test that the integration can handle various error scenarios gracefully
-            var errorToleranceTests = new List<(string description, Func<bool> test)>
+            // Test that the integration works even with optional sources
+            var errorToleranceTests = new List<(string description, Func<bool> validation)>
             {
-                ("Configuration built despite errors", () => _integrationConfiguration != null || _lastIntegrationException == null),
-                ("FlexKit accessible despite errors", () => _integrationFlexConfiguration != null),
-                ("Partial configuration available", () => _integrationConfiguration?.AsEnumerable().Any() == true),
-                ("Dynamic access still works", TryDynamicAccess)
+                ("Configuration built despite optional failures", () => _integrationConfiguration != null),
+                ("FlexKit operational with error tolerance", () => 
+                {
+                    dynamic _ = _integrationFlexConfiguration!;
+                    return TryDynamicAccess();
+                }),
+                ("Available configuration accessible", () => 
+                {
+                    var keys = _integrationConfiguration!.AsEnumerable().ToList();
+                    return keys.Count > 0;
+                }),
+                ("Error recovery and graceful degradation", () => 
+                {
+                    // Test that we can still access available configuration
+                    var hasAnyConfig = _integrationConfiguration!.AsEnumerable().Any();
+                    return hasAnyConfig;
+                })
             };
 
-            var successfulErrorTolerance = 0;
-            foreach (var (description, test) in errorToleranceTests)
+            foreach (var test in errorToleranceTests)
             {
-                try
-                {
-                    var result = test();
-                    if (result)
-                    {
-                        successfulErrorTolerance++;
-                        _integrationValidationResults.Add($"✓ {description}: passed");
-                    }
-                    else
-                    {
-                        _integrationValidationResults.Add($"⚠ {description}: failed");
-                    }
-                }
-                catch (Exception ex)
-                {
-                    _integrationValidationResults.Add($"✗ {description}: {ex.Message}");
-                }
+                var passed = test.validation();
+                _integrationValidationResults.Add(passed 
+                    ? $"✓ {test.description} test passed"
+                    : $"✗ {test.description} test failed");
+                
+                passed.Should().BeTrue($"{test.description} validation should pass");
             }
 
-            _integrationValidationResults.Add($"Error tolerance verification: {successfulErrorTolerance}/{errorToleranceTests.Count} tests passed");
+            // Verify that we can still access FlexKit features despite any potential issues
+            var flexKitStillWorks = TryDynamicAccess();
+            _integrationValidationResults.Add(flexKitStillWorks 
+                ? "✓ FlexKit dynamic access still functional with error tolerance"
+                : "✗ FlexKit dynamic access failed with error tolerance");
+            
+            flexKitStillWorks.Should().BeTrue("FlexKit should remain functional with error tolerance");
         }
         catch (Exception ex)
         {
-            _integrationValidationResults.Add($"✗ Error tolerance verification failed: {ex.Message}");
+            _integrationValidationResults.Add($"✗ Error-tolerant Azure integration testing failed: {ex.Message}");
+            throw;
         }
-        
-        scenarioContext.Set(_integrationValidationResults, "IntegrationValidationResults");
     }
 
+    #endregion
+
+    #region Helper Methods
+
     /// <summary>
-    /// Helper method to test dynamic access capability.
+    /// Attempts dynamic access to test FlexKit functionality without throwing exceptions.
     /// </summary>
     /// <returns>True if dynamic access works, false otherwise</returns>
     private bool TryDynamicAccess()

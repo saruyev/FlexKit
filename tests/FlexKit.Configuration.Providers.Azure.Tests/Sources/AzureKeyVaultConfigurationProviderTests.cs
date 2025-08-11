@@ -6,6 +6,7 @@ using FluentAssertions;
 using NSubstitute;
 using Xunit;
 // ReSharper disable AccessToDisposedClosure
+// ReSharper disable NullableWarningSuppressionIsUsed
 
 namespace FlexKit.Configuration.Providers.Azure.Tests.Sources;
 
@@ -565,6 +566,28 @@ public class AzureKeyVaultConfigurationProviderTests
             .WithMessage("Failed to load secret 'failing-secret' from Key Vault.");
     
         provider.Dispose();
+    }
+    
+    [Fact]
+    public void Dispose_WhenAlreadyDisposed_ReturnsEarlyWithoutException()
+    {
+        // Arrange
+        var source = new AzureKeyVaultConfigurationSource
+        {
+            VaultUri = "https://test-vault.vault.azure.net/",
+            ReloadAfter = TimeSpan.FromMinutes(1) // Create a timer so there's something to dispose
+        };
+        var provider = new AzureKeyVaultConfigurationProvider(source);
+
+        // Act - First disposal
+        provider.Dispose();
+    
+        // Act - Second disposal should hit the early return path
+        provider.Dispose();
+
+        // Assert - No exception should be thrown, covering the _disposed check
+        // This test specifically covers the "if (_disposed) { return; }" line in Dispose(bool disposing)
+        provider.Should().NotBeNull();
     }
 
     private static SecretProperties CreateSecretProperties(string name, bool enabled = true)

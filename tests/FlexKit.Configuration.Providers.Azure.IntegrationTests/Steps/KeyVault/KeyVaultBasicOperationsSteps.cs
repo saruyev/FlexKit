@@ -1,11 +1,14 @@
 using FlexKit.Configuration.Core;
 using FlexKit.Configuration.Providers.Azure.IntegrationTests.Utils;
 using FlexKit.Configuration.Conversion;
+using FlexKit.Configuration.Providers.Azure.Extensions;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Reqnroll;
+using Newtonsoft.Json;
 // ReSharper disable MethodTooLong
 // ReSharper disable TooManyDeclarations
+// ReSharper disable NullableWarningSuppressionIsUsed
 
 namespace FlexKit.Configuration.Providers.Azure.IntegrationTests.Steps.KeyVault;
 
@@ -18,7 +21,6 @@ namespace FlexKit.Configuration.Providers.Azure.IntegrationTests.Steps.KeyVault;
 [Binding]
 public class KeyVaultBasicOperationsSteps(ScenarioContext scenarioContext)
 {
-    private AzureTestConfigurationBuilder? _keyVaultBuilder;
     private IConfiguration? _keyVaultConfiguration;
     private IFlexConfig? _keyVaultFlexConfiguration;
     private Exception? _lastKeyVaultException;
@@ -26,60 +28,85 @@ public class KeyVaultBasicOperationsSteps(ScenarioContext scenarioContext)
     private bool _jsonProcessingEnabled;
     private bool _hierarchicalSecretsConfigured;
     private bool _errorToleranceEnabled;
+    private Dictionary<string, object>? _testData;
 
     #region Given Steps - Setup
 
     [Given(@"I have established a key vault controller environment")]
     public void GivenIHaveEstablishedAKeyVaultControllerEnvironment()
     {
-        _keyVaultBuilder = new AzureTestConfigurationBuilder(scenarioContext);
-        scenarioContext.Set(_keyVaultBuilder, "KeyVaultBuilder");
+        // No need to do anything here - containers are started globally
+        _keyVaultValidationResults.Add("✓ Key vault controller environment established");
     }
 
     [Given(@"I have key vault controller configuration with Key Vault from ""(.*)""")]
-    public void GivenIHaveKeyVaultControllerConfigurationWithKeyVaultFrom(string testDataPath)
+    public async Task GivenIHaveKeyVaultControllerConfigurationWithKeyVaultFrom(string testDataPath)
     {
-        _keyVaultBuilder.Should().NotBeNull("Key vault builder should be established");
+        var keyVaultEmulator = scenarioContext.GetKeyVaultEmulator();
+        var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
 
         var fullPath = Path.Combine("TestData", testDataPath);
-        _keyVaultBuilder!.AddKeyVaultFromTestData(fullPath, optional: false, jsonProcessor: false);
+        var jsonContent = await File.ReadAllTextAsync(fullPath);
+        _testData = JsonConvert.DeserializeObject<Dictionary<string, object>>(jsonContent)!;
         
-        scenarioContext.Set(_keyVaultBuilder, "KeyVaultBuilder");
+        // Load Key Vault secrets from test data with a scenario prefix
+        if (_testData.TryGetValue("keyVaultSecrets", out var secretsObj) && secretsObj is Newtonsoft.Json.Linq.JObject secretsJson)
+        {
+            foreach (var secret in secretsJson)
+            {
+                await keyVaultEmulator.SetSecretAsync(secret.Key, secret.Value?.ToString() ?? "", scenarioPrefix);
+            }
+        }
+        
+        _keyVaultValidationResults.Add($"✓ Key Vault secrets loaded with prefix '{scenarioPrefix}'");
     }
 
     [Given(@"I have key vault controller configuration with hierarchical Key Vault from ""(.*)""")]
-    public void GivenIHaveKeyVaultControllerConfigurationWithHierarchicalKeyVaultFrom(string testDataPath)
+    public async Task GivenIHaveKeyVaultControllerConfigurationWithHierarchicalKeyVaultFrom(string testDataPath)
     {
-        _keyVaultBuilder.Should().NotBeNull("Key vault builder should be established");
-
-        var fullPath = Path.Combine("TestData", testDataPath);
-        _keyVaultBuilder!.AddKeyVaultFromTestData(fullPath, optional: false, jsonProcessor: false);
+        await GivenIHaveKeyVaultControllerConfigurationWithKeyVaultFrom(testDataPath);
         _hierarchicalSecretsConfigured = true;
-        
-        scenarioContext.Set(_keyVaultBuilder, "KeyVaultBuilder");
+        _keyVaultValidationResults.Add("✓ Hierarchical secrets configured");
     }
 
     [Given(@"I have key vault controller configuration with JSON-enabled Key Vault from ""(.*)""")]
-    public void GivenIHaveKeyVaultControllerConfigurationWithJsonEnabledKeyVaultFrom(string testDataPath)
+    public async Task GivenIHaveKeyVaultControllerConfigurationWithJsonEnabledKeyVaultFrom(string testDataPath)
     {
-        _keyVaultBuilder.Should().NotBeNull("Key vault builder should be established");
+        var keyVaultEmulator = scenarioContext.GetKeyVaultEmulator();
+        var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
 
         var fullPath = Path.Combine("TestData", testDataPath);
-        _keyVaultBuilder!.AddKeyVaultFromTestDataWithJsonProcessing(fullPath, optional: false, jsonProcessor: true);
-        _jsonProcessingEnabled = true;
+        var jsonContent = await File.ReadAllTextAsync(fullPath);
+        _testData = JsonConvert.DeserializeObject<Dictionary<string, object>>(jsonContent)!;
         
-        scenarioContext.Set(_keyVaultBuilder, "KeyVaultBuilder");
+        // Load Key Vault secrets from test data with a scenario prefix
+        if (_testData.TryGetValue("keyVaultSecrets", out var secretsObj) && secretsObj is Newtonsoft.Json.Linq.JObject secretsJson)
+        {
+            foreach (var secret in secretsJson)
+            {
+                await keyVaultEmulator.SetSecretAsync(secret.Key, secret.Value?.ToString() ?? "", scenarioPrefix);
+            }
+        }
+        
+        // Load JSON secrets for JSON processing tests with a scenario prefix
+        if (_testData.TryGetValue("jsonSecrets", out var jsonSecretsObj) && jsonSecretsObj is Newtonsoft.Json.Linq.JObject jsonSecretsJson)
+        {
+            foreach (var jsonSecret in jsonSecretsJson)
+            {
+                var jsonValue = JsonConvert.SerializeObject(jsonSecret.Value);
+                await keyVaultEmulator.SetSecretAsync(jsonSecret.Key, jsonValue, scenarioPrefix);
+            }
+        }
+        
+        _jsonProcessingEnabled = true;
+        _keyVaultValidationResults.Add($"✓ JSON-enabled Key Vault secrets loaded with prefix '{scenarioPrefix}'");
     }
 
     [Given(@"I have key vault controller configuration with optional Key Vault from ""(.*)""")]
-    public void GivenIHaveKeyVaultControllerConfigurationWithOptionalKeyVaultFrom(string testDataPath)
+    public async Task GivenIHaveKeyVaultControllerConfigurationWithOptionalKeyVaultFrom(string testDataPath)
     {
-        _keyVaultBuilder.Should().NotBeNull("Key vault builder should be established");
-
-        var fullPath = Path.Combine("TestData", testDataPath);
-        _keyVaultBuilder!.AddKeyVaultFromTestData(fullPath, optional: true, jsonProcessor: false);
-        
-        scenarioContext.Set(_keyVaultBuilder, "KeyVaultBuilder");
+        await GivenIHaveKeyVaultControllerConfigurationWithKeyVaultFrom(testDataPath);
+        _keyVaultValidationResults.Add("✓ Optional Key Vault configuration prepared");
     }
 
     #endregion
@@ -89,16 +116,24 @@ public class KeyVaultBasicOperationsSteps(ScenarioContext scenarioContext)
     [When(@"I configure key vault controller by building the configuration")]
     public void WhenIConfigureKeyVaultControllerByBuildingTheConfiguration()
     {
-        _keyVaultBuilder.Should().NotBeNull("Key vault builder should be established");
+        var keyVaultEmulator = scenarioContext.GetKeyVaultEmulator();
+        var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
 
         try
         {
-            // Start LocalStack first
-            var startTask = _keyVaultBuilder!.StartLocalStackAsync("keyvault");
-            startTask.Wait(TimeSpan.FromMinutes(2));
+            var builder = new FlexConfigurationBuilder();
+            builder.AddAzureKeyVault(options =>
+            {
+                options.VaultUri = "https://test-vault.vault.azure.net/";
+                options.SecretClient = keyVaultEmulator.SecretClient;
+                options.JsonProcessor = _jsonProcessingEnabled;
+                options.Optional = false;
+                // Use a custom secret processor to filter by scenario prefix
+                options.SecretProcessor = new ScenarioPrefixSecretProcessor(scenarioPrefix);
+            });
 
-            _keyVaultConfiguration = _keyVaultBuilder.Build();
-            _keyVaultFlexConfiguration = _keyVaultBuilder.BuildFlexConfig();
+            _keyVaultFlexConfiguration = builder.Build();
+            _keyVaultConfiguration = _keyVaultFlexConfiguration.Configuration;
             
             scenarioContext.Set(_keyVaultConfiguration, "KeyVaultConfiguration");
             scenarioContext.Set(_keyVaultFlexConfiguration, "KeyVaultFlexConfiguration");
@@ -116,17 +151,25 @@ public class KeyVaultBasicOperationsSteps(ScenarioContext scenarioContext)
     [When(@"I configure key vault controller with error tolerance by building the configuration")]
     public void WhenIConfigureKeyVaultControllerWithErrorToleranceByBuildingTheConfiguration()
     {
-        _keyVaultBuilder.Should().NotBeNull("Key vault builder should be established");
+        var keyVaultEmulator = scenarioContext.GetKeyVaultEmulator();
+        var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
         _errorToleranceEnabled = true;
 
         try
         {
-            // Start LocalStack first
-            var startTask = _keyVaultBuilder!.StartLocalStackAsync("keyvault");
-            startTask.Wait(TimeSpan.FromMinutes(2));
+            var builder = new FlexConfigurationBuilder();
+            builder.AddAzureKeyVault(options =>
+            {
+                options.VaultUri = "https://test-vault.vault.azure.net/";
+                options.SecretClient = keyVaultEmulator.SecretClient;
+                options.JsonProcessor = _jsonProcessingEnabled;
+                options.Optional = true; // Enable error tolerance
+                // Use a custom secret processor to filter by scenario prefix
+                options.SecretProcessor = new ScenarioPrefixSecretProcessor(scenarioPrefix);
+            });
 
-            _keyVaultConfiguration = _keyVaultBuilder.Build();
-            _keyVaultFlexConfiguration = _keyVaultBuilder.BuildFlexConfig();
+            _keyVaultFlexConfiguration = builder.Build();
+            _keyVaultConfiguration = _keyVaultFlexConfiguration.Configuration;
             
             scenarioContext.Set(_keyVaultConfiguration, "KeyVaultConfiguration");
             scenarioContext.Set(_keyVaultFlexConfiguration, "KeyVaultFlexConfiguration");
@@ -155,11 +198,10 @@ public class KeyVaultBasicOperationsSteps(ScenarioContext scenarioContext)
             // Test dynamic access patterns specific to FlexKit
             dynamic config = _keyVaultFlexConfiguration!;
             
-            // Test various FlexKit access patterns
+            // Test various FlexKit access patterns - Key Vault transforms -- to :
             var dynamicTests = new List<(string description, Func<object?> test)>
             {
                 ("Basic property access", () => config["myapp:database:host"]),
-                ("Nested property navigation", () => AzureTestConfigurationBuilder.GetDynamicProperty(_keyVaultFlexConfiguration, "myapp.database.host")),
                 ("Section access", () => _keyVaultFlexConfiguration.Configuration.GetSection("myapp")),
                 ("Dynamic casting", () => (string?)config["myapp:database:host"])
             };
@@ -201,6 +243,7 @@ public class KeyVaultBasicOperationsSteps(ScenarioContext scenarioContext)
     {
         _keyVaultConfiguration.Should().NotBeNull("Key vault configuration should be built");
 
+        // Key Vault automatically transforms secret names: -- becomes :
         var actualValue = _keyVaultConfiguration![expectedKey];
         actualValue.Should().Be(expectedValue, $"Configuration key '{expectedKey}' should have the expected value");
         
@@ -215,12 +258,12 @@ public class KeyVaultBasicOperationsSteps(ScenarioContext scenarioContext)
 
         try
         {
-            // Test type conversion capabilities
+            // Test type conversion capabilities - Key Vault transforms secret names from -- to :
             var typeConversionTests = new List<(string description, Func<object> test)>
             {
                 ("String to int conversion", () => _keyVaultFlexConfiguration!["myapp:database:port"].ToType<int>()),
                 ("String to bool conversion", () => _keyVaultFlexConfiguration!["myapp:features:cache:enabled"].ToType<bool>()),
-                ("String to TimeSpan conversion", () => _keyVaultFlexConfiguration!["myapp:features:cache:ttl"].ToType<int>()),
+                ("String to int for TTL", () => _keyVaultFlexConfiguration!["myapp:features:cache:ttl"].ToType<int>()),
                 ("Direct string access", () => _keyVaultFlexConfiguration!["myapp:database:host"] ?? "null")
             };
 
@@ -258,7 +301,7 @@ public class KeyVaultBasicOperationsSteps(ScenarioContext scenarioContext)
 
         try
         {
-            // Test hierarchical access patterns
+            // Test hierarchical access patterns - Key Vault transforms -- to :
             var hierarchicalTests = new List<(string description, string key)>
             {
                 ("Database host access", "myapp:database:host"),
@@ -309,6 +352,7 @@ public class KeyVaultBasicOperationsSteps(ScenarioContext scenarioContext)
         try
         {
             // Test JSON flattening - these should be flattened from JSON secrets
+            // Key Vault transforms secret names from -- to : automatically
             var jsonFlatteningTests = new List<(string description, string key)>
             {
                 ("Database config host", "database-config:host"),

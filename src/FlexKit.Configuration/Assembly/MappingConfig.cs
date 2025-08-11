@@ -255,12 +255,14 @@ public sealed record MappingConfig
         var hashCode = new HashCode();
         hashCode.Add(Prefix);
 
-        if (Names != null)
+        if (Names == null)
         {
-            foreach (var name in Names)
-            {
-                hashCode.Add(name);
-            }
+            return hashCode.ToHashCode();
+        }
+
+        foreach (var name in Names)
+        {
+            hashCode.Add(name);
         }
 
         return hashCode.ToHashCode();

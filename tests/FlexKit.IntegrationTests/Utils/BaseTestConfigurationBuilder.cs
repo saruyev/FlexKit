@@ -7,6 +7,7 @@ using FlexKit.IntegrationTests.Hooks;
 using JetBrains.Annotations;
 // ReSharper disable MemberCanBeProtected.Global
 // ReSharper disable ClassTooBig
+// ReSharper disable NullableWarningSuppressionIsUsed
 
 namespace FlexKit.IntegrationTests.Utils;
 
@@ -16,7 +17,7 @@ public abstract class BaseTestConfigurationBuilder<T> where T : BaseTestConfigur
     protected readonly Dictionary<string, string?> InMemoryData;
     protected readonly List<string> TempFiles;
     private readonly Dictionary<string, string?> _environmentVariables;
-    protected ScenarioContext? ScenarioContext;
+    [UsedImplicitly] protected ScenarioContext? ScenarioContext;
     private IFileSystem? _fileSystem;
 
     /// <summary>

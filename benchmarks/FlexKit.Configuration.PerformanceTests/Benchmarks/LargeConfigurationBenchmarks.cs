@@ -4,6 +4,7 @@ using FlexKit.Configuration.Conversion;
 using Microsoft.Extensions.Configuration;
 // ReSharper disable TooManyDeclarations
 // ReSharper disable ClassTooBig
+// ReSharper disable NullableWarningSuppressionIsUsed
 
 namespace FlexKit.Configuration.PerformanceTests.Benchmarks;
 

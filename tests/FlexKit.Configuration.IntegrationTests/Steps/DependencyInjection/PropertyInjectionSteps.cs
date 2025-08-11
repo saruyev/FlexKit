@@ -9,6 +9,7 @@ using JetBrains.Annotations;
 // ReSharper disable MethodTooLong
 // ReSharper disable ComplexConditionExpression
 // ReSharper disable ClassTooBig
+// ReSharper disable NullableWarningSuppressionIsUsed
 
 namespace FlexKit.Configuration.IntegrationTests.Steps.DependencyInjection;
 

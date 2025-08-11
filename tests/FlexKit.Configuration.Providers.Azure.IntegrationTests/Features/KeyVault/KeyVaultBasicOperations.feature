@@ -29,7 +29,7 @@ So that I can access secure configuration data dynamically
         Then the key vault controller should support JSON secret flattening
         And the key vault controller configuration should contain "database-config:host" with value "db.example.com"
         And the key vault controller configuration should contain "database-config:port" with value "5432"
-        And the key vault controller configuration should contain "database-config:ssl" with value "True"
+        And the key vault controller configuration should contain "database-config:ssl" with value "true"
 
     @KeyVault @OptionalSecrets @ErrorHandling
     Scenario: Handle optional Key Vault configuration gracefully

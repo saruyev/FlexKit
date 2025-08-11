@@ -6,6 +6,7 @@ using Reqnroll;
 using System.Text;
 // ReSharper disable MethodTooLong
 // ReSharper disable ClassTooBig
+// ReSharper disable NullableWarningSuppressionIsUsed
 
 namespace FlexKit.Configuration.Providers.Yaml.IntegrationTests.Steps.Configuration;
 

@@ -3,6 +3,7 @@ using FlexKit.Configuration.Providers.Yaml.Tests.TestBase;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Xunit;
+// ReSharper disable NullableWarningSuppressionIsUsed
 
 namespace FlexKit.Configuration.Providers.Yaml.Tests.Sources;
 

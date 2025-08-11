@@ -7,6 +7,7 @@ using NSubstitute;
 using Xunit;
 // ReSharper disable ComplexConditionExpression
 // ReSharper disable ClassTooBig
+// ReSharper disable NullableWarningSuppressionIsUsed
 
 namespace FlexKit.Configuration.Providers.Azure.Tests.Options;
 
@@ -228,6 +229,7 @@ public class AzureOptionsTests
         options.ReloadAfter.Should().BeNull();
         options.Credential.Should().BeNull();
         options.OnLoadException.Should().BeNull();
+        options.JsonProcessor.Should().BeFalse();
     }
 
     [Fact]
@@ -345,7 +347,8 @@ public class AzureOptionsTests
             Label = "production",
             ReloadAfter = TimeSpan.FromMinutes(5),
             Credential = credential,
-            OnLoadException = ex => _ = ex
+            OnLoadException = ex => _ = ex,
+            JsonProcessor = true
         };
 
         // Assert
@@ -356,6 +359,7 @@ public class AzureOptionsTests
         options.ReloadAfter.Should().Be(TimeSpan.FromMinutes(5));
         options.Credential.Should().BeSameAs(credential);
         options.OnLoadException.Should().NotBeNull();
+        options.JsonProcessor.Should().BeTrue();
     }
 
     [Fact]

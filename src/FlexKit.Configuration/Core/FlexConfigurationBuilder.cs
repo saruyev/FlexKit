@@ -74,7 +74,7 @@ public class FlexConfigurationBuilder
     /// Sources are applied in the order they appear in this list, with later sources
     /// taking precedence over earlier ones for duplicate keys.
     /// </summary>
-    private readonly List<IConfigurationSource> _sources = new();
+    private readonly List<IConfigurationSource> _sources = [];
 
     /// <summary>
     /// Flag indicating whether the Build() method has been called on this builder instance.
@@ -158,15 +158,13 @@ public class FlexConfigurationBuilder
     /// builder.AddJsonFile("appsettings.Development.json", optional: true, reloadOnChange: true);
     /// </code>
     /// </example>
-    public FlexConfigurationBuilder AddJsonFile(string path, bool optional = true, bool reloadOnChange = true)
-    {
-        return AddSource(new JsonConfigurationSource
+    public FlexConfigurationBuilder AddJsonFile(string path, bool optional = true, bool reloadOnChange = true) =>
+        AddSource(new JsonConfigurationSource
         {
             Path = path,
             Optional = optional,
             ReloadOnChange = reloadOnChange
         });
-    }
 
     /// <summary>
     /// Adds environment variables as a configuration source to the builder.
@@ -249,10 +247,8 @@ public class FlexConfigurationBuilder
     /// // Docker: -e DATABASE__CONNECTIONSTRING="Server=localhost"
     /// </code>
     /// </example>
-    public FlexConfigurationBuilder AddEnvironmentVariables()
-    {
-        return AddSource(new EnvironmentVariablesConfigurationSource());
-    }
+    public FlexConfigurationBuilder AddEnvironmentVariables() =>
+        AddSource(new EnvironmentVariablesConfigurationSource());
 
     /// <summary>
     /// Adds a ".env" file configuration source to the builder.
@@ -342,14 +338,12 @@ public class FlexConfigurationBuilder
     /// builder.AddDotEnvFile(".env.development", optional: false);
     /// </code>
     /// </example>
-    public FlexConfigurationBuilder AddDotEnvFile(string path = ".env", bool optional = true)
-    {
-        return AddSource(new DotEnvConfigurationSource
+    public FlexConfigurationBuilder AddDotEnvFile(string path = ".env", bool optional = true) =>
+        AddSource(new DotEnvConfigurationSource
         {
             Path = path,
             Optional = optional
         });
-    }
 
     /// <summary>
     /// Adds a custom configuration source to the builder.

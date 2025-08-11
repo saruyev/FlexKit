@@ -1,15 +1,21 @@
+using System.Collections.Concurrent;
 using System.Reflection;
 using System.Text.Json;
+using Azure;
 using Azure.Core;
+using Azure.Data.AppConfiguration;
+using Azure.Security.KeyVault.Secrets;
 using FlexKit.Configuration.Core;
 using FlexKit.Configuration.Providers.Azure.Extensions;
 using FlexKit.Configuration.Providers.Azure.Sources;
+using FlexKit.Configuration.Providers.Azure.Tests.Sources;
 using FluentAssertions;
 using NSubstitute;
 using Xunit;
 // ReSharper disable MethodTooLong
 // ReSharper disable ComplexConditionExpression
 // ReSharper disable ClassTooBig
+// ReSharper disable NullableWarningSuppressionIsUsed
 
 namespace FlexKit.Configuration.Providers.Azure.Tests.Extensions;
 
@@ -201,6 +207,37 @@ public class AzureExtensionsTests
         action.Should().Throw<ArgumentNullException>()
             .WithParameterName("configure");
     }
+    
+    [Fact]
+    public void AddAzureKeyVault_WithInjectedSecretClient_LoadsSecretsFromMockClient()
+    {
+        // Arrange
+        var builder = new FlexConfigurationBuilder();
+    
+        // Setup mock client with test data
+        var secretProperties = new[] { new SecretProperties("test--secret") { Enabled = true } };
+        var pageable = AsyncPageable<SecretProperties>.FromPages([
+            Page<SecretProperties>.FromValues(secretProperties, null, Substitute.For<Response>())
+        ]);
+        var secrets = new Dictionary<string, KeyVaultSecret>
+        {
+            ["test--secret"] = new("test--secret", "test-value")
+        };
+        var mockClient = new MockSecretClient(pageable, secrets);
+
+        // Act
+        var config = builder.AddAzureKeyVault(options =>
+            {
+                options.VaultUri = "https://test-vault.vault.azure.net/";
+                options.SecretClient = mockClient;
+                options.Optional = false;
+            })
+            .Build();
+
+        // Assert
+        var value = config["test:secret"];
+        value.Should().Be("test-value");
+    }
 
     #endregion
 
@@ -371,6 +408,35 @@ public class AzureExtensionsTests
 
         action.Should().Throw<ArgumentNullException>()
             .WithParameterName("configure");
+    }
+    
+    [Fact]
+    public void AddAzureAppConfiguration_WithInjectedSecretClient_LoadsSecretsFromMockClient()
+    {
+        // Arrange
+        var builder = new FlexConfigurationBuilder();
+        var mockClient = Substitute.For<ConfigurationClient>();
+        var firstSetting = new ConfigurationSetting("test:secret", "test-value");
+        var firstSettings = AsyncPageable<ConfigurationSetting>.FromPages([
+            Page<ConfigurationSetting>.FromValues([firstSetting], null, Substitute.For<Response>())
+        ]);
+
+        // First load
+        mockClient?.GetConfigurationSettingsAsync(Arg.Any<SettingSelector>(), CancellationToken.None)
+            .Returns(firstSettings);
+
+        // Act
+        var config = builder.AddAzureAppConfiguration(options =>
+            {
+                options.ConnectionString = "https://test-vault.vault.azure.net/";
+                options.ConfigurationClient = mockClient;
+                options.Optional = false;
+            })
+            .Build();
+
+        // Assert
+        var value = config["test:secret"];
+        value.Should().Be("test-value");
     }
 
     #endregion
@@ -558,7 +624,7 @@ public class AzureExtensionsTests
         // Arrange
         var json = "{\"host\": \"localhost\", \"port\": 5432}";
         var prefix = "database";
-        var result = new Dictionary<string, string?>();
+        var result = new ConcurrentDictionary<string, string?>();
 
         // Act
         json.FlattenJsonValue(result, prefix);
@@ -575,7 +641,7 @@ public class AzureExtensionsTests
         // Arrange
         var json = "{\"database\": {\"host\": \"localhost\", \"port\": 5432}}";
         var prefix = "config";
-        var result = new Dictionary<string, string?>();
+        var result = new ConcurrentDictionary<string, string?>();
 
         // Act
         json.FlattenJsonValue(result, prefix);
@@ -592,7 +658,7 @@ public class AzureExtensionsTests
         // Arrange
         var json = "{\"items\": [\"first\", \"second\", \"third\"]}";
         var prefix = "config";
-        var result = new Dictionary<string, string?>();
+        var result = new ConcurrentDictionary<string, string?>();
 
         // Act
         json.FlattenJsonValue(result, prefix);
@@ -623,7 +689,7 @@ public class AzureExtensionsTests
                    }
                    """;
         var prefix = "config";
-        var result = new Dictionary<string, string?>();
+        var result = new ConcurrentDictionary<string, string?>();
 
         // Act
         json.FlattenJsonValue(result, prefix);
@@ -643,7 +709,7 @@ public class AzureExtensionsTests
         // Arrange
         var json = "{}";
         var prefix = "config";
-        var result = new Dictionary<string, string?>();
+        var result = new ConcurrentDictionary<string, string?>();
 
         // Act
         json.FlattenJsonValue(result, prefix);
@@ -658,7 +724,7 @@ public class AzureExtensionsTests
         // Arrange
         var json = "{\"items\": []}";
         var prefix = "config";
-        var result = new Dictionary<string, string?>();
+        var result = new ConcurrentDictionary<string, string?>();
 
         // Act
         json.FlattenJsonValue(result, prefix);
@@ -673,7 +739,7 @@ public class AzureExtensionsTests
         // Arrange
         var json = "{\"key1\": null, \"key2\": \"value\"}";
         var prefix = "config";
-        var result = new Dictionary<string, string?>();
+        var result = new ConcurrentDictionary<string, string?>();
 
         // Act
         json.FlattenJsonValue(result, prefix);
@@ -690,7 +756,7 @@ public class AzureExtensionsTests
         // Arrange
         var json = "{ invalid json";
         var prefix = "config";
-        var result = new Dictionary<string, string?>();
+        var result = new ConcurrentDictionary<string, string?>();
 
         // Act
         json.FlattenJsonValue(result, prefix);
@@ -711,7 +777,7 @@ public class AzureExtensionsTests
         // Arrange
         var json = $"{{\"key\": {jsonValue}}}";
         var prefix = "config";
-        var result = new Dictionary<string, string?>();
+        var result = new ConcurrentDictionary<string, string?>();
 
         // Act
         json.FlattenJsonValue(result, prefix);
@@ -750,7 +816,7 @@ public class AzureExtensionsTests
     {
         // Arrange
         var prefix = "config";
-        var result = new Dictionary<string, string?>();
+        var result = new ConcurrentDictionary<string, string?>();
     
         // Create a JsonElement with Undefined ValueKind using reflection
         var jsonElement = default(JsonElement); // This creates a JsonElement with ValueKind.Undefined

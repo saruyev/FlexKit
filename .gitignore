@@ -403,6 +403,7 @@ flexkit-temp/
 # Generated documentation
 docs/api/
 docs/_site/
+LivingDoc.html
 
 # Benchmark results
 benchmark-results/

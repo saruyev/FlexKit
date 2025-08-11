@@ -185,8 +185,6 @@ public class YamlConfigurationSource : IConfigurationSource
     /// provider.Load(); // Manually load YAML file data
     /// </code>
     /// </example>
-    public IConfigurationProvider Build(IConfigurationBuilder builder)
-    {
-        return new YamlConfigurationProvider(this);
-    }
+    public IConfigurationProvider Build(IConfigurationBuilder builder) =>
+        new YamlConfigurationProvider(this);
 }

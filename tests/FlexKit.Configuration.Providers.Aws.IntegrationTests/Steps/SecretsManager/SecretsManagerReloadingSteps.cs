@@ -3,6 +3,7 @@ using FlexKit.Configuration.Providers.Aws.IntegrationTests.Utils;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Reqnroll;
+// ReSharper disable NullableWarningSuppressionIsUsed
 
 namespace FlexKit.Configuration.Providers.Aws.IntegrationTests.Steps.SecretsManager;
 

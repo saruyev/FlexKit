@@ -465,7 +465,8 @@ public static class TypeConversionExtensions
             throw new ArgumentException($"Type {type.Name} is not a supported dictionary type.", nameof(type));
         }
 
-        var dictionary = (IDictionary?)Activator.CreateInstance(type);
+        // ReSharper disable once NullableWarningSuppressionIsUsed
+        var dictionary = (IDictionary?)Activator.CreateInstance(type)!;
         var args = type.GetGenericArguments();
 
         foreach (var value in source)
@@ -478,10 +479,10 @@ public static class TypeConversionExtensions
             }
 
             var key = item.Key.ToType(args[0]) ?? throw new InvalidOperationException();
-            dictionary!.Add(key, item.Value.ToType(args[1]));
+            dictionary.Add(key, item.Value.ToType(args[1]));
         }
 
-        return dictionary!;
+        return dictionary;
     }
 
     /// <summary>

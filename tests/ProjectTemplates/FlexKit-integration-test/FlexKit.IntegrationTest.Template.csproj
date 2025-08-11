@@ -25,6 +25,7 @@
   <!-- Core testing packages -->
   <ItemGroup>
     <!-- BDD Testing -->
+    <PackageReference Include="databinding.LivingDoc.ExecutionDataCollector" Version="6.3.5" />
     <PackageReference Include="Reqnroll" Version="[2.4.1,3.0.0)" />
     <PackageReference Include="Reqnroll.xUnit" Version="[2.4.1,3.0.0)" />
     <PackageReference Include="Reqnroll.Tools.MsBuild.Generation" Version="[2.4.1,3.0.0)" />

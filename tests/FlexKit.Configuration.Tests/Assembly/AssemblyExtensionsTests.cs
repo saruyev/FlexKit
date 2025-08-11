@@ -9,6 +9,7 @@ using NSubstitute;
 using Xunit;
 using Module = Autofac.Module;
 // ReSharper disable ClassTooBig
+// ReSharper disable NullableWarningSuppressionIsUsed
 
 namespace FlexKit.Configuration.Tests.Assembly;
 

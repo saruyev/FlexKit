@@ -14,6 +14,7 @@ using DotNet.Testcontainers.Containers;
 // ReSharper disable ComplexConditionExpression
 // ReSharper disable ClassTooBig
 // ReSharper disable MethodTooLong
+// ReSharper disable NullableWarningSuppressionIsUsed
 
 namespace FlexKit.Configuration.Providers.Aws.PerformanceTests.Benchmarks;
 

@@ -55,9 +55,7 @@ public class ConfigurationModule : Module
     /// can expose multiple service interfaces.
     /// </remarks>
     private static bool IsFlexConfigRegistration(IComponentRegistration registration)
-    {
-        return registration.Services.Any(s => s is TypedService ts && ts.ServiceType == typeof(IFlexConfig));
-    }
+        => registration.Services.Any(s => s is TypedService ts && ts.ServiceType == typeof(IFlexConfig));
 
     /// <summary>
     /// Determines whether the specified registration uses reflection-based activation.
@@ -87,9 +85,7 @@ public class ConfigurationModule : Module
     /// </para>
     /// </remarks>
     private static bool IsReflectionActivatedRegistration(IComponentRegistration registration)
-    {
-        return registration.Activator is ReflectionActivator;
-    }
+        => registration.Activator is ReflectionActivator;
 
     /// <summary>
     /// Adds property injection middleware to the component registration pipeline.
@@ -116,17 +112,16 @@ public class ConfigurationModule : Module
     /// property injection that integrates seamlessly with the container's lifecycle management.
     /// </para>
     /// </remarks>
-    private static void AddPropertyInjectionMiddleware(IComponentRegistration registration)
-    {
-        registration.PipelineBuilding += (_, pipeline) =>
-        {
-            pipeline.Use(PipelinePhase.Activation, MiddlewareInsertionMode.EndOfPhase, (context, next) =>
-            {
-                next(context);
-                InjectFlexConfigurationProperties(context);
-            });
-        };
-    }
+    private static void AddPropertyInjectionMiddleware(IComponentRegistration registration) =>
+        registration.PipelineBuilding +=
+            (_, pipeline) => pipeline.Use(
+                PipelinePhase.Activation,
+                MiddlewareInsertionMode.EndOfPhase,
+                (context, next) =>
+                {
+                    next(context);
+                    InjectFlexConfigurationProperties(context);
+                });
 
     /// <summary>
     /// Injects IFlexConfig instances into suitable properties of the activated component.
@@ -174,11 +169,8 @@ public class ConfigurationModule : Module
             return;
         }
 
-        // Find all properties that match our injection criteria
-        var targetProperties = GetInjectableFlexConfigProperties(instance.GetType());
-
         // Inject IFlexConfig into each matching property
-        foreach (var property in targetProperties)
+        foreach (var property in GetInjectableFlexConfigProperties(instance.GetType()))
         {
             InjectFlexConfigIntoProperty(context, instance, property);
         }

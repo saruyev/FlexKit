@@ -3,6 +3,7 @@
 // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 // </copyright>
 
+using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
 using Azure.Identity;
 using Azure.Security.KeyVault.Secrets;
@@ -164,7 +165,7 @@ public sealed class AzureKeyVaultConfigurationProvider : ConfigurationProvider, 
     /// <returns>A task that represents the asynchronous load operation.</returns>
     private async Task LoadAsync()
     {
-        var configurationData = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
+        var configurationData = new ConcurrentDictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
 
         try
         {
@@ -195,7 +196,7 @@ public sealed class AzureKeyVaultConfigurationProvider : ConfigurationProvider, 
     /// </summary>
     /// <param name="configurationData">The dictionary to store the processed configuration data.</param>
     /// <returns>A task that represents the asynchronous secret loading operation.</returns>
-    private async Task LoadSecretsAsync(Dictionary<string, string?> configurationData)
+    private async Task LoadSecretsAsync(ConcurrentDictionary<string, string?> configurationData)
     {
         var enabledSecrets = await GetEnabledSecretsAsync();
         await ProcessSecretsAsync(enabledSecrets, configurationData);
@@ -209,18 +210,8 @@ public sealed class AzureKeyVaultConfigurationProvider : ConfigurationProvider, 
     /// This method filters out disabled secrets during the retrieval process to ensure
     /// only active secrets are processed in subsequent operations.
     /// </remarks>
-    private async Task<List<SecretProperties>> GetEnabledSecretsAsync()
-    {
-        var enabledSecrets = new List<SecretProperties>();
-        await foreach (var secretProperties in _secretClient.GetPropertiesOfSecretsAsync())
-        {
-            if (secretProperties.Enabled == true)
-            {
-                enabledSecrets.Add(secretProperties);
-            }
-        }
-        return enabledSecrets;
-    }
+    private async Task<List<SecretProperties>> GetEnabledSecretsAsync() =>
+        await _secretClient.GetPropertiesOfSecretsAsync().Where(secretProperties => secretProperties.Enabled == true).ToListAsync();
 
     /// <summary>
     /// Processes a collection of secrets in parallel, loading their values and storing them in the configuration data.
@@ -228,11 +219,8 @@ public sealed class AzureKeyVaultConfigurationProvider : ConfigurationProvider, 
     /// <param name="secrets">The collection of secret properties to process.</param>
     /// <param name="configurationData">The dictionary to store the processed configuration data.</param>
     /// <returns>A task that represents the asynchronous processing operation.</returns>
-    private async Task ProcessSecretsAsync(List<SecretProperties> secrets, Dictionary<string, string?> configurationData)
-    {
-        var secretProcessingTasks = secrets.Select(secret => ProcessSingleSecretAsync(secret, configurationData));
-        await Task.WhenAll(secretProcessingTasks);
-    }
+    private async Task ProcessSecretsAsync(List<SecretProperties> secrets, ConcurrentDictionary<string, string?> configurationData) =>
+        await Task.WhenAll(secrets.Select(secret => ProcessSingleSecretAsync(secret, configurationData)));
 
     /// <summary>
     /// Processes a single secret from the Key Vault, retrieving its value and storing it in the configuration data.
@@ -248,7 +236,7 @@ public sealed class AzureKeyVaultConfigurationProvider : ConfigurationProvider, 
     /// <exception cref="InvalidOperationException">
     /// Thrown when the secret cannot be loaded and the configuration source is not optional.
     /// </exception>
-    private async Task ProcessSingleSecretAsync(SecretProperties secretProperties, Dictionary<string, string?> configurationData)
+    private async Task ProcessSingleSecretAsync(SecretProperties secretProperties, ConcurrentDictionary<string, string?> configurationData)
     {
         try
         {
@@ -295,7 +283,7 @@ public sealed class AzureKeyVaultConfigurationProvider : ConfigurationProvider, 
     /// <param name="secret">The Key Vault secret to process.</param>
     /// <param name="configurationData">The dictionary to store the processed configuration data.</param>
     /// <param name="configKey">The transformed configuration key for this secret.</param>
-    private void ProcessSecretValue(KeyVaultSecret secret, Dictionary<string, string?> configurationData, string configKey)
+    private void ProcessSecretValue(KeyVaultSecret secret, ConcurrentDictionary<string, string?> configurationData, string configKey)
     {
         var value = secret.Value;
 
@@ -339,15 +327,17 @@ public sealed class AzureKeyVaultConfigurationProvider : ConfigurationProvider, 
         "No SRP violation as this is a standard pattern for IDisposable implementations.")]
     private void Dispose(bool disposing)
     {
-        if (!_disposed)
+        if (_disposed)
         {
-            if (disposing)
-            {
-                _reloadTimer?.Dispose();
-            }
-
-            _disposed = true;
+            return;
         }
+
+        if (disposing)
+        {
+            _reloadTimer?.Dispose();
+        }
+
+        _disposed = true;
     }
 
     /// <summary>

@@ -9,7 +9,7 @@ So that I can leverage Azure configuration services with FlexKit's enhanced feat
         And I have integration controller configuration with Key Vault from "infrastructure-module-azure-config.json"
         When I configure integration controller by building the configuration
         Then the integration controller should support FlexKit dynamic access patterns
-        And the integration controller configuration should contain "myapp:database:host" with value "localhost"
+        And the integration controller configuration should contain "keyVaultSecrets:myapp:database:host" with value "localhost"
         And the integration controller should demonstrate FlexKit type conversion capabilities
 
     @Azure @FlexKit @AppConfiguration @Integration
@@ -18,7 +18,7 @@ So that I can leverage Azure configuration services with FlexKit's enhanced feat
         And I have integration controller configuration with App Configuration from "infrastructure-module-azure-config.json"
         When I configure integration controller by building the configuration
         Then the integration controller should support FlexKit dynamic access to configuration
-        And the integration controller configuration should contain "myapp:api:timeout" with value "30"
+        And the integration controller configuration should contain "appConfigurationSettings:myapp:api:timeout" with value "30"
         And the integration controller should demonstrate advanced FlexKit features
 
     @Azure @FlexKit @CombinedSources @Integration

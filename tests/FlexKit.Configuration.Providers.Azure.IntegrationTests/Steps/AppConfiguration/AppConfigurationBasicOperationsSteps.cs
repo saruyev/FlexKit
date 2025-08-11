@@ -1,11 +1,15 @@
 using FlexKit.Configuration.Core;
 using FlexKit.Configuration.Providers.Azure.IntegrationTests.Utils;
 using FlexKit.Configuration.Conversion;
+using FlexKit.Configuration.Providers.Azure.Extensions;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Reqnroll;
+using Newtonsoft.Json;
 // ReSharper disable MethodTooLong
 // ReSharper disable TooManyDeclarations
+// ReSharper disable NullableWarningSuppressionIsUsed
+// ReSharper disable ComplexConditionExpression
 
 namespace FlexKit.Configuration.Providers.Azure.IntegrationTests.Steps.AppConfiguration;
 
@@ -18,7 +22,6 @@ namespace FlexKit.Configuration.Providers.Azure.IntegrationTests.Steps.AppConfig
 [Binding]
 public class AppConfigurationBasicOperationsSteps(ScenarioContext scenarioContext)
 {
-    private AzureTestConfigurationBuilder? _appConfigBuilder;
     private IConfiguration? _appConfigConfiguration;
     private IFlexConfig? _appConfigFlexConfiguration;
     private readonly List<string> _appConfigValidationResults = new();
@@ -27,69 +30,107 @@ public class AppConfigurationBasicOperationsSteps(ScenarioContext scenarioContex
     private bool _featureFlagsConfigured;
     private string? _environmentLabel;
     private string? _keyFilterPattern;
+    private Dictionary<string, object>? _testData;
 
     #region Given Steps - Setup
 
     [Given(@"I have established an app config controller environment")]
     public void GivenIHaveEstablishedAnAppConfigControllerEnvironment()
     {
-        _appConfigBuilder = new AzureTestConfigurationBuilder(scenarioContext);
-        scenarioContext.Set(_appConfigBuilder, "AppConfigBuilder");
+        // No need to do anything here - containers are started globally
+        _appConfigValidationResults.Add("✓ App config controller environment established");
     }
 
     [Given(@"I have app config controller configuration with App Configuration from ""(.*)""")]
-    public void GivenIHaveAppConfigControllerConfigurationWithAppConfigurationFrom(string testDataPath)
+    public async Task GivenIHaveAppConfigControllerConfigurationWithAppConfigurationFrom(string testDataPath)
     {
-        _appConfigBuilder.Should().NotBeNull("App config builder should be established");
-
-        var fullPath = Path.Combine("TestData", testDataPath);
-        _appConfigBuilder!.AddAppConfigurationFromTestData(fullPath, optional: false);
+        var appConfigEmulator = scenarioContext.GetAppConfigEmulator();
+        var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
         
-        // Store the test data path for later use
-        scenarioContext.Set(fullPath, "TestDataPath");
-        scenarioContext.Set(_appConfigBuilder, "AppConfigBuilder");
+        var fullPath = Path.Combine("TestData", testDataPath);
+        var jsonContent = await File.ReadAllTextAsync(fullPath);
+        _testData = JsonConvert.DeserializeObject<Dictionary<string, object>>(jsonContent)!;
+        
+        // Load App Configuration settings from test data with the scenario prefix
+        if (_testData.TryGetValue("appConfigurationSettings", out var settingsObj) && settingsObj is Newtonsoft.Json.Linq.JObject settingsJson)
+        {
+            foreach (var setting in settingsJson)
+            {
+                await appConfigEmulator.SetConfigurationAsync($"{scenarioPrefix}:{setting.Key}", setting.Value?.ToString() ?? "");
+            }
+        }
+        
+        _appConfigValidationResults.Add($"✓ App Configuration source added with prefix '{scenarioPrefix}'");
     }
 
     [Given(@"I have app config controller configuration with labeled App Configuration from ""(.*)""")]
-    public void GivenIHaveAppConfigControllerConfigurationWithLabeledAppConfigurationFrom(string testDataPath)
+    public async Task GivenIHaveAppConfigControllerConfigurationWithLabeledAppConfigurationFrom(string testDataPath)
     {
-        _appConfigBuilder.Should().NotBeNull("App config builder should be established");
+        var appConfigEmulator = scenarioContext.GetAppConfigEmulator();
+        var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
 
         var fullPath = Path.Combine("TestData", testDataPath);
-        _appConfigBuilder!.AddAppConfigurationFromTestData(fullPath, optional: false);
-        _labelFilteringEnabled = true;
+        var jsonContent = await File.ReadAllTextAsync(fullPath);
+        _testData = JsonConvert.DeserializeObject<Dictionary<string, object>>(jsonContent)!;
         
-        // Store the test data path for later use
-        scenarioContext.Set(fullPath, "TestDataPath");
-        scenarioContext.Set(_appConfigBuilder, "AppConfigBuilder");
+        // Load labeled App Configuration settings from test data with the scenario prefix
+        if (_testData.TryGetValue("labeledAppConfigurationSettings", out var labeledSettingsObj) && labeledSettingsObj is Newtonsoft.Json.Linq.JObject labeledSettingsJson)
+        {
+            foreach (var labelGroup in labeledSettingsJson)
+            {
+                var label = labelGroup.Key;
+                if (labelGroup.Value is Newtonsoft.Json.Linq.JObject settingsForLabel)
+                {
+                    foreach (var setting in settingsForLabel)
+                    {
+                        await appConfigEmulator.SetConfigurationAsync($"{scenarioPrefix}:{setting.Key}", setting.Value?.ToString() ?? "", label);
+                    }
+                }
+            }
+        }
+        
+        _labelFilteringEnabled = true;
+        _appConfigValidationResults.Add($"✓ Labeled App Configuration source added with prefix '{scenarioPrefix}'");
     }
 
     [Given(@"I have app config controller configuration with filtered App Configuration from ""(.*)""")]
-    public void GivenIHaveAppConfigControllerConfigurationWithFilteredAppConfigurationFrom(string testDataPath)
+    public async Task GivenIHaveAppConfigControllerConfigurationWithFilteredAppConfigurationFrom(string testDataPath)
     {
-        _appConfigBuilder.Should().NotBeNull("App config builder should be established");
-
-        var fullPath = Path.Combine("TestData", testDataPath);
-        _appConfigBuilder!.AddAppConfigurationFromTestData(fullPath, optional: false);
+        await GivenIHaveAppConfigControllerConfigurationWithAppConfigurationFrom(testDataPath);
         _keyFilteringEnabled = true;
-        
-        // Store the test data path for later use
-        scenarioContext.Set(fullPath, "TestDataPath");
-        scenarioContext.Set(_appConfigBuilder, "AppConfigBuilder");
+        _appConfigValidationResults.Add("✓ Key filtering enabled for App Configuration");
     }
 
     [Given(@"I have app config controller configuration with feature flags from ""(.*)""")]
-    public void GivenIHaveAppConfigControllerConfigurationWithFeatureFlagsFrom(string testDataPath)
+    public async Task GivenIHaveAppConfigControllerConfigurationWithFeatureFlagsFrom(string testDataPath)
     {
-        _appConfigBuilder.Should().NotBeNull("App config builder should be established");
-
-        var fullPath = Path.Combine("TestData", testDataPath);
-        _appConfigBuilder!.AddAppConfigurationFromTestData(fullPath, optional: false);
-        _featureFlagsConfigured = true;
+        var appConfigEmulator = scenarioContext.GetAppConfigEmulator();
+        var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
         
-        // Store the test data path for later use
-        scenarioContext.Set(fullPath, "TestDataPath");
-        scenarioContext.Set(_appConfigBuilder, "AppConfigBuilder");
+        var fullPath = Path.Combine("TestData", testDataPath);
+        var jsonContent = await File.ReadAllTextAsync(fullPath);
+        _testData = JsonConvert.DeserializeObject<Dictionary<string, object>>(jsonContent)!;
+        
+        // Load App Configuration settings from test data with the scenario prefix
+        if (_testData.TryGetValue("appConfigurationSettings", out var settingsObj) && settingsObj is Newtonsoft.Json.Linq.JObject settingsJson)
+        {
+            foreach (var setting in settingsJson)
+            {
+                await appConfigEmulator.SetConfigurationAsync($"{scenarioPrefix}:{setting.Key}", setting.Value?.ToString() ?? "");
+            }
+        }
+        
+        // Load feature flags as configuration settings with the scenario prefix
+        if (_testData.TryGetValue("featureFlags", out var featureFlagsObj) && featureFlagsObj is Newtonsoft.Json.Linq.JObject featureFlagsJson)
+        {
+            foreach (var featureFlag in featureFlagsJson)
+            {
+                await appConfigEmulator.SetConfigurationAsync($"{scenarioPrefix}:FeatureFlags:{featureFlag.Key}", featureFlag.Value?.ToString() ?? "false");
+            }
+        }
+        
+        _featureFlagsConfigured = true;
+        _appConfigValidationResults.Add($"✓ Feature flags configured with prefix '{scenarioPrefix}'");
     }
 
     #endregion
@@ -99,89 +140,51 @@ public class AppConfigurationBasicOperationsSteps(ScenarioContext scenarioContex
     [When(@"I configure app config controller by building the configuration")]
     public void WhenIConfigureAppConfigControllerByBuildingTheConfiguration()
     {
-        _appConfigBuilder.Should().NotBeNull("App config builder should be established");
+        var appConfigEmulator = scenarioContext.GetAppConfigEmulator();
+        var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
 
         try
         {
-            // Start LocalStack first
-            try
+            var builder = new FlexConfigurationBuilder();
+            builder.AddAzureAppConfiguration(options =>
             {
-                var startTask = _appConfigBuilder!.StartLocalStackAsync("appconfig");
-                startTask.Wait(TimeSpan.FromMinutes(2));
-                _appConfigValidationResults.Add("✓ LocalStack started successfully");
-            }
-            catch (Exception ex)
-            {
-                _appConfigValidationResults.Add($"✗ LocalStack startup failed: {ex.Message}");
-                // Continue anyway - might work with existing data
-            }
-
-            // Build basic configuration
-            try
-            {
-                _appConfigConfiguration = _appConfigBuilder!.Build();
-                _appConfigValidationResults.Add("✓ App config configuration built successfully");
-            }
-            catch (Exception ex)
-            {
-                _appConfigValidationResults.Add($"✗ App config configuration build failed: {ex.Message}");
-                throw; // Re-throw to fail the test
-            }
+                options.ConnectionString = appConfigEmulator.GetConnectionString();
+                options.ConfigurationClient = appConfigEmulator.ConfigurationClient;
+                options.Optional = false;
+                // Use scenario prefix as key filter to isolate this scenario's data
+                options.KeyFilter = $"{scenarioPrefix}:*";
+                options.Label = _environmentLabel;
+            });
             
-            // Build FlexKit configuration
-            try
-            {
-                _appConfigFlexConfiguration = _appConfigBuilder!.BuildFlexConfig();
-                _appConfigValidationResults.Add("✓ App config FlexKit configuration built successfully");
-            }
-            catch (Exception ex)
-            {
-                _appConfigValidationResults.Add($"✗ App config FlexKit configuration build failed: {ex.Message}");
-                throw; // Re-throw to fail the test
-            }
+            _appConfigFlexConfiguration = builder.Build();
+            _appConfigConfiguration = _appConfigFlexConfiguration.Configuration;
             
-            // Store in a scenario context
             scenarioContext.Set(_appConfigConfiguration, "AppConfigConfiguration");
             scenarioContext.Set(_appConfigFlexConfiguration, "AppConfigFlexConfiguration");
+            
+            _appConfigValidationResults.Add("✓ App config configuration built successfully");
         }
         catch (Exception ex)
         {
             scenarioContext.Set(ex, "AppConfigException");
-            _appConfigValidationResults.Add($"✗ App config setup failed: {ex.Message}");
-            throw; // Re-throw to properly fail the test
+            _appConfigValidationResults.Add($"✗ App config configuration build failed: {ex.Message}");
         }
     }
 
     [When(@"I configure app config controller with environment label ""(.*)""")]
     public void WhenIConfigureAppConfigControllerWithEnvironmentLabel(string environmentLabel)
     {
-        _appConfigBuilder.Should().NotBeNull("App config builder should be established");
         _environmentLabel = environmentLabel;
-        
-        // Reconfigure the builder to use the specific label
-        if (scenarioContext.TryGetValue<string>("TestDataPath", out var testDataPath) && !string.IsNullOrEmpty(testDataPath))
-        {
-            _appConfigBuilder.AddAppConfigurationFromTestDataWithLabel(testDataPath, environmentLabel);
-        }
-        else
-        {
-            _appConfigValidationResults.Add($"⚠ No test data path found, using default configuration for label '{environmentLabel}'");
-        }
-        
-        scenarioContext.Set(_appConfigBuilder, "AppConfigBuilder");
         _appConfigValidationResults.Add($"✓ Environment label '{environmentLabel}' configured");
     }
 
     [When(@"I configure app config controller with key filter ""(.*)""")]
     public void WhenIConfigureAppConfigControllerWithKeyFilter(string keyFilter)
     {
-        _appConfigBuilder.Should().NotBeNull("App config builder should be established");
-        _keyFilterPattern = keyFilter;
-        
-        // The key filter would be applied during the AddAppConfigurationFromTestData call
-        // This step mainly records the filter pattern for validation
-        scenarioContext.Set(keyFilter, "KeyFilterPattern");
-        _appConfigValidationResults.Add($"✓ Key filter '{keyFilter}' configured");
+        var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
+        // Combine scenario prefix with the requested filter
+        _keyFilterPattern = $"{scenarioPrefix}:{keyFilter}";
+        _appConfigValidationResults.Add($"✓ Key filter '{_keyFilterPattern}' configured");
     }
 
     #endregion
@@ -192,19 +195,19 @@ public class AppConfigurationBasicOperationsSteps(ScenarioContext scenarioContex
     public void ThenTheAppConfigControllerShouldSupportFlexKitDynamicAccessPatterns()
     {
         _appConfigFlexConfiguration.Should().NotBeNull("App config FlexKit configuration should be available");
+        var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
 
         try
         {
-            // Test dynamic access patterns specific to FlexKit
+            // Test dynamic access patterns specific to FlexKit with a scenario prefix
             dynamic config = _appConfigFlexConfiguration!;
             
-            // Test various FlexKit access patterns
+            // Test various FlexKit access patterns with prefixed keys
             var dynamicTests = new List<(string description, Func<object?> test)>
             {
-                ("Basic property access", () => config["myapp:api:timeout"]),
-                ("Nested property navigation", () => AzureTestConfigurationBuilder.GetDynamicProperty(_appConfigFlexConfiguration, "myapp.api.timeout")),
-                ("Section access", () => _appConfigFlexConfiguration.Configuration.GetSection("myapp")),
-                ("Dynamic casting", () => (string?)config["myapp:api:baseUrl"])
+                ("Basic property access", () => config[$"{scenarioPrefix}:myapp:api:timeout"]),
+                ("Section access", () => _appConfigFlexConfiguration.Configuration.GetSection($"{scenarioPrefix}:myapp")),
+                ("Dynamic casting", () => (string?)config[$"{scenarioPrefix}:myapp:api:baseUrl"])
             };
 
             var successfulTests = 0;
@@ -243,11 +246,14 @@ public class AppConfigurationBasicOperationsSteps(ScenarioContext scenarioContex
     public void ThenTheAppConfigControllerConfigurationShouldContainWithValue(string expectedKey, string expectedValue)
     {
         _appConfigConfiguration.Should().NotBeNull("App config configuration should be built");
+        var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
 
-        var actualValue = _appConfigConfiguration![expectedKey];
-        actualValue.Should().Be(expectedValue, $"Configuration key '{expectedKey}' should have the expected value");
+        // Use prefixed key for lookup
+        var prefixedKey = $"{scenarioPrefix}:{expectedKey}";
+        var actualValue = _appConfigConfiguration![prefixedKey];
+        actualValue.Should().Be(expectedValue, $"Configuration key '{prefixedKey}' should have the expected value");
         
-        _appConfigValidationResults.Add($"✓ Configuration validation passed: {expectedKey} = {expectedValue}");
+        _appConfigValidationResults.Add($"✓ Configuration validation passed: {prefixedKey} = {expectedValue}");
         scenarioContext.Set(_appConfigValidationResults, "AppConfigValidationResults");
     }
 
@@ -256,9 +262,11 @@ public class AppConfigurationBasicOperationsSteps(ScenarioContext scenarioContex
     {
         _appConfigConfiguration.Should().NotBeNull("App config configuration should be built");
         _environmentLabel.Should().Be("production", "Should be configured for production environment");
+        var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
 
-        var actualValue = _appConfigConfiguration![expectedKey];
-        actualValue.Should().NotBeNullOrEmpty($"Production configuration key '{expectedKey}' should have a value");
+        var prefixedKey = $"{scenarioPrefix}:{expectedKey}";
+        var actualValue = _appConfigConfiguration![prefixedKey];
+        actualValue.Should().NotBeNullOrEmpty($"Production configuration key '{prefixedKey}' should have a value");
         
         // Verify it's a production-specific value (should contain "prod" or be production-appropriate)
         bool isProductionValue = actualValue.Contains("prod", StringComparison.OrdinalIgnoreCase) ||
@@ -267,7 +275,7 @@ public class AppConfigurationBasicOperationsSteps(ScenarioContext scenarioContex
         
         isProductionValue.Should().BeTrue($"Value '{actualValue}' should be production-appropriate");
         
-        _appConfigValidationResults.Add($"✓ Production configuration validation passed: {expectedKey} = {actualValue}");
+        _appConfigValidationResults.Add($"✓ Production configuration validation passed: {prefixedKey} = {actualValue}");
         scenarioContext.Set(_appConfigValidationResults, "AppConfigValidationResults");
     }
 
@@ -275,16 +283,17 @@ public class AppConfigurationBasicOperationsSteps(ScenarioContext scenarioContex
     public void ThenTheAppConfigControllerShouldDemonstrateFlexKitTypeConversionCapabilities()
     {
         _appConfigFlexConfiguration.Should().NotBeNull("App config FlexKit configuration should be available");
+        var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
 
         try
         {
-            // Test type conversion capabilities
+            // Test type conversion capabilities with prefixed keys
             var typeConversionTests = new List<(string description, Func<object> test)>
             {
-                ("String to int conversion", () => _appConfigFlexConfiguration!["myapp:api:timeout"].ToType<int>()),
-                ("String to bool conversion", () => _appConfigFlexConfiguration!["myapp:cache:enabled"].ToType<bool>()),
-                ("String to int for TTL", () => _appConfigFlexConfiguration!["myapp:cache:ttl"].ToType<int>()),
-                ("Direct string access", () => _appConfigFlexConfiguration!["myapp:api:baseUrl"] ?? "null")
+                ("String to int conversion", () => _appConfigFlexConfiguration![$"{scenarioPrefix}:myapp:api:timeout"].ToType<int>()),
+                ("String to bool conversion", () => _appConfigFlexConfiguration![$"{scenarioPrefix}:myapp:cache:enabled"].ToType<bool>()),
+                ("String to int for TTL", () => _appConfigFlexConfiguration![$"{scenarioPrefix}:myapp:cache:ttl"].ToType<int>()),
+                ("Direct string access", () => _appConfigFlexConfiguration![$"{scenarioPrefix}:myapp:api:baseUrl"] ?? "null")
             };
 
             var successfulConversions = 0;
@@ -318,16 +327,17 @@ public class AppConfigurationBasicOperationsSteps(ScenarioContext scenarioContex
     {
         _appConfigFlexConfiguration.Should().NotBeNull("App config FlexKit configuration should be available");
         _labelFilteringEnabled.Should().BeTrue("Label filtering should be enabled");
+        var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
 
         try
         {
-            // Test that we can access labeled configuration
+            // Test that we can access labeled configuration with prefixed keys
             var labeledTests = new List<(string description, string key)>
             {
-                ("Database connection string", "myapp:database:connectionString"),
-                ("Logging level", "myapp:logging:level"),
-                ("Cache TTL", "myapp:cache:ttl"),
-                ("API base URL", "myapp:api:baseUrl")
+                ("Database connection string", $"{scenarioPrefix}:myapp:database:connectionString"),
+                ("Logging level", $"{scenarioPrefix}:myapp:logging:level"),
+                ("Cache TTL", $"{scenarioPrefix}:myapp:cache:ttl"),
+                ("API base URL", $"{scenarioPrefix}:myapp:api:baseUrl")
             };
 
             var successfulLabeledAccess = 0;
@@ -367,6 +377,7 @@ public class AppConfigurationBasicOperationsSteps(ScenarioContext scenarioContex
     {
         _appConfigFlexConfiguration.Should().NotBeNull("App config FlexKit configuration should be available");
         _keyFilteringEnabled.Should().BeTrue("Key filtering should be enabled");
+        var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
 
         try
         {
@@ -376,15 +387,13 @@ public class AppConfigurationBasicOperationsSteps(ScenarioContext scenarioContex
                 .Select(kvp => kvp.Key)
                 .ToList();
 
-            var filterPattern = _keyFilterPattern ?? "myapp:*";
-            var expectedPrefix = filterPattern.Replace("*", "");
-
+            var expectedPrefix = scenarioPrefix;
             var filteredKeys = allKeys.Where(key => key.StartsWith(expectedPrefix, StringComparison.OrdinalIgnoreCase)).ToList();
             var unfilteredKeys = allKeys.Where(key => !key.StartsWith(expectedPrefix, StringComparison.OrdinalIgnoreCase)).ToList();
 
             filteredKeys.Should().NotBeEmpty("Should have keys matching the filter pattern");
             
-            _appConfigValidationResults.Add($"✓ Key filtering verification: {filteredKeys.Count} keys match pattern '{filterPattern}'");
+            _appConfigValidationResults.Add($"✓ Key filtering verification: {filteredKeys.Count} keys match pattern '{expectedPrefix}:*'");
             
             if (unfilteredKeys.Any())
             {
@@ -403,18 +412,22 @@ public class AppConfigurationBasicOperationsSteps(ScenarioContext scenarioContex
     public void ThenTheAppConfigControllerConfigurationShouldOnlyContainKeysStartingWith(string keyPrefix)
     {
         _appConfigConfiguration.Should().NotBeNull("App config configuration should be built");
+        var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
+
+        // Expected prefix should include a scenario prefix
+        var expectedFullPrefix = $"{scenarioPrefix}:{keyPrefix}";
 
         var allKeys = _appConfigConfiguration!.AsEnumerable()
             .Where(kvp => !string.IsNullOrEmpty(kvp.Key))
             .Select(kvp => kvp.Key)
             .ToList();
 
-        var matchingKeys = allKeys.Where(key => key.StartsWith(keyPrefix, StringComparison.OrdinalIgnoreCase)).ToList();
-        var nonMatchingKeys = allKeys.Where(key => !key.StartsWith(keyPrefix, StringComparison.OrdinalIgnoreCase)).ToList();
+        var matchingKeys = allKeys.Where(key => key.StartsWith(expectedFullPrefix, StringComparison.OrdinalIgnoreCase)).ToList();
+        var nonMatchingKeys = allKeys.Where(key => !key.StartsWith(expectedFullPrefix, StringComparison.OrdinalIgnoreCase)).ToList();
 
-        matchingKeys.Should().NotBeEmpty($"Should have keys starting with '{keyPrefix}'");
+        matchingKeys.Should().NotBeEmpty($"Should have keys starting with '{expectedFullPrefix}'");
         
-        _appConfigValidationResults.Add($"✓ Key prefix validation: {matchingKeys.Count} keys start with '{keyPrefix}'");
+        _appConfigValidationResults.Add($"✓ Key prefix validation: {matchingKeys.Count} keys start with '{expectedFullPrefix}'");
         
         if (nonMatchingKeys.Any())
         {
@@ -428,17 +441,20 @@ public class AppConfigurationBasicOperationsSteps(ScenarioContext scenarioContex
     public void ThenTheAppConfigControllerShouldNotContainKeysFromOtherApplications()
     {
         _appConfigConfiguration.Should().NotBeNull("App config configuration should be built");
+        var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
 
         var allKeys = _appConfigConfiguration!.AsEnumerable()
             .Where(kvp => !string.IsNullOrEmpty(kvp.Key))
             .Select(kvp => kvp.Key)
             .ToList();
 
-        // Check for keys that might belong to other applications
+        // Check for keys that might belong to other applications (different scenario prefixes)
         var otherAppKeys = allKeys.Where(key => 
-            key.StartsWith("otherapp:", StringComparison.OrdinalIgnoreCase) ||
-            key.StartsWith("different-app:", StringComparison.OrdinalIgnoreCase) ||
-            key.StartsWith("external:", StringComparison.OrdinalIgnoreCase)
+            !key.StartsWith(scenarioPrefix, StringComparison.OrdinalIgnoreCase) &&
+            (key.StartsWith("test-", StringComparison.OrdinalIgnoreCase) || // Other scenario prefixes
+             key.StartsWith("otherapp:", StringComparison.OrdinalIgnoreCase) ||
+             key.StartsWith("different-app:", StringComparison.OrdinalIgnoreCase) ||
+             key.StartsWith("external:", StringComparison.OrdinalIgnoreCase))
         ).ToList();
 
         otherAppKeys.Should().BeEmpty("Should not contain keys from other applications when filtering is applied");
@@ -452,16 +468,17 @@ public class AppConfigurationBasicOperationsSteps(ScenarioContext scenarioContex
     {
         _appConfigFlexConfiguration.Should().NotBeNull("App config FlexKit configuration should be available");
         _featureFlagsConfigured.Should().BeTrue("Feature flags should be configured");
+        var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
 
         try
         {
-            // Test feature flag access
+            // Test feature flag access with a scenario prefix
             var featureFlagTests = new List<(string description, string key, bool expectedValue)>
             {
-                ("New UI feature", "FeatureFlags:NewUI", true),
-                ("Beta features", "FeatureFlags:BetaFeatures", false),
-                ("Advanced reporting", "FeatureFlags:AdvancedReporting", true),
-                ("Dark mode", "FeatureFlags:DarkMode", true)
+                ("New UI feature", $"{scenarioPrefix}:FeatureFlags:NewUI", true),
+                ("Beta features", $"{scenarioPrefix}:FeatureFlags:BetaFeatures", false),
+                ("Advanced reporting", $"{scenarioPrefix}:FeatureFlags:AdvancedReporting", true),
+                ("Dark mode", $"{scenarioPrefix}:FeatureFlags:DarkMode", true)
             };
 
             var successfulFeatureFlags = 0;

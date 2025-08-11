@@ -3,9 +3,11 @@
 // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 // </copyright>
 
+using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
 using Azure.Data.AppConfiguration;
 using Azure.Identity;
+using FlexKit.Configuration.Providers.Azure.Extensions;
 using JetBrains.Annotations;
 using Microsoft.Extensions.Configuration;
 
@@ -95,12 +97,10 @@ public sealed class AzureAppConfigurationProvider : ConfigurationProvider, IDisp
             {
                 return new ConfigurationClient(source.ConnectionString);
             }
-            else
-            {
-                // Treat as endpoint URI and use credential
-                var credential = source.Credential ?? new DefaultAzureCredential();
-                return new ConfigurationClient(new Uri(source.ConnectionString), credential);
-            }
+
+            // Treat as endpoint URI and use credential
+            var credential = source.Credential ?? new DefaultAzureCredential();
+            return new ConfigurationClient(new Uri(source.ConnectionString), credential);
         }
         catch (Exception ex)
         {
@@ -155,7 +155,7 @@ public sealed class AzureAppConfigurationProvider : ConfigurationProvider, IDisp
     /// <returns>A task that represents the asynchronous load operation.</returns>
     private async Task LoadAsync()
     {
-        var configurationData = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
+        var configurationData = new ConcurrentDictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
 
         try
         {
@@ -186,7 +186,7 @@ public sealed class AzureAppConfigurationProvider : ConfigurationProvider, IDisp
     /// </summary>
     /// <param name="configurationData">The dictionary to store the processed configuration data.</param>
     /// <returns>A task that represents the asynchronous configuration loading operation.</returns>
-    private async Task LoadConfigurationAsync(Dictionary<string, string?> configurationData)
+    private async Task LoadConfigurationAsync(ConcurrentDictionary<string, string?> configurationData)
     {
         var selector = new SettingSelector
         {
@@ -198,8 +198,34 @@ public sealed class AzureAppConfigurationProvider : ConfigurationProvider, IDisp
         {
             if (setting is { Key: not null, Value: not null })
             {
-                configurationData[setting.Key] = setting.Value;
+                ProcessConfigurationSetting(setting, configurationData);
             }
+        }
+    }
+
+    /// <summary>
+    /// Processes a single configuration setting from Azure App Configuration and adds it to the configuration data dictionary.
+    /// </summary>
+    /// <param name="setting">The configuration setting retrieved from Azure App Configuration.</param>
+    /// <param name="configurationData">The concurrent dictionary storing processed configuration key-value pairs.</param>
+    /// <remarks>
+    /// If JSON processing is enabled and the setting value is valid JSON, the method will flatten the JSON structure
+    /// into multiple configuration keys. Otherwise, the setting is stored as a simple key-value pair.
+    /// For example, if JSON processing is enabled and the value is {"nested":{"key":"value"}}, it will create
+    /// configuration entries like "parentKey:nested:key" = "value". If JSON processing is disabled or the value
+    /// is not JSON, it will store the raw value directly.
+    /// </remarks>
+    private void ProcessConfigurationSetting(ConfigurationSetting setting, ConcurrentDictionary<string, string?> configurationData)
+    {
+        // Check if JSON processing is enabled and this value contains JSON
+        if (_source.JsonProcessor && setting.Value.IsValidJson())
+        {
+            setting.Value.FlattenJsonValue(configurationData, setting.Key);
+        }
+        else
+        {
+            // Store as a simple key-value pair
+            configurationData[setting.Key] = setting.Value;
         }
     }
 

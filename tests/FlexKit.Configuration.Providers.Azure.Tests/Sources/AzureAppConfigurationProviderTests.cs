@@ -10,6 +10,7 @@ using NSubstitute.ExceptionExtensions;
 using Xunit;
 // ReSharper disable ClassTooBig
 // ReSharper disable FlagArgument
+// ReSharper disable NullableWarningSuppressionIsUsed
 
 namespace FlexKit.Configuration.Providers.Azure.Tests.Sources;
 
@@ -323,6 +324,33 @@ public class AzureAppConfigurationProviderTests : IDisposable
             Arg.Is<SettingSelector>(s => s.KeyFilter == "myapp:*"), CancellationToken.None);
         _provider.TryGet("myapp:test", out var value).Should().BeTrue();
         value.Should().Be("value");
+    }
+    
+    [Fact]
+    public void Load_WithJsonProcessorEnabledAndValidJsonValue_FlattensJsonValue()
+    {
+        // Arrange
+        _source.JsonProcessor = true;
+        var jsonValue = """{"database": {"host": "localhost", "port": 5432}, "api": {"key": "secret"}}""";
+        var setting = CreateConfigurationSetting("config", jsonValue);
+        var settings = AsyncPageable<ConfigurationSetting>.FromPages([
+            Page<ConfigurationSetting>.FromValues([setting], null, Substitute.For<Response>())
+        ]);
+        _mockConfigClient?.GetConfigurationSettingsAsync(Arg.Any<SettingSelector>(), CancellationToken.None)
+            .Returns(settings);
+
+        // Act
+        _provider.Load();
+
+        // Assert
+        _provider.TryGet("config:database:host", out var host).Should().BeTrue();
+        host.Should().Be("localhost");
+        _provider.TryGet("config:database:port", out var port).Should().BeTrue();
+        port.Should().Be("5432");
+        _provider.TryGet("config:api:key", out var key).Should().BeTrue();
+        key.Should().Be("secret");
+        // The original key should not exist when JSON is flattened
+        _provider.TryGet("config", out _).Should().BeFalse();
     }
 
     [Fact]

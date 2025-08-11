@@ -3,6 +3,7 @@ using FlexKit.Configuration.IntegrationTests.Utils;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Reqnroll;
+// ReSharper disable NullableWarningSuppressionIsUsed
 
 namespace FlexKit.Configuration.IntegrationTests.Steps.Sources;
 

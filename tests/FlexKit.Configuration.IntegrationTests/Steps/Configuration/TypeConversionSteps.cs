@@ -8,6 +8,7 @@ using System.Text.Json;
 using System.Globalization;
 // ReSharper disable MethodTooLong
 // ReSharper disable ClassTooBig
+// ReSharper disable NullableWarningSuppressionIsUsed
 
 namespace FlexKit.Configuration.IntegrationTests.Steps.Configuration;
 

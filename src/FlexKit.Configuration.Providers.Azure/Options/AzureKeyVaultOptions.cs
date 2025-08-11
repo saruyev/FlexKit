@@ -1,4 +1,5 @@
 using Azure.Core;
+using Azure.Security.KeyVault.Secrets;
 using FlexKit.Configuration.Providers.Azure.Sources;
 using JetBrains.Annotations;
 
@@ -247,4 +248,32 @@ public class AzureKeyVaultOptions
     /// </para>
     /// </remarks>
     public Action<KeyVaultConfigurationProviderException>? OnLoadException { get; [UsedImplicitly] set; }
+
+    /// <summary>
+    /// Gets or sets a pre-configured Azure Key Vault SecretClient for testing scenarios.
+    /// When provided, this client will be used instead of creating a new one from the vault URI and credentials.
+    /// </summary>
+    /// <value>
+    /// A configured SecretClient instance, or null to create a new client using the vault URI and credentials.
+    /// Default is null.
+    /// </value>
+    /// <remarks>
+    /// <para>
+    /// <strong>Testing Use Cases:</strong>
+    /// <list type="bullet">
+    /// <item>Integration testing with Azure Key Vault Emulator</item>
+    /// <item>Unit testing with mock SecretClient implementations</item>
+    /// <item>Development environments using alternative Key Vault endpoints</item>
+    /// <item>Testing scenarios requiring specific client configurations</item>
+    /// </list>
+    /// </para>
+    ///
+    /// <para>
+    /// <strong>Production Considerations:</strong>
+    /// This property is primarily intended for testing scenarios. In production,
+    /// it's recommended to use the VaultUri and Credential properties to let the
+    /// provider create the SecretClient automatically.
+    /// </para>
+    /// </remarks>
+    public SecretClient? SecretClient { get; [UsedImplicitly] set; }
 }

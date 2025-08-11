@@ -15,6 +15,7 @@ using DotNet.Testcontainers.Builders;
 using DotNet.Testcontainers.Containers;
 using ResourceNotFoundException = Amazon.SecretsManager.Model.ResourceNotFoundException;
 // ReSharper disable TooManyDeclarations
+// ReSharper disable NullableWarningSuppressionIsUsed
 
 // ReSharper disable ClassTooBig
 // ReSharper disable ComplexConditionExpression

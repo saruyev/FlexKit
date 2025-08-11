@@ -1,3 +1,4 @@
 using BenchmarkDotNet.Running;
+// using FlexKit.Configuration.Providers.Azure.PerformanceTests.Benchmarks;
 
-Console.WriteLine("Hello World!");
+// BenchmarkRunner.Run<AzureKeyVaultBenchmarks>();

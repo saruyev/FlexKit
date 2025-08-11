@@ -10,6 +10,7 @@ using Xunit;
 // ReSharper disable DisposeOnUsingVariable
 // ReSharper disable ClassTooBig
 // ReSharper disable ComplexConditionExpression
+// ReSharper disable NullableWarningSuppressionIsUsed
 
 namespace FlexKit.Configuration.Providers.Aws.Tests.Sources;
 

@@ -3,6 +3,7 @@ using FlexKit.Configuration.Core;
 using FlexKit.Configuration.Conversion;
 using Microsoft.Extensions.Configuration;
 // ReSharper disable ComplexConditionExpression
+// ReSharper disable NullableWarningSuppressionIsUsed
 
 namespace FlexKit.Configuration.PerformanceTests.Benchmarks;
 

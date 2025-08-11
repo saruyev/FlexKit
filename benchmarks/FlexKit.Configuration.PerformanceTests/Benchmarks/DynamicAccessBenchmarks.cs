@@ -1,6 +1,7 @@
 ﻿using BenchmarkDotNet.Attributes;
 using FlexKit.Configuration.Core;
 using Microsoft.Extensions.Configuration;
+// ReSharper disable NullableWarningSuppressionIsUsed
 
 namespace FlexKit.Configuration.PerformanceTests.Benchmarks;
 
