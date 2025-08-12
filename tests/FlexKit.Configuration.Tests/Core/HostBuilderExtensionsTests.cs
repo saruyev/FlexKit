@@ -389,8 +389,123 @@ public class HostBuilderExtensionsTests : UnitTestBase
         var apiKeyFromConfig = apiSection?.Configuration?["Key"];
         (apiKeyFromConfig as string).Should().Be("test-api-key");
     }
+    
+    [Fact]
+    public void AddFlexConfig_IHostApplicationBuilder_WithNullBuilder_ThrowsArgumentNullException()
+    {
+        // Arrange
+        IHostApplicationBuilder? nullBuilder = null;
+
+        // Act & Assert
+        Func<IHostApplicationBuilder> action = () => nullBuilder!.AddFlexConfig();
+        action.Should().Throw<NullReferenceException>();
+    }
+    
+    [Fact]
+    public void AddFlexConfig_IHostApplicationBuilder_WithoutConfigureAction_CallsCorrectMethods()
+    {
+        // Arrange
+        var serviceCollection = new ServiceCollection(); // Use real ServiceCollection
+        var mockBuilder = Substitute.For<IHostApplicationBuilder>();
+        var mockConfiguration = Substitute.For<IConfigurationManager>();
+    
+        mockBuilder.Services.Returns(serviceCollection);
+        mockBuilder.Configuration.Returns(mockConfiguration);
+
+        // Act
+        var result = mockBuilder.AddFlexConfig();
+
+        // Assert
+        result.Should().BeSameAs(mockBuilder);
+    
+        // Verify Autofac was added by checking the service collection contains the expected service
+        serviceCollection.Should().Contain(descriptor => 
+            descriptor.ServiceType == typeof(IServiceProviderFactory<ContainerBuilder>) &&
+            descriptor.Lifetime == ServiceLifetime.Singleton);
+    
+        // Verify ConfigureContainer was called
+        mockBuilder.Received(1).ConfigureContainer(
+            Arg.Any<AutofacServiceProviderFactory>(),
+            Arg.Any<Action<ContainerBuilder>?>());
+    }
+    
+    [Fact]
+    public void AddFlexConfig_IHostApplicationBuilder_WithConfigureAction_CallsCorrectMethods()
+    {
+        // Arrange
+        var mockBuilder = Substitute.For<IHostApplicationBuilder>();
+        var mockServices = Substitute.For<IServiceCollection>();
+        var mockConfiguration = Substitute.For<IConfigurationManager>();
+    
+        mockBuilder.Services.Returns(mockServices);
+        mockBuilder.Configuration.Returns(mockConfiguration);
+
+        // Act
+        var result = mockBuilder.AddFlexConfig(config =>
+        {
+            config.AddEnvironmentVariables();
+        });
+
+        // Assert
+        result.Should().BeSameAs(mockBuilder);
+    
+        // Verify ConfigureContainer was called
+        mockBuilder.Received(1).ConfigureContainer(
+            Arg.Any<AutofacServiceProviderFactory>(),
+            Arg.Any<Action<ContainerBuilder>?>());
+    }
+
+    [Fact]
+    public void AddFlexConfig_IHostApplicationBuilder_ConfiguresServicesCorrectly()
+    {
+        // Arrange
+        var mockBuilder = Substitute.For<IHostApplicationBuilder>();
+        var serviceCollection = new ServiceCollection();
+        var containerBuilder = new ContainerBuilder();
+        var capturedConfigureAction = (Action<ContainerBuilder>?)null;
+    
+        // Use ConfigurationManager, which implements IConfigurationManager
+        var configurationManager = new ConfigurationManager();
+        configurationManager.AddInMemoryCollection(new Dictionary<string, string?>
+        {
+            ["ExistingKey"] = "ExistingValue",
+            ["App:Name"] = "TestApp"
+        });
+
+        mockBuilder.Services.Returns(serviceCollection);
+        mockBuilder.Configuration.Returns(configurationManager);
+    
+        SetupMockApplicationBuilderForContainer(mockBuilder, capturedAction => capturedConfigureAction = capturedAction);
+
+        // Act
+        mockBuilder.AddFlexConfig();
+    
+        // Execute the captured ConfigureContainer action
+        capturedConfigureAction.Should().NotBeNull();
+        capturedConfigureAction!.Invoke(containerBuilder);
+
+        // Assert
+        using var container = containerBuilder.Build();
+        var flexConfig = container.Resolve<IFlexConfig>();
+    
+        // Verify the existing configuration is preserved
+        flexConfig["ExistingKey"].Should().Be("ExistingValue");
+        flexConfig["App:Name"].Should().Be("TestApp");
+    
+        // Verify both IFlexConfig and dynamic are registered as the same instance
+        var dynamicConfig = container.Resolve<dynamic>();
+        ((object)dynamicConfig).Should().BeSameAs(flexConfig);
+    }
 
     #region Helper Methods
+    
+    private static void SetupMockApplicationBuilderForContainer(IHostApplicationBuilder mockBuilder, Action<Action<ContainerBuilder>> captureAction)
+    {
+        mockBuilder.When(x => x.ConfigureContainer(
+                Arg.Any<AutofacServiceProviderFactory>(),
+                Arg.Any<Action<ContainerBuilder>?>()))
+            .Do(callInfo => captureAction(callInfo.Arg<Action<ContainerBuilder>>()));
+    }
 
     private static void SetupMockHostBuilderForContainer(IHostBuilder mockHostBuilder, Action<Action<HostBuilderContext, ContainerBuilder>> captureAction)
     {
