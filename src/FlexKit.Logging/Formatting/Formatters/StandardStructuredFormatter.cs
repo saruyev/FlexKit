@@ -9,20 +9,15 @@ namespace FlexKit.Logging.Formatting.Formatters;
 
 /// <summary>
 /// Formats log entries using standard structured templates with parameter placeholders.
-/// Produces human-readable messages like "Method ProcessPayment completed in 450ms".
+/// Produces human-readable messages like "Method ProcessPayment completed in 450 ms".
 /// </summary>
-public sealed class StandardStructuredFormatter : IMessageFormatter
+/// <remarks>
+/// Initializes a new instance of the StandardStructuredFormatter.
+/// </remarks>
+/// <param name="translator">The message translator for provider-specific syntax conversion.</param>
+public sealed class StandardStructuredFormatter(IMessageTranslator translator) : IMessageFormatter
 {
-    private readonly IMessageTranslator _translator;
-
-    /// <summary>
-    /// Initializes a new instance of the StandardStructuredFormatter.
-    /// </summary>
-    /// <param name="translator">The message translator for provider-specific syntax conversion.</param>
-    public StandardStructuredFormatter(IMessageTranslator translator)
-    {
-        _translator = translator ?? throw new ArgumentNullException(nameof(translator));
-    }
+    private readonly IMessageTranslator _translator = translator ?? throw new ArgumentNullException(nameof(translator));
 
     /// <inheritdoc />
     public FormatterType FormatterType => FormatterType.StandardStructured;
@@ -53,6 +48,17 @@ public sealed class StandardStructuredFormatter : IMessageFormatter
 
     private static string GetTemplate(FormattingContext context)
     {
+        // First try to get from TemplateConfig
+        if (context.Configuration.Templates.TryGetValue("StandardStructured", out var templateConfig) && templateConfig.Enabled && templateConfig.IsValid())
+        {
+            var configuredTemplate = templateConfig.GetTemplateForOutcome(context.LogEntry.Success);
+            if (!string.IsNullOrEmpty(configuredTemplate))
+            {
+                return configuredTemplate;
+            }
+        }
+
+        // Fall back to hardcoded templates
         var entry = context.LogEntry;
 
         if (entry.Success)

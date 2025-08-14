@@ -1,3 +1,5 @@
+using JetBrains.Annotations;
+
 namespace FlexKit.Logging.Configuration;
 
 /// <summary>
@@ -14,7 +16,7 @@ public class TemplateConfig
     /// <example>
     /// "Method {MethodName} completed successfully in {Duration}ms"
     /// </example>
-    public string SuccessTemplate { get; set; } = string.Empty;
+    public string SuccessTemplate { get; [UsedImplicitly] set; } = string.Empty;
 
     /// <summary>
     /// Gets or sets the template for failed method executions.
@@ -24,7 +26,7 @@ public class TemplateConfig
     /// <example>
     /// "Method {MethodName} failed with {ExceptionType}: {ExceptionMessage} after {Duration}ms"
     /// </example>
-    public string ErrorTemplate { get; set; } = string.Empty;
+    public string ErrorTemplate { get; [UsedImplicitly] set; } = string.Empty;
 
     /// <summary>
     /// Gets or sets a general-purpose template that works for both success and error cases.
@@ -34,28 +36,15 @@ public class TemplateConfig
     /// <example>
     /// "Method {MethodName} executed with status {Success} in {Duration}ms"
     /// </example>
+    [UsedImplicitly]
     public string GeneralTemplate { get; set; } = string.Empty;
-
-    /// <summary>
-    /// Gets or sets the description of this template configuration.
-    /// Provides human-readable information about the template's purpose and usage.
-    /// </summary>
-    /// <value>A descriptive string explaining the template's intended use.</value>
-    public string Description { get; set; } = string.Empty;
 
     /// <summary>
     /// Gets or sets whether this template configuration is enabled.
     /// Disabled templates are ignored during formatting and fall back to defaults.
     /// </summary>
     /// <value>True if the template is enabled; false if disabled. Default is true.</value>
-    public bool Enabled { get; set; } = true;
-
-    /// <summary>
-    /// Gets or sets additional metadata associated with this template.
-    /// Can be used for custom properties or provider-specific settings.
-    /// </summary>
-    /// <value>Dictionary of additional template properties.</value>
-    public Dictionary<string, string> Metadata { get; set; } = new();
+    public bool Enabled { get; [UsedImplicitly] set; } = true;
 
     /// <summary>
     /// Gets the appropriate template based on the success status of a log entry.
@@ -107,12 +96,10 @@ public class TemplateConfig
     ///
     /// This validation helps catch configuration errors early in the application lifecycle.
     /// </remarks>
-    public bool IsValid()
-    {
-        return !string.IsNullOrWhiteSpace(SuccessTemplate) ||
-               !string.IsNullOrWhiteSpace(ErrorTemplate) ||
-               !string.IsNullOrWhiteSpace(GeneralTemplate);
-    }
+    public bool IsValid() =>
+        !string.IsNullOrWhiteSpace(SuccessTemplate) ||
+        !string.IsNullOrWhiteSpace(ErrorTemplate) ||
+        !string.IsNullOrWhiteSpace(GeneralTemplate);
 
     /// <summary>
     /// Gets all available templates in this configuration.
@@ -131,9 +118,11 @@ public class TemplateConfig
             yield return ErrorTemplate;
         }
 
-        if (!string.IsNullOrWhiteSpace(GeneralTemplate))
+        if (string.IsNullOrWhiteSpace(GeneralTemplate))
         {
-            yield return GeneralTemplate;
+            yield break;
         }
+
+        yield return GeneralTemplate;
     }
 }

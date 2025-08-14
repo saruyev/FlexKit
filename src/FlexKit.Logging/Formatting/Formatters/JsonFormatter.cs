@@ -53,39 +53,81 @@ public sealed class JsonFormatter : IMessageFormatter
     {
         var jsonObject = new Dictionary<string, object?>
         {
-            ["id"] = entry.Id.ToString(),
-            ["timestamp"] = new DateTimeOffset(entry.TimestampTicks, TimeSpan.Zero).ToString("O"),
-            ["method_name"] = entry.MethodName,
-            ["type_name"] = entry.TypeName,
-            ["success"] = entry.Success,
-            ["thread_id"] = entry.ThreadId
+            [GetPropertyName("id", settings)] = entry.Id.ToString(),
+            [GetPropertyName("method_name", settings)] = entry.MethodName,
+            [GetPropertyName("type_name", settings)] = entry.TypeName,
+            [GetPropertyName("success", settings)] = entry.Success
         };
 
-        if (entry.DurationTicks.HasValue)
-        {
-            var duration = TimeSpan.FromTicks(entry.DurationTicks.Value).TotalMilliseconds;
-            jsonObject["duration_ms"] = Math.Round(duration, 2);
-        }
-
-        if (!entry.Success)
-        {
-            jsonObject["exception"] = new
-            {
-                type = entry.ExceptionType,
-                message = entry.ExceptionMessage
-            };
-
-            if (settings.IncludeStackTrace)
-            {
-                jsonObject["stack_trace"] = "Stack trace not available in LogEntry model";
-            }
-        }
-
-        if (!string.IsNullOrEmpty(entry.ActivityId))
-        {
-            jsonObject["activity_id"] = entry.ActivityId;
-        }
+        AddTimingInfo(jsonObject, entry, settings);
+        AddThreadInfo(jsonObject, entry, settings);
+        AddExceptionInfo(jsonObject, entry, settings);
 
         return jsonObject;
     }
+
+    private static void AddTimingInfo(Dictionary<string, object?> jsonObject, LogEntry entry,
+        JsonFormatterSettings settings)
+    {
+        if (!settings.IncludeTimingInfo)
+        {
+            return;
+        }
+
+        jsonObject[GetPropertyName("timestamp", settings)] =
+            new DateTimeOffset(entry.TimestampTicks, TimeSpan.Zero).ToString("O");
+
+        if (!entry.DurationTicks.HasValue)
+        {
+            return;
+        }
+
+        var duration = TimeSpan.FromTicks(entry.DurationTicks.Value).TotalMilliseconds;
+        jsonObject[GetPropertyName("duration_ms", settings)] = Math.Round(duration, 2);
+    }
+
+    private static void AddThreadInfo(Dictionary<string, object?> jsonObject, LogEntry entry,
+        JsonFormatterSettings settings)
+    {
+        if (!settings.IncludeThreadInfo)
+        {
+            return;
+        }
+
+        jsonObject[GetPropertyName("thread_id", settings)] = entry.ThreadId;
+
+        if (string.IsNullOrEmpty(entry.ActivityId))
+        {
+            return;
+        }
+
+        jsonObject[GetPropertyName("activity_id", settings)] = entry.ActivityId;
+    }
+
+    private static void AddExceptionInfo(Dictionary<string, object?> jsonObject, LogEntry entry,
+        JsonFormatterSettings settings)
+    {
+        if (entry.Success)
+        {
+            return;
+        }
+
+        jsonObject[GetPropertyName("exception", settings)] = new
+        {
+            type = entry.ExceptionType,
+            message = entry.ExceptionMessage
+        };
+
+        if (!settings.IncludeStackTrace)
+        {
+            return;
+        }
+
+        jsonObject[GetPropertyName("stack_trace", settings)] = "Stack trace not available in LogEntry model";
+    }
+
+    private static string GetPropertyName(string defaultName, JsonFormatterSettings settings) =>
+        settings.CustomPropertyNames.TryGetValue(defaultName, out var customName)
+            ? customName
+            : defaultName;
 }

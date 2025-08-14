@@ -4,6 +4,7 @@ using FlexKit.Logging.Formatting.Core;
 using FlexKit.Logging.Formatting.Models;
 using FlexKit.Logging.Formatting.Translation;
 using System.Text.Json;
+using FlexKit.Logging.Models;
 using JetBrains.Annotations;
 
 namespace FlexKit.Logging.Formatting.Formatters;
@@ -19,6 +20,7 @@ public sealed class HybridFormatter : IMessageFormatter
     private readonly IMessageFormatter _messageFormatter;
     private readonly IMessageFormatter _jsonFormatter;
     private readonly IMessageTranslator _translator;
+
     private readonly JsonSerializerOptions _options = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
@@ -57,10 +59,10 @@ public sealed class HybridFormatter : IMessageFormatter
 
             // Get the metadata part if enabled
             var metadataPart = hybridSettings.IncludeMetadata
-                ? GetMetadataPart(context)
+                ? GetMetadataPart(context, hybridSettings)
                 : string.Empty;
 
-            var separator = string.IsNullOrEmpty(metadataPart) ? string.Empty : " | ";
+            var separator = string.IsNullOrEmpty(metadataPart) ? string.Empty : hybridSettings.MetadataSeparator;
             var hybridMessage = messageResult.Message + separator + metadataPart;
 
             return FormattedMessage.Success(hybridMessage);
@@ -72,77 +74,145 @@ public sealed class HybridFormatter : IMessageFormatter
     }
 
     /// <inheritdoc />
-    public bool CanFormat(FormattingContext context)
-    {
-        return _messageFormatter.CanFormat(context) && _jsonFormatter.CanFormat(context);
-    }
+    public bool CanFormat(FormattingContext context) =>
+        _messageFormatter.CanFormat(context) && _jsonFormatter.CanFormat(context);
 
     private FormattedMessage GetMessagePart(FormattingContext context, HybridFormatterSettings settings)
     {
-        if (!string.IsNullOrEmpty(settings.MessageTemplate))
+        if (string.IsNullOrEmpty(settings.MessageTemplate))
         {
-            // Add the custom template to context temporarily
-            var tempTemplates = new Dictionary<string, TemplateConfig>(context.Configuration.Templates)
-            {
-                ["Hybrid"] = new TemplateConfig
-                {
-                    SuccessTemplate = settings.MessageTemplate,
-                    ErrorTemplate = settings.MessageTemplate
-                }
-            };
+            return _messageFormatter.Format(context);
+        }
 
-            var tempConfig = new LoggingConfig
+        // Add the custom template to context temporarily
+        var tempTemplates = new Dictionary<string, TemplateConfig>(context.Configuration.Templates)
+        {
+            ["Hybrid"] = new()
             {
-                DefaultFormatter = context.Configuration.DefaultFormatter,
-                Templates = tempTemplates,
-                Formatters = context.Configuration.Formatters,
-                EnableFallbackFormatting = context.Configuration.EnableFallbackFormatting,
-                FallbackTemplate = context.Configuration.FallbackTemplate
-            };
+                SuccessTemplate = settings.MessageTemplate,
+                ErrorTemplate = settings.MessageTemplate
+            }
+        };
 
-            var tempFormattingContext = FormattingContext.Create(
+        var tempConfig = new LoggingConfig
+        {
+            DefaultFormatter = context.Configuration.DefaultFormatter,
+            Templates = tempTemplates,
+            Formatters = context.Configuration.Formatters,
+            EnableFallbackFormatting = context.Configuration.EnableFallbackFormatting,
+            FallbackTemplate = context.Configuration.FallbackTemplate
+        };
+
+        var tempFormattingContext = FormattingContext.Create(
                 context.LogEntry,
                 tempConfig).WithFormatterType(FormatterType.CustomTemplate)
-                .WithTemplateName("Hybrid").WithProperties(context.Properties);
+            .WithTemplateName("Hybrid").WithProperties(context.Properties);
 
-            var customFormatter = new CustomTemplateFormatter(_translator);
-            return customFormatter.Format(tempFormattingContext);
-        }
-
-        // Use a standard structured formatter
-        return _messageFormatter.Format(context);
+        var customFormatter = new CustomTemplateFormatter(_translator);
+        return customFormatter.Format(tempFormattingContext);
     }
 
-    private string GetMetadataPart(FormattingContext context)
+    private string GetMetadataPart(FormattingContext context, HybridFormatterSettings settings)
     {
         var metadata = new Dictionary<string, object?>();
-
         var entry = context.LogEntry;
 
-        if (entry.DurationTicks.HasValue)
+        AddDurationMetadata(metadata, entry, settings);
+        AddThreadMetadata(metadata, entry, settings);
+        AddExceptionMetadata(metadata, entry, settings);
+        AddTimestampMetadata(metadata, entry, settings);
+        AddSuccessMetadata(metadata, entry, settings);
+        AddContextProperties(metadata, context, settings);
+
+        return metadata.Count > 0 ? JsonSerializer.Serialize(metadata, _options) : string.Empty;
+    }
+
+    private static void AddDurationMetadata(
+        Dictionary<string, object?> metadata,
+        in LogEntry entry,
+        HybridFormatterSettings settings)
+    {
+        var includeProperty = settings.MetadataFields.Count != 0 && !settings.MetadataFields.Contains("duration");
+        if (includeProperty || !entry.DurationTicks.HasValue)
         {
-            var duration = TimeSpan.FromTicks(entry.DurationTicks.Value).TotalMilliseconds;
-            metadata["duration"] = Math.Round(duration, 2);
+            return;
         }
 
-        metadata["thread_id"] = entry.ThreadId;
+        var duration = TimeSpan.FromTicks(entry.DurationTicks.Value).TotalMilliseconds;
+        metadata["duration"] = Math.Round(duration, 2);
+    }
 
-        if (!string.IsNullOrEmpty(entry.ActivityId))
+    private static void AddThreadMetadata(
+        Dictionary<string, object?> metadata,
+        in LogEntry entry,
+        HybridFormatterSettings settings)
+    {
+        if (settings.MetadataFields.Count == 0 || settings.MetadataFields.Contains("thread_id"))
         {
-            metadata["activity_id"] = entry.ActivityId;
+            metadata["thread_id"] = entry.ThreadId;
         }
 
-        if (!entry.Success)
+        if ((settings.MetadataFields.Count != 0 && !settings.MetadataFields.Contains("activity_id"))
+            || string.IsNullOrEmpty(entry.ActivityId))
         {
-            metadata["exception_type"] = entry.ExceptionType;
+            return;
         }
 
-        // Add any additional properties
-        foreach (var property in context.Properties)
+        metadata["activity_id"] = entry.ActivityId;
+    }
+
+    private static void AddExceptionMetadata(
+        Dictionary<string, object?> metadata,
+        in LogEntry entry,
+        HybridFormatterSettings settings)
+    {
+        if ((settings.MetadataFields.Count != 0 && !settings.MetadataFields.Contains("exception_type"))
+            || entry.Success)
+        {
+            return;
+        }
+
+        metadata["exception_type"] = entry.ExceptionType;
+    }
+
+    private static void AddTimestampMetadata(
+        Dictionary<string, object?> metadata,
+        in LogEntry entry,
+        HybridFormatterSettings settings)
+    {
+        if (settings.MetadataFields.Count != 0 && !settings.MetadataFields.Contains("timestamp"))
+        {
+            return;
+        }
+
+        metadata["timestamp"] = new DateTimeOffset(entry.TimestampTicks, TimeSpan.Zero).ToString("O");
+    }
+
+    private static void AddSuccessMetadata(
+        Dictionary<string, object?> metadata,
+        in LogEntry entry,
+        HybridFormatterSettings settings)
+    {
+        if (settings.MetadataFields.Count != 0 && !settings.MetadataFields.Contains("success"))
+        {
+            return;
+        }
+
+        metadata["success"] = entry.Success;
+    }
+
+    private static void AddContextProperties(
+        Dictionary<string, object?> metadata,
+        in FormattingContext context,
+        HybridFormatterSettings settings)
+    {
+        var propertiesToAdd = settings.MetadataFields.Count == 0
+            ? context.Properties
+            : context.Properties.Where(p => settings.MetadataFields.Contains(p.Key));
+
+        foreach (var property in propertiesToAdd)
         {
             metadata[property.Key] = property.Value;
         }
-
-        return JsonSerializer.Serialize(metadata, _options);
     }
 }

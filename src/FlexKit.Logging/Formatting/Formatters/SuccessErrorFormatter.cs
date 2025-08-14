@@ -10,22 +10,17 @@ namespace FlexKit.Logging.Formatting.Formatters;
 
 /// <summary>
 /// Formats log entries using different templates for successful vs. failed method executions.
-/// Success: "Method ProcessPayment completed in 450ms"
-/// Error: "Method ProcessPayment failed: InvalidOperationException after 450ms"
+/// Success: "Method ProcessPayment completed in 450 ms"
+/// Error: "Method ProcessPayment failed: InvalidOperationException after 450 ms"
 /// </summary>
+/// <remarks>
+/// Initializes a new instance of the SuccessErrorFormatter.
+/// </remarks>
+/// <param name="translator">The message translator for provider-specific syntax conversion.</param>
 [UsedImplicitly]
-public sealed class SuccessErrorFormatter : IMessageFormatter
+public sealed class SuccessErrorFormatter(IMessageTranslator translator) : IMessageFormatter
 {
-    private readonly IMessageTranslator _translator;
-
-    /// <summary>
-    /// Initializes a new instance of the SuccessErrorFormatter.
-    /// </summary>
-    /// <param name="translator">The message translator for provider-specific syntax conversion.</param>
-    public SuccessErrorFormatter(IMessageTranslator translator)
-    {
-        _translator = translator ?? throw new ArgumentNullException(nameof(translator));
-    }
+    private readonly IMessageTranslator _translator = translator ?? throw new ArgumentNullException(nameof(translator));
 
     /// <inheritdoc />
     public FormatterType FormatterType => FormatterType.SuccessError;
@@ -35,7 +30,7 @@ public sealed class SuccessErrorFormatter : IMessageFormatter
     {
         try
         {
-            var template = GetTemplate(context.LogEntry);
+            var template = GetTemplate(context.LogEntry, context);
             var parameters = ExtractParameters(context.LogEntry);
 
             var translatedTemplate = _translator.TranslateTemplate(template);
@@ -54,13 +49,25 @@ public sealed class SuccessErrorFormatter : IMessageFormatter
     /// <inheritdoc />
     public bool CanFormat(FormattingContext context)
     {
-        var template = GetTemplate(context.LogEntry);
+        var template = GetTemplate(context.LogEntry, context);
         var parameters = ExtractParameters(context.LogEntry);
         return _translator.CanTranslate(template, parameters);
     }
 
-    private static string GetTemplate(LogEntry entry)
+    private static string GetTemplate(LogEntry entry, FormattingContext context)
     {
+        // First try to get from TemplateConfig
+        if (context.Configuration.Templates.TryGetValue("SuccessError", out var templateConfig)
+            && templateConfig.Enabled && templateConfig.IsValid())
+        {
+            var configuredTemplate = templateConfig.GetTemplateForOutcome(entry.Success);
+            if (!string.IsNullOrEmpty(configuredTemplate))
+            {
+                return configuredTemplate;
+            }
+        }
+
+        // Fall back to hardcoded templates
         if (entry.Success)
         {
             return entry.DurationTicks.HasValue

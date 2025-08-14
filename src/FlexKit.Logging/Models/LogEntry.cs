@@ -62,9 +62,8 @@ public readonly record struct LogEntry
     /// <summary>
     /// Creates a new log entry for method start.
     /// </summary>
-    public static LogEntry CreateStart(string methodName, string typeName)
-    {
-        return new LogEntry
+    public static LogEntry CreateStart(string methodName, string typeName) =>
+        new()
         {
             Id = Guid.NewGuid(),
             TimestampTicks = Stopwatch.GetTimestamp(),
@@ -74,19 +73,16 @@ public readonly record struct LogEntry
             ActivityId = Activity.Current?.Id,
             ThreadId = Environment.CurrentManagedThreadId
         };
-    }
 
     /// <summary>
     /// Creates a completion entry based on a start entry.
     /// </summary>
-    public LogEntry WithCompletion(bool success, long durationTicks, Exception? exception = null)
-    {
-        return this with
+    public LogEntry WithCompletion(bool success, long durationTicks, Exception? exception = null) =>
+        this with
         {
             DurationTicks = durationTicks,
             Success = success,
             ExceptionType = exception?.GetType().Name,
             ExceptionMessage = exception?.Message
         };
-    }
 }

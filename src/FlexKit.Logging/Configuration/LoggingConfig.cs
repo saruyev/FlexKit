@@ -1,3 +1,5 @@
+using JetBrains.Annotations;
+
 namespace FlexKit.Logging.Configuration;
 
 /// <summary>
@@ -56,31 +58,31 @@ public class LoggingConfig
     /// Gets or sets the default message formatting mode to use when no specific formatter is configured.
     /// </summary>
     /// <value>The default formatter type. Default is <see cref="FormatterType.StandardStructured"/>.</value>
-    public FormatterType DefaultFormatter { get; set; } = FormatterType.StandardStructured;
+    public FormatterType DefaultFormatter { get; [UsedImplicitly] set; } = FormatterType.StandardStructured;
 
     /// <summary>
     /// Gets or sets custom template configurations for different formatters.
     /// </summary>
     /// <value>Dictionary mapping template names to template configurations.</value>
-    public Dictionary<string, TemplateConfig> Templates { get; set; } = new();
+    public Dictionary<string, TemplateConfig> Templates { get; [UsedImplicitly] set; } = new();
 
     /// <summary>
     /// Gets or sets formatter-specific settings.
     /// </summary>
     /// <value>Configuration settings for individual formatters.</value>
-    public FormatterSettings Formatters { get; set; } = new();
+    public FormatterSettings Formatters { get; [UsedImplicitly] set; } = new();
 
     /// <summary>
     /// Gets or sets whether to enable fallback formatting when the primary formatter fails.
     /// When enabled, failed formatting attempts fall back to a simple default format.
     /// </summary>
     /// <value>True to enable fallback formatting; false to log formatting errors without a fallback. Default is true.</value>
-    public bool EnableFallbackFormatting { get; set; } = true;
+    public bool EnableFallbackFormatting { get; [UsedImplicitly] set; } = true;
 
     /// <summary>
     /// Gets or sets the fallback template to use when primary formatting fails.
     /// Only used when <see cref="EnableFallbackFormatting"/> is true.
     /// </summary>
     /// <value>The fallback template string. Default provides basic method execution information.</value>
-    public string FallbackTemplate { get; set; } = "Method {TypeName}.{MethodName} - Status: {Success}";
+    public string FallbackTemplate { get; [UsedImplicitly] set; } = "Method {TypeName}.{MethodName} - Status: {Success}";
 }
