@@ -71,7 +71,9 @@ public sealed class AzureKeyVaultConfigurationProvider : ConfigurationProvider, 
     /// <param name="secretClient">The pre-configured Azure Key Vault secret client to use.</param>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="source"/> or <paramref name="secretClient"/> is null.</exception>
     [UsedImplicitly]
-    internal AzureKeyVaultConfigurationProvider(AzureKeyVaultConfigurationSource source, SecretClient secretClient)
+    internal AzureKeyVaultConfigurationProvider(
+        AzureKeyVaultConfigurationSource source,
+        SecretClient secretClient)
     {
         ArgumentNullException.ThrowIfNull(source);
         ArgumentNullException.ThrowIfNull(secretClient);
@@ -211,7 +213,9 @@ public sealed class AzureKeyVaultConfigurationProvider : ConfigurationProvider, 
     /// only active secrets are processed in subsequent operations.
     /// </remarks>
     private async Task<List<SecretProperties>> GetEnabledSecretsAsync() =>
-        await _secretClient.GetPropertiesOfSecretsAsync().Where(secretProperties => secretProperties.Enabled == true).ToListAsync();
+        await _secretClient.GetPropertiesOfSecretsAsync()
+            .Where(secretProperties => secretProperties.Enabled == true)
+            .ToListAsync();
 
     /// <summary>
     /// Processes a collection of secrets in parallel, loading their values and storing them in the configuration data.
@@ -219,7 +223,9 @@ public sealed class AzureKeyVaultConfigurationProvider : ConfigurationProvider, 
     /// <param name="secrets">The collection of secret properties to process.</param>
     /// <param name="configurationData">The dictionary to store the processed configuration data.</param>
     /// <returns>A task that represents the asynchronous processing operation.</returns>
-    private async Task ProcessSecretsAsync(List<SecretProperties> secrets, ConcurrentDictionary<string, string?> configurationData) =>
+    private async Task ProcessSecretsAsync(
+        List<SecretProperties> secrets,
+        ConcurrentDictionary<string, string?> configurationData) =>
         await Task.WhenAll(secrets.Select(secret => ProcessSingleSecretAsync(secret, configurationData)));
 
     /// <summary>
@@ -236,7 +242,9 @@ public sealed class AzureKeyVaultConfigurationProvider : ConfigurationProvider, 
     /// <exception cref="InvalidOperationException">
     /// Thrown when the secret cannot be loaded and the configuration source is not optional.
     /// </exception>
-    private async Task ProcessSingleSecretAsync(SecretProperties secretProperties, ConcurrentDictionary<string, string?> configurationData)
+    private async Task ProcessSingleSecretAsync(
+        SecretProperties secretProperties,
+        ConcurrentDictionary<string, string?> configurationData)
     {
         try
         {
@@ -283,7 +291,10 @@ public sealed class AzureKeyVaultConfigurationProvider : ConfigurationProvider, 
     /// <param name="secret">The Key Vault secret to process.</param>
     /// <param name="configurationData">The dictionary to store the processed configuration data.</param>
     /// <param name="configKey">The transformed configuration key for this secret.</param>
-    private void ProcessSecretValue(KeyVaultSecret secret, ConcurrentDictionary<string, string?> configurationData, string configKey)
+    private void ProcessSecretValue(
+        KeyVaultSecret secret,
+        ConcurrentDictionary<string, string?> configurationData,
+        string configKey)
     {
         var value = secret.Value;
 
@@ -343,8 +354,5 @@ public sealed class AzureKeyVaultConfigurationProvider : ConfigurationProvider, 
     /// <summary>
     /// Releases all resources used by the current instance of the <see cref="AzureKeyVaultConfigurationProvider"/> class.
     /// </summary>
-    public void Dispose()
-    {
-        Dispose(disposing: true);
-    }
+    public void Dispose() => Dispose(disposing: true);
 }

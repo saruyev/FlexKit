@@ -3,6 +3,7 @@
 // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 // </copyright>
 
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Runtime.Loader;
 using Autofac;
@@ -92,6 +93,7 @@ public static class AssemblyExtensions
     /// and contain Autofac modules, then registers those modules with the container.
     /// </summary>
     /// <param name="builder">Container builder instance to register modules with.</param>
+    /// <param name="registered">Previously registered assemblies to avoid duplications.</param>
     /// <param name="configuration">The current application configuration settings containing assembly mapping rules.</param>
     /// <remarks>
     /// This method performs the following operations:
@@ -113,6 +115,7 @@ public static class AssemblyExtensions
     [UsedImplicitly]
     public static void RegisterAssembliesFromBaseDirectory(
         this ContainerBuilder builder,
+        List<string> registered,
         IConfiguration? configuration = null)
     {
         // Retrieve assembly mapping configuration to determine which assemblies to scan
@@ -121,11 +124,10 @@ public static class AssemblyExtensions
         // Get all currently loaded assemblies from the application domain
         var allAssemblies = AppDomain.CurrentDomain.GetAssemblies();
 
-        // Filter assemblies based on naming patterns and module presence
         var assemblies = allAssemblies
-            .Where(assembly => FilterLibraries(assembly.FullName, config) && ContainsModules(assembly))
+            .Where(FilterAndValidateAssemblies)
             .Where(assembly =>
-                !assembly.GetName().Name?.Equals("FlexKit.Configuration", StringComparison.OrdinalIgnoreCase) == true)
+                assembly.GetName().Name?.Equals("FlexKit.Configuration", StringComparison.OrdinalIgnoreCase) == false)
             .ToList();
 
         // Register all modules found in the filtered assemblies
@@ -133,6 +135,14 @@ public static class AssemblyExtensions
         {
             builder.RegisterAssemblyModules(assembly);
         }
+
+        return;
+
+        // Filter assemblies based on naming patterns and module presence
+        [SuppressMessage("ReSharper", "NullableWarningSuppressionIsUsed")]
+        bool FilterAndValidateAssemblies(System.Reflection.Assembly assembly1) =>
+            !registered.Contains(assembly1.FullName!) && FilterLibraries(assembly1.FullName, config) &&
+            ContainsModules(assembly1);
     }
 
     /// <summary>
@@ -157,18 +167,23 @@ public static class AssemblyExtensions
     /// </para>
     /// </remarks>
     [UsedImplicitly]
-    public static void AddModules(this ContainerBuilder builder, IConfiguration configuration)
+    public static void AddModules(
+        this ContainerBuilder builder,
+        IConfiguration configuration)
     {
         builder.RegisterModule<ConfigurationModule>(); // Register FlexKit.Configuration module>()
+        var registered = new List<string>();
 
         // Register modules from dependency context (compile-time dependencies)
         foreach (var assembly in DependencyContext.Default?.GetAssemblies(configuration) ?? [])
         {
             builder.RegisterAssemblyModules(assembly);
+            // ReSharper disable once NullableWarningSuppressionIsUsed
+            registered.Add(assembly.FullName!);
         }
 
         // Register modules from current app domain (runtime assemblies)
-        builder.RegisterAssembliesFromBaseDirectory(configuration);
+        builder.RegisterAssembliesFromBaseDirectory(registered, configuration);
     }
 
     /// <summary>
@@ -198,7 +213,9 @@ public static class AssemblyExtensions
     /// </para>
     /// </remarks>
     [UsedImplicitly]
-    public static List<System.Reflection.Assembly> GetAssemblies(this DependencyContext? context, IConfiguration? configuration)
+    public static List<System.Reflection.Assembly> GetAssemblies(
+        this DependencyContext? context,
+        IConfiguration? configuration)
     {
         // Use provided context or fall back to default
         context ??= DependencyContext.Default;
@@ -287,7 +304,9 @@ public static class AssemblyExtensions
     /// </code>
     /// </para>
     /// </remarks>
-    private static bool FilterLibraries(string? lib, MappingConfig? config)
+    private static bool FilterLibraries(
+        string? lib,
+        MappingConfig? config)
     {
         // Null or empty assembly names are always excluded
         if (lib is null)
@@ -305,14 +324,8 @@ public static class AssemblyExtensions
         }
 
         // Priority 2: Name-based filtering
-        if (names?.Count > 0)
-        {
-            return names.Any(lib.StartsWith);
-        }
-
-        // Priority 3: Default filtering for FlexKit assemblies or module-containing assemblies
-        return lib.StartsWith("FlexKit.Configuration", StringComparison.InvariantCulture) ||
-               lib.Contains("Module", StringComparison.InvariantCulture);
+        return names?.Count > 0 ? names.Any(lib.StartsWith) :
+            lib.StartsWith("FlexKit.", StringComparison.InvariantCulture);
     }
 
     /// <summary>

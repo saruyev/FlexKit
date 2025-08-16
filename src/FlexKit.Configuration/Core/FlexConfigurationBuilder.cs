@@ -158,7 +158,10 @@ public class FlexConfigurationBuilder
     /// builder.AddJsonFile("appsettings.Development.json", optional: true, reloadOnChange: true);
     /// </code>
     /// </example>
-    public FlexConfigurationBuilder AddJsonFile(string path, bool optional = true, bool reloadOnChange = true) =>
+    public FlexConfigurationBuilder AddJsonFile(
+        string path,
+        bool optional = true,
+        bool reloadOnChange = true) =>
         AddSource(new JsonConfigurationSource
         {
             Path = path,
@@ -338,7 +341,9 @@ public class FlexConfigurationBuilder
     /// builder.AddDotEnvFile(".env.development", optional: false);
     /// </code>
     /// </example>
-    public FlexConfigurationBuilder AddDotEnvFile(string path = ".env", bool optional = true) =>
+    public FlexConfigurationBuilder AddDotEnvFile(
+        string path = ".env",
+        bool optional = true) =>
         AddSource(new DotEnvConfigurationSource
         {
             Path = path,

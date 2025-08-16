@@ -334,7 +334,9 @@ public static class ConfigurationExtensions
     /// var root = configuration.CurrentConfig(); // Same as wrapping entire config
     /// </code>
     /// </example>
-    public static IFlexConfig? CurrentConfig(this IConfiguration root, string? name = null)
+    public static IFlexConfig? CurrentConfig(
+        this IConfiguration root,
+        string? name = null)
     {
         var section = !string.IsNullOrEmpty(name)
             ? root.GetChildren().FirstOrDefault(

@@ -242,7 +242,9 @@ public static class ContainerBuilderConfigurationExtensions
     /// </code>
     /// </example>
     [UsedImplicitly]
-    public static ContainerBuilder RegisterConfig<T>(this ContainerBuilder builder, string sectionPath)
+    public static ContainerBuilder RegisterConfig<T>(
+        this ContainerBuilder builder,
+        string sectionPath)
         where T : class, new()
     {
         ArgumentNullException.ThrowIfNull(builder);
@@ -320,7 +322,8 @@ public static class ContainerBuilderConfigurationExtensions
     /// </code>
     /// </example>
     [UsedImplicitly]
-    public static ContainerBuilder RegisterConfigs(this ContainerBuilder builder,
+    public static ContainerBuilder RegisterConfigs(
+        this ContainerBuilder builder,
         IEnumerable<(Type ConfigType, string SectionPath)> configurations)
     {
         ArgumentNullException.ThrowIfNull(builder);

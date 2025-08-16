@@ -1,0 +1,151 @@
+using System.Diagnostics;
+
+namespace FlexKit.Logging.Models;
+
+/// <summary>
+/// Lightweight model for capturing method execution data with minimal allocation overhead.
+/// Designed to be created quickly (~10ns) and serialized on background threads.
+/// </summary>
+public readonly record struct LogEntry
+{
+    /// <summary>
+    /// Gets the unique identifier for this log entry.
+    /// </summary>
+    public Guid Id { get; private init; }
+
+    /// <summary>
+    /// Gets the timestamp when the method execution began.
+    /// Uses high-precision timestamp for accurate performance measurements.
+    /// </summary>
+    private long TimestampTicks { get; init; }
+
+    /// <summary>
+    /// Gets the name of the method being logged.
+    /// </summary>
+    public string MethodName { get; private init; }
+
+    /// <summary>
+    /// Gets the full name of the type containing the method.
+    /// </summary>
+    public string TypeName { get; private init; }
+
+    /// <summary>
+    /// Gets the execution duration in ticks, or null if execution is still in progress.
+    /// </summary>
+    public long? DurationTicks { get; private init; }
+
+    /// <summary>
+    /// Gets whether the method execution completed successfully.
+    /// </summary>
+    public bool Success { get; private init; }
+
+    /// <summary>
+    /// Gets the exception type name if the method failed, or null if successful.
+    /// </summary>
+    public string? ExceptionType { get; private init; }
+
+    /// <summary>
+    /// Gets the exception message if the method failed, or null if successful.
+    /// </summary>
+    public string? ExceptionMessage { get; private init; }
+
+    /// <summary>
+    /// Gets the current activity ID for distributed tracing correlation.
+    /// </summary>
+    public string? ActivityId { get; private init; }
+
+    /// <summary>
+    /// Gets the thread ID where the method executed.
+    /// </summary>
+    public int ThreadId { get; private init; }
+
+    /// <summary>
+    /// Gets the serialized input parameters if LogInput or LogBoth behavior was used.
+    /// Null if input logging was not enabled for this method.
+    /// </summary>
+    public string? InputParameters { get; private init; }
+
+    /// <summary>
+    /// Gets the serialized output value if LogOutput or LogBoth behavior was used.
+    /// Null if output logging was not enabled or the method returned void.
+    /// </summary>
+    public string? OutputValue { get; private init; }
+
+    /// <summary>
+    /// Gets the timestamp when the method execution began as a DateTimeOffset.
+    /// </summary>
+    public DateTimeOffset Timestamp => GetActualTimestamp(TimestampTicks);
+
+    /// <summary>
+    /// Calculates the actual timestamp from Stopwatch ticks.
+    /// </summary>
+    /// <param name="stopwatchTicks">The stopwatch ticks when the method began.</param>
+    private static DateTimeOffset GetActualTimestamp(
+        long stopwatchTicks)
+    {
+        var currentStopwatchTicks = Stopwatch.GetTimestamp();
+        var elapsedSinceStart = currentStopwatchTicks - stopwatchTicks;
+        var elapsedTimeSpan = TimeSpan.FromTicks((long)(elapsedSinceStart * TimeSpan.TicksPerSecond / (double)Stopwatch.Frequency));
+
+        return DateTimeOffset.UtcNow.Subtract(elapsedTimeSpan);
+    }
+
+    /// <summary>
+    /// Creates a new log entry for method start.
+    /// </summary>
+    /// <param name="methodName">The name of the method being logged.</param>
+    /// <param name="typeName">The full name of the type containing the method.</param>
+    public static LogEntry CreateStart(
+        string methodName,
+        string typeName) =>
+        new()
+        {
+            Id = Guid.NewGuid(),
+            TimestampTicks = Stopwatch.GetTimestamp(),
+            MethodName = methodName,
+            TypeName = typeName,
+            Success = true,
+            ActivityId = Activity.Current?.Id,
+            ThreadId = Environment.CurrentManagedThreadId
+        };
+
+    /// <summary>
+    /// Creates a new log entry for a method start with input parameters.
+    /// Used when LogInput or LogBoth behavior is enabled.
+    /// </summary>
+    /// <param name="inputParameters">The serialized input parameters.</param>
+    public LogEntry WithInput(string? inputParameters) =>
+        this with
+        {
+            InputParameters = inputParameters
+        };
+
+    /// <summary>
+    /// Creates a completion entry based on a start entry.
+    /// </summary>
+    /// <param name="success">Whether the method completed successfully.</param>
+    /// <param name="durationTicks">The duration of the method execution in ticks.</param>
+    /// <param name="exception">The exception that was thrown, if any.</param>
+    public LogEntry WithCompletion(
+        bool success,
+        long durationTicks,
+        Exception? exception = null) =>
+        this with
+        {
+            DurationTicks = durationTicks,
+            Success = success,
+            ExceptionType = exception?.GetType().Name,
+            ExceptionMessage = exception?.Message
+        };
+
+    /// <summary>
+    /// Creates a completion entry with an output value.
+    /// Used when LogOutput or LogBoth behavior is enabled.
+    /// </summary>
+    /// <param name="outputValue">The output value to log.</param>
+    public LogEntry WithOutput(string? outputValue) =>
+        this with
+        {
+            OutputValue = outputValue
+        };
+}

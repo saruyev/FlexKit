@@ -55,7 +55,9 @@ public sealed class AzureAppConfigurationProvider : ConfigurationProvider, IDisp
     /// <param name="configClient">The pre-configured Azure App Configuration client to use.</param>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="source"/> or <paramref name="configClient"/> is null.</exception>
     [UsedImplicitly]
-    internal AzureAppConfigurationProvider(AzureAppConfigurationSource source, ConfigurationClient configClient)
+    internal AzureAppConfigurationProvider(
+        AzureAppConfigurationSource source,
+        ConfigurationClient configClient)
     {
         ArgumentNullException.ThrowIfNull(source);
         ArgumentNullException.ThrowIfNull(configClient);
@@ -215,7 +217,9 @@ public sealed class AzureAppConfigurationProvider : ConfigurationProvider, IDisp
     /// configuration entries like "parentKey:nested:key" = "value". If JSON processing is disabled or the value
     /// is not JSON, it will store the raw value directly.
     /// </remarks>
-    private void ProcessConfigurationSetting(ConfigurationSetting setting, ConcurrentDictionary<string, string?> configurationData)
+    private void ProcessConfigurationSetting(
+        ConfigurationSetting setting,
+        ConcurrentDictionary<string, string?> configurationData)
     {
         // Check if JSON processing is enabled and this value contains JSON
         if (_source.JsonProcessor && setting.Value.IsValidJson())
@@ -234,12 +238,10 @@ public sealed class AzureAppConfigurationProvider : ConfigurationProvider, IDisp
     /// </summary>
     /// <param name="connectionString">The connection string to check.</param>
     /// <returns>True if it's a connection string, false if it's an endpoint URI.</returns>
-    private static bool IsConnectionString(string connectionString)
-    {
-        return connectionString.Contains("Endpoint=", StringComparison.OrdinalIgnoreCase) &&
-               (connectionString.Contains("Id=", StringComparison.OrdinalIgnoreCase) ||
-                connectionString.Contains("Secret=", StringComparison.OrdinalIgnoreCase));
-    }
+    private static bool IsConnectionString(string connectionString) =>
+        connectionString.Contains("Endpoint=", StringComparison.OrdinalIgnoreCase) &&
+        (connectionString.Contains("Id=", StringComparison.OrdinalIgnoreCase) ||
+         connectionString.Contains("Secret=", StringComparison.OrdinalIgnoreCase));
 
     /// <summary>
     /// Releases the unmanaged resources used by the provider and optionally releases the managed resources.
@@ -251,22 +253,21 @@ public sealed class AzureAppConfigurationProvider : ConfigurationProvider, IDisp
         "No SRP violation as this is a standard pattern for IDisposable implementations.")]
     private void Dispose(bool disposing)
     {
-        if (!_disposed)
+        if (_disposed)
         {
-            if (disposing)
-            {
-                _reloadTimer?.Dispose();
-            }
-
-            _disposed = true;
+            return;
         }
+
+        if (disposing)
+        {
+            _reloadTimer?.Dispose();
+        }
+
+        _disposed = true;
     }
 
     /// <summary>
     /// Releases all resources used by the current instance of the <see cref="AzureAppConfigurationProvider"/> class.
     /// </summary>
-    public void Dispose()
-    {
-        Dispose(disposing: true);
-    }
+    public void Dispose() => Dispose(disposing: true);
 }
