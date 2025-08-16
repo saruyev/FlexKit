@@ -200,13 +200,8 @@ public sealed class AwsParameterStoreConfigurationProvider : ConfigurationProvid
         {
             await LoadParametersAsync(configurationData).ConfigureAwait(false);
         }
-        catch (Exception ex)
+        catch (Exception ex) when (_source.Optional)
         {
-            if (!_source.Optional)
-            {
-                throw;
-            }
-
             _source.OnLoadException?.Invoke(new ConfigurationProviderException(_source, ex));
             return;
         }
@@ -297,7 +292,10 @@ public sealed class AwsParameterStoreConfigurationProvider : ConfigurationProvid
     /// <param name="parameter">The AWS parameter to process.</param>
     /// <param name="configurationData">The dictionary to store the processed configuration data.</param>
     /// <param name="configKey">The transformed configuration key for this parameter.</param>
-    private void ProcessParameterValue(Parameter parameter, Dictionary<string, string?> configurationData, string configKey)
+    private void ProcessParameterValue(
+        Parameter parameter,
+        Dictionary<string, string?> configurationData,
+        string configKey)
     {
         switch (parameter.Type.Value)
         {
@@ -327,7 +325,10 @@ public sealed class AwsParameterStoreConfigurationProvider : ConfigurationProvid
     /// <param name="parameter">The String parameter to process.</param>
     /// <param name="configurationData">The dictionary to store the processed configuration data.</param>
     /// <param name="configKey">The configuration key for this parameter.</param>
-    private void ProcessStringParameter(Parameter parameter, Dictionary<string, string?> configurationData, string configKey)
+    private void ProcessStringParameter(
+        Parameter parameter,
+        Dictionary<string, string?> configurationData,
+        string configKey)
     {
         var value = parameter.Value;
 
@@ -350,7 +351,10 @@ public sealed class AwsParameterStoreConfigurationProvider : ConfigurationProvid
     /// <param name="parameter">The StringList parameter to process.</param>
     /// <param name="configurationData">The dictionary to store the processed configuration data.</param>
     /// <param name="configKey">The configuration key for this parameter.</param>
-    private static void ProcessStringListParameter(Parameter parameter, Dictionary<string, string?> configurationData, string configKey)
+    private static void ProcessStringListParameter(
+        Parameter parameter,
+        Dictionary<string, string?> configurationData,
+        string configKey)
     {
         if (string.IsNullOrEmpty(parameter.Value))
         {
@@ -373,12 +377,10 @@ public sealed class AwsParameterStoreConfigurationProvider : ConfigurationProvid
     /// <param name="parameter">The SecureString parameter to process.</param>
     /// <param name="configurationData">The dictionary to store the processed configuration data.</param>
     /// <param name="configKey">The configuration key for this parameter.</param>
-    private void ProcessSecureStringParameter(Parameter parameter, Dictionary<string, string?> configurationData, string configKey)
-    {
-        // SecureString parameters are automatically decrypted when WithDecryption=true
-        // Process them the same way as String parameters
-        ProcessStringParameter(parameter, configurationData, configKey);
-    }
+    private void ProcessSecureStringParameter(
+        Parameter parameter,
+        Dictionary<string, string?> configurationData,
+        string configKey) => ProcessStringParameter(parameter, configurationData, configKey);
 
     /// <summary>
     /// Determines whether a configuration key should be processed as JSON based on the provider configuration.
@@ -437,7 +439,11 @@ public sealed class AwsParameterStoreConfigurationProvider : ConfigurationProvid
 /// </remarks>
 /// <param name="source">The configuration source that caused the exception.</param>
 /// <param name="innerException">The exception that is the cause of the current exception.</param>
-public class ConfigurationProviderException(AwsParameterStoreConfigurationSource source, Exception innerException) : Exception($"Failed to load configuration from AWS Parameter Store source: {source.Path}", innerException)
+public class ConfigurationProviderException(
+    AwsParameterStoreConfigurationSource source,
+    Exception innerException) : Exception(
+        $"Failed to load configuration from AWS Parameter Store source: {source.Path}",
+        innerException)
 {
     /// <summary>
     /// Source of the exception (the Parameter Store path).

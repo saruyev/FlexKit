@@ -100,29 +100,4 @@ public class TemplateConfig
         !string.IsNullOrWhiteSpace(SuccessTemplate) ||
         !string.IsNullOrWhiteSpace(ErrorTemplate) ||
         !string.IsNullOrWhiteSpace(GeneralTemplate);
-
-    /// <summary>
-    /// Gets all available templates in this configuration.
-    /// Useful for validation and debugging purposes.
-    /// </summary>
-    /// <returns>An enumerable of all non-empty template strings in this configuration.</returns>
-    public IEnumerable<string> GetAllTemplates()
-    {
-        if (!string.IsNullOrWhiteSpace(SuccessTemplate))
-        {
-            yield return SuccessTemplate;
-        }
-
-        if (!string.IsNullOrWhiteSpace(ErrorTemplate))
-        {
-            yield return ErrorTemplate;
-        }
-
-        if (string.IsNullOrWhiteSpace(GeneralTemplate))
-        {
-            yield break;
-        }
-
-        yield return GeneralTemplate;
-    }
 }

@@ -90,5 +90,7 @@ public interface IMessageTranslator
     /// This method allows translators to reject templates they cannot handle,
     /// enabling fallback to other available translators or default formatting.
     /// </remarks>
-    bool CanTranslate([UsedImplicitly] string? messageTemplate, IReadOnlyDictionary<string, object?> parameters);
+    bool CanTranslate(
+        [UsedImplicitly] string? messageTemplate,
+        IReadOnlyDictionary<string, object?> parameters);
 }

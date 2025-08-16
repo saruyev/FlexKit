@@ -215,7 +215,71 @@ public static class HostBuilderExtensions
         return hostBuilder
             .ConfigureServices((_, services) => services.AddAutofac())
             .UseServiceProviderFactory(new AutofacServiceProviderFactory())
-            .ConfigureContainer<ContainerBuilder>((context, containerBuilder) => ConfigureContainer(configure, containerBuilder, context.Configuration));
+            .ConfigureContainer<ContainerBuilder>((context, containerBuilder) =>
+                ConfigureContainer(
+                    new ConfigContext
+                    {
+                        Configure = configure,
+                        ContainerBuilder = containerBuilder,
+                        Configuration = context.Configuration,
+                        Environment = context.HostingEnvironment
+                    }));
+    }
+
+    /// <summary>
+    /// Adds FlexKit.Configuration to the host builder with support for both FlexConfig and ContainerBuilder customization.
+    /// This overload provides maximum flexibility by allowing customization of both the configuration builder
+    /// and the Autofac container builder in a single call.
+    /// </summary>
+    /// <param name="hostBuilder">The host builder to configure with FlexConfig support.</param>
+    /// <param name="configure">
+    /// Configuration action that receives both FlexConfigurationBuilder and ContainerBuilder,
+    /// allowing customization of configuration sources and dependency registrations in one place.
+    /// </param>
+    /// <returns>
+    /// The same <see cref="IHostBuilder"/> instance to enable method chaining.
+    /// </returns>
+    /// <remarks>
+    /// This overload is useful when you need to customize both configuration and dependency injection
+    /// without having to use separate ConfigureContainer calls. The configuration builder is set up
+    /// with automatic JSON file detection before calling your configure action.
+    /// </remarks>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="hostBuilder"/> or <paramref name="configure"/> is null.</exception>
+    /// <example>
+    /// <code>
+    /// // Single configuration action for both config and DI
+    /// var builder = Host.CreateDefaultBuilder(args);
+    /// builder.AddFlexConfig((configBuilder, containerBuilder) =>
+    /// {
+    ///     // Configure additional config sources
+    ///     configBuilder.AddDotEnvFile(".env", optional: true);
+    ///
+    ///     // Register additional services
+    ///     containerBuilder.RegisterType&lt;MyService&gt;().AsImplementedInterfaces();
+    ///     containerBuilder.RegisterModule&lt;MyModule&gt;();
+    /// });
+    /// </code>
+    /// </example>
+    [UsedImplicitly]
+    public static IHostBuilder AddFlexConfig(
+        this IHostBuilder hostBuilder,
+        Action<FlexConfigurationBuilder, ContainerBuilder> configure)
+    {
+        ArgumentNullException.ThrowIfNull(hostBuilder);
+        ArgumentNullException.ThrowIfNull(configure);
+
+        return hostBuilder
+            .ConfigureServices((_, services) => services.AddAutofac())
+            .UseServiceProviderFactory(new AutofacServiceProviderFactory())
+            .ConfigureContainer<ContainerBuilder>((context, containerBuilder) =>
+                ConfigureContainer(
+                    new ConfigContext
+                    {
+                        ExtendedConfigure = configure,
+                        ContainerBuilder = containerBuilder,
+                        Configuration = context.Configuration,
+                        Environment = context.HostingEnvironment
+                    }));
     }
 
     /// <summary>
@@ -410,7 +474,74 @@ public static class HostBuilderExtensions
             new AutofacServiceProviderFactory(),
             containerBuilder =>
             {
-                ConfigureContainer(configure, containerBuilder, builder.Configuration);
+                ConfigureContainer(
+                    new ConfigContext
+                    {
+                        Configure = configure,
+                        ContainerBuilder = containerBuilder,
+                        Configuration = builder.Configuration,
+                        Environment = builder.Environment
+                    });
+            });
+
+        return builder;
+    }
+
+    /// <summary>
+    /// Adds FlexKit.Configuration to the host application builder with support for both FlexConfig and ContainerBuilder customization.
+    /// This overload provides maximum flexibility by allowing customization of both the configuration builder
+    /// and the Autofac container builder in a single call.
+    /// </summary>
+    /// <param name="builder">The host application builder to configure with FlexConfig support.</param>
+    /// <param name="configure">
+    /// Configuration action that receives both FlexConfigurationBuilder and ContainerBuilder,
+    /// allowing customization of configuration sources and dependency registrations in one place.
+    /// </param>
+    /// <returns>
+    /// The same <see cref="IHostApplicationBuilder"/> instance to enable method chaining.
+    /// </returns>
+    /// <remarks>
+    /// This overload is useful when you need to customize both configuration and dependency injection
+    /// without having to use separate ConfigureContainer calls. The configuration builder is set up
+    /// with automatic JSON file detection before calling your configure action.
+    /// </remarks>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="builder"/> or <paramref name="configure"/> is null.</exception>
+    /// <example>
+    /// <code>
+    /// // Single configuration action for both config and DI
+    /// var builder = WebApplication.CreateBuilder(args);
+    /// builder.AddFlexConfig((configBuilder, containerBuilder) =>
+    /// {
+    ///     // Configure additional config sources
+    ///     configBuilder.AddDotEnvFile(".env", optional: true);
+    ///
+    ///     // Register additional services
+    ///     containerBuilder.RegisterType&lt;MyService&gt;().AsImplementedInterfaces();
+    ///     containerBuilder.RegisterModule&lt;MyModule&gt;();
+    /// });
+    /// </code>
+    /// </example>
+    [UsedImplicitly]
+    public static IHostApplicationBuilder AddFlexConfig(
+        this IHostApplicationBuilder builder,
+        Action<FlexConfigurationBuilder, ContainerBuilder> configure)
+    {
+        ArgumentNullException.ThrowIfNull(builder);
+        ArgumentNullException.ThrowIfNull(configure);
+
+        builder.Services.AddAutofac();
+        builder.ConfigureContainer(
+            new AutofacServiceProviderFactory(),
+            containerBuilder =>
+            {
+                ConfigureContainer(
+                    new ConfigContext
+                    {
+                        ExtendedConfigure = configure,
+                        ContainerBuilder = containerBuilder,
+                        Configuration = builder.Configuration,
+                        Environment = builder.Environment
+                    });
             });
 
         return builder;
@@ -421,16 +552,8 @@ public static class HostBuilderExtensions
     /// This private method handles the actual container setup, including FlexConfig registration
     /// with existing host configuration and assembly module discovery.
     /// </summary>
-    /// <param name="configure">
-    /// Optional configuration action for adding additional FlexKit-specific sources.
-    /// If null, only the existing host configuration will be integrated.
-    /// </param>
-    /// <param name="containerBuilder">
-    /// The Autofac container builder to configure with FlexKit services.
-    /// </param>
-    /// <param name="configuration">
-    /// The existing configuration and environment information.
-    /// Provides access to the configuration built by Host.CreateDefaultBuilder.
+    /// <param name="configContext">
+    /// The current configuration context holder.
     /// </param>
     /// <remarks>
     /// This method performs the core integration logic for FlexKit.Configuration in generic hosting scenarios.
@@ -462,30 +585,96 @@ public static class HostBuilderExtensions
     /// This follows the convention-over-configuration principle for DI setup.
     /// </para>
     /// </remarks>
-    private static void ConfigureContainer(
-        Action<FlexConfigurationBuilder>? configure,
-        ContainerBuilder containerBuilder,
-        IConfiguration configuration)
+    private static void ConfigureContainer(ConfigContext configContext)
     {
         // Register FlexConfig with the container, integrating host configuration and additional sources
-        containerBuilder.AddFlexConfig(config =>
+        configContext.ContainerBuilder.AddFlexConfig(config =>
         {
             // Start with the existing host configuration as the base (the lowest precedence)
-            // This includes all sources from Host.CreateDefaultBuilder:
-            // - appsettings.json
-            // - appsettings.{Environment}.json
-            // - User secrets (in Development)
-            // - Environment variables
-            // - Command line arguments
-            config.UseExistingConfiguration(configuration);
+            config.UseExistingConfiguration(configContext.Configuration);
+
+            AddAutomaticJsonFiles(config, configContext.Environment);
 
             // Apply additional FlexKit-specific configuration sources if provided
             // These sources will have higher precedence than the host configuration
-            configure?.Invoke(config);
+            configContext.Configure?.Invoke(config);
+            configContext.ExtendedConfigure?.Invoke(config, configContext.ContainerBuilder);
         });
 
         // Register assembly modules for automatic dependency injection discovery
         // Scans application assemblies for Autofac modules and registers them
-        containerBuilder.AddModules(configuration);
+        configContext.ContainerBuilder.AddModules(configContext.Configuration);
+    }
+
+    /// <summary>
+    /// Automatically detects and adds appsettings.json and environment-specific JSON files
+    /// to the FlexConfigurationBuilder if they exist in the application directory.
+    /// </summary>
+    /// <param name="config">The FlexConfigurationBuilder to add JSON sources to.</param>
+    /// <param name="environment">The hosting environment for determining environment-specific files.</param>
+    /// <remarks>
+    /// This method implements the automatic JSON file detection logic:
+    /// <list type="bullet">
+    /// <item>Checks for appsettings.json and adds it if found (optional: true)</item>
+    /// <item>Checks for appsettings.{Environment}.json and adds it if found (optional: true)</item>
+    /// <item>Uses the current working directory as the base path for file detection</item>
+    /// <item>Files are added with reloadOnChange: true for development convenience</item>
+    /// </list>
+    /// The files are added with low precedence, so they won't override existing host configuration
+    /// but will be available for FlexKit's dynamic access capabilities.
+    /// </remarks>
+    private static void AddAutomaticJsonFiles(
+        FlexConfigurationBuilder config,
+        IHostEnvironment? environment)
+    {
+        // Check for appsettings.json
+        var appSettingsPath = Path.Combine(Directory.GetCurrentDirectory(), "appsettings.json");
+        if (File.Exists(appSettingsPath))
+        {
+            config.AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
+        }
+
+        // Check for an environment-specific appsettings file
+        var environmentAppSettingsPath = Path.Combine(Directory.GetCurrentDirectory(), $"appsettings.{environment?.EnvironmentName}.json");
+        if (!File.Exists(environmentAppSettingsPath))
+        {
+            return;
+        }
+
+        config.AddJsonFile($"appsettings.{environment?.EnvironmentName}.json", optional: true, reloadOnChange: true);
+    }
+
+    /// <summary>
+    /// The current configuration context holder.
+    /// </summary>
+    private sealed class ConfigContext
+    {
+        /// <summary>
+        /// The existing configuration and environment information.
+        /// Provides access to the configuration built by Host.CreateDefaultBuilder.
+        /// </summary>
+        public required IConfiguration Configuration { get; init; }
+
+        /// <summary>
+        /// The hosting environment information used for automatic JSON file detection.
+        /// </summary>
+        public IHostEnvironment? Environment { get; init; }
+
+        /// <summary>
+        /// Optional configuration action for adding additional FlexKit-specific sources.
+        /// If null, only the existing host configuration will be integrated.
+        /// </summary>
+        public Action<FlexConfigurationBuilder>? Configure { get; init; }
+
+        /// <summary>
+        /// Configuration action that receives both FlexConfigurationBuilder and ContainerBuilder,
+        /// allowing customization of configuration sources and dependency registrations in one place.
+        /// </summary>
+        public Action<FlexConfigurationBuilder, ContainerBuilder>? ExtendedConfigure { get; init; }
+
+        /// <summary>
+        /// The Autofac container builder to configure with FlexKit services.
+        /// </summary>
+        public required ContainerBuilder ContainerBuilder { get; init; }
     }
 }

@@ -292,7 +292,9 @@ public class DotEnvConfigurationProvider(DotEnvConfigurationSource source) : Con
     /// // Result: data["COMPLEX_VALUE"] = "value with = signs in it"
     /// </code>
     /// </example>
-    private static void ParseLine(string line, Dictionary<string, string?> data)
+    private static void ParseLine(
+        string line,
+        Dictionary<string, string?> data)
     {
         // Skip empty lines and comments
         var trimmed = line.Trim();

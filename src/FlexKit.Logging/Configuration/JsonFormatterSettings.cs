@@ -42,5 +42,5 @@ public class JsonFormatterSettings
     /// </summary>
     /// <value>Dictionary mapping internal field names to custom JSON property names.</value>
     [UsedImplicitly]
-    public Dictionary<string, string> CustomPropertyNames { get; [UsedImplicitly] set; } = new();
+    public Dictionary<string, string> CustomPropertyNames { get; [UsedImplicitly] set; } = [];
 }

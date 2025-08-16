@@ -130,7 +130,7 @@ public class AssemblyScanningSteps(ScenarioContext scenarioContext)
                 .SingleInstance();
                 
             // Use AssemblyExtensions with configuration to exclude test assemblies
-            _containerBuilder.RegisterAssembliesFromBaseDirectory(minimalConfig);
+            _containerBuilder.RegisterAssembliesFromBaseDirectory([], minimalConfig);
             
             // Store scanned assemblies for verification
             var currentAssemblies = AppDomain.CurrentDomain.GetAssemblies();

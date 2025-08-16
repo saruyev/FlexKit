@@ -27,9 +27,17 @@ namespace FlexKit.Logging.Configuration;
 /// {
 ///   "FlexKit": {
 ///     "Logging": {
+///       "MaxBatchSize": 1,
+///       "BatchTimeout": "00:00:05",
 ///       "DefaultFormatter": "StandardStructured",
 ///       "EnableFallbackFormatting": true,
 ///       "FallbackTemplate": "Method {TypeName}.{MethodName} - Status: {Success}",
+///       "AutoIntercept": true,
+///       "Services": {
+///         "MyApp.Services.*": { "LogInput": true },
+///         "MyApp.Services.PaymentService": { "LogBoth": true },
+///         "MyApp.Controllers.*": { "LogOutput": true }
+///       },
 ///       "Templates": {
 ///         "MethodExecution": {
 ///           "SuccessTemplate": "Method {MethodName} completed in {Duration}ms",
@@ -55,6 +63,18 @@ namespace FlexKit.Logging.Configuration;
 public class LoggingConfig
 {
     /// <summary>
+    /// Gets or sets the maximum number of log entries to batch before processing.
+    /// </summary>
+    /// <value>The maximum number of log entries to keep in the batch before processing. Default is 1.</value>
+    public int MaxBatchSize { get; [UsedImplicitly] set; } = 1;
+
+    /// <summary>
+    /// Gets or sets the maximum time to wait for a batch to fill before processing.
+    /// </summary>
+    /// <value>The maximum time to wait for a batch to fill before processing. Default is 1 second.</value>
+    public TimeSpan BatchTimeout { get; [UsedImplicitly] set; } = TimeSpan.FromSeconds(1);
+
+    /// <summary>
     /// Gets or sets the default message formatting mode to use when no specific formatter is configured.
     /// </summary>
     /// <value>The default formatter type. Default is <see cref="FormatterType.StandardStructured"/>.</value>
@@ -64,7 +84,7 @@ public class LoggingConfig
     /// Gets or sets custom template configurations for different formatters.
     /// </summary>
     /// <value>Dictionary mapping template names to template configurations.</value>
-    public Dictionary<string, TemplateConfig> Templates { get; [UsedImplicitly] set; } = new();
+    public Dictionary<string, TemplateConfig> Templates { get; [UsedImplicitly] set; } = [];
 
     /// <summary>
     /// Gets or sets formatter-specific settings.
@@ -85,4 +105,54 @@ public class LoggingConfig
     /// </summary>
     /// <value>The fallback template string. Default provides basic method execution information.</value>
     public string FallbackTemplate { get; [UsedImplicitly] set; } = "Method {TypeName}.{MethodName} - Status: {Success}";
+
+    /// <summary>
+    /// Gets or sets whether to enable automatic method interception for all registered services.
+    /// When true, all public methods will be automatically intercepted for logging unless explicitly excluded.
+    /// </summary>
+    /// <value>True to enable auto-interception; false to require explicit decoration. Default is true.</value>
+    /// <remarks>
+    /// <para>
+    /// Auto-interception follows this decision hierarchy:
+    /// <list type="number">
+    /// <item>Manual/Activity logging → Skip auto-intercept</item>
+    /// <item>Attributes → Use attribute configuration</item>
+    /// <item>Configuration patterns → Use config rules from <see cref="Services"/></item>
+    /// <item>Default → Auto-intercept all public methods</item>
+    /// </list>
+    /// </para>
+    /// <para>
+    /// FlexKit internal services are automatically excluded from interception to prevent
+    /// infinite recursion and maintain performance.
+    /// </para>
+    /// </remarks>
+    public bool AutoIntercept { get; [UsedImplicitly] set; } = true;
+
+    /// <summary>
+    /// Gets or sets service-specific interception configuration patterns.
+    /// Maps service name patterns to their logging behavior configuration.
+    /// </summary>
+    /// <value>Dictionary mapping service patterns to interception configurations.</value>
+    /// <remarks>
+    /// <para>
+    /// <strong>Pattern Matching Rules:</strong>
+    /// <list type="bullet">
+    /// <item><strong>Exact match:</strong> "MyApp.Services.PaymentService" matches only that specific service</item>
+    /// <item><strong>Wildcard match:</strong> "MyApp.Services.*" matches all services in the MyApp.Services namespace</item>
+    /// <item><strong>Precedence:</strong> Exact matches override wildcard patterns</item>
+    /// </list>
+    /// </para>
+    /// <para>
+    /// <strong>Configuration Examples:</strong>
+    /// <code>
+    /// "Services": {
+    ///   "MyApp.Services.*": { "LogInput": true },
+    ///   "MyApp.Services.PaymentService": { "LogBoth": true },
+    ///   "MyApp.Controllers.*": { "LogOutput": true }
+    /// }
+    /// </code>
+    /// </para>
+    /// </remarks>
+    [UsedImplicitly]
+    public Dictionary<string, InterceptionConfig> Services { get; set; } = [];
 }

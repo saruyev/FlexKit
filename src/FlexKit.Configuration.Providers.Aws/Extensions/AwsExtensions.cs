@@ -330,16 +330,15 @@ public static class AwsExtensions
         ArgumentNullException.ThrowIfNull(builder);
         ArgumentNullException.ThrowIfNull(secretNames);
 
-        if (secretNames.Length == 0)
-        {
-            throw new ArgumentException("At least one secret name must be specified.", nameof(secretNames));
-        }
-
-        return builder.AddSource(new AwsSecretsManagerConfigurationSource
-        {
-            SecretNames = secretNames,
-            Optional = optional
-        });
+        return secretNames.Length == 0
+            ? throw new ArgumentException(
+                "At least one secret name must be specified.",
+                nameof(secretNames))
+            : builder.AddSource(new AwsSecretsManagerConfigurationSource
+            {
+                SecretNames = secretNames,
+                Optional = optional
+            });
     }
 
     /// <summary>
@@ -443,6 +442,9 @@ public static class AwsExtensions
     ///     .Build();
     /// </code>
     /// </example>
+    /// <exception cref="ArgumentException">
+    /// Thrown when <paramref name="configure"/> does not specify any secret names.
+    /// </exception>
     [UsedImplicitly]
     public static FlexConfigurationBuilder AddAwsSecretsManager(
         this FlexConfigurationBuilder builder,
@@ -454,23 +456,22 @@ public static class AwsExtensions
         var options = new AwsSecretsManagerOptions();
         configure(options);
 
-        if (options.SecretNames == null || options.SecretNames.Length == 0)
-        {
-            throw new ArgumentException("At least one secret name must be specified in SecretNames.", nameof(configure));
-        }
-
-        return builder.AddSource(new AwsSecretsManagerConfigurationSource
-        {
-            SecretNames = options.SecretNames,
-            Optional = options.Optional,
-            VersionStage = options.VersionStage,
-            ReloadAfter = options.ReloadAfter,
-            AwsOptions = options.AwsOptions,
-            JsonProcessor = options.JsonProcessor,
-            JsonProcessorSecrets = options.JsonProcessorSecrets,
-            SecretProcessor = options.SecretProcessor,
-            OnLoadException = options.OnLoadException
-        });
+        return options.SecretNames == null || options.SecretNames.Length == 0
+            ? throw new ArgumentException(
+                "At least one secret name must be specified in SecretNames.",
+                nameof(configure))
+            : builder.AddSource(new AwsSecretsManagerConfigurationSource
+            {
+                SecretNames = options.SecretNames,
+                Optional = options.Optional,
+                VersionStage = options.VersionStage,
+                ReloadAfter = options.ReloadAfter,
+                AwsOptions = options.AwsOptions,
+                JsonProcessor = options.JsonProcessor,
+                JsonProcessorSecrets = options.JsonProcessorSecrets,
+                SecretProcessor = options.SecretProcessor,
+                OnLoadException = options.OnLoadException
+            });
     }
 
     /// <summary>
@@ -513,7 +514,10 @@ public static class AwsExtensions
     /// <param name="jsonElement">The JSON element to flatten.</param>
     /// <param name="output">The dictionary where flattened key-value pairs will be stored.</param>
     /// <param name="parentKey">The prefix key under which all values from this element will be stored.</param>
-    private static void FlattenJsonElement(this in JsonElement jsonElement, Dictionary<string, string?> output, string parentKey)
+    private static void FlattenJsonElement(
+        this in JsonElement jsonElement,
+        Dictionary<string, string?> output,
+        string parentKey)
     {
         switch (jsonElement.ValueKind)
         {
@@ -543,7 +547,10 @@ public static class AwsExtensions
     /// <param name="element">The object JSON element to process.</param>
     /// <param name="output">The target dictionary for flattened key-value pairs.</param>
     /// <param name="parentKey">The key prefix representing the current nesting level.</param>
-    private static void ProcessObject(in JsonElement element, Dictionary<string, string?> output, string parentKey)
+    private static void ProcessObject(
+        in JsonElement element,
+        Dictionary<string, string?> output,
+        string parentKey)
     {
         const string keyDelimiter = ":";
         foreach (var property in element.EnumerateObject())
@@ -559,7 +566,10 @@ public static class AwsExtensions
     /// <param name="element">The array JSON element to process.</param>
     /// <param name="output">The target dictionary for flattened key-value pairs.</param>
     /// <param name="parentKey">The key prefix representing the current nesting level.</param>
-    private static void ProcessArray(in JsonElement element, Dictionary<string, string?> output, string parentKey)
+    private static void ProcessArray(
+        in JsonElement element,
+        Dictionary<string, string?> output,
+        string parentKey)
     {
         const string keyDelimiter = ":";
         var index = 0;
@@ -578,7 +588,10 @@ public static class AwsExtensions
     /// <param name="element">The primitive JSON element to process.</param>
     /// <param name="output">The target dictionary for flattened key-value pairs.</param>
     /// <param name="key">The resulting key under which the value will be stored.</param>
-    private static void ProcessPrimitive(in JsonElement element, Dictionary<string, string?> output, string key)
+    private static void ProcessPrimitive(
+        in JsonElement element,
+        Dictionary<string, string?> output,
+        string key)
     {
         output[key] = element.ValueKind switch
         {
@@ -597,7 +610,10 @@ public static class AwsExtensions
     /// <param name="jsonValue">The JSON string to flatten.</param>
     /// <param name="configurationData">The dictionary to store the flattened configuration data.</param>
     /// <param name="prefix">The key prefix to prepend to all flattened keys.</param>
-    internal static void FlattenJsonValue(this string jsonValue, Dictionary<string, string?> configurationData, string prefix)
+    internal static void FlattenJsonValue(
+        this string jsonValue,
+        Dictionary<string, string?> configurationData,
+        string prefix)
     {
         try
         {

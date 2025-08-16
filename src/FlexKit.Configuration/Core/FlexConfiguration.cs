@@ -377,7 +377,9 @@ public sealed class FlexConfiguration(IConfiguration root) : DynamicObject, IFle
     /// Dictionary&lt;string, int&gt; dict = (Dictionary&lt;string, int&gt;)dictSection;
     /// </code>
     /// </example>
-    public override bool TryConvert(ConvertBinder binder, out object? result)
+    public override bool TryConvert(
+        ConvertBinder binder,
+        out object? result)
     {
         result = binder.Type.IsValueType ? Activator.CreateInstance(binder.Type) : null;
         var section = _root as IConfigurationSection;
@@ -478,7 +480,9 @@ public sealed class FlexConfiguration(IConfiguration root) : DynamicObject, IFle
     /// string value = config.SomeSection.SomeValue?.ToString();
     /// </code>
     /// </example>
-    public override bool TryGetMember(GetMemberBinder binder, out object? result)
+    public override bool TryGetMember(
+        GetMemberBinder binder,
+        out object? result)
     {
         result = _root.CurrentConfig(binder.Name);
         return true;
@@ -627,7 +631,9 @@ public sealed class FlexConfiguration(IConfiguration root) : DynamicObject, IFle
     /// </list>
     /// </para>
     /// </remarks>
-    private static object? GetGenericValue(IConfigurationSection? section, ConvertBinder binder)
+    private static object? GetGenericValue(
+        IConfigurationSection? section,
+        ConvertBinder binder)
     {
         var genericType = binder.Type.GetGenericTypeDefinition();
         var isExpectedType = genericType == typeof(IDictionary<,>);

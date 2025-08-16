@@ -132,7 +132,9 @@ public static class TypeConversionExtensions
     /// <exception cref="ArgumentException">Thrown when the target type is not supported for conversion.</exception>
     /// <exception cref="FormatException">Thrown when the input string format is invalid for the target type.</exception>
     /// <exception cref="OverflowException">Thrown when the input value is outside the valid range for the target numeric type.</exception>
-    public static object? ToType(this string? text, Type type)
+    public static object? ToType(
+        this string? text,
+        Type type)
     {
         ArgumentNullException.ThrowIfNull(type);
 
@@ -269,7 +271,9 @@ public static class TypeConversionExtensions
     /// <exception cref="ArgumentException">Thrown when individual string values cannot be converted to the element type.</exception>
     /// <exception cref="FormatException">Thrown when string values have an invalid format for the element type.</exception>
     /// <exception cref="OverflowException">Thrown when string values represent numbers outside the valid range for the element type.</exception>
-    public static object? ToArray(this IEnumerable<string?>? source, Type? type)
+    public static object? ToArray(
+        this IEnumerable<string?>? source,
+        Type? type)
     {
         if (source is null || type is null)
         {
@@ -362,7 +366,9 @@ public static class TypeConversionExtensions
     /// <exception cref="FormatException">Thrown when individual values have an invalid format for <typeparamref name="T"/>.</exception>
     /// <exception cref="OverflowException">Thrown when individual values are outside the valid range for <typeparamref name="T"/>.</exception>
     [UsedImplicitly]
-    public static T?[]? GetCollection<T>(this string? source, char separator = ',')
+    public static T?[]? GetCollection<T>(
+        this string? source,
+        char separator = ',')
     {
         if (string.IsNullOrEmpty(source))
         {
@@ -452,7 +458,9 @@ public static class TypeConversionExtensions
     /// <exception cref="ArgumentException">Thrown when the type is not a valid dictionary type.</exception>
     [RequiresUnreferencedCode("Uses reflection to create dictionary instance")]
     [UsedImplicitly]
-    public static IDictionary ToDictionary(this IEnumerable<IConfigurationSection> source, Type type)
+    public static IDictionary ToDictionary(
+        this IEnumerable<IConfigurationSection> source,
+        Type type)
     {
         ArgumentNullException.ThrowIfNull(source);
 

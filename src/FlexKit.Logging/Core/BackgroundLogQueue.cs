@@ -37,19 +37,19 @@ public sealed class BackgroundLog : IBackgroundLog, IDisposable
         var channel = Channel.CreateBounded<LogEntry>(options);
         _writer = channel.Writer;
         _reader = channel.Reader;
-
-        Capacity = capacity;
     }
-
-    /// <inheritdoc />
-    public int Count => _reader.CanCount ? _reader.Count : 0;
-
-    /// <inheritdoc />
-    public int Capacity { get; }
 
     /// <inheritdoc />
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool TryEnqueue(LogEntry entry) => !_disposed && _writer.TryWrite(entry);
+
+    /// <summary>
+    /// Attempts to dequeue a log entry for immediate processing.
+    /// Used for synchronous flushing during shutdown.
+    /// </summary>
+    /// <param name="entry">The dequeued log entry, if any</param>
+    /// <returns>true if an entry was dequeued; false if the queue is empty</returns>
+    public bool TryDequeue(out LogEntry entry) => _reader.TryRead(out entry);
 
     /// <inheritdoc />
     public async IAsyncEnumerable<LogEntry> ReadAllAsync([EnumeratorCancellation] CancellationToken cancellationToken = default)

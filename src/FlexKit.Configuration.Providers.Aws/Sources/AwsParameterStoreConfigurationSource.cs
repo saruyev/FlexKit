@@ -628,5 +628,7 @@ public interface IParameterProcessor
     /// </para>
     /// </remarks>
     /// <exception cref="ArgumentException">Thrown when the transformation results in an invalid configuration key.</exception>
-    string ProcessParameterName(string configKey, string originalParameterName);
+    string ProcessParameterName(
+        string configKey,
+        string originalParameterName);
 }

@@ -22,7 +22,9 @@ public class ConfigurationModule : Module
     /// </summary>
     /// <param name="componentRegistry">Component registry to apply configuration to.</param>
     /// <param name="registration">The registration to attach functionality to.</param>
-    protected override void AttachToComponentRegistration(IComponentRegistryBuilder componentRegistry, IComponentRegistration registration)
+    protected override void AttachToComponentRegistration(
+        IComponentRegistryBuilder componentRegistry,
+        IComponentRegistration registration)
     {
         // Skip if this is the IFlexConfig registration itself
         if (IsFlexConfigRegistration(registration))
@@ -239,7 +241,10 @@ public class ConfigurationModule : Module
     /// as the component being activated.
     /// </para>
     /// </remarks>
-    private static void InjectFlexConfigIntoProperty(ResolveRequestContext context, object instance, System.Reflection.PropertyInfo property)
+    private static void InjectFlexConfigIntoProperty(
+        ResolveRequestContext context,
+        object instance,
+        System.Reflection.PropertyInfo property)
     {
         if (!context.TryResolve<IFlexConfig>(out var flexConfig))
         {

@@ -372,7 +372,10 @@ public static class AzureExtensions
     /// <param name="jsonElement">The JSON element to flatten.</param>
     /// <param name="output">The dictionary where flattened key-value pairs will be stored.</param>
     /// <param name="parentKey">The prefix key under which all values from this element will be stored.</param>
-    private static void FlattenJsonElement(this JsonElement jsonElement, ConcurrentDictionary<string, string?> output, string parentKey)
+    private static void FlattenJsonElement(
+        this in JsonElement jsonElement,
+        ConcurrentDictionary<string, string?> output,
+        string parentKey)
     {
         switch (jsonElement.ValueKind)
         {
@@ -402,7 +405,10 @@ public static class AzureExtensions
     /// <param name="element">The object JSON element to process.</param>
     /// <param name="output">The target dictionary for flattened key-value pairs.</param>
     /// <param name="parentKey">The key prefix representing the current nesting level.</param>
-    private static void ProcessObject(JsonElement element, ConcurrentDictionary<string, string?> output, string parentKey)
+    private static void ProcessObject(
+        in JsonElement element,
+        ConcurrentDictionary<string, string?> output,
+        string parentKey)
     {
         const string keyDelimiter = ":";
         foreach (var property in element.EnumerateObject())
@@ -418,7 +424,10 @@ public static class AzureExtensions
     /// <param name="element">The array JSON element to process.</param>
     /// <param name="output">The target dictionary for flattened key-value pairs.</param>
     /// <param name="parentKey">The key prefix representing the current nesting level.</param>
-    private static void ProcessArray(in JsonElement element, ConcurrentDictionary<string, string?> output, string parentKey)
+    private static void ProcessArray(
+        in JsonElement element,
+        ConcurrentDictionary<string, string?> output,
+        string parentKey)
     {
         const string keyDelimiter = ":";
         var index = 0;
@@ -437,8 +446,10 @@ public static class AzureExtensions
     /// <param name="element">The primitive JSON element to process.</param>
     /// <param name="output">The target dictionary for flattened key-value pairs.</param>
     /// <param name="key">The resulting key under which the value will be stored.</param>
-    private static void ProcessPrimitive(in JsonElement element, ConcurrentDictionary<string, string?> output, string key)
-    {
+    private static void ProcessPrimitive(
+        in JsonElement element,
+        ConcurrentDictionary<string, string?> output,
+        string key) =>
         output[key] = element.ValueKind switch
         {
             JsonValueKind.String => element.GetString(),
@@ -447,7 +458,6 @@ public static class AzureExtensions
             JsonValueKind.False => "false",
             _ => null
         };
-    }
 
     /// <summary>
     /// Flattens a JSON string into hierarchical configuration keys following .NET configuration conventions.
@@ -456,7 +466,10 @@ public static class AzureExtensions
     /// <param name="jsonValue">The JSON string to flatten.</param>
     /// <param name="configurationData">The dictionary to store the flattened configuration data.</param>
     /// <param name="prefix">The key prefix to prepend to all flattened keys.</param>
-    internal static void FlattenJsonValue(this string jsonValue, ConcurrentDictionary<string, string?> configurationData, string prefix)
+    internal static void FlattenJsonValue(
+        this string jsonValue,
+        ConcurrentDictionary<string, string?> configurationData,
+        string prefix)
     {
         try
         {

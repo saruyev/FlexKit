@@ -4,6 +4,7 @@ using FlexKit.Logging.Formatting.Core;
 using FlexKit.Logging.Formatting.Models;
 using FlexKit.Logging.Formatting.Translation;
 using System.Text.Json;
+using FlexKit.Logging.Formatting.Utils;
 using FlexKit.Logging.Models;
 using JetBrains.Annotations;
 
@@ -24,7 +25,8 @@ public sealed class HybridFormatter : IMessageFormatter
     private readonly JsonSerializerOptions _options = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
-        WriteIndented = false
+        WriteIndented = false,
+        Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
     };
 
     /// <summary>
@@ -43,7 +45,11 @@ public sealed class HybridFormatter : IMessageFormatter
     /// <inheritdoc />
     public FormatterType FormatterType => FormatterType.Hybrid;
 
-    /// <inheritdoc />
+    /// <summary>
+    /// Formats a log entry by combining a structured message part with optional JSON metadata.
+    /// </summary>
+    /// <param name="context">The formatting context containing log entry and configuration.</param>
+    /// <returns>A formatted message result combining structured text and JSON metadata.</returns>
     public FormattedMessage Format(FormattingContext context)
     {
         try
@@ -73,11 +79,24 @@ public sealed class HybridFormatter : IMessageFormatter
         }
     }
 
-    /// <inheritdoc />
+    /// <summary>
+    /// Determines whether this formatter can handle the given formatting context.
+    /// Requires both message and JSON formatters to be capable of formatting the context.
+    /// </summary>
+    /// <param name="context">The formatting context to evaluate.</param>
+    /// <returns>True if both underlying formatters can handle the context; otherwise, false.</returns>
     public bool CanFormat(FormattingContext context) =>
         _messageFormatter.CanFormat(context) && _jsonFormatter.CanFormat(context);
 
-    private FormattedMessage GetMessagePart(FormattingContext context, HybridFormatterSettings settings)
+    /// <summary>
+    /// Generates the structured message part of the hybrid output using either a custom template or the standard formatter.
+    /// </summary>
+    /// <param name="context">The formatting context containing log entry and configuration.</param>
+    /// <param name="settings">The hybrid formatter settings that may include a custom message template.</param>
+    /// <returns>A formatted message result containing the structured message part.</returns>
+    private FormattedMessage GetMessagePart(
+        in FormattingContext context,
+        HybridFormatterSettings settings)
     {
         if (string.IsNullOrEmpty(settings.MessageTemplate))
         {
@@ -112,7 +131,15 @@ public sealed class HybridFormatter : IMessageFormatter
         return customFormatter.Format(tempFormattingContext);
     }
 
-    private string GetMetadataPart(FormattingContext context, HybridFormatterSettings settings)
+    /// <summary>
+    /// Generates the JSON metadata part of the hybrid output containing additional log entry details.
+    /// </summary>
+    /// <param name="context">The formatting context containing log entry and additional properties.</param>
+    /// <param name="settings">The hybrid formatter settings that control which metadata fields to include.</param>
+    /// <returns>A JSON string containing the metadata, or an empty string if no metadata is available.</returns>
+    private string GetMetadataPart(
+        in FormattingContext context,
+        HybridFormatterSettings settings)
     {
         var metadata = new Dictionary<string, object?>();
         var entry = context.LogEntry;
@@ -127,6 +154,12 @@ public sealed class HybridFormatter : IMessageFormatter
         return metadata.Count > 0 ? JsonSerializer.Serialize(metadata, _options) : string.Empty;
     }
 
+    /// <summary>
+    /// Adds duration information to the metadata dictionary if available and enabled in settings.
+    /// </summary>
+    /// <param name="metadata">The metadata dictionary to populate.</param>
+    /// <param name="entry">The log entry containing potential duration information.</param>
+    /// <param name="settings">The formatter settings that control which fields to include.</param>
     private static void AddDurationMetadata(
         Dictionary<string, object?> metadata,
         in LogEntry entry,
@@ -142,6 +175,12 @@ public sealed class HybridFormatter : IMessageFormatter
         metadata["duration"] = Math.Round(duration, 2);
     }
 
+    /// <summary>
+    /// Adds thread and activity ID information to the metadata dictionary if enabled in settings.
+    /// </summary>
+    /// <param name="metadata">The metadata dictionary to populate.</param>
+    /// <param name="entry">The log entry containing thread and activity information.</param>
+    /// <param name="settings">The formatter settings that control which fields to include.</param>
     private static void AddThreadMetadata(
         Dictionary<string, object?> metadata,
         in LogEntry entry,
@@ -161,6 +200,12 @@ public sealed class HybridFormatter : IMessageFormatter
         metadata["activity_id"] = entry.ActivityId;
     }
 
+    /// <summary>
+    /// Adds exception type information to the metadata dictionary for failed operations if enabled in settings.
+    /// </summary>
+    /// <param name="metadata">The metadata dictionary to populate.</param>
+    /// <param name="entry">The log entry that may contain exception information.</param>
+    /// <param name="settings">The formatter settings that control which fields to include.</param>
     private static void AddExceptionMetadata(
         Dictionary<string, object?> metadata,
         in LogEntry entry,
@@ -175,6 +220,12 @@ public sealed class HybridFormatter : IMessageFormatter
         metadata["exception_type"] = entry.ExceptionType;
     }
 
+    /// <summary>
+    /// Adds timestamp information to the metadata dictionary if enabled in settings.
+    /// </summary>
+    /// <param name="metadata">The metadata dictionary to populate.</param>
+    /// <param name="entry">The log entry containing timestamp information.</param>
+    /// <param name="settings">The formatter settings that control which fields to include.</param>
     private static void AddTimestampMetadata(
         Dictionary<string, object?> metadata,
         in LogEntry entry,
@@ -185,9 +236,15 @@ public sealed class HybridFormatter : IMessageFormatter
             return;
         }
 
-        metadata["timestamp"] = new DateTimeOffset(entry.TimestampTicks, TimeSpan.Zero).ToString("O");
+        metadata["timestamp"] = entry.Timestamp.ToString("O");
     }
 
+    /// <summary>
+    /// Adds success status information to the metadata dictionary if enabled in settings.
+    /// </summary>
+    /// <param name="metadata">The metadata dictionary to populate.</param>
+    /// <param name="entry">The log entry containing success status information.</param>
+    /// <param name="settings">The formatter settings that control which fields to include.</param>
     private static void AddSuccessMetadata(
         Dictionary<string, object?> metadata,
         in LogEntry entry,
@@ -201,6 +258,12 @@ public sealed class HybridFormatter : IMessageFormatter
         metadata["success"] = entry.Success;
     }
 
+    /// <summary>
+    /// Adds additional context properties and parameter information to the metadata dictionary.
+    /// </summary>
+    /// <param name="metadata">The metadata dictionary to populate.</param>
+    /// <param name="context">The formatting context containing additional properties.</param>
+    /// <param name="settings">The formatter settings that control which fields to include.</param>
     private static void AddContextProperties(
         Dictionary<string, object?> metadata,
         in FormattingContext context,
@@ -214,5 +277,33 @@ public sealed class HybridFormatter : IMessageFormatter
         {
             metadata[property.Key] = property.Value;
         }
+
+        AddParameterMetadata(metadata, context.LogEntry, settings);
+    }
+
+    /// <summary>
+    /// Adds input parameters and output values to the metadata dictionary if available and enabled in settings.
+    /// </summary>
+    /// <param name="metadata">The metadata dictionary to populate.</param>
+    /// <param name="entry">The log entry containing parameter and output information.</param>
+    /// <param name="settings">The formatter settings that control which fields to include.</param>
+    private static void AddParameterMetadata(
+        Dictionary<string, object?> metadata,
+        in LogEntry entry,
+        HybridFormatterSettings settings)
+    {
+        if ((settings.MetadataFields.Count == 0 || settings.MetadataFields.Contains("input_parameters"))
+            && !string.IsNullOrEmpty(entry.InputParameters))
+        {
+            metadata["input_parameters"] = JsonParameterUtils.ParseParametersAsJson(entry.InputParameters);
+        }
+
+        if ((settings.MetadataFields.Count != 0 && !settings.MetadataFields.Contains("output_value"))
+            || string.IsNullOrEmpty(entry.OutputValue))
+        {
+            return;
+        }
+
+        metadata["output_value"] = JsonParameterUtils.ParseOutputAsJson(entry.OutputValue);
     }
 }

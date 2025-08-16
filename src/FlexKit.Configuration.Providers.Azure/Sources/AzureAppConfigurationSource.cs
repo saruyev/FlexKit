@@ -161,7 +161,11 @@ public class AzureAppConfigurationSource : IConfigurationSource
 /// </remarks>
 /// <param name="source">The configuration source that caused the exception.</param>
 /// <param name="innerException">The exception that is the cause of the current exception.</param>
-public class AppConfigurationProviderException(AzureAppConfigurationSource source, Exception innerException) : Exception($"Failed to load configuration from Azure App Configuration source: {source.ConnectionString}", innerException)
+public class AppConfigurationProviderException(
+    AzureAppConfigurationSource source,
+    Exception innerException) : Exception(
+    $"Failed to load configuration from Azure App Configuration source: {source.ConnectionString}",
+    innerException)
 {
     /// <summary>
     /// The configuration source that caused the exception.

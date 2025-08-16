@@ -690,5 +690,7 @@ public interface ISecretProcessor
     /// </para>
     /// </remarks>
     /// <exception cref="ArgumentException">Thrown when the transformation results in an invalid configuration key.</exception>
-    string ProcessSecretName(string configKey, string originalSecretName);
+    string ProcessSecretName(
+        string configKey,
+        string originalSecretName);
 }

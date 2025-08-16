@@ -1,3 +1,4 @@
+using FlexKit.Logging.Configuration;
 using FlexKit.Logging.Models;
 
 namespace FlexKit.Logging.Core;
@@ -13,4 +14,10 @@ public interface ILogEntryProcessor
     /// </summary>
     /// <param name="entry">The log entry to process.</param>
     void ProcessEntry(LogEntry entry);
+
+    /// <summary>
+    /// Gets the current logging configuration.
+    /// </summary>
+    /// <returns>The current logging configuration.</returns>
+    LoggingConfig Config { get; }
 }

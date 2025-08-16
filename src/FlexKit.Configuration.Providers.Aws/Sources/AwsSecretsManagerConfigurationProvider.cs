@@ -136,14 +136,16 @@ public sealed class AwsSecretsManagerConfigurationProvider : ConfigurationProvid
         }
 
         // Set up automatic reloading if configured
-        if (_source.ReloadAfter.HasValue)
+        if (!_source.ReloadAfter.HasValue)
         {
-            _reloadTimer = new Timer(
-                callback: _ => LoadAsync().ConfigureAwait(false),
-                state: null,
-                dueTime: _source.ReloadAfter.Value,
-                period: _source.ReloadAfter.Value);
+            return;
         }
+
+        _reloadTimer = new Timer(
+            callback: _ => LoadAsync().ConfigureAwait(false),
+            state: null,
+            dueTime: _source.ReloadAfter.Value,
+            period: _source.ReloadAfter.Value);
     }
 
     /// <summary>
@@ -203,13 +205,8 @@ public sealed class AwsSecretsManagerConfigurationProvider : ConfigurationProvid
         {
             await LoadSecretsAsync(configurationData).ConfigureAwait(false);
         }
-        catch (Exception ex)
+        catch (Exception ex) when (_source.Optional)
         {
-            if (!_source.Optional)
-            {
-                throw;
-            }
-
             _source.OnLoadException?.Invoke(new SecretsManagerConfigurationProviderException(_source, ex));
             return;
         }
@@ -249,7 +246,12 @@ public sealed class AwsSecretsManagerConfigurationProvider : ConfigurationProvid
     /// <param name="secretName">The name or pattern of the secret to load.</param>
     /// <param name="configurationData">The dictionary to populate with configuration values.</param>
     /// <returns>A task that represents the asynchronous operation.</returns>
-    private async Task ProcessSecretAsync(string secretName, Dictionary<string, string?> configurationData)
+    /// <exception cref="InvalidOperationException">
+    /// Thrown when the secret is not found and the source is not optional.
+    /// </exception>
+    private async Task ProcessSecretAsync(
+        string secretName,
+        Dictionary<string, string?> configurationData)
     {
         try
         {
@@ -278,7 +280,9 @@ public sealed class AwsSecretsManagerConfigurationProvider : ConfigurationProvid
     /// <param name="secretName">The name or ARN of the secret to load.</param>
     /// <param name="configurationData">The dictionary to store the processed configuration data.</param>
     /// <returns>A task that represents the asynchronous secret loading operation.</returns>
-    private async Task LoadSingleSecretAsync(string secretName, Dictionary<string, string?> configurationData)
+    private async Task LoadSingleSecretAsync(
+        string secretName,
+        Dictionary<string, string?> configurationData)
     {
         var request = new GetSecretValueRequest
         {
@@ -298,7 +302,9 @@ public sealed class AwsSecretsManagerConfigurationProvider : ConfigurationProvid
     /// <param name="secretPattern">The secret name pattern ending with '*', used as a prefix filter.</param>
     /// <param name="configurationData">The dictionary to populate with loaded secrets.</param>
     /// <returns>A task representing the asynchronous secret loading operation.</returns>
-    private async Task LoadSecretsWithPatternAsync(string secretPattern, Dictionary<string, string?> configurationData)
+    private async Task LoadSecretsWithPatternAsync(
+        string secretPattern,
+        Dictionary<string, string?> configurationData)
     {
         var secretNamePrefix = secretPattern.TrimEnd('*');
         var request = CreateListSecretsRequest(secretNamePrefix);
@@ -319,7 +325,7 @@ public sealed class AwsSecretsManagerConfigurationProvider : ConfigurationProvid
             MaxResults = 100,
             Filters =
             [
-                new() { Key = FilterNameStringType.Name, Values = [secretNamePrefix] },
+                new() { Key = FilterNameStringType.Name, Values = [secretNamePrefix] }
             ]
         };
 
@@ -329,7 +335,9 @@ public sealed class AwsSecretsManagerConfigurationProvider : ConfigurationProvid
     /// <param name="request">Initial ListSecretsRequest with applied filters and no NextToken.</param>
     /// <param name="secretNamePrefix">The prefix used for additional filtering.</param>
     /// <returns>A list of secrets matching the prefix across all pages.</returns>
-    private async Task<List<SecretListEntry>> ListAllSecretsWithPrefixAsync(ListSecretsRequest request, string secretNamePrefix)
+    private async Task<List<SecretListEntry>> ListAllSecretsWithPrefixAsync(
+        ListSecretsRequest request,
+        string secretNamePrefix)
     {
         var collectedSecrets = new List<SecretListEntry>();
         do
@@ -348,7 +356,9 @@ public sealed class AwsSecretsManagerConfigurationProvider : ConfigurationProvid
     /// <param name="secrets">The source collection of secrets.</param>
     /// <param name="prefix">The prefix that secret names should start with.</param>
     /// <returns>An enumerable of secrets filtered by name prefix.</returns>
-    private static IEnumerable<SecretListEntry> FilterSecretsByPrefix(IEnumerable<SecretListEntry> secrets, string prefix) =>
+    private static IEnumerable<SecretListEntry> FilterSecretsByPrefix(
+        IEnumerable<SecretListEntry> secrets,
+        string prefix) =>
         secrets.Where(secret => secret.Name.StartsWith(prefix, StringComparison.OrdinalIgnoreCase));
 
     /// <summary>
@@ -428,7 +438,10 @@ public sealed class AwsSecretsManagerConfigurationProvider : ConfigurationProvid
     /// <param name="secretBinary">The SecretBinary value to process.</param>
     /// <param name="configurationData">The dictionary to store the processed configuration data.</param>
     /// <param name="configKey">The configuration key for this secret.</param>
-    private static void ProcessSecretBinary(MemoryStream secretBinary, Dictionary<string, string?> configurationData, string configKey) =>
+    private static void ProcessSecretBinary(
+        MemoryStream secretBinary,
+        Dictionary<string, string?> configurationData,
+        string configKey) =>
         configurationData[configKey] = Convert.ToBase64String(secretBinary.ToArray());
 
     /// <summary>
@@ -491,8 +504,11 @@ public sealed class AwsSecretsManagerConfigurationProvider : ConfigurationProvid
 /// </remarks>
 /// <param name="source">The configuration source that caused the exception.</param>
 /// <param name="innerException">The exception that is the cause of the current exception.</param>
-public class SecretsManagerConfigurationProviderException(AwsSecretsManagerConfigurationSource source, Exception innerException) :
-    Exception($"Failed to load configuration from AWS Secrets Manager", innerException)
+public class SecretsManagerConfigurationProviderException(
+    AwsSecretsManagerConfigurationSource source,
+    Exception innerException) : Exception(
+    "Failed to load configuration from AWS Secrets Manager",
+    innerException)
 {
     /// <summary>
     /// The configuration source that caused the exception.

@@ -211,7 +211,9 @@ public interface IKeyVaultSecretProcessor
     /// </para>
     /// </remarks>
     /// <exception cref="ArgumentException">Thrown when the transformation results in an invalid configuration key.</exception>
-    string ProcessSecretName(string configKey, string originalSecretName);
+    string ProcessSecretName(
+        [UsedImplicitly] string configKey,
+        string originalSecretName);
 }
 
 /// <summary>
@@ -223,7 +225,11 @@ public interface IKeyVaultSecretProcessor
 /// </remarks>
 /// <param name="source">The configuration source that caused the exception.</param>
 /// <param name="innerException">The exception that is the cause of the current exception.</param>
-public class KeyVaultConfigurationProviderException(AzureKeyVaultConfigurationSource source, Exception innerException) : Exception($"Failed to load configuration from Azure Key Vault source: {source.VaultUri}", innerException)
+public class KeyVaultConfigurationProviderException(
+    AzureKeyVaultConfigurationSource source,
+    Exception innerException) : Exception(
+    $"Failed to load configuration from Azure Key Vault source: {source.VaultUri}",
+    innerException)
 {
     /// <summary>
     /// The configuration source that caused the exception.

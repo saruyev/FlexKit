@@ -39,7 +39,7 @@ public class AssemblyExtensionsTests : UnitTestBase
         var builder = new ContainerBuilder();
 
         // Act
-        var action = () => builder.RegisterAssembliesFromBaseDirectory();
+        var action = () => builder.RegisterAssembliesFromBaseDirectory([]);
 
         // Assert - Should not throw and should complete successfully
         action.Should().NotThrow();
@@ -61,7 +61,7 @@ public class AssemblyExtensionsTests : UnitTestBase
         var builder = new ContainerBuilder();
 
         // Act
-        var action = () => builder.RegisterAssembliesFromBaseDirectory(configuration);
+        var action = () => builder.RegisterAssembliesFromBaseDirectory([], configuration);
 
         // Assert - Should complete without throwing
         action.Should().NotThrow();
@@ -84,7 +84,7 @@ public class AssemblyExtensionsTests : UnitTestBase
         var builder = new ContainerBuilder();
 
         // Act
-        var action = () => builder.RegisterAssembliesFromBaseDirectory(configuration);
+        var action = () => builder.RegisterAssembliesFromBaseDirectory([], configuration);
 
         // Assert - Should complete without throwing
         action.Should().NotThrow();
@@ -187,8 +187,8 @@ public class AssemblyExtensionsTests : UnitTestBase
     [Theory]
     [InlineData("FlexKit.Configuration", true)]
     [InlineData("FlexKit.Configuration.Tests", true)]
-    [InlineData("SomeAssembly.Module", true)]
-    [InlineData("TestModule.Extensions", true)]
+    [InlineData("SomeAssembly.Module", false)]
+    [InlineData("TestModule.Extensions", false)]
     [InlineData("RandomAssembly", false)]
     [InlineData("Microsoft.Extensions", false)]
     public void FilterLibraries_WithNoConfiguration_UsesDefaults(string assemblyName, bool shouldInclude)
@@ -287,7 +287,7 @@ public class AssemblyExtensionsTests : UnitTestBase
             .Build();
 
         // Act
-        builder.RegisterAssembliesFromBaseDirectory(configuration);
+        builder.RegisterAssembliesFromBaseDirectory([], configuration);
 
         // Assert - Should complete without issues
         // The FlexKit.Configuration assembly should be filtered out
@@ -379,7 +379,7 @@ public class AssemblyExtensionsTests : UnitTestBase
         var configuration = new ConfigurationBuilder().Build(); // Empty configuration
 
         // Act & Assert - Should not throw
-        var action = () => builder.RegisterAssembliesFromBaseDirectory(configuration);
+        var action = () => builder.RegisterAssembliesFromBaseDirectory([], configuration);
         action.Should().NotThrow();
     }
 
@@ -548,7 +548,7 @@ public class AssemblyExtensionsTests : UnitTestBase
             .Build();
 
         // Act & Assert - Should not throw even if no matching assemblies are found
-        var action = () => builder.RegisterAssembliesFromBaseDirectory(configuration);
+        var action = () => builder.RegisterAssembliesFromBaseDirectory([], configuration);
         action.Should().NotThrow();
     }
 

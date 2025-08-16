@@ -214,6 +214,7 @@ public class YamlConfigurationProvider(YamlConfigurationSource source) : Configu
     /// provider.TryGet("application:name", out var appName);
     /// </code>
     /// </example>
+    /// <exception cref="InvalidDataException">Could not parse YAML file.</exception>
     public override void Load()
     {
         if (!ValidateFileExists())
@@ -229,7 +230,9 @@ public class YamlConfigurationProvider(YamlConfigurationSource source) : Configu
         }
         catch (Exception ex) when (!(ex is FileNotFoundException || ex is UnauthorizedAccessException))
         {
-            throw new InvalidDataException($"Failed to parse YAML configuration file '{_source.Path}': {ex.Message}", ex);
+            throw new InvalidDataException(
+                $"Failed to parse YAML configuration file '{_source.Path}': {ex.Message}",
+                ex);
         }
     }
 
@@ -345,7 +348,10 @@ public class YamlConfigurationProvider(YamlConfigurationSource source) : Configu
     /// // version = "1.0.0"
     /// </code>
     /// </example>
-    private static void FlattenYamlObject(object? obj, Dictionary<string, string?> data, string prefix)
+    private static void FlattenYamlObject(
+        object? obj,
+        Dictionary<string, string?> data,
+        string prefix)
     {
         switch (obj)
         {
@@ -369,7 +375,9 @@ public class YamlConfigurationProvider(YamlConfigurationSource source) : Configu
     /// </summary>
     /// <param name="data">The dictionary to store the flattened key-value pairs.</param>
     /// <param name="prefix">The current key prefix for nested objects (used recursively).</param>
-    private static void HandleNullValue(Dictionary<string, string?> data, string prefix)
+    private static void HandleNullValue(
+        Dictionary<string, string?> data,
+        string prefix)
     {
         if (string.IsNullOrEmpty(prefix))
         {
@@ -385,7 +393,10 @@ public class YamlConfigurationProvider(YamlConfigurationSource source) : Configu
     /// <param name="dict">The YAML dictionary to flatten.</param>
     /// <param name="data">The dictionary to store the flattened key-value pairs.</param>
     /// <param name="prefix">The current key prefix for nested objects (used recursively).</param>
-    private static void HandleDictionary(IDictionary<object, object> dict, Dictionary<string, string?> data, string prefix)
+    private static void HandleDictionary(
+        IDictionary<object, object> dict,
+        Dictionary<string, string?> data,
+        string prefix)
     {
         foreach (var kvp in dict)
         {
@@ -401,11 +412,15 @@ public class YamlConfigurationProvider(YamlConfigurationSource source) : Configu
     /// <param name="list">The YAML list to flatten.</param>
     /// <param name="data">The dictionary to store the flattened key-value pairs.</param>
     /// <param name="prefix">The current key prefix for nested objects (used recursively).</param>
-    private static void HandleArray(IList<object> list, Dictionary<string, string?> data, string prefix)
+    private static void HandleArray(
+        IList<object> list,
+        Dictionary<string, string?> data,
+        string prefix)
     {
         for (var i = 0; i < list.Count; i++)
         {
-            var newPrefix = string.IsNullOrEmpty(prefix) ? i.ToString(CultureInfo.InvariantCulture) : $"{prefix}:{i}";
+            var newPrefix = string.IsNullOrEmpty(prefix) ?
+                i.ToString(CultureInfo.InvariantCulture) : $"{prefix}:{i}";
             FlattenYamlObject(list[i], data, newPrefix);
         }
     }
@@ -416,6 +431,8 @@ public class YamlConfigurationProvider(YamlConfigurationSource source) : Configu
     /// <param name="obj">The YAML scalar value to flatten.</param>
     /// <param name="data">The dictionary to store the flattened key-value pairs.</param>
     /// <param name="prefix">The current key prefix for nested objects (used recursively).</param>
-    private static void HandleScalarValue(object obj, Dictionary<string, string?> data, string prefix) =>
-        data[prefix] = obj.ToString();
+    private static void HandleScalarValue(
+        object obj,
+        Dictionary<string, string?> data,
+        string prefix) => data[prefix] = obj.ToString();
 }

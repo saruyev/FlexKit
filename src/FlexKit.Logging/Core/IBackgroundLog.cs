@@ -17,20 +17,18 @@ public interface IBackgroundLog
     bool TryEnqueue(LogEntry entry);
 
     /// <summary>
+    /// Attempts to dequeue a log entry for immediate processing.
+    /// Used for synchronous flushing during shutdown.
+    /// </summary>
+    /// <param name="entry">The dequeued log entry, if any</param>
+    /// <returns>true if an entry was dequeued; false if the queue is empty</returns>
+    bool TryDequeue(out LogEntry entry);
+
+    /// <summary>
     /// Reads log entries from the queue for background processing.
     /// This operation blocks until entries are available or cancellation is requested.
     /// </summary>
     /// <param name="cancellationToken">Token to cancel the read operation</param>
     /// <returns>An async enumerable of log entries for processing</returns>
     IAsyncEnumerable<LogEntry> ReadAllAsync(CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Gets the current number of queued entries waiting for processing.
-    /// </summary>
-    int Count { get; }
-
-    /// <summary>
-    /// Gets the maximum capacity of the queue.
-    /// </summary>
-    int Capacity { get; }
 }

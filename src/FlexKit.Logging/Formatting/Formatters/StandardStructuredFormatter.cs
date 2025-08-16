@@ -3,6 +3,7 @@ using FlexKit.Logging.Formatting.Core;
 using FlexKit.Logging.Formatting.Models;
 using FlexKit.Logging.Formatting.Translation;
 using System.Diagnostics.CodeAnalysis;
+using FlexKit.Logging.Formatting.Utils;
 using FlexKit.Logging.Models;
 
 namespace FlexKit.Logging.Formatting.Formatters;
@@ -22,7 +23,11 @@ public sealed class StandardStructuredFormatter(IMessageTranslator translator) :
     /// <inheritdoc />
     public FormatterType FormatterType => FormatterType.StandardStructured;
 
-    /// <inheritdoc />
+    /// <summary>
+    /// Formats a log entry using structured templates with parameter substitution.
+    /// </summary>
+    /// <param name="context">The formatting context containing log entry and configuration.</param>
+    /// <returns>A formatted message result with structured template output.</returns>
     public FormattedMessage Format(FormattingContext context)
     {
         try
@@ -43,68 +48,227 @@ public sealed class StandardStructuredFormatter(IMessageTranslator translator) :
         }
     }
 
-    /// <inheritdoc />
-    public bool CanFormat(FormattingContext context) => _translator.CanTranslate(GetTemplate(context), ExtractParameters(context.LogEntry));
+    /// <summary>
+    /// Determines whether this formatter can handle the given formatting context.
+    /// </summary>
+    /// <param name="context">The formatting context to evaluate.</param>
+    /// <returns>True if the translator can handle the template and parameters; otherwise, false.</returns>
+    public bool CanFormat(FormattingContext context) =>
+        _translator.CanTranslate(GetTemplate(context), ExtractParameters(context.LogEntry));
 
-    private static string GetTemplate(FormattingContext context)
+    /// <summary>
+    /// Gets the appropriate template for formatting based on configuration or fallback templates.
+    /// </summary>
+    /// <param name="context">The formatting context containing configuration and log entry.</param>
+    /// <returns>The template string to use for formatting.</returns>
+    private static string GetTemplate(in FormattingContext context)
     {
-        // First try to get from TemplateConfig
-        if (context.Configuration.Templates.TryGetValue("StandardStructured", out var templateConfig) && templateConfig.Enabled && templateConfig.IsValid())
+        var configuredTemplate = TryGetConfiguredTemplate(context);
+        if (!string.IsNullOrEmpty(configuredTemplate))
         {
-            var configuredTemplate = templateConfig.GetTemplateForOutcome(context.LogEntry.Success);
-            if (!string.IsNullOrEmpty(configuredTemplate))
-            {
-                return configuredTemplate;
-            }
+            return configuredTemplate;
         }
 
-        // Fall back to hardcoded templates
-        var entry = context.LogEntry;
-
-        if (entry.Success)
-        {
-            return entry.DurationTicks.HasValue
-                ? "Method {MethodName} completed in {Duration}ms"
-                : "Method {MethodName} started";
-        }
-
-        return entry.DurationTicks.HasValue
-            ? "Method {MethodName} failed after {Duration}ms"
-            : "Method {MethodName} failed";
+        return GetFallbackTemplate(context.LogEntry);
     }
 
-    [SuppressMessage("Performance", "CA1859:Use concrete types when possible for improved performance")]
-    private static IReadOnlyDictionary<string, object?> ExtractParameters(LogEntry entry)
+    /// <summary>
+    /// Attempts to get a template from the configuration if available and valid.
+    /// </summary>
+    /// <param name="context">The formatting context containing configuration.</param>
+    /// <returns>The configured template if available and valid; otherwise, null.</returns>
+    private static string? TryGetConfiguredTemplate(in FormattingContext context)
     {
-        var parameters = new Dictionary<string, object?>
-        {
-            ["MethodName"] = entry.MethodName,
-            ["TypeName"] = entry.TypeName,
-            ["Success"] = entry.Success,
-            ["ThreadId"] = entry.ThreadId
-        };
+        var validTemplate = context.Configuration.Templates.TryGetValue(
+            "StandardStructured",
+            out var templateConfig) && templateConfig.Enabled && templateConfig.IsValid();
 
-        if (entry.DurationTicks.HasValue)
+        return !validTemplate ? null : templateConfig?.GetTemplateForOutcome(context.LogEntry.Success);
+    }
+
+    /// <summary>
+    /// Gets a fallback template based on the log entry characteristics when no configured template is available.
+    /// </summary>
+    /// <param name="entry">The log entry to create a template for.</param>
+    /// <returns>A fallback template appropriate for the log entry type.</returns>
+    private static string GetFallbackTemplate(in LogEntry entry) =>
+        entry.Success
+            ? GetSuccessTemplate(entry)
+            : GetFailureTemplate(entry);
+
+    /// <summary>
+    /// Creates a template for successful operations, including duration and parameter information.
+    /// </summary>
+    /// <param name="entry">The log entry representing a successful operation.</param>
+    /// <returns>A template string for successful operations.</returns>
+    private static string GetSuccessTemplate(in LogEntry entry)
+    {
+        var baseTemplate = entry.DurationTicks.HasValue
+            ? "Method {MethodName} completed in {Duration}ms"
+            : "Method {MethodName} started";
+
+        return AppendParameterTemplates(baseTemplate, entry);
+    }
+
+    /// <summary>
+    /// Creates a template for failed operations, including duration and parameter information.
+    /// </summary>
+    /// <param name="entry">The log entry representing a failed operation.</param>
+    /// <returns>A template string for failed operations.</returns>
+    private static string GetFailureTemplate(in LogEntry entry)
+    {
+        var baseTemplate = entry.DurationTicks.HasValue
+            ? "Method {MethodName} failed after {Duration}ms"
+            : "Method {MethodName} failed";
+
+        return AppendParameterTemplates(baseTemplate, entry);
+    }
+
+    /// <summary>
+    /// Appends input and output parameter template sections to a base template if the data is available.
+    /// </summary>
+    /// <param name="baseTemplate">The base template to append to.</param>
+    /// <param name="entry">The log entry containing parameter information.</param>
+    /// <returns>The template with parameter sections appended.</returns>
+    private static string AppendParameterTemplates(
+        string baseTemplate,
+        in LogEntry entry)
+    {
+        var template = baseTemplate;
+
+        if (!string.IsNullOrEmpty(entry.InputParameters))
         {
-            var duration = TimeSpan.FromTicks(entry.DurationTicks.Value).TotalMilliseconds;
-            parameters["Duration"] = Math.Round(duration, 2);
+            template += " | Input: {InputParameters}";
         }
 
-        if (!entry.Success)
+        if (!string.IsNullOrEmpty(entry.OutputValue))
         {
-            parameters["ExceptionType"] = entry.ExceptionType;
-            parameters["ExceptionMessage"] = entry.ExceptionMessage;
+            template += " | Output: {OutputValue}";
         }
 
-        if (!string.IsNullOrEmpty(entry.ActivityId))
-        {
-            parameters["ActivityId"] = entry.ActivityId;
-        }
+        return template;
+    }
+
+    /// <summary>
+    /// Extracts all available parameters from a log entry for template substitution.
+    /// </summary>
+    /// <param name="entry">The log entry to extract parameters from.</param>
+    /// <returns>A dictionary of parameters available for template substitution.</returns>
+    [SuppressMessage("Performance", "CA1859:Use concrete types when possible for improved performance")]
+    private static IReadOnlyDictionary<string, object?> ExtractParameters(in LogEntry entry)
+    {
+        var parameters = new Dictionary<string, object?>();
+
+        AddBasicParameters(parameters, entry);
+        AddDurationParameters(parameters, entry);
+        AddExceptionParameters(parameters, entry);
+        AddActivityParameters(parameters, entry);
+        AddInputOutputParameters(parameters, entry);
 
         return parameters;
     }
 
-    private static string FormatMessage(string template, IReadOnlyDictionary<string, object?> parameters)
+    /// <summary>
+    /// Adds basic log entry parameters like method name, type, success status, and thread ID.
+    /// </summary>
+    /// <param name="parameters">The parameter dictionary to populate.</param>
+    /// <param name="entry">The log entry containing basic information.</param>
+    private static void AddBasicParameters(
+        Dictionary<string, object?> parameters,
+        in LogEntry entry)
+    {
+        parameters["MethodName"] = entry.MethodName;
+        parameters["TypeName"] = entry.TypeName;
+        parameters["Success"] = entry.Success;
+        parameters["ThreadId"] = entry.ThreadId;
+    }
+
+    /// <summary>
+    /// Adds duration parameters if timing information is available in the log entry.
+    /// </summary>
+    /// <param name="parameters">The parameter dictionary to populate.</param>
+    /// <param name="entry">The log entry that may contain duration information.</param>
+    private static void AddDurationParameters(
+        Dictionary<string, object?> parameters,
+        in LogEntry entry)
+    {
+        if (!entry.DurationTicks.HasValue)
+        {
+            return;
+        }
+
+        var duration = TimeSpan.FromTicks(entry.DurationTicks.Value).TotalMilliseconds;
+        parameters["Duration"] = Math.Round(duration, 2);
+    }
+
+    /// <summary>
+    /// Adds exception-related parameters for failed operations.
+    /// </summary>
+    /// <param name="parameters">The parameter dictionary to populate.</param>
+    /// <param name="entry">The log entry that may contain exception information.</param>
+    private static void AddExceptionParameters(
+        Dictionary<string, object?> parameters,
+        in LogEntry entry)
+    {
+        if (entry.Success)
+        {
+            return;
+        }
+
+        parameters["ExceptionType"] = entry.ExceptionType;
+        parameters["ExceptionMessage"] = entry.ExceptionMessage;
+    }
+
+    /// <summary>
+    /// Adds activity tracking parameters if available in the log entry.
+    /// </summary>
+    /// <param name="parameters">The parameter dictionary to populate.</param>
+    /// <param name="entry">The log entry that may contain activity information.</param>
+    private static void AddActivityParameters(
+        Dictionary<string, object?> parameters,
+        in LogEntry entry)
+    {
+        if (string.IsNullOrEmpty(entry.ActivityId))
+        {
+            return;
+        }
+
+        parameters["ActivityId"] = entry.ActivityId;
+    }
+
+    /// <summary>
+    /// Adds formatted input and output parameters using utility methods for proper display formatting.
+    /// </summary>
+    /// <param name="parameters">The parameter dictionary to populate.</param>
+    /// <param name="entry">The log entry that may contain input/output data.</param>
+    private static void AddInputOutputParameters(
+        Dictionary<string, object?> parameters,
+        in LogEntry entry)
+    {
+        var inputDisplay = JsonParameterUtils.FormatParametersForDisplay(entry.InputParameters);
+        if (!string.IsNullOrEmpty(inputDisplay))
+        {
+            parameters["InputParameters"] = inputDisplay;
+        }
+
+        var outputDisplay = JsonParameterUtils.FormatOutputForDisplay(entry.OutputValue);
+        if (string.IsNullOrEmpty(outputDisplay))
+        {
+            return;
+        }
+
+        parameters["OutputValue"] = outputDisplay;
+    }
+
+    /// <summary>
+    /// Formats a template string by replacing placeholders with parameter values.
+    /// </summary>
+    /// <param name="template">The template string containing placeholders in {PropertyName} format.</param>
+    /// <param name="parameters">The parameters to substitute into the template.</param>
+    /// <returns>The formatted message with all placeholders replaced by their corresponding values.</returns>
+    private static string FormatMessage(
+        string template,
+        IReadOnlyDictionary<string, object?> parameters)
     {
         var result = template;
 
