@@ -1,4 +1,5 @@
 using JetBrains.Annotations;
+using Microsoft.Extensions.Logging;
 
 namespace FlexKit.Logging.Interception.Attributes;
 
@@ -26,8 +27,11 @@ namespace FlexKit.Logging.Interception.Attributes;
 /// [LogOutput]
 /// public class CalculationService
 /// {
-///     // All methods will log return values
+///     // All methods will log return values at Information level
 ///     public decimal CalculateTotal(List&lt;OrderItem&gt; items) { ... }
+///
+///     [LogOutput(LogLevel.Debug)] // Override with Debug level for detailed calculations
+///     public decimal CalculateInterestRate(decimal principal, int months) { ... }
 ///
 ///     [NoLog] // Override class-level attribute
 ///     public void InternalCleanup() { ... }
@@ -35,13 +39,40 @@ namespace FlexKit.Logging.Interception.Attributes;
 ///
 /// public class UserService
 /// {
-///     [LogOutput] // Only this method logs output
+///     [LogOutput(LogLevel.Warning)] // Only this method logs output at Warning level
 ///     public User GetUserById(int userId) { ... }
 ///
 ///     public void UpdateLastLogin(int userId) { ... }
 /// }
 /// </code>
 /// </example>
+/// <remarks>
+/// Initializes a new instance of the LogOutputAttribute with the specified log level.
+/// </remarks>
+/// <param name="level">The log level to use when logging output values.</param>
+/// <param name="exceptionLevel">The log level to use when an exception is thrown.</param>
+/// <param name="target">The target name to route logs to.</param>
 [AttributeUsage(AttributeTargets.Method | AttributeTargets.Class)]
 [UsedImplicitly]
-public sealed class LogOutputAttribute : Attribute;
+public sealed class LogOutputAttribute(
+    LogLevel level = LogLevel.Information,
+    LogLevel exceptionLevel = LogLevel.Error,
+    string? target = null) : Attribute
+{
+    /// <summary>
+    /// Gets the log level to use when logging output values.
+    /// Defaults to Information if not specified.
+    /// </summary>
+    public LogLevel Level { get; } = level;
+
+    /// <summary>
+    /// Gets the log level to use when an exception is thrown.
+    /// </summary>
+    public LogLevel? ExceptionLevel { get; } = exceptionLevel;
+
+    /// <summary>
+    /// Gets the target name to route logs to.
+    /// If null, uses the default target.
+    /// </summary>
+    public string? Target { get; } = target;
+}

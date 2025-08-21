@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using Microsoft.Extensions.Logging;
 
 namespace FlexKit.Logging.Models;
 
@@ -72,9 +73,26 @@ public readonly record struct LogEntry
     public string? OutputValue { get; private init; }
 
     /// <summary>
+    /// Gets the log level that should be used when outputting this log entry.
+    /// Defaults to Information if not specified.
+    /// </summary>
+    public LogLevel Level { get; private init; }
+
+    /// <summary>
+    /// Gets the log level to use when an exception is thrown.
+    /// </summary>
+    public LogLevel ExceptionLevel { get; private init; }
+
+    /// <summary>
     /// Gets the timestamp when the method execution began as a DateTimeOffset.
     /// </summary>
     public DateTimeOffset Timestamp => GetActualTimestamp(TimestampTicks);
+
+    /// <summary>
+    /// Gets the target or destination associated with the log entry, indicating the intended
+    /// recipient or endpoint related to this logging operation.
+    /// </summary>
+    public string? Target { get; private init; }
 
     /// <summary>
     /// Calculates the actual timestamp from Stopwatch ticks.
@@ -95,9 +113,11 @@ public readonly record struct LogEntry
     /// </summary>
     /// <param name="methodName">The name of the method being logged.</param>
     /// <param name="typeName">The full name of the type containing the method.</param>
+    /// <param name="level">The log level for this entry.</param>
     public static LogEntry CreateStart(
         string methodName,
-        string typeName) =>
+        string typeName,
+        LogLevel level = LogLevel.Information) =>
         new()
         {
             Id = Guid.NewGuid(),
@@ -105,8 +125,34 @@ public readonly record struct LogEntry
             MethodName = methodName,
             TypeName = typeName,
             Success = true,
+            Level = level,
+            ExceptionLevel = LogLevel.Error,
             ActivityId = Activity.Current?.Id,
             ThreadId = Environment.CurrentManagedThreadId
+        };
+
+    /// <summary>
+    /// Returns a new <see cref="LogEntry"/> with the specified exception log level.
+    /// </summary>
+    /// <param name="level">The log level to set for exceptions. If null, the current instance is returned unchanged.</param>
+    /// <returns>A new <see cref="LogEntry"/> instance with the updated exception log level, or the current instance if no level is provided.</returns>
+    public LogEntry WithErrorLevel(LogLevel? level) =>
+        level is null
+            ? this
+            : this with
+            {
+                ExceptionLevel = level.Value
+            };
+
+    /// <summary>
+    /// Associates a specified target with the log entry.
+    /// </summary>
+    /// <param name="target">The target or recipient related to the log entry, if applicable.</param>
+    /// <return>A new instance of <see cref="LogEntry"/> with the specified target set.</return>
+    public LogEntry WithTarget(string? target) =>
+        this with
+        {
+            Target = target
         };
 
     /// <summary>

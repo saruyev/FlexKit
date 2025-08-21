@@ -48,15 +48,15 @@ public sealed class MethodLoggingInterceptor(
     /// <param name="invocation">The method invocation context from Castle DynamicProxy.</param>
     public void Intercept(IInvocation invocation)
     {
-        var behavior = _cache.GetInterceptionBehavior(invocation.Method);
+        var decision = _cache.GetInterceptionDecision(invocation.Method);
 
-        if (behavior == null)
+        if (decision == null)
         {
             invocation.Proceed();
             return;
         }
 
-        LogMethodExecution(invocation, behavior.Value);
+        LogMethodExecution(invocation, decision.Value);
     }
 
     /// <summary>
@@ -64,13 +64,13 @@ public sealed class MethodLoggingInterceptor(
     /// Manages the start entry creation, method execution, completion logging, and error handling.
     /// </summary>
     /// <param name="invocation">The method invocation context.</param>
-    /// <param name="behavior">The interception behavior that determines what to log.</param>
+    /// <param name="decision">The interception decision that determines what to log and at what level.</param>
     [SuppressMessage("ReSharper", "FlagArgument")]
     private void LogMethodExecution(
         IInvocation invocation,
-        InterceptionBehavior behavior)
+        InterceptionDecision decision)
     {
-        var startEntry = CreateStartEntry(invocation, behavior);
+        var startEntry = CreateStartEntry(invocation, decision);
         var stopwatch = Stopwatch.StartNew();
         try
         {
@@ -79,7 +79,7 @@ public sealed class MethodLoggingInterceptor(
             var durationTicks = (long)(stopwatch.ElapsedTicks * TimeSpan.TicksPerSecond / (double)Stopwatch.Frequency);
             var entry = startEntry.WithCompletion(true, durationTicks);
 
-            if (behavior is InterceptionBehavior.LogOutput or InterceptionBehavior.LogBoth)
+            if (decision.Behavior is InterceptionBehavior.LogOutput or InterceptionBehavior.LogBoth)
             {
                 var output = SerializeOutputValue(invocation.ReturnValue);
                 entry = entry.WithOutput(output);
@@ -97,6 +97,27 @@ public sealed class MethodLoggingInterceptor(
     }
 
     /// <summary>
+    /// Creates the initial log entry when a method starts execution.
+    /// Includes input parameters if the behavior requires input logging.
+    /// </summary>
+    /// <param name="invocation">The method invocation context.</param>
+    /// <param name="decision">The interception decision that determines what to log and at what level.</param>
+    /// <returns>A log entry representing the method's start with optional input parameters.</returns>
+    private LogEntry CreateStartEntry(
+        IInvocation invocation,
+        InterceptionDecision decision)
+    {
+        var entry = LogEntry.CreateStart(
+            invocation.Method.Name,
+            invocation.Method.DeclaringType?.FullName ?? "Unknown",
+            decision.Level).WithErrorLevel(decision.ExceptionLevel).WithTarget(decision.Target);
+
+        // Add input parameters if required
+        return decision.Behavior is not InterceptionBehavior.LogInput and not InterceptionBehavior.LogBoth ?
+            entry : entry.WithInput(SerializeInputParameters(invocation.Arguments, invocation.Method));
+    }
+
+    /// <summary>
     /// Attempts to enqueue a log entry to the background queue with error handling for queue full scenarios.
     /// </summary>
     /// <param name="entry">The log entry to enqueue.</param>
@@ -108,26 +129,6 @@ public sealed class MethodLoggingInterceptor(
         }
 
         _logQueueFullWarning(_logger, null);
-    }
-
-    /// <summary>
-    /// Creates the initial log entry when a method starts execution.
-    /// Includes input parameters if the behavior requires input logging.
-    /// </summary>
-    /// <param name="invocation">The method invocation context.</param>
-    /// <param name="behavior">The interception behavior that determines what to log.</param>
-    /// <returns>A log entry representing the method's start with optional input parameters.</returns>
-    private LogEntry CreateStartEntry(
-        IInvocation invocation,
-        InterceptionBehavior behavior)
-    {
-        var entry = LogEntry.CreateStart(
-            invocation.Method.Name,
-            invocation.Method.DeclaringType?.FullName ?? "Unknown");
-
-        // Add input parameters if required
-        return behavior is not InterceptionBehavior.LogInput and not InterceptionBehavior.LogBoth ?
-            entry : entry.WithInput(SerializeInputParameters(invocation.Arguments, invocation.Method));
     }
 
     /// <summary>

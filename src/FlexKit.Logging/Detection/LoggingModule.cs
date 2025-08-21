@@ -11,6 +11,8 @@ using FlexKit.Logging.Interception;
 using FlexKit.Logging.Interception.Attributes;
 using JetBrains.Annotations;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Module = Autofac.Module;
 
 namespace FlexKit.Logging.Detection;
@@ -67,6 +69,7 @@ public sealed class LoggingModule : Module
         RegisterFormattingInfrastructure(builder);
         RegisterInterceptionComponents(builder);
         RegisterBackgroundLogging(builder);
+        RegisterMicrosoftExtensionsLogging(builder);
     }
 
     /// <summary>
@@ -167,6 +170,45 @@ public sealed class LoggingModule : Module
     }
 
     /// <summary>
+    /// Registers Microsoft.Extensions.Logging integration using MelProviderFactory.
+    /// Only registers if targets are configured in LoggingConfig.
+    /// </summary>
+    /// <param name="builder">The container builder to register with.</param>
+    private static void RegisterMicrosoftExtensionsLogging(ContainerBuilder builder)
+    {
+        builder.Register(c =>
+            {
+                var loggingConfig = c.Resolve<LoggingConfig>();
+
+                // Skip registration if no targets are configured
+                if (loggingConfig?.Targets == null || loggingConfig.Targets.Count == 0)
+                {
+                    // Return a minimal logger factory instead of null
+                    var emptyServices = new ServiceCollection();
+                    emptyServices.AddLogging();
+                    return emptyServices.BuildServiceProvider().GetRequiredService<ILoggerFactory>();
+                }
+
+                var services = new ServiceCollection();
+                services.AddLogging(loggingBuilder =>
+                {
+                    new MelProviderFactory(loggingBuilder, loggingConfig).ConfigureProviders();
+                });
+
+                var serviceProvider = services.BuildServiceProvider();
+                return serviceProvider
+                    .GetRequiredService<ILoggerFactory>(); // Changed from GetService to GetRequiredService
+            })
+            .As<ILoggerFactory>()
+            .SingleInstance();
+
+        // Also register ILogger<T> for injection
+        builder.RegisterGeneric(typeof(Logger<>))
+            .As(typeof(ILogger<>))
+            .InstancePerDependency();
+    }
+
+    /// <summary>
     /// Flushes any remaining log entries when the process is exiting.
     /// </summary>
     /// <param name="backgroundService">The background service to stop and flush.</param>
@@ -175,6 +217,7 @@ public sealed class LoggingModule : Module
         try
         {
             backgroundService.FlushRemainingEntries();
+            Thread.Sleep(1000);
         }
         catch (Exception ex)
         {

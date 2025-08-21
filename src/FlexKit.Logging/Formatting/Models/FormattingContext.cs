@@ -51,7 +51,7 @@ public readonly record struct FormattingContext
             Configuration = configuration,
             FormatterType = configuration.DefaultFormatter,
             Properties = new Dictionary<string, object?>(),
-            EnableFallback = configuration.EnableFallbackFormatting
+            EnableFallback = configuration.EnableFallbackFormatting,
         };
 
     /// <summary>

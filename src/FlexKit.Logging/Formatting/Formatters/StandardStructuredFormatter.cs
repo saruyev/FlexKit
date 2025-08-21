@@ -272,6 +272,11 @@ public sealed class StandardStructuredFormatter(IMessageTranslator translator) :
     {
         var result = template;
 
+        if (parameters.ContainsKey("ExceptionMessage") && !string.IsNullOrEmpty(parameters["ExceptionMessage"]?.ToString()))
+        {
+            result += " | Exception: {ExceptionType} - {ExceptionMessage}";
+        }
+
         foreach (var parameter in parameters)
         {
             var placeholder = $"{{{parameter.Key}}}";

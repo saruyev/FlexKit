@@ -1,10 +1,11 @@
 using JetBrains.Annotations;
+using Microsoft.Extensions.Logging;
 
 namespace FlexKit.Logging.Configuration;
 
 /// <summary>
 /// Configuration settings for method interception behavior on specific services or service patterns.
-/// Defines what type of logging should occur when methods are intercepted.
+/// Defines what type of logging should occur when methods are intercepted and at what level.
 /// </summary>
 public class InterceptionConfig
 {
@@ -13,24 +14,61 @@ public class InterceptionConfig
     /// When true, method arguments will be captured and logged.
     /// </summary>
     /// <value>True to log input parameters; false to skip input logging. Default is false.</value>
-    public bool LogInput { get; [UsedImplicitly] set; }
+    [UsedImplicitly]
+    public bool LogInput { get; set; }
 
     /// <summary>
     /// Gets or sets whether to log output values when methods complete successfully.
     /// When true, method return values will be captured and logged.
     /// </summary>
     /// <value>True to log output values; false to skip output logging. Default is false.</value>
-    public bool LogOutput { get; [UsedImplicitly] set; }
+    [UsedImplicitly]
+    public bool LogOutput { get; set; }
 
     /// <summary>
-    /// Gets the effective interception behavior based on the configured flags.
+    /// Gets or sets the log level to use for logging.
+    /// Defaults to Information if not specified.
     /// </summary>
-    /// <returns>The appropriate InterceptionBehavior enum value.</returns>
-    public InterceptionBehavior GetBehavior() =>
+    /// <value>The log level for logging. Default is Information.</value>
+    [UsedImplicitly]
+    public LogLevel Level { get; set; } = LogLevel.Information;
+
+    /// <summary>
+    /// Gets or sets the log level to use when an exception is thrown.
+    /// </summary>
+    /// <value>The log level for exception logging. Default is Error.</value>
+    [UsedImplicitly]
+    public LogLevel ExceptionLevel { get; set; } = LogLevel.Error;
+
+    /// <summary>
+    /// Gets or sets the target name to route logs to.
+    /// If null, uses the default target. Allows configuration-based target routing.
+    /// </summary>
+    /// <value>The target name for routing logs. Default is null (use default target).</value>
+    [UsedImplicitly]
+    public string? Target { get; set; }
+
+    /// <summary>
+    /// Gets the effective interception decision based on the configured flags and level.
+    /// </summary>
+    /// <returns>The appropriate InterceptionDecision with behavior and log level.</returns>
+    public InterceptionDecision GetDecision() =>
         LogOutput switch
         {
-            true when LogInput => InterceptionBehavior.LogBoth,
-            true when !LogInput => InterceptionBehavior.LogOutput,
-            _ => InterceptionBehavior.LogInput
+            true when LogInput => new InterceptionDecision()
+                .WithBehavior(InterceptionBehavior.LogBoth)
+                .WithLevel(Level)
+                .WithExceptionLevel(ExceptionLevel)
+                .WithTarget(Target),
+            true when !LogInput => new InterceptionDecision()
+                .WithBehavior(InterceptionBehavior.LogOutput)
+                .WithLevel(Level)
+                .WithExceptionLevel(ExceptionLevel)
+                .WithTarget(Target),
+            _ => new InterceptionDecision()
+                .WithBehavior(InterceptionBehavior.LogInput)
+                .WithLevel(Level)
+                .WithExceptionLevel(ExceptionLevel)
+                .WithTarget(Target)
         };
 }

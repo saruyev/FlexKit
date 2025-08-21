@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
 using FlexKit.Logging.Configuration;
 using FlexKit.Logging.Formatting.Core;
@@ -17,16 +18,34 @@ namespace FlexKit.Logging.Core;
 /// </remarks>
 /// <param name="loggingConfig">Logging configuration.</param>
 /// <param name="formatterFactory">Message formatter factory.</param>
-/// <param name="logger">Logger for the interceptor itself.</param>
+/// <param name="loggerFactory">The logger factory to create category-specific loggers.</param>
 [SuppressMessage("Performance", "CA1848:Use the LoggerMessage delegates")]
 [UsedImplicitly]
 public sealed class FormattedLogWriter(
     LoggingConfig loggingConfig,
     IMessageFormatterFactory formatterFactory,
-    ILogger<FormattedLogWriter> logger) : ILogEntryProcessor
+    ILoggerFactory loggerFactory) : ILogEntryProcessor
 {
     private readonly IMessageFormatterFactory _formatterFactory = formatterFactory ?? throw new ArgumentNullException(nameof(formatterFactory));
-    private readonly ILogger<FormattedLogWriter> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    private readonly ILoggerFactory _loggerFactory = loggerFactory ?? throw new ArgumentNullException(nameof(loggerFactory));
+    private readonly ConcurrentDictionary<string, ILogger> _loggerCache = new();
+    private static readonly Action<ILogger, string, Exception?> _logTrace =
+        LoggerMessage.Define<string>(LogLevel.Trace, new EventId(1), "{Message}");
+
+    private static readonly Action<ILogger, string, Exception?> _logDebug =
+        LoggerMessage.Define<string>(LogLevel.Debug, new EventId(2), "{Message}");
+
+    private static readonly Action<ILogger, string, Exception?> _logInfo =
+        LoggerMessage.Define<string>(LogLevel.Information, new EventId(3), "{Message}");
+
+    private static readonly Action<ILogger, string, Exception?> _logWarning =
+        LoggerMessage.Define<string>(LogLevel.Warning, new EventId(4), "{Message}");
+
+    private static readonly Action<ILogger, string, Exception?> _logError =
+        LoggerMessage.Define<string>(LogLevel.Error, new EventId(5), "{Message}");
+
+    private static readonly Action<ILogger, string, Exception?> _logCritical =
+        LoggerMessage.Define<string>(LogLevel.Critical, new EventId(6), "{Message}");
 
     /// <inheritdoc />
     public LoggingConfig Config { get; } = loggingConfig ?? throw new ArgumentNullException(nameof(loggingConfig));
@@ -36,8 +55,10 @@ public sealed class FormattedLogWriter(
     {
         try
         {
-            var formattedMessage = FormatLogEntry(entry);
-            OutputMessage(formattedMessage);
+            OutputMessage(
+                FormatLogEntry(entry),
+                entry.ExceptionMessage == null ? entry.Level : entry.ExceptionLevel,
+                entry.Target ?? Config.DefaultTarget ?? entry.TypeName);
         }
         catch (Exception ex)
         {
@@ -77,12 +98,12 @@ public sealed class FormattedLogWriter(
     {
         if (Config.EnableFallbackFormatting)
         {
-            _logger.LogWarning("Message formatting failed for entry {EntryId}, used fallback: {ErrorMessage}",
+            GetLoggerForType(nameof(FormattedLogWriter)).LogWarning("Message formatting failed for entry {EntryId}, used fallback: {ErrorMessage}",
                 entry.Id, result.ErrorMessage);
             return FormatFallbackMessage(entry);
         }
 
-        _logger.LogError("Message formatting failed for entry {EntryId}: {ErrorMessage}",
+        GetLoggerForType(nameof(FormattedLogWriter)).LogError("Message formatting failed for entry {EntryId}: {ErrorMessage}",
             entry.Id, result.ErrorMessage);
         return $"[Formatting Error: {result.ErrorMessage}]";
     }
@@ -101,7 +122,7 @@ public sealed class FormattedLogWriter(
             return;
         }
 
-        _logger.LogDebug("Used fallback formatting for entry {EntryId}: {ErrorMessage}",
+        GetLoggerForType(nameof(FormattedLogWriter)).LogDebug("Used fallback formatting for entry {EntryId}: {ErrorMessage}",
             entryId, result.ErrorMessage);
     }
 
@@ -115,19 +136,57 @@ public sealed class FormattedLogWriter(
         Exception ex)
     {
         var safeMessage = $"[Error] Method {entry.TypeName}.{entry.MethodName} - Success: {entry.Success}";
-        OutputMessage(safeMessage);
+        OutputMessage(safeMessage, entry.ExceptionLevel, entry.Target ?? Config.DefaultTarget ?? entry.TypeName);
 
-        _logger.LogWarning(ex, "Failed to process log entry {EntryId} for method {TypeName}.{MethodName}",
+        GetLoggerForType(nameof(FormattedLogWriter)).LogWarning(ex, "Failed to process log entry {EntryId} for method {TypeName}.{MethodName}",
             entry.Id, entry.TypeName, entry.MethodName);
     }
 
     /// <summary>
     /// Outputs the formatted message to the configured destination.
+    /// For now, includes the log level in the console output for testing purposes.
     /// </summary>
     /// <param name="message">The formatted message to output.</param>
-    private static void OutputMessage(string message)
+    /// <param name="level">The log level for this message.</param>
+    /// <param name="typeName">The type name to create a logger for.</param>
+    [SuppressMessage("ReSharper", "FlagArgument")]
+    private void OutputMessage(
+        string message,
+        LogLevel level,
+        string typeName)
     {
-        Console.WriteLine(message);
+        var logger = GetLoggerForType(typeName);
+
+        if (!logger.IsEnabled(level))
+        {
+            return;
+        }
+
+        switch (level)
+        {
+            case LogLevel.Trace:
+                _logTrace(logger, message, null);
+                break;
+            case LogLevel.Debug:
+                _logDebug(logger, message, null);
+                break;
+            case LogLevel.Information:
+                _logInfo(logger, message, null);
+                break;
+            case LogLevel.Warning:
+                _logWarning(logger, message, null);
+                break;
+            case LogLevel.Error:
+                _logError(logger, message, null);
+                break;
+            case LogLevel.Critical:
+                _logCritical(logger, message, null);
+                break;
+            case LogLevel.None:
+                break;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(level), level, null);
+        }
     }
 
     /// <summary>
@@ -158,4 +217,13 @@ public sealed class FormattedLogWriter(
 
         return result;
     }
+
+    /// <summary>
+    /// Gets or creates a logger for the specified type name.
+    /// Caches loggers to avoid repeated factory calls.
+    /// </summary>
+    /// <param name="typeName">The type name to create a logger for.</param>
+    /// <returns>A logger instance for the specified type.</returns>
+    private ILogger GetLoggerForType(string typeName) =>
+        _loggerCache.GetOrAdd(typeName, name => _loggerFactory.CreateLogger(name));
 }
