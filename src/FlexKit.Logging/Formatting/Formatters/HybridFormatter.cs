@@ -125,7 +125,7 @@ public sealed class HybridFormatter : IMessageFormatter
         var tempFormattingContext = FormattingContext.Create(
                 context.LogEntry,
                 tempConfig).WithFormatterType(FormatterType.CustomTemplate)
-            .WithTemplateName("Hybrid").WithProperties(context.Properties);
+            .WithTemplateName(context.LogEntry.TemplateName ?? "Hybrid").WithProperties(context.Properties);
 
         var customFormatter = new CustomTemplateFormatter(_translator);
         return customFormatter.Format(tempFormattingContext);

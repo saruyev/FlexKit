@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Reflection;
 using FlexKit.Logging.Configuration;
+using FlexKit.Logging.Core;
 using FlexKit.Logging.Interception.Attributes;
 
 namespace FlexKit.Logging.Interception;
@@ -245,6 +246,11 @@ public sealed class InterceptionDecisionCache(LoggingConfig loggingConfig)
             return true; // No type info, allow interception
         }
 
+        if (HasFlexKitLoggerInjection(declaringType))
+        {
+            return false; // Exclude the entire class from interception
+        }
+
         // Find a matching configuration (exact or wildcard)
         var config = FindMatchingConfiguration(declaringType.FullName);
         if (config == null)
@@ -319,5 +325,19 @@ public sealed class InterceptionDecisionCache(LoggingConfig loggingConfig)
         }
 
         return pattern.EndsWith('*') && methodName.StartsWith(pattern[..^1], StringComparison.InvariantCulture); // prefix*
+    }
+
+    /// <summary>
+    /// Checks if a type has IFlexKitLogger injected through any constructor.
+    /// </summary>
+    /// <param name="type">The type to check for manual logging injection.</param>
+    /// <returns>True if IFlexKitLogger is injected; false otherwise.</returns>
+    private static bool HasFlexKitLoggerInjection(Type type)
+    {
+        var constructors = type.GetConstructors(BindingFlags.Public | BindingFlags.Instance);
+
+        return constructors.Any(constructor =>
+            constructor.GetParameters().Any(parameter =>
+                parameter.ParameterType == typeof(IFlexKitLogger)));
     }
 }

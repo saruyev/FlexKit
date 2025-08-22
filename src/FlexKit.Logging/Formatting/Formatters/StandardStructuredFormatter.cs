@@ -177,6 +177,7 @@ public sealed class StandardStructuredFormatter(IMessageTranslator translator) :
         parameters["TypeName"] = entry.TypeName;
         parameters["Success"] = entry.Success;
         parameters["ThreadId"] = entry.ThreadId;
+        parameters["Timestamp"] = entry.Timestamp;
     }
 
     /// <summary>
@@ -190,6 +191,7 @@ public sealed class StandardStructuredFormatter(IMessageTranslator translator) :
     {
         if (!entry.DurationTicks.HasValue)
         {
+            parameters["Duration"] = 0;
             return;
         }
 
@@ -248,13 +250,7 @@ public sealed class StandardStructuredFormatter(IMessageTranslator translator) :
             parameters["InputParameters"] = inputDisplay;
         }
 
-        var outputDisplay = JsonParameterUtils.FormatOutputForDisplay(entry.OutputValue);
-        if (string.IsNullOrEmpty(outputDisplay))
-        {
-            return;
-        }
-
-        parameters["OutputValue"] = outputDisplay;
+        parameters["OutputValue"] = JsonParameterUtils.FormatOutputForDisplay(entry.OutputValue);
     }
 
     /// <summary>

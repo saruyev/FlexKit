@@ -179,6 +179,7 @@ public sealed class LoggingModule : Module
         RegisterInterceptionComponents(builder);
         RegisterBackgroundLogging(builder);
         RegisterMicrosoftExtensionsLogging(builder);
+        RegisterManualLogging(builder);
     }
 
     /// <summary>
@@ -572,5 +573,31 @@ public sealed class LoggingModule : Module
     private static void LogAssemblyScanFailure(Assembly assembly, Exception ex)
     {
         Debug.WriteLine($"Warning: Failed to scan assembly {assembly.FullName}: {ex.Message}");
+    }
+
+    private static void RegisterManualLogging(ContainerBuilder builder)
+    {
+        // Register ActivitySource as singleton
+        builder.Register(c =>
+            {
+                var config = c.Resolve<LoggingConfig>();
+                var activitySource = new ActivitySource(config.ActivitySourceName);
+
+                ActivitySource.AddActivityListener(new ActivityListener
+                {
+                    ShouldListenTo = source => source.Name == config.ActivitySourceName,
+                    Sample = (ref ActivityCreationOptions<ActivityContext> options) => ActivitySamplingResult.AllData,
+                    SampleUsingParentId = (ref ActivityCreationOptions<string> options) => ActivitySamplingResult.AllData
+                });
+
+                return activitySource;
+            })
+            .As<ActivitySource>()
+            .SingleInstance();
+
+        // Register FlexKitLogger
+        builder.RegisterType<FlexKitLogger>()
+            .As<IFlexKitLogger>()
+            .InstancePerLifetimeScope();
     }
 }

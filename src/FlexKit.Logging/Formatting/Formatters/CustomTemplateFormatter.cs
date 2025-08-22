@@ -94,8 +94,8 @@ public sealed partial class CustomTemplateFormatter(IMessageTranslator translato
     private static string? GetCustomTemplate(
         in FormattingContext context,
         CustomTemplateFormatterSettings settings) =>
-        TryGetServiceTemplate(context, settings) ??
         TryGetNamedTemplate(context, settings) ??
+        TryGetServiceTemplate(context, settings) ??
         TryGetTypeTemplate(context, settings) ??
         TryGetMethodTemplate(context, settings) ??
         TryGetDefaultTemplate(context, settings) ??
@@ -251,6 +251,7 @@ public sealed partial class CustomTemplateFormatter(IMessageTranslator translato
     {
         if (!entry.DurationTicks.HasValue)
         {
+            parameters["Duration"] = 0;
             return;
         }
 
@@ -309,13 +310,7 @@ public sealed partial class CustomTemplateFormatter(IMessageTranslator translato
             parameters["InputParameters"] = inputDisplay;
         }
 
-        var outputDisplay = JsonParameterUtils.FormatOutputForDisplay(entry.OutputValue);
-        if (string.IsNullOrEmpty(outputDisplay))
-        {
-            return;
-        }
-
-        parameters["OutputValue"] = outputDisplay;
+        parameters["OutputValue"] = JsonParameterUtils.FormatOutputForDisplay(entry.OutputValue);
     }
 
     /// <summary>

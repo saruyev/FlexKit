@@ -162,7 +162,7 @@ public class LoggingConfig
     /// </summary>
     /// <value>Dictionary mapping target names to their configuration. Default is empty.</value>
     [UsedImplicitly]
-    public Dictionary<string, LoggingTarget> Targets { get; set; } = new();
+    public Dictionary<string, LoggingTarget> Targets { get; set; } = [];
 
     /// <summary>
     /// Gets or sets the default target name to use when no specific target is specified.
@@ -170,4 +170,11 @@ public class LoggingConfig
     /// </summary>
     /// <value>The default target name. Default is null (auto-detect).</value>
     public string? DefaultTarget { get; [UsedImplicitly] set; }
+
+    /// <summary>
+    /// Gets or sets the name of the ActivitySource to use for manual logging.
+    /// </summary>
+    /// <value>The name of the ActivitySource to use for manual logging. The default is "FlexKit.Logging".</value>
+    [UsedImplicitly]
+    public string ActivitySourceName { get; set; } = "FlexKit.Logging";
 }

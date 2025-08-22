@@ -74,6 +74,12 @@ public sealed class FormattedLogWriter(
     private string FormatLogEntry(in LogEntry entry)
     {
         var context = FormattingContext.Create(entry, Config);
+
+        if (!string.IsNullOrEmpty(entry.TemplateName))
+        {
+            context = context.WithTemplateName(entry.TemplateName);
+        }
+
         var formatter = _formatterFactory.GetFormatter(context);
         var result = formatter.Format(context);
 
@@ -227,13 +233,10 @@ public sealed class FormattedLogWriter(
                 StringComparison.OrdinalIgnoreCase);
         }
 
-        if (!string.IsNullOrEmpty(entry.OutputValue))
-        {
-            result = result.Replace(
-                "{OutputValue}",
-                entry.OutputValue,
-                StringComparison.OrdinalIgnoreCase);
-        }
+        result = result.Replace(
+            "{OutputValue}",
+            entry.OutputValue ?? string.Empty,
+            StringComparison.OrdinalIgnoreCase);
 
         return result;
     }

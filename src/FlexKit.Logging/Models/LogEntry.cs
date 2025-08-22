@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using JetBrains.Annotations;
 using Microsoft.Extensions.Logging;
 
 namespace FlexKit.Logging.Models;
@@ -76,6 +77,11 @@ public readonly record struct LogEntry
     /// Null if output logging was not enabled or the method returned void.
     /// </summary>
     public string? OutputValue { get; private init; }
+
+    /// <summary>
+    /// Gets the name of the logging template associated with this log entry.
+    /// </summary>
+    public string? TemplateName { get; private init; }
 
     /// <summary>
     /// Gets the log level that should be used when outputting this log entry.
@@ -191,6 +197,23 @@ public readonly record struct LogEntry
         };
 
     /// <summary>
+    /// Creates a completion entry based on a start entry.
+    /// </summary>
+    /// <param name="success">Whether the method completed successfully.</param>
+    /// <param name="exception">The exception that was thrown, if any.</param>
+    [UsedImplicitly]
+    public LogEntry WithCompletion(
+        bool success,
+        Exception? exception = null)
+    {
+        var currentTicks = Stopwatch.GetTimestamp();
+        var elapsedTicks = currentTicks - TimestampTicks;
+        var durationTicks = (long)(elapsedTicks * TimeSpan.TicksPerSecond / (double)Stopwatch.Frequency);
+
+        return WithCompletion(success, durationTicks, exception);
+    }
+
+    /// <summary>
     /// Creates a completion entry with an output value.
     /// Used when LogOutput or LogBoth behavior is enabled.
     /// </summary>
@@ -199,5 +222,17 @@ public readonly record struct LogEntry
         this with
         {
             OutputValue = outputValue
+        };
+
+    /// <summary>
+    /// Associates a specified template name with the log entry.
+    /// </summary>
+    /// <param name="name">The name of the template to associate with the log entry.</param>
+    /// <returns>A new instance of <see cref="LogEntry"/> with the template name updated.</returns>
+    [UsedImplicitly]
+    public LogEntry WithTemplate(string name) =>
+        this with
+        {
+            TemplateName = name
         };
 }
