@@ -8,7 +8,6 @@ using FlexKit.Logging.Formatting.Core;
 using FlexKit.Logging.Formatting.Formatters;
 using FlexKit.Logging.Formatting.Translation;
 using FlexKit.Logging.Interception;
-using FlexKit.Logging.Interception.Attributes;
 using JetBrains.Annotations;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;

@@ -1,3 +1,4 @@
+using FlexKit.Logging.Interception;
 using JetBrains.Annotations;
 using Microsoft.Extensions.Logging;
 
@@ -47,6 +48,16 @@ public class InterceptionConfig
     /// <value>The target name for routing logs. Default is null (use default target).</value>
     [UsedImplicitly]
     public string? Target { get; set; }
+
+    /// <summary>
+    /// Gets or sets the patterns of method names to exclude from interception and logging.
+    /// Methods matching any of these patterns will be skipped during the interception process.
+    /// </summary>
+    /// <value>
+    /// A list of string patterns representing method names to exclude from interception. Default is an empty list.
+    /// </value>
+    [UsedImplicitly]
+    public List<string> ExcludeMethodPatterns { get; set; } = [];
 
     /// <summary>
     /// Gets the effective interception decision based on the configured flags and level.

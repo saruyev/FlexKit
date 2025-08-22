@@ -1,6 +1,7 @@
+using FlexKit.Logging.Configuration;
 using Microsoft.Extensions.Logging;
 
-namespace FlexKit.Logging.Configuration;
+namespace FlexKit.Logging.Interception;
 
 /// <summary>
 /// Represents a complete interception decision containing both behavior and log level.

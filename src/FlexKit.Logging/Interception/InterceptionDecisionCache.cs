@@ -1,8 +1,9 @@
 using System.Collections.Concurrent;
 using System.Reflection;
 using FlexKit.Logging.Configuration;
+using FlexKit.Logging.Interception.Attributes;
 
-namespace FlexKit.Logging.Interception.Attributes;
+namespace FlexKit.Logging.Interception;
 
 /// <summary>
 /// High-performance cache for interception decisions using a three-tier precedence system:
@@ -24,6 +25,7 @@ public sealed class InterceptionDecisionCache(LoggingConfig loggingConfig)
 {
     private readonly ConcurrentDictionary<Type, ConcurrentDictionary<MethodInfo, InterceptionDecision?>>
         _typeDecisions = new();
+
     private readonly LoggingConfig _loggingConfig =
         loggingConfig ?? throw new ArgumentNullException(nameof(loggingConfig));
 
@@ -227,8 +229,95 @@ public sealed class InterceptionDecisionCache(LoggingConfig loggingConfig)
     /// </summary>
     /// <param name="method">The method to evaluate.</param>
     /// <returns>True if the method should be considered for interception; false if it should be ignored.</returns>
-    private static bool ShouldInterceptMethod(MethodInfo method) =>
-        method is { IsPublic: true, IsStatic: false } and
-        { IsConstructor: false, IsSpecialName: false } && // Excludes property getters/setters, event handlers
-        method.DeclaringType != typeof(object); // Exclude Object methods
+    private bool ShouldInterceptMethod(MethodInfo method)
+    {
+        // Basic method checks (existing logic)
+        if (method is not { IsPublic: true, IsStatic: false } or
+            { IsConstructor: true, IsSpecialName: true } ||
+            method.DeclaringType == typeof(object))
+        {
+            return false;
+        }
+
+        var declaringType = method.DeclaringType;
+        if (declaringType?.FullName == null)
+        {
+            return true; // No type info, allow interception
+        }
+
+        // Find a matching configuration (exact or wildcard)
+        var config = FindMatchingConfiguration(declaringType.FullName);
+        if (config == null)
+        {
+            return true; // No config found, allow interception
+        }
+
+        // Check if patterns exclude a method
+        return !IsMethodExcludedByPatterns(method.Name, config.ExcludeMethodPatterns);
+    }
+
+    /// <summary>
+    /// Finds the matching logging configuration for the specified type name, either by exact match or wildcard pattern.
+    /// </summary>
+    /// <param name="typeName">The fully qualified name of the type to search for in the logging configuration.</param>
+    /// <returns>The matching <see cref="InterceptionConfig"/> if found; otherwise, null.</returns>
+    private InterceptionConfig? FindMatchingConfiguration(string typeName)
+    {
+        // Check the exact match first
+        if (_loggingConfig.Services.TryGetValue(typeName, out var exactConfig))
+        {
+            return exactConfig;
+        }
+
+        // Check wildcard patterns
+        foreach (var (pattern, config) in _loggingConfig.Services)
+        {
+            if (pattern.EndsWith('*') && typeName.StartsWith(pattern[..^1], StringComparison.InvariantCulture))
+            {
+                return config;
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Determines whether a method is excluded based on a list of patterns.
+    /// </summary>
+    /// <param name="methodName">The name of the method to check for exclusion.</param>
+    /// <param name="patterns">The list of patterns to match against the method name.</param>
+    /// <returns>True if the method is excluded by any pattern; otherwise, false.</returns>
+    private static bool IsMethodExcludedByPatterns(
+        string methodName,
+        IList<string> patterns) =>
+        patterns.Any(pattern => MatchesPattern(methodName, pattern));
+
+    /// <summary>
+    /// Determines whether the method name matches a specified pattern using wildcard matching.
+    /// Supported patterns: exact match, prefix match, suffix match, and contains match.
+    /// </summary>
+    /// <param name="methodName">The name of the method to evaluate against the pattern.</param>
+    /// <param name="pattern">The pattern to match, which can include wildcards (*).</param>
+    /// <returns>True if the method name matches the pattern; otherwise, false.</returns>
+    private static bool MatchesPattern(
+        string methodName,
+        string pattern)
+    {
+        if (pattern == methodName)
+        {
+            return true; // Exact match
+        }
+
+        if (pattern.StartsWith('*') && pattern.EndsWith('*'))
+        {
+            return methodName.Contains(pattern[1..^1], StringComparison.InvariantCulture); // *contains*
+        }
+
+        if (pattern.StartsWith('*'))
+        {
+            return methodName.EndsWith(pattern[1..], StringComparison.InvariantCulture); // *suffix
+        }
+
+        return pattern.EndsWith('*') && methodName.StartsWith(pattern[..^1], StringComparison.InvariantCulture); // prefix*
+    }
 }

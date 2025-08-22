@@ -6,7 +6,6 @@ using System.Text.Json.Serialization;
 using Castle.DynamicProxy;
 using FlexKit.Logging.Configuration;
 using FlexKit.Logging.Core;
-using FlexKit.Logging.Interception.Attributes;
 using FlexKit.Logging.Models;
 using Microsoft.Extensions.Logging;
 
@@ -141,12 +140,10 @@ public sealed class MethodLoggingInterceptor(
     private void HandleAsyncCompletion(
         Task task,
         InterceptionDecision decision,
-        CompletionDetails details)
-    {
+        CompletionDetails details) =>
         _ = task.ContinueWith(completedTask =>
-            LogAsyncCompletion(completedTask, decision, details),
+                LogAsyncCompletion(completedTask, decision, details),
             TaskContinuationOptions.ExecuteSynchronously);
-    }
 
     /// <summary>
     /// Logs the completion of an async method. Called by ContinueWith.

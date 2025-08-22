@@ -74,32 +74,6 @@ public static class AttributeResolver
     }
 
     /// <summary>
-    /// Checks if the method has any logging-related attributes at the method level.
-    /// Includes both enabling attributes (LogInput, LogOutput, LogBoth) and disabling attributes (NoLog, NoAutoLog).
-    /// </summary>
-    /// <param name="method">The method to check for logging attributes.</param>
-    /// <returns>True if the method has any logging-related attributes; false otherwise.</returns>
-    public static bool HasLoggingAttributes(MethodInfo method) =>
-        method.GetCustomAttribute<LogInputAttribute>() != null ||
-        method.GetCustomAttribute<LogOutputAttribute>() != null ||
-        method.GetCustomAttribute<LogBothAttribute>() != null ||
-        method.GetCustomAttribute<NoLogAttribute>() != null ||
-        method.GetCustomAttribute<NoAutoLogAttribute>() != null;
-
-    /// <summary>
-    /// Checks if the type has any logging-related attributes at the class level.
-    /// Includes both enabling attributes (LogInput, LogOutput, LogBoth) and disabling attributes (NoLog, NoAutoLog).
-    /// </summary>
-    /// <param name="type">The type to check for logging attributes.</param>
-    /// <returns>True if the type has any logging-related attributes; false otherwise.</returns>
-    public static bool HasLoggingAttributes(Type type) =>
-        type.GetCustomAttribute<LogInputAttribute>() != null ||
-        type.GetCustomAttribute<LogOutputAttribute>() != null ||
-        type.GetCustomAttribute<LogBothAttribute>() != null ||
-        type.GetCustomAttribute<NoLogAttribute>() != null ||
-        type.GetCustomAttribute<NoAutoLogAttribute>() != null;
-
-    /// <summary>
     /// Resolves the interception decision from method-level attributes.
     /// Handles a combination of LogInput and LogOutput attributes and prioritizes LogBoth.
     /// </summary>
