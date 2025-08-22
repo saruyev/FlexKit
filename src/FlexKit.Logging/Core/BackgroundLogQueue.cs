@@ -52,7 +52,8 @@ public sealed class BackgroundLog : IBackgroundLog, IDisposable
     public bool TryDequeue(out LogEntry entry) => _reader.TryRead(out entry);
 
     /// <inheritdoc />
-    public async IAsyncEnumerable<LogEntry> ReadAllAsync([EnumeratorCancellation] CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<LogEntry> ReadAllAsync(
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         while (!cancellationToken.IsCancellationRequested && !_disposed)
         {

@@ -94,8 +94,8 @@ public sealed partial class CustomTemplateFormatter(IMessageTranslator translato
     private static string? GetCustomTemplate(
         in FormattingContext context,
         CustomTemplateFormatterSettings settings) =>
-        TryGetServiceTemplate(context, settings) ??
         TryGetNamedTemplate(context, settings) ??
+        TryGetServiceTemplate(context, settings) ??
         TryGetTypeTemplate(context, settings) ??
         TryGetMethodTemplate(context, settings) ??
         TryGetDefaultTemplate(context, settings) ??
@@ -187,7 +187,9 @@ public sealed partial class CustomTemplateFormatter(IMessageTranslator translato
         string templateKey,
         CustomTemplateFormatterSettings settings)
     {
-        if (!context.Configuration.Templates.TryGetValue(templateKey, out var templateConfig) || !templateConfig.Enabled)
+        if (
+            !context.Configuration.Templates.TryGetValue(templateKey, out var templateConfig) ||
+            !templateConfig.Enabled)
         {
             return null;
         }
@@ -204,7 +206,9 @@ public sealed partial class CustomTemplateFormatter(IMessageTranslator translato
     /// </summary>
     /// <param name="context">The formatting context containing log entry and additional properties.</param>
     /// <returns>A dictionary of parameters available for template substitution.</returns>
-    [SuppressMessage("Performance", "CA1859:Use concrete types when possible for improved performance")]
+    [SuppressMessage(
+        "Performance",
+        "CA1859:Use concrete types when possible for improved performance")]
     private static IReadOnlyDictionary<string, object?> ExtractParameters(in FormattingContext context)
     {
         var parameters = new Dictionary<string, object?>();
@@ -247,6 +251,7 @@ public sealed partial class CustomTemplateFormatter(IMessageTranslator translato
     {
         if (!entry.DurationTicks.HasValue)
         {
+            parameters["Duration"] = 0;
             return;
         }
 
@@ -305,13 +310,7 @@ public sealed partial class CustomTemplateFormatter(IMessageTranslator translato
             parameters["InputParameters"] = inputDisplay;
         }
 
-        var outputDisplay = JsonParameterUtils.FormatOutputForDisplay(entry.OutputValue);
-        if (string.IsNullOrEmpty(outputDisplay))
-        {
-            return;
-        }
-
-        parameters["OutputValue"] = outputDisplay;
+        parameters["OutputValue"] = JsonParameterUtils.FormatOutputForDisplay(entry.OutputValue);
     }
 
     /// <summary>
@@ -368,7 +367,7 @@ public sealed partial class CustomTemplateFormatter(IMessageTranslator translato
         // Extract service name from namespace or type name
         // This could be more sophisticated based on naming conventions
         var parts = typeName.Split('.');
-        return parts.Length > 1 ? parts[^2] : typeName;
+        return parts.Length > 1 ? parts[^1] : typeName;
     }
 
     /// <summary>

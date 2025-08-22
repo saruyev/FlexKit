@@ -155,4 +155,26 @@ public class LoggingConfig
     /// </remarks>
     [UsedImplicitly]
     public Dictionary<string, InterceptionConfig> Services { get; set; } = [];
+
+    /// <summary>
+    /// Gets or sets the logging targets configuration.
+    /// Maps targets to their configuration. Auto-detected targets are merged with configured targets.
+    /// </summary>
+    /// <value>Dictionary mapping target names to their configuration. Default is empty.</value>
+    [UsedImplicitly]
+    public Dictionary<string, LoggingTarget> Targets { get; set; } = [];
+
+    /// <summary>
+    /// Gets or sets the default target name to use when no specific target is specified.
+    /// If null, FlexKit will attempt to use the first available target or create a default console target.
+    /// </summary>
+    /// <value>The default target name. Default is null (auto-detect).</value>
+    public string? DefaultTarget { get; [UsedImplicitly] set; }
+
+    /// <summary>
+    /// Gets or sets the name of the ActivitySource to use for manual logging.
+    /// </summary>
+    /// <value>The name of the ActivitySource to use for manual logging. The default is "FlexKit.Logging".</value>
+    [UsedImplicitly]
+    public string ActivitySourceName { get; set; } = "FlexKit.Logging";
 }

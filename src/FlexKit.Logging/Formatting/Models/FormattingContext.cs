@@ -43,7 +43,7 @@ public readonly record struct FormattingContext
     /// Creates a new formatting context.
     /// </summary>
     public static FormattingContext Create(
-        LogEntry logEntry,
+        in LogEntry logEntry,
         LoggingConfig configuration) =>
         new()
         {
@@ -51,21 +51,35 @@ public readonly record struct FormattingContext
             Configuration = configuration,
             FormatterType = configuration.DefaultFormatter,
             Properties = new Dictionary<string, object?>(),
-            EnableFallback = configuration.EnableFallbackFormatting
+            EnableFallback = configuration.EnableFallbackFormatting,
         };
 
     /// <summary>
-    /// Creates a copy of this context with a different formatter type.
+    /// Creates a new instance of the <see cref="FormattingContext"/> with the specified
+    /// <paramref name="formatterType"/>.
     /// </summary>
-    public FormattingContext WithFormatterType(FormatterType formatterType) => this with { FormatterType = formatterType };
+    /// <param name="formatterType">The formatter type to be used in the new context.</param>
+    /// <returns>
+    /// A new <see cref="FormattingContext"/> where the <see cref="FormatterType"/> has been set to the specified value.
+    /// </returns>
+    public FormattingContext WithFormatterType(FormatterType formatterType) =>
+        this with { FormatterType = formatterType };
 
     /// <summary>
-    /// Creates a copy of this context with additional properties.
+    /// Updates the formatting context with a new set of properties.
     /// </summary>
-    public FormattingContext WithProperties(IReadOnlyDictionary<string, object?> properties) => this with { Properties = properties };
+    /// <param name="properties">
+    /// A read-only dictionary containing key-value pairs to associate with the formatting context.
+    /// </param>
+    /// <returns>A new <see cref="FormattingContext"/> instance with the specified properties applied.</returns>
+    public FormattingContext WithProperties(IReadOnlyDictionary<string, object?> properties) =>
+        this with { Properties = properties };
 
     /// <summary>
-    /// Creates a copy of this context with a specific template name.
+    /// Creates a new <see cref="FormattingContext"/> with the specified template name applied.
     /// </summary>
-    public FormattingContext WithTemplateName(string templateName) => this with { TemplateName = templateName };
+    /// <param name="templateName">The name of the template to use in the formatting context.</param>
+    /// <returns>A new <see cref="FormattingContext"/> with the provided template name set.</returns>
+    public FormattingContext WithTemplateName(string templateName) =>
+        this with { TemplateName = templateName };
 }

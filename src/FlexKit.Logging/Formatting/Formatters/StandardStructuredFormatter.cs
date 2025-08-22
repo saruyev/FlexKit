@@ -18,7 +18,8 @@ namespace FlexKit.Logging.Formatting.Formatters;
 /// <param name="translator">The message translator for provider-specific syntax conversion.</param>
 public sealed class StandardStructuredFormatter(IMessageTranslator translator) : IMessageFormatter
 {
-    private readonly IMessageTranslator _translator = translator ?? throw new ArgumentNullException(nameof(translator));
+    private readonly IMessageTranslator _translator =
+        translator ?? throw new ArgumentNullException(nameof(translator));
 
     /// <inheritdoc />
     public FormatterType FormatterType => FormatterType.StandardStructured;
@@ -64,12 +65,7 @@ public sealed class StandardStructuredFormatter(IMessageTranslator translator) :
     private static string GetTemplate(in FormattingContext context)
     {
         var configuredTemplate = TryGetConfiguredTemplate(context);
-        if (!string.IsNullOrEmpty(configuredTemplate))
-        {
-            return configuredTemplate;
-        }
-
-        return GetFallbackTemplate(context.LogEntry);
+        return !string.IsNullOrEmpty(configuredTemplate) ? configuredTemplate : GetFallbackTemplate(context.LogEntry);
     }
 
     /// <summary>
@@ -181,6 +177,7 @@ public sealed class StandardStructuredFormatter(IMessageTranslator translator) :
         parameters["TypeName"] = entry.TypeName;
         parameters["Success"] = entry.Success;
         parameters["ThreadId"] = entry.ThreadId;
+        parameters["Timestamp"] = entry.Timestamp;
     }
 
     /// <summary>
@@ -194,6 +191,7 @@ public sealed class StandardStructuredFormatter(IMessageTranslator translator) :
     {
         if (!entry.DurationTicks.HasValue)
         {
+            parameters["Duration"] = 0;
             return;
         }
 
@@ -217,6 +215,7 @@ public sealed class StandardStructuredFormatter(IMessageTranslator translator) :
 
         parameters["ExceptionType"] = entry.ExceptionType;
         parameters["ExceptionMessage"] = entry.ExceptionMessage;
+        parameters["StackTrace"] = entry.StackTrace;
     }
 
     /// <summary>
@@ -251,13 +250,7 @@ public sealed class StandardStructuredFormatter(IMessageTranslator translator) :
             parameters["InputParameters"] = inputDisplay;
         }
 
-        var outputDisplay = JsonParameterUtils.FormatOutputForDisplay(entry.OutputValue);
-        if (string.IsNullOrEmpty(outputDisplay))
-        {
-            return;
-        }
-
-        parameters["OutputValue"] = outputDisplay;
+        parameters["OutputValue"] = JsonParameterUtils.FormatOutputForDisplay(entry.OutputValue);
     }
 
     /// <summary>
@@ -271,6 +264,13 @@ public sealed class StandardStructuredFormatter(IMessageTranslator translator) :
         IReadOnlyDictionary<string, object?> parameters)
     {
         var result = template;
+
+        if (
+            parameters.ContainsKey("ExceptionMessage") &&
+            !string.IsNullOrEmpty(parameters["ExceptionMessage"]?.ToString()))
+        {
+            result += " | Exception: {ExceptionType} - {ExceptionMessage}";
+        }
 
         foreach (var parameter in parameters)
         {
