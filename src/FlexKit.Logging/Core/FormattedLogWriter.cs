@@ -98,13 +98,17 @@ public sealed class FormattedLogWriter(
     {
         if (Config.EnableFallbackFormatting)
         {
-            GetLoggerForType(nameof(FormattedLogWriter)).LogWarning("Message formatting failed for entry {EntryId}, used fallback: {ErrorMessage}",
-                entry.Id, result.ErrorMessage);
+            GetLoggerForType(nameof(FormattedLogWriter)).LogWarning(
+                "Message formatting failed for entry {EntryId}, used fallback: {ErrorMessage}",
+                entry.Id,
+                result.ErrorMessage);
             return FormatFallbackMessage(entry);
         }
 
-        GetLoggerForType(nameof(FormattedLogWriter)).LogError("Message formatting failed for entry {EntryId}: {ErrorMessage}",
-            entry.Id, result.ErrorMessage);
+        GetLoggerForType(nameof(FormattedLogWriter)).LogError(
+            "Message formatting failed for entry {EntryId}: {ErrorMessage}",
+            entry.Id,
+            result.ErrorMessage);
         return $"[Formatting Error: {result.ErrorMessage}]";
     }
 
@@ -122,8 +126,10 @@ public sealed class FormattedLogWriter(
             return;
         }
 
-        GetLoggerForType(nameof(FormattedLogWriter)).LogDebug("Used fallback formatting for entry {EntryId}: {ErrorMessage}",
-            entryId, result.ErrorMessage);
+        GetLoggerForType(nameof(FormattedLogWriter)).LogDebug(
+            "Used fallback formatting for entry {EntryId}: {ErrorMessage}",
+            entryId,
+            result.ErrorMessage);
     }
 
     /// <summary>
@@ -136,10 +142,17 @@ public sealed class FormattedLogWriter(
         Exception ex)
     {
         var safeMessage = $"[Error] Method {entry.TypeName}.{entry.MethodName} - Success: {entry.Success}";
-        OutputMessage(safeMessage, entry.ExceptionLevel, entry.Target ?? Config.DefaultTarget ?? entry.TypeName);
+        OutputMessage(
+            safeMessage,
+            entry.ExceptionLevel,
+            entry.Target ?? Config.DefaultTarget ?? entry.TypeName);
 
-        GetLoggerForType(nameof(FormattedLogWriter)).LogWarning(ex, "Failed to process log entry {EntryId} for method {TypeName}.{MethodName}",
-            entry.Id, entry.TypeName, entry.MethodName);
+        GetLoggerForType(nameof(FormattedLogWriter)).LogWarning(
+            ex,
+            "Failed to process log entry {EntryId} for method {TypeName}.{MethodName}",
+            entry.Id,
+            entry.TypeName,
+            entry.MethodName);
     }
 
     /// <summary>
@@ -149,6 +162,7 @@ public sealed class FormattedLogWriter(
     /// <param name="message">The formatted message to output.</param>
     /// <param name="level">The log level for this message.</param>
     /// <param name="typeName">The type name to create a logger for.</param>
+    /// <exception cref="ArgumentOutOfRangeException">Thrown if the log level is invalid.</exception>
     [SuppressMessage("ReSharper", "FlagArgument")]
     private void OutputMessage(
         string message,
@@ -207,12 +221,18 @@ public sealed class FormattedLogWriter(
         // Add InputParameters and OutputValue to fallback
         if (!string.IsNullOrEmpty(entry.InputParameters))
         {
-            result = result.Replace("{InputParameters}", entry.InputParameters, StringComparison.OrdinalIgnoreCase);
+            result = result.Replace(
+                "{InputParameters}",
+                entry.InputParameters,
+                StringComparison.OrdinalIgnoreCase);
         }
 
         if (!string.IsNullOrEmpty(entry.OutputValue))
         {
-            result = result.Replace("{OutputValue}", entry.OutputValue, StringComparison.OrdinalIgnoreCase);
+            result = result.Replace(
+                "{OutputValue}",
+                entry.OutputValue,
+                StringComparison.OrdinalIgnoreCase);
         }
 
         return result;
@@ -225,5 +245,5 @@ public sealed class FormattedLogWriter(
     /// <param name="typeName">The type name to create a logger for.</param>
     /// <returns>A logger instance for the specified type.</returns>
     private ILogger GetLoggerForType(string typeName) =>
-        _loggerCache.GetOrAdd(typeName, name => _loggerFactory.CreateLogger(name));
+        _loggerCache.GetOrAdd(typeName, _loggerFactory.CreateLogger);
 }

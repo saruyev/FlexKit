@@ -165,7 +165,8 @@ public sealed class HybridFormatter : IMessageFormatter
         in LogEntry entry,
         HybridFormatterSettings settings)
     {
-        var includeProperty = settings.MetadataFields.Count != 0 && !settings.MetadataFields.Contains("duration");
+        var includeProperty =
+            settings.MetadataFields.Count != 0 && !settings.MetadataFields.Contains("duration");
         if (includeProperty || !entry.DurationTicks.HasValue)
         {
             return;
@@ -211,13 +212,23 @@ public sealed class HybridFormatter : IMessageFormatter
         in LogEntry entry,
         HybridFormatterSettings settings)
     {
-        if ((settings.MetadataFields.Count != 0 && !settings.MetadataFields.Contains("exception_type"))
-            || entry.Success)
+        if (entry.Success)
         {
             return;
         }
 
-        metadata["exception_type"] = entry.ExceptionType;
+        if (settings.MetadataFields.Count == 0 || settings.MetadataFields.Contains("exception_type"))
+        {
+            metadata["exception_type"] = entry.ExceptionType;
+        }
+
+        if ((settings.MetadataFields.Count != 0 && !settings.MetadataFields.Contains("stack_trace"))
+            || string.IsNullOrEmpty(entry.StackTrace))
+        {
+            return;
+        }
+
+        metadata["stack_trace"] = entry.StackTrace;
     }
 
     /// <summary>

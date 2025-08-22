@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using Castle.DynamicProxy;
 using FlexKit.Logging.Configuration;
 using FlexKit.Logging.Core;
@@ -14,6 +15,7 @@ namespace FlexKit.Logging.Interception;
 /// <summary>
 /// Castle DynamicProxy interceptor that provides automatic method logging based on cached interception decisions.
 /// Uses the InterceptionDecisionCache to determine what logging behavior to apply for each intercepted method.
+/// Supports both synchronous and asynchronous methods with proper async result logging.
 /// </summary>
 /// <remarks>
 /// Initializes a new instance of the MethodLoggingInterceptor.
@@ -40,6 +42,11 @@ public sealed class MethodLoggingInterceptor(
             LogLevel.Warning,
             new EventId(1),
             "Failed to enqueue the logging task.");
+    private record struct CompletionDetails(
+        LogEntry Entry,
+        Stopwatch Stopwatch,
+        bool Success = true,
+        Exception? Exception = null);
 
     /// <summary>
     /// Intercepts method calls and applies logging based on cached decisions.
@@ -62,26 +69,108 @@ public sealed class MethodLoggingInterceptor(
     /// <summary>
     /// Handles the complete method execution logging lifecycle, including timing and exception handling.
     /// Manages the start entry creation, method execution, completion logging, and error handling.
+    /// Supports both synchronous and asynchronous methods.
     /// </summary>
     /// <param name="invocation">The method invocation context.</param>
     /// <param name="decision">The interception decision that determines what to log and at what level.</param>
     [SuppressMessage("ReSharper", "FlagArgument")]
     private void LogMethodExecution(
         IInvocation invocation,
-        InterceptionDecision decision)
+        in InterceptionDecision decision)
     {
-        var startEntry = CreateStartEntry(invocation, decision);
-        var stopwatch = Stopwatch.StartNew();
+        var details = new CompletionDetails(
+            Entry: CreateStartEntry(invocation, decision),
+            Stopwatch: Stopwatch.StartNew());
+
         try
         {
             invocation.Proceed();
-            stopwatch.Stop();
-            var durationTicks = (long)(stopwatch.ElapsedTicks * TimeSpan.TicksPerSecond / (double)Stopwatch.Frequency);
-            var entry = startEntry.WithCompletion(true, durationTicks);
 
-            if (decision.Behavior is InterceptionBehavior.LogOutput or InterceptionBehavior.LogBoth)
+            // Check if the return value is a Task (async method)
+            if (invocation.ReturnValue is Task task)
             {
-                var output = SerializeOutputValue(invocation.ReturnValue);
+                HandleAsyncCompletion(task, decision, details);
+            }
+            else
+            {
+                // Handle synchronous method completion
+                HandleSyncCompletion(invocation, decision, details);
+            }
+        }
+        catch (Exception ex)
+        {
+            // Handle synchronous exceptions
+            details.Stopwatch.Stop();
+            var durationTicks =
+                (long)(details.Stopwatch.ElapsedTicks * TimeSpan.TicksPerSecond / (double)Stopwatch.Frequency);
+            var entry = details.Entry.WithCompletion(false, durationTicks, ex);
+            TryEnqueueEntry(entry);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Handles completion logging for synchronous methods.
+    /// </summary>
+    /// <param name="invocation">The method invocation context.</param>
+    /// <param name="decision">The interception decision determining what to log.</param>
+    /// <param name="details">The completion details including timing and status.</param>
+    private void HandleSyncCompletion(
+        IInvocation invocation,
+        in InterceptionDecision decision,
+        CompletionDetails details)
+    {
+        details.Stopwatch.Stop();
+        var entry = CreateCompletionEntry(details);
+
+        if (ShouldLogOutput(decision))
+        {
+            var output = SerializeOutputValue(invocation.ReturnValue);
+            entry = entry.WithOutput(output);
+        }
+
+        TryEnqueueEntry(entry);
+    }
+
+    /// <summary>
+    /// Handles completion logging for asynchronous methods using ContinueWith to avoid blocking.
+    /// </summary>
+    /// <param name="task">The Task returned by the async method.</param>
+    /// <param name="decision">The interception decision determining what to log.</param>
+    /// <param name="details">The completion details including timing and status.</param>
+    private void HandleAsyncCompletion(
+        Task task,
+        InterceptionDecision decision,
+        CompletionDetails details)
+    {
+        _ = task.ContinueWith(completedTask =>
+            LogAsyncCompletion(completedTask, decision, details),
+            TaskContinuationOptions.ExecuteSynchronously);
+    }
+
+    /// <summary>
+    /// Logs the completion of an async method. Called by ContinueWith.
+    /// </summary>
+    /// <param name="completedTask">The completed task.</param>
+    /// <param name="decision">The interception decision.</param>
+    /// <param name="details">The completion details including timing and status.</param>
+    private void LogAsyncCompletion(
+        Task completedTask,
+        in InterceptionDecision decision,
+        CompletionDetails details)
+    {
+        details.Stopwatch.Stop();
+
+        try
+        {
+            details.Success = completedTask.Status == TaskStatus.RanToCompletion;
+            details.Exception = completedTask.Exception?.GetBaseException();
+            var entry = CreateCompletionEntry(details);
+
+            if (details.Success && ShouldLogOutput(decision))
+            {
+                var actualResult = ExtractTaskResult(completedTask);
+                var output = SerializeOutputValue(actualResult);
                 entry = entry.WithOutput(output);
             }
 
@@ -89,12 +178,119 @@ public sealed class MethodLoggingInterceptor(
         }
         catch (Exception ex)
         {
-            stopwatch.Stop();
-            var entry = startEntry.WithCompletion(false, stopwatch.ElapsedTicks, ex);
-            TryEnqueueEntry(entry);
-            throw;
+            details.Success = false;
+            details.Exception = ex;
+            LogAsyncCompletionFailure(details);
         }
     }
+
+    /// <summary>
+    /// Creates a completion log entry with timing and status information.
+    /// </summary>
+    /// <param name="details">The completion details including timing and status.</param>
+    /// <returns>A log entry with completion information.</returns>
+    private static LogEntry CreateCompletionEntry(CompletionDetails details)
+    {
+        var durationTicks =
+            (long)(details.Stopwatch.ElapsedTicks * TimeSpan.TicksPerSecond / (double)Stopwatch.Frequency);
+        return details.Entry.WithCompletion(details.Success, durationTicks, details.Exception);
+    }
+
+    /// <summary>
+    /// Determines if output should be logged based on the decision behavior.
+    /// </summary>
+    /// <param name="decision">The interception decision.</param>
+    /// <returns>True if output should be logged.</returns>
+    private static bool ShouldLogOutput(in InterceptionDecision decision) =>
+        decision.Behavior is InterceptionBehavior.LogOutput or InterceptionBehavior.LogBoth;
+
+    /// <summary>
+    /// Logs a failure that occurred while trying to log async completion.
+    /// </summary>
+    /// <param name="details">The completion details including timing and status.</param>
+    private void LogAsyncCompletionFailure(CompletionDetails details)
+    {
+        _logSerializationFailure(_logger, details.Exception);
+        var fallbackEntry = CreateCompletionEntry(details);
+        TryEnqueueEntry(fallbackEntry);
+    }
+
+    /// <summary>
+    /// Extracts the actual result value from a completed Task.
+    /// Handles both Task (non-generic) and Task&lt;T&gt; (generic) types, including compiler-generated async state machines.
+    /// </summary>
+    /// <param name="task">The completed task to extract the result from.</param>
+    /// <returns>The actual result value for Task&lt;T&gt;, or null for non-generic Task.</returns>
+    private static object? ExtractTaskResult(Task task)
+    {
+        if (task.Status != TaskStatus.RanToCompletion)
+        {
+            return null;
+        }
+
+        try
+        {
+            var resultProperty = task.GetType().GetProperty("Result");
+            if (resultProperty != null && HasValidResultType(resultProperty.PropertyType))
+            {
+                return resultProperty.GetValue(task);
+            }
+
+            // Check inheritance chain and interfaces for Task<T>
+            return ExtractFromTaskInterface(task);
+        }
+        catch (Exception)
+        {
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Determines if a result type is valid (not void, object, or Task).
+    /// </summary>
+    /// <param name="resultType">The type to check.</param>
+    /// <returns>True if the type represents a valid task result.</returns>
+    private static bool HasValidResultType(Type resultType) =>
+        resultType != typeof(void) &&
+        resultType != typeof(object) &&
+        !typeof(Task).IsAssignableFrom(resultType);
+
+    /// <summary>
+    /// Attempts to extract the result by finding Task&lt;T&gt; in the type hierarchy or interfaces.
+    /// </summary>
+    /// <param name="task">The task to extract the result from.</param>
+    /// <returns>The result value or null if not found.</returns>
+    private static object? ExtractFromTaskInterface(Task task)
+    {
+        var taskType = task.GetType();
+
+        // Check base types
+        var baseType = taskType.BaseType;
+        while (baseType != null)
+        {
+            if (IsGenericTask(baseType))
+            {
+                var resultProperty = baseType.GetProperty("Result");
+                return resultProperty?.GetValue(task);
+            }
+            baseType = baseType.BaseType;
+        }
+
+        // Check interfaces
+        return taskType.GetInterfaces()
+            .Where(IsGenericTask)
+            .Select(interfaceType =>
+                typeof(Task<>).MakeGenericType(interfaceType.GetGenericArguments()[0]).GetProperty("Result"))
+            .Select(resultProperty => resultProperty?.GetValue(task)).FirstOrDefault();
+    }
+
+    /// <summary>
+    /// Checks if a type is a generic Task&lt;T&gt;
+    /// </summary>
+    /// <param name="type">The type to check.</param>
+    /// <returns>True if the type is Task&lt;T&gt;</returns>
+    private static bool IsGenericTask(Type type) =>
+        type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Task<>);
 
     /// <summary>
     /// Creates the initial log entry when a method starts execution.
@@ -297,9 +493,9 @@ public sealed class MethodLoggingInterceptor(
             var options = new JsonSerializerOptions
             {
                 WriteIndented = false,
-                ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles,
+                ReferenceHandler = ReferenceHandler.IgnoreCycles,
                 MaxDepth = 3,
-                DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
+                DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
             };
 
             // Serialize and deserialize to get a clean object structure
@@ -315,7 +511,8 @@ public sealed class MethodLoggingInterceptor(
                 };
             }
 
-            return JsonSerializer.Deserialize<object>(json, options) ?? new { _type = obj.GetType().Name, _value = obj.ToString() };
+            return JsonSerializer.Deserialize<object>(json, options) ??
+                   new { _type = obj.GetType().Name, _value = obj.ToString() };
         }
         catch
         {

@@ -18,7 +18,8 @@ namespace FlexKit.Logging.Formatting.Formatters;
 /// <param name="translator">The message translator for provider-specific syntax conversion.</param>
 public sealed class StandardStructuredFormatter(IMessageTranslator translator) : IMessageFormatter
 {
-    private readonly IMessageTranslator _translator = translator ?? throw new ArgumentNullException(nameof(translator));
+    private readonly IMessageTranslator _translator =
+        translator ?? throw new ArgumentNullException(nameof(translator));
 
     /// <inheritdoc />
     public FormatterType FormatterType => FormatterType.StandardStructured;
@@ -64,12 +65,7 @@ public sealed class StandardStructuredFormatter(IMessageTranslator translator) :
     private static string GetTemplate(in FormattingContext context)
     {
         var configuredTemplate = TryGetConfiguredTemplate(context);
-        if (!string.IsNullOrEmpty(configuredTemplate))
-        {
-            return configuredTemplate;
-        }
-
-        return GetFallbackTemplate(context.LogEntry);
+        return !string.IsNullOrEmpty(configuredTemplate) ? configuredTemplate : GetFallbackTemplate(context.LogEntry);
     }
 
     /// <summary>
@@ -217,6 +213,7 @@ public sealed class StandardStructuredFormatter(IMessageTranslator translator) :
 
         parameters["ExceptionType"] = entry.ExceptionType;
         parameters["ExceptionMessage"] = entry.ExceptionMessage;
+        parameters["StackTrace"] = entry.StackTrace;
     }
 
     /// <summary>
@@ -272,7 +269,9 @@ public sealed class StandardStructuredFormatter(IMessageTranslator translator) :
     {
         var result = template;
 
-        if (parameters.ContainsKey("ExceptionMessage") && !string.IsNullOrEmpty(parameters["ExceptionMessage"]?.ToString()))
+        if (
+            parameters.ContainsKey("ExceptionMessage") &&
+            !string.IsNullOrEmpty(parameters["ExceptionMessage"]?.ToString()))
         {
             result += " | Exception: {ExceptionType} - {ExceptionMessage}";
         }

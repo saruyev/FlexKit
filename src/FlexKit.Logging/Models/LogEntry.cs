@@ -46,6 +46,11 @@ public readonly record struct LogEntry
     public string? ExceptionType { get; private init; }
 
     /// <summary>
+    /// Gets the exception stack trace if the method failed, or null if successful.
+    /// </summary>
+    public string? StackTrace { get; private init; }
+
+    /// <summary>
     /// Gets the exception message if the method failed, or null if successful.
     /// </summary>
     public string? ExceptionMessage { get; private init; }
@@ -181,7 +186,8 @@ public readonly record struct LogEntry
             DurationTicks = durationTicks,
             Success = success,
             ExceptionType = exception?.GetType().Name,
-            ExceptionMessage = exception?.Message
+            ExceptionMessage = exception?.Message,
+            StackTrace = exception?.StackTrace
         };
 
     /// <summary>

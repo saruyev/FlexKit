@@ -187,7 +187,9 @@ public sealed partial class CustomTemplateFormatter(IMessageTranslator translato
         string templateKey,
         CustomTemplateFormatterSettings settings)
     {
-        if (!context.Configuration.Templates.TryGetValue(templateKey, out var templateConfig) || !templateConfig.Enabled)
+        if (
+            !context.Configuration.Templates.TryGetValue(templateKey, out var templateConfig) ||
+            !templateConfig.Enabled)
         {
             return null;
         }
@@ -204,7 +206,9 @@ public sealed partial class CustomTemplateFormatter(IMessageTranslator translato
     /// </summary>
     /// <param name="context">The formatting context containing log entry and additional properties.</param>
     /// <returns>A dictionary of parameters available for template substitution.</returns>
-    [SuppressMessage("Performance", "CA1859:Use concrete types when possible for improved performance")]
+    [SuppressMessage(
+        "Performance",
+        "CA1859:Use concrete types when possible for improved performance")]
     private static IReadOnlyDictionary<string, object?> ExtractParameters(in FormattingContext context)
     {
         var parameters = new Dictionary<string, object?>();
@@ -368,7 +372,7 @@ public sealed partial class CustomTemplateFormatter(IMessageTranslator translato
         // Extract service name from namespace or type name
         // This could be more sophisticated based on naming conventions
         var parts = typeName.Split('.');
-        return parts.Length > 1 ? parts[^2] : typeName;
+        return parts.Length > 1 ? parts[^1] : typeName;
     }
 
     /// <summary>

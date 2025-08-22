@@ -30,7 +30,8 @@ public class TemplateConfig
 
     /// <summary>
     /// Gets or sets a general-purpose template that works for both success and error cases.
-    /// Used when success/error specific templates are not provided or when the formatter doesn't distinguish between outcomes.
+    /// Used when success/error specific templates are not provided or when the formatter doesn't
+    /// distinguish between outcomes.
     /// </summary>
     /// <value>The general template string that works for all execution outcomes.</value>
     /// <example>
@@ -93,7 +94,6 @@ public class TemplateConfig
     /// <item>A non-empty <see cref="ErrorTemplate"/></item>
     /// <item>A non-empty <see cref="GeneralTemplate"/></item>
     /// </list>
-    ///
     /// This validation helps catch configuration errors early in the application lifecycle.
     /// </remarks>
     public bool IsValid() =>

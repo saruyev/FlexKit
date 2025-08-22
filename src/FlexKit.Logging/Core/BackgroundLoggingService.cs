@@ -21,10 +21,12 @@ public sealed class BackgroundLoggingService(
     ILogger<BackgroundLoggingService> logger,
     ILogEntryProcessor logEntryProcessor) : BackgroundService
 {
-    private readonly IBackgroundLog _logQueue = logQueue ?? throw new ArgumentNullException(nameof(logQueue));
-    private readonly ILogger<BackgroundLoggingService> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-    private readonly ILogEntryProcessor _logEntryProcessor = logEntryProcessor ?? throw new ArgumentNullException(nameof(logEntryProcessor));
-
+    private readonly IBackgroundLog _logQueue =
+        logQueue ?? throw new ArgumentNullException(nameof(logQueue));
+    private readonly ILogger<BackgroundLoggingService> _logger =
+        logger ?? throw new ArgumentNullException(nameof(logger));
+    private readonly ILogEntryProcessor _logEntryProcessor =
+        logEntryProcessor ?? throw new ArgumentNullException(nameof(logEntryProcessor));
     private readonly SemaphoreSlim _processingLock = new(1, 1);
 
     /// <summary>
@@ -62,7 +64,9 @@ public sealed class BackgroundLoggingService(
         catch (Exception ex)
         {
             _logger.LogError(ex, "Unexpected error in background logging service");
-            throw new InvalidOperationException("Background logging service encountered an unexpected error and cannot continue", ex);
+            throw new InvalidOperationException(
+                "Background logging service encountered an unexpected error and cannot continue",
+                ex);
         }
         finally
         {
@@ -102,7 +106,9 @@ public sealed class BackgroundLoggingService(
     /// </summary>
     /// <param name="entries">The batch of log entries to process.</param>
     /// <param name="cancellationToken">Token to cancel the processing operation</param>
-    [SuppressMessage("Performance", "CA1859:Use concrete types when possible for improved performance")]
+    [SuppressMessage(
+        "Performance",
+        "CA1859:Use concrete types when possible for improved performance")]
     private async Task ProcessBatchAsync(
         IReadOnlyList<LogEntry> entries,
         CancellationToken cancellationToken)

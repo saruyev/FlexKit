@@ -65,7 +65,9 @@ public sealed class JsonFormatter : IMessageFormatter
     /// Creates a JSON object representation of a log entry with configurable property names and content.
     /// </summary>
     /// <param name="entry">The log entry to convert to JSON.</param>
-    /// <param name="settings">The JSON formatter settings that control property names and included information.</param>
+    /// <param name="settings">
+    /// The JSON formatter settings that control property names and included information.
+    /// </param>
     /// <returns>A dictionary representing the JSON object structure.</returns>
     private static Dictionary<string, object?> CreateJsonObject(
         in LogEntry entry,
@@ -182,18 +184,18 @@ public sealed class JsonFormatter : IMessageFormatter
             return;
         }
 
-        jsonObject[GetPropertyName("exception", settings)] = new
+        var exceptionObj = new Dictionary<string, object?>
         {
-            type = entry.ExceptionType,
-            message = entry.ExceptionMessage
+            ["type"] = entry.ExceptionType,
+            ["message"] = entry.ExceptionMessage
         };
 
-        if (!settings.IncludeStackTrace)
+        if (settings.IncludeStackTrace && !string.IsNullOrEmpty(entry.StackTrace))
         {
-            return;
+            exceptionObj["stack_trace"] = entry.StackTrace;
         }
 
-        jsonObject[GetPropertyName("stack_trace", settings)] = "Stack trace not available in LogEntry model";
+        jsonObject[GetPropertyName("exception", settings)] = exceptionObj;
     }
 
     /// <summary>

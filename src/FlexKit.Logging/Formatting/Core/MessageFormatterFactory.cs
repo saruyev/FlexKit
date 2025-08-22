@@ -17,7 +17,9 @@ public sealed class MessageFormatterFactory : IMessageFormatterFactory
     /// </summary>
     /// <param name="formatters">Collection of available formatters.</param>
     /// <exception cref="ArgumentNullException">Thrown when formatters' collection is null.</exception>
-    /// <exception cref="ArgumentException">Thrown when formatters' collection is empty or contains duplicate types.</exception>
+    /// <exception cref="ArgumentException">
+    /// Thrown when formatters' collection is empty or contains duplicate types.
+    /// </exception>
     public MessageFormatterFactory(IEnumerable<IMessageFormatter> formatters)
     {
         ArgumentNullException.ThrowIfNull(formatters);

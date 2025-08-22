@@ -5,7 +5,10 @@ using FlexKit.Logging.Configuration;
 namespace FlexKit.Logging.Interception.Attributes;
 
 /// <summary>
-/// High-performance cache for interception decisions to avoid reflection overhead during method calls.
+/// High-performance cache for interception decisions using a three-tier precedence system:
+/// 1. Attribute-based (the highest priority)
+/// 2. Configuration-based patterns (medium priority)
+/// 3. Auto-interception (the lowest priority)
 /// Pre-computes and caches interception decisions for types and methods to maintain ~50ns performance target.
 /// </summary>
 /// <remarks>
@@ -13,19 +16,16 @@ namespace FlexKit.Logging.Interception.Attributes;
 /// during method interception to avoid any reflection or attribute resolution overhead
 /// in the hot path.
 /// </remarks>
-public sealed class InterceptionDecisionCache
+/// <remarks>
+/// Initializes a new instance of the InterceptionDecisionCache.
+/// </remarks>
+/// <param name="loggingConfig">The logging configuration for pattern matching and defaults.</param>
+public sealed class InterceptionDecisionCache(LoggingConfig loggingConfig)
 {
-    private readonly ConcurrentDictionary<Type, Dictionary<MethodInfo, InterceptionDecision?>> _typeDecisions = new();
-    private readonly LoggingConfig _loggingConfig;
-
-    /// <summary>
-    /// Initializes a new instance of the InterceptionDecisionCache.
-    /// </summary>
-    /// <param name="loggingConfig">The logging configuration for pattern matching and defaults.</param>
-    public InterceptionDecisionCache(LoggingConfig loggingConfig)
-    {
-        _loggingConfig = loggingConfig ?? throw new ArgumentNullException(nameof(loggingConfig));
-    }
+    private readonly ConcurrentDictionary<Type, ConcurrentDictionary<MethodInfo, InterceptionDecision?>>
+        _typeDecisions = new();
+    private readonly LoggingConfig _loggingConfig =
+        loggingConfig ?? throw new ArgumentNullException(nameof(loggingConfig));
 
     /// <summary>
     /// Gets the cached interception decision for a method, or computes and caches it if not present.
@@ -47,18 +47,24 @@ public sealed class InterceptionDecisionCache
         }
 
         // If declaring type is an interface, find the implementation type
-        if (declaringType.IsInterface)
+        if (!declaringType.IsInterface)
         {
-            var implementationType = FindImplementationType(declaringType);
-            if (implementationType != null && _typeDecisions.TryGetValue(implementationType, out var implTypeCache))
-            {
-                // Find the implementation method with a matching signature
-                var implMethod = FindImplementationMethod(method, implementationType);
-                if (implMethod != null)
-                {
-                    return implTypeCache.TryGetValue(implMethod, out var implDecision) ? implDecision : null;
-                }
-            }
+            return ComputeMethodDecision(method);
+        }
+
+        var implementationType = FindImplementationType(declaringType);
+        if (
+            implementationType == null ||
+            !_typeDecisions.TryGetValue(implementationType, out var implTypeCache))
+        {
+            return ComputeMethodDecision(method);
+        }
+
+        // Find the implementation method with a matching signature
+        var implMethod = FindImplementationMethod(method, implementationType);
+        if (implMethod != null)
+        {
+            return implTypeCache.TryGetValue(implMethod, out var implDecision) ? implDecision : null;
         }
 
         // Compute decision on-demand for types not in cache
@@ -66,41 +72,29 @@ public sealed class InterceptionDecisionCache
     }
 
     /// <summary>
-    /// Pre-caches decisions for all public methods of a type.
+    /// Pre-caches decisions for all public methods of a type using the three-tier precedence system.
     /// Called during DI registration to front-load all expensive operations.
     /// </summary>
     /// <param name="type">The type to cache all method decisions for.</param>
     public void CacheTypeDecisions(Type type)
     {
-        var methodDecisions = new Dictionary<MethodInfo, InterceptionDecision?>();
+        var methodDecisions = new ConcurrentDictionary<MethodInfo, InterceptionDecision?>();
 
-        // Check if the entire type is disabled for logging
-        var typeDisabled = IsTypeCompletelyDisabled(type);
-
-        if (typeDisabled)
+        // Cache individual method decisions using three-tier precedence
+        foreach (var method in type.GetMethods(BindingFlags.Public | BindingFlags.Instance)
+                     .Where(ShouldInterceptMethod))
         {
-            // If the type is disabled, mark all methods as null (no interception)
-            foreach (var method in type.GetMethods(BindingFlags.Public | BindingFlags.Instance)
-                         .Where(ShouldInterceptMethod))
-            {
-                methodDecisions[method] = null;
-            }
-        }
-        else
-        {
-            // Cache individual method decisions
-            foreach (var method in type.GetMethods(BindingFlags.Public | BindingFlags.Instance)
-                         .Where(ShouldInterceptMethod))
-            {
-                methodDecisions[method] = ComputeMethodDecision(method);
-            }
+            methodDecisions[method] = ComputeMethodDecision(method);
         }
 
         _typeDecisions[type] = methodDecisions;
     }
 
     /// <summary>
-    /// Computes the interception decision for a specific method using the decision hierarchy.
+    /// Computes the interception decision for a specific method using the three-tier precedence system:
+    /// 1. Attributes (highest priority) - explicit method/class attributes
+    /// 2. Configuration (medium priority) - patterns in LoggingConfig.Services
+    /// 3. Auto-interception (the lowest priority) - default behavior when AutoIntercept is enabled
     /// </summary>
     /// <param name="method">The method to compute the decision for.</param>
     /// <returns>The computed interception decision; null if no logging should occur.</returns>
@@ -112,28 +106,28 @@ public sealed class InterceptionDecisionCache
             return null;
         }
 
-        // 1. Check for disabled attributes (the highest precedence)
+        // TIER 1: Check for disabled attributes (the highest precedence within attributes)
         if (AttributeResolver.IsLoggingDisabled(method))
         {
-            return null; // No interception
+            return null; // No interception - disabled attributes override everything
         }
 
-        // 2. Check for explicit logging attributes
+        // TIER 1: Check for explicit logging attributes (the highest priority)
         var attributeDecision = AttributeResolver.ResolveInterceptionDecision(method);
         if (attributeDecision.HasValue)
         {
-            return attributeDecision.Value;
+            return attributeDecision.Value; // Use attribute-based decision
         }
 
-        // 3. Check configuration patterns
+        // TIER 2: Check configuration patterns (medium priority)
         var configDecision = ResolveFromConfiguration(declaringType);
         if (configDecision.HasValue)
         {
-            return configDecision.Value;
+            return configDecision.Value; // Use configuration-based decision
         }
 
-        // 4. Use default behavior
-        return _loggingConfig.AutoIntercept ? new() : null;
+        // TIER 3: Check auto-interception (the lowest priority)
+        return ResolveFromAutoIntercept(declaringType);
     }
 
     /// <summary>
@@ -144,18 +138,18 @@ public sealed class InterceptionDecisionCache
     /// <returns>The configured InterceptionDecision if a matching pattern is found; null otherwise.</returns>
     private InterceptionDecision? ResolveFromConfiguration(Type type)
     {
-        if (type.FullName == null)
+        if (type.FullName == null || _loggingConfig.Services.Count == 0)
         {
             return null;
         }
 
-        // Check for the exact match first
+        // Check for the exact match first (the highest precedence within configuration)
         if (_loggingConfig.Services.TryGetValue(type.FullName, out var exactConfig))
         {
             return exactConfig.GetDecision();
         }
 
-        // Check for wildcard patterns
+        // Check for wildcard patterns (lower precedence within configuration)
         foreach (var (pattern, config) in _loggingConfig.Services)
         {
             if (pattern.EndsWith('*') && type.FullName.StartsWith(pattern[..^1], StringComparison.InvariantCulture))
@@ -164,7 +158,34 @@ public sealed class InterceptionDecisionCache
             }
         }
 
-        return null;
+        return null; // No configuration pattern matched
+    }
+
+    /// <summary>
+    /// Resolves interception decision from auto-intercept settings.
+    /// Only applies when AutoIntercept is enabled and the type is not explicitly excluded.
+    /// </summary>
+    /// <param name="type">The type to resolve auto-interception for.</param>
+    /// <returns>The auto-interception decision if applicable; null if auto-interception should not apply.</returns>
+    private InterceptionDecision? ResolveFromAutoIntercept(Type type)
+    {
+        // Only auto-intercept if enabled in configuration
+        if (!_loggingConfig.AutoIntercept)
+        {
+            return null;
+        }
+
+        // Don't auto-intercept if explicitly disabled at type level
+        if (IsTypeCompletelyDisabled(type))
+        {
+            return null;
+        }
+
+        // Use the default auto-interception behavior (LogInput with Information level)
+        return new InterceptionDecision()
+            .WithBehavior(InterceptionBehavior.LogInput)
+            .WithLevel(Microsoft.Extensions.Logging.LogLevel.Information)
+            .WithExceptionLevel(Microsoft.Extensions.Logging.LogLevel.Error);
     }
 
     /// <summary>
@@ -192,7 +213,9 @@ public sealed class InterceptionDecisionCache
     /// <param name="interfaceMethod">The interface method to find an implementation for.</param>
     /// <param name="implementationType">The type that implements the interface.</param>
     /// <returns>The implementation method if found; null if no implementation is found.</returns>
-    private static MethodInfo? FindImplementationMethod(MethodInfo interfaceMethod, Type implementationType)
+    private static MethodInfo? FindImplementationMethod(
+        MethodInfo interfaceMethod,
+        Type implementationType)
     {
         var parameterTypes = interfaceMethod.GetParameters().Select(p => p.ParameterType).ToArray();
         return implementationType.GetMethod(interfaceMethod.Name, parameterTypes);

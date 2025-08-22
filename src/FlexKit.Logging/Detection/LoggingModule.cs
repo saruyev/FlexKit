@@ -18,7 +18,10 @@ using Module = Autofac.Module;
 namespace FlexKit.Logging.Detection;
 
 /// <summary>
-/// Autofac module that automatically discovers and registers classes with logging attributes for interception.
+/// Autofac module that automatically discovers and registers classes for logging interception using three approaches:
+/// 1. Attribute-based (highest priority)
+/// 2. Configuration-based patterns (medium priority)
+/// 3. Auto-interception for all public classes (lowest priority)
 /// Provides transparent logging infrastructure that requires no manual service registration by the user.
 /// </summary>
 [UsedImplicitly]
@@ -26,7 +29,7 @@ public sealed class LoggingModule : Module
 {
     /// <summary>
     /// Loads and configures the logging infrastructure components and discovers classes that need logging.
-    /// Orchestrates the entire logging setup process in the correct order.
+    /// Uses a three-tier discovery approach with proper precedence handling.
     /// </summary>
     /// <param name="builder">The Autofac container builder to register components with.</param>
     protected override void Load(ContainerBuilder builder)
@@ -34,28 +37,135 @@ public sealed class LoggingModule : Module
         // Register core logging infrastructure FIRST
         RegisterLoggingInfrastructure(builder);
 
-        // Discover types and populate cache BEFORE registering services
-        var typesNeedingLogging = DiscoverTypesWithLoggingAttributes().ToList();
+        // Discover all potentially interceptable types (expanded discovery)
+        var candidateTypes = DiscoverCandidateTypes().ToList();
 
-        // Register the cache and populate it immediately
-        var loggingConfig = new LoggingConfig(); // or resolve from builder
-        var cache = new InterceptionDecisionCache(loggingConfig);
+        // Create cache that will resolve decisions using the three-tier approach
+        // The LoggingConfig will be resolved when the container is built
+        builder.Register(c =>
+            {
+                var loggingConfig = c.Resolve<LoggingConfig>();
+                var cache = new InterceptionDecisionCache(loggingConfig);
 
-        // Populate the cache with discovered types
-        foreach (var type in typesNeedingLogging)
-        {
-            cache.CacheTypeDecisions(type);
-        }
+                // Populate cache with all candidate types
+                // The cache's decision logic will handle the three-tier precedence
+                foreach (var type in candidateTypes)
+                {
+                    cache.CacheTypeDecisions(type);
+                }
 
-        // Register the populated cache as a singleton
-        builder.RegisterInstance(cache).AsSelf().SingleInstance();
+                return cache;
+            })
+            .AsSelf()
+            .SingleInstance();
 
-        // NOW register services with interception (cache is ready)
-        foreach (var type in typesNeedingLogging)
+        // Register all candidate types with interception
+        // The interceptor will use the cache to determine actual behavior at runtime
+        foreach (var type in candidateTypes)
         {
             RegisterTypeWithLogging(builder, type);
         }
     }
+
+    /// <summary>
+    /// Discovers all types that could potentially be intercepted.
+    /// This is an expanded discovery that includes:
+    /// - Types with logging attributes (existing)
+    /// - All public, non-abstract classes in user assemblies (new)
+    /// The actual interception decisions will be made by the cache at runtime.
+    /// </summary>
+    /// <returns>A list of all types that could potentially need logging interception.</returns>
+    private static List<Type> DiscoverCandidateTypes()
+    {
+        var assemblies = GetScannableAssemblies();
+        var candidateTypes = new List<Type>();
+
+        foreach (var assembly in assemblies)
+        {
+            var discoveredTypes = ScanAssemblyForCandidateTypes(assembly);
+            candidateTypes.AddRange(discoveredTypes);
+        }
+
+        return candidateTypes;
+    }
+
+    /// <summary>
+    /// Scans a single assembly for all potentially interceptable types.
+    /// Includes all public, non-abstract classes that can be intercepted.
+    /// </summary>
+    /// <param name="assembly">The assembly to scan for candidate types.</param>
+    /// <returns>A collection of candidate types from the assembly.</returns>
+    private static IEnumerable<Type> ScanAssemblyForCandidateTypes(Assembly assembly)
+    {
+        try
+        {
+            return GetCandidateTypesFromAssembly(assembly);
+        }
+        catch (ReflectionTypeLoadException ex)
+        {
+            return HandlePartiallyLoadedAssembly(ex);
+        }
+        catch (Exception ex)
+        {
+            LogAssemblyScanFailure(assembly, ex);
+            return Enumerable.Empty<Type>();
+        }
+    }
+
+    /// <summary>
+    /// Gets all potentially interceptable types from a successfully loaded assembly.
+    /// Includes all public, non-abstract classes that have interceptable methods.
+    /// </summary>
+    /// <param name="assembly">The assembly to get types from.</param>
+    /// <returns>Candidate types from the assembly.</returns>
+    private static IEnumerable<Type> GetCandidateTypesFromAssembly(Assembly assembly)
+    {
+        return assembly.GetTypes()
+            .Where(type => type is { IsClass: true, IsPublic: true, IsAbstract: false } &&
+                           HasInterceptableMethods(type));
+    }
+
+    /// <summary>
+    /// Handles assemblies that couldn't be fully loaded due to missing dependencies.
+    /// Extracts the types that were successfully loaded and filters for interceptable types.
+    /// </summary>
+    /// <param name="ex">The ReflectionTypeLoadException containing partially loaded types.</param>
+    /// <returns>Successfully loaded candidate types.</returns>
+    private static IEnumerable<Type> HandlePartiallyLoadedAssembly(ReflectionTypeLoadException ex)
+    {
+        var loadedTypes = ex.Types.Where(t => t != null &&
+                                             t.IsClass &&
+                                             t.IsPublic &&
+                                             !t.IsAbstract &&
+                                             HasInterceptableMethods(t));
+        return loadedTypes!;
+    }
+
+    /// <summary>
+    /// Checks if a type has methods that can be intercepted (public instance methods).
+    /// Used to avoid registering types that can't benefit from interception.
+    /// </summary>
+    /// <param name="type">The type to check for interceptable methods.</param>
+    /// <returns>True if the type has interceptable methods; false otherwise.</returns>
+    private static bool HasInterceptableMethods(Type type)
+    {
+        return type.GetMethods(BindingFlags.Public | BindingFlags.Instance)
+            .Where(m => m.DeclaringType == type) // Only methods declared on this type
+            .Any(ShouldInterceptMethod);
+    }
+
+    /// <summary>
+    /// Determines if a method should be considered for interception based on its characteristics.
+    /// Excludes private methods, static methods, constructors, property accessors, and Object methods.
+    /// </summary>
+    /// <param name="method">The method to evaluate.</param>
+    /// <returns>True if the method should be considered for interception; false if it should be ignored.</returns>
+    private static bool ShouldInterceptMethod(MethodInfo method) =>
+        method is { IsPublic: true, IsStatic: false } and
+        { IsConstructor: false, IsSpecialName: false } && // Excludes property getters/setters, event handlers
+        method.DeclaringType != typeof(object); // Exclude Object methods
+
+    // ... (rest of the existing infrastructure methods remain unchanged)
 
     /// <summary>
     /// Registers the core logging infrastructure components including configuration, formatters, and background services.
@@ -114,15 +224,12 @@ public sealed class LoggingModule : Module
     }
 
     /// <summary>
-    /// Registers the interception components including the decision cache and interceptor.
+    /// Registers the interception components including the interceptor.
+    /// The decision cache is registered separately in the main Load method.
     /// </summary>
     /// <param name="builder">The container builder to register with.</param>
     private static void RegisterInterceptionComponents(ContainerBuilder builder)
     {
-        builder.RegisterType<InterceptionDecisionCache>()
-            .AsSelf()
-            .SingleInstance();
-
         builder.RegisterType<MethodLoggingInterceptor>()
             .AsSelf()
             .InstancePerLifetimeScope();
@@ -272,26 +379,7 @@ public sealed class LoggingModule : Module
     }
 
     /// <summary>
-    /// Scans loaded assemblies to find types that have logging attributes or contain methods with logging attributes.
-    /// Filters assemblies and types to avoid scanning system components and focus on user code.
-    /// </summary>
-    /// <returns>A list of types that require logging interception.</returns>
-    private static List<Type> DiscoverTypesWithLoggingAttributes()
-    {
-        var assemblies = GetScannableAssemblies();
-        var typesWithLogging = new List<Type>();
-
-        foreach (var assembly in assemblies)
-        {
-            var discoveredTypes = ScanAssemblyForLoggingTypes(assembly);
-            typesWithLogging.AddRange(discoveredTypes);
-        }
-
-        return typesWithLogging;
-    }
-
-    /// <summary>
-    /// Gets the list of assemblies that should be scanned for logging attributes.
+    /// Gets the list of assemblies that should be scanned for logging.
     /// Excludes system assemblies and assemblies that don't reference FlexKit.Logging.
     /// </summary>
     /// <returns>A filtered list of assemblies to scan.</returns>
@@ -303,65 +391,8 @@ public sealed class LoggingModule : Module
     }
 
     /// <summary>
-    /// Scans a single assembly for types that have logging attributes, with error handling for problematic assemblies.
-    /// </summary>
-    /// <param name="assembly">The assembly to scan for logging types.</param>
-    /// <returns>A collection of types from the assembly that have logging attributes.</returns>
-    private static IEnumerable<Type> ScanAssemblyForLoggingTypes(Assembly assembly)
-    {
-        try
-        {
-            return GetLoggingTypesFromAssembly(assembly);
-        }
-        catch (ReflectionTypeLoadException ex)
-        {
-            return HandlePartiallyLoadedAssembly(ex);
-        }
-        catch (Exception ex)
-        {
-            LogAssemblyScanFailure(assembly, ex);
-            return Enumerable.Empty<Type>();
-        }
-    }
-
-    /// <summary>
-    /// Gets types with logging attributes from a successfully loaded assembly.
-    /// </summary>
-    /// <param name="assembly">The assembly to get types from.</param>
-    /// <returns>Types from the assembly that have logging attributes.</returns>
-    private static IEnumerable<Type> GetLoggingTypesFromAssembly(Assembly assembly)
-    {
-        return assembly.GetTypes()
-            .Where(type => type is { IsClass: true, IsPublic: true, IsAbstract: false } &&
-                           HasLoggingAttributes(type));
-    }
-
-    /// <summary>
-    /// Handles assemblies that couldn't be fully loaded due to missing dependencies.
-    /// Extracts the types that were successfully loaded and filters for logging attributes.
-    /// </summary>
-    /// <param name="ex">The ReflectionTypeLoadException containing partially loaded types.</param>
-    /// <returns>Successfully loaded types that have logging attributes.</returns>
-    private static IEnumerable<Type> HandlePartiallyLoadedAssembly(ReflectionTypeLoadException ex)
-    {
-        var loadedTypes = ex.Types.Where(t => t != null && HasLoggingAttributes(t));
-        // ReSharper disable once NullableWarningSuppressionIsUsed
-        return loadedTypes!;
-    }
-
-    /// <summary>
-    /// Logs a warning when an assembly scan fails completely.
-    /// </summary>
-    /// <param name="assembly">The assembly that failed to scan.</param>
-    /// <param name="ex">The exception that occurred during scanning.</param>
-    private static void LogAssemblyScanFailure(Assembly assembly, Exception ex)
-    {
-        Debug.WriteLine($"Warning: Failed to scan assembly {assembly.FullName}: {ex.Message}");
-    }
-
-    /// <summary>
-    /// Determines if an assembly should be scanned for logging attributes.
-    /// Excludes system assemblies and other known assemblies that won't have user logging attributes.
+    /// Determines if an assembly should be scanned for logging.
+    /// Excludes system assemblies and other known assemblies that won't have user logging.
     /// </summary>
     /// <param name="assembly">The assembly to evaluate for scanning.</param>
     /// <returns>True if the assembly should be scanned; false if it should be skipped.</returns>
@@ -405,7 +436,7 @@ public sealed class LoggingModule : Module
     }
 
     /// <summary>
-    /// Checks if an assembly references FlexKit.Logging, indicating it might contain logging attributes.
+    /// Checks if an assembly references FlexKit.Logging, indicating it might contain logging.
     /// </summary>
     /// <param name="assembly">The assembly to check references for.</param>
     /// <returns>True if the assembly references FlexKit.Logging; false otherwise.</returns>
@@ -423,26 +454,6 @@ public sealed class LoggingModule : Module
         {
             return false;
         }
-    }
-
-    /// <summary>
-    /// Checks if a type has logging attributes at the class level or any of its methods have logging attributes.
-    /// </summary>
-    /// <param name="type">The type to check for logging attributes.</param>
-    /// <returns>True if the type or its methods have logging attributes; false otherwise.</returns>
-    private static bool HasLoggingAttributes(Type type)
-    {
-        // Check class-level attributes
-        if (AttributeResolver.HasLoggingAttributes(type))
-        {
-            return true;
-        }
-
-        // Check method-level attributes
-        var methods = type.GetMethods(BindingFlags.Public | BindingFlags.Instance)
-            .Where(m => m.DeclaringType == type); // Only methods declared on this type
-
-        return methods.Any(AttributeResolver.HasLoggingAttributes);
     }
 
     /// <summary>
@@ -552,5 +563,15 @@ public sealed class LoggingModule : Module
         return name.StartsWith("System.", StringComparison.InvariantCulture) ||
                name.StartsWith("Microsoft.", StringComparison.InvariantCulture) ||
                interfaceType.Assembly == typeof(object).Assembly;
+    }
+
+    /// <summary>
+    /// Logs a warning when an assembly scan fails completely.
+    /// </summary>
+    /// <param name="assembly">The assembly that failed to scan.</param>
+    /// <param name="ex">The exception that occurred during scanning.</param>
+    private static void LogAssemblyScanFailure(Assembly assembly, Exception ex)
+    {
+        Debug.WriteLine($"Warning: Failed to scan assembly {assembly.FullName}: {ex.Message}");
     }
 }

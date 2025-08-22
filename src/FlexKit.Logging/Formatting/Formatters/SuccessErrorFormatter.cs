@@ -21,7 +21,8 @@ namespace FlexKit.Logging.Formatting.Formatters;
 [UsedImplicitly]
 public sealed class SuccessErrorFormatter(IMessageTranslator translator) : IMessageFormatter
 {
-    private readonly IMessageTranslator _translator = translator ?? throw new ArgumentNullException(nameof(translator));
+    private readonly IMessageTranslator _translator =
+        translator ?? throw new ArgumentNullException(nameof(translator));
 
     /// <inheritdoc />
     public FormatterType FormatterType => FormatterType.SuccessError;
@@ -164,7 +165,9 @@ public sealed class SuccessErrorFormatter(IMessageTranslator translator) : IMess
     /// </summary>
     /// <param name="entry">The log entry to extract parameters from.</param>
     /// <returns>A dictionary of parameters available for template substitution.</returns>
-    [SuppressMessage("Performance", "CA1859:Use concrete types when possible for improved performance")]
+    [SuppressMessage(
+        "Performance",
+        "CA1859:Use concrete types when possible for improved performance")]
     private static IReadOnlyDictionary<string, object?> ExtractParameters(in LogEntry entry)
     {
         var parameters = new Dictionary<string, object?>();
@@ -227,6 +230,7 @@ public sealed class SuccessErrorFormatter(IMessageTranslator translator) : IMess
 
         parameters["ExceptionType"] = entry.ExceptionType ?? "UnknownException";
         parameters["ExceptionMessage"] = entry.ExceptionMessage ?? "No exception message available";
+        parameters["StackTrace"] = entry.StackTrace ?? "No stack trace available";
     }
 
     /// <summary>
