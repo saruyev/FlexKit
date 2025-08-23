@@ -177,4 +177,10 @@ public class LoggingConfig
     /// <value>The name of the ActivitySource to use for manual logging. The default is "FlexKit.Logging".</value>
     [UsedImplicitly]
     public string ActivitySourceName { get; set; } = "FlexKit.Logging";
+
+    /// <summary>
+    /// Gets or sets whether input/output parameters should be JSON serialized.
+    /// Default is true for MEL compatibility. Serilog sets this to false for structured logging.
+    /// </summary>
+    public bool RequiresSerialization { get; set; } = true;
 }

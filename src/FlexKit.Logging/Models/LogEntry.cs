@@ -171,7 +171,7 @@ public readonly record struct LogEntry
     /// Used when LogInput or LogBoth behavior is enabled.
     /// </summary>
     /// <param name="inputParameters">The serialized input parameters.</param>
-    public LogEntry WithInput(string? inputParameters) =>
+    public LogEntry WithInput(object? inputParameters) =>
         this with
         {
             InputParameters = inputParameters
@@ -218,7 +218,7 @@ public readonly record struct LogEntry
     /// Used when LogOutput or LogBoth behavior is enabled.
     /// </summary>
     /// <param name="outputValue">The output value to log.</param>
-    public LogEntry WithOutput(string? outputValue) =>
+    public LogEntry WithOutput(object? outputValue) =>
         this with
         {
             OutputValue = outputValue
