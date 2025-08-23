@@ -304,13 +304,13 @@ public sealed partial class CustomTemplateFormatter(IMessageTranslator translato
         Dictionary<string, object?> parameters,
         in LogEntry entry)
     {
-        var inputDisplay = JsonParameterUtils.FormatParametersForDisplay(entry.InputParameters);
+        var inputDisplay = JsonParameterUtils.FormatParametersForDisplay(entry.InputParameters?.ToString());
         if (!string.IsNullOrEmpty(inputDisplay))
         {
             parameters["InputParameters"] = inputDisplay;
         }
 
-        parameters["OutputValue"] = JsonParameterUtils.FormatOutputForDisplay(entry.OutputValue);
+        parameters["OutputValue"] = JsonParameterUtils.FormatOutputForDisplay(entry.OutputValue?.ToString());
     }
 
     /// <summary>

@@ -100,13 +100,13 @@ public sealed class JsonFormatter : IMessageFormatter
         in LogEntry entry,
         JsonFormatterSettings settings)
     {
-        var inputParams = JsonParameterUtils.ParseParametersAsJson(entry.InputParameters);
+        var inputParams = JsonParameterUtils.ParseParametersAsJson(entry.InputParameters?.ToString());
         if (inputParams != null)
         {
             jsonObject[GetPropertyName("input_parameters", settings)] = inputParams;
         }
 
-        var outputValue = JsonParameterUtils.ParseOutputAsJson(entry.OutputValue);
+        var outputValue = JsonParameterUtils.ParseOutputAsJson(entry.OutputValue?.ToString());
         if (outputValue == null)
         {
             return;

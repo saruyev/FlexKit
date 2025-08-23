@@ -67,16 +67,16 @@ public readonly record struct LogEntry
     public int ThreadId { get; private init; }
 
     /// <summary>
-    /// Gets the serialized input parameters if LogInput or LogBoth behavior was used.
+    /// Gets the raw input parameters if LogInput or LogBoth behavior was used.
     /// Null if input logging was not enabled for this method.
     /// </summary>
-    public string? InputParameters { get; private init; }
+    public object? InputParameters { get; private init; }
 
     /// <summary>
-    /// Gets the serialized output value if LogOutput or LogBoth behavior was used.
+    /// Gets the raw output value if LogOutput or LogBoth behavior was used.
     /// Null if output logging was not enabled or the method returned void.
     /// </summary>
-    public string? OutputValue { get; private init; }
+    public object? OutputValue { get; private init; }
 
     /// <summary>
     /// Gets the name of the logging template associated with this log entry.

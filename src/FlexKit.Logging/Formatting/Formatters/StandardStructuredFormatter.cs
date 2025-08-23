@@ -132,12 +132,12 @@ public sealed class StandardStructuredFormatter(IMessageTranslator translator) :
     {
         var template = baseTemplate;
 
-        if (!string.IsNullOrEmpty(entry.InputParameters))
+        if (!string.IsNullOrEmpty(entry.InputParameters?.ToString()))
         {
             template += " | Input: {InputParameters}";
         }
 
-        if (!string.IsNullOrEmpty(entry.OutputValue))
+        if (!string.IsNullOrEmpty(entry.OutputValue?.ToString()))
         {
             template += " | Output: {OutputValue}";
         }
@@ -244,13 +244,13 @@ public sealed class StandardStructuredFormatter(IMessageTranslator translator) :
         Dictionary<string, object?> parameters,
         in LogEntry entry)
     {
-        var inputDisplay = JsonParameterUtils.FormatParametersForDisplay(entry.InputParameters);
+        var inputDisplay = JsonParameterUtils.FormatParametersForDisplay(entry.InputParameters?.ToString());
         if (!string.IsNullOrEmpty(inputDisplay))
         {
             parameters["InputParameters"] = inputDisplay;
         }
 
-        parameters["OutputValue"] = JsonParameterUtils.FormatOutputForDisplay(entry.OutputValue);
+        parameters["OutputValue"] = JsonParameterUtils.FormatOutputForDisplay(entry.OutputValue?.ToString());
     }
 
     /// <summary>

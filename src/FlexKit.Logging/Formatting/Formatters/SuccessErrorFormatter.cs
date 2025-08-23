@@ -147,12 +147,12 @@ public sealed class SuccessErrorFormatter(IMessageTranslator translator) : IMess
     {
         var template = baseTemplate;
 
-        if (!string.IsNullOrEmpty(entry.InputParameters))
+        if (!string.IsNullOrEmpty(entry.InputParameters?.ToString()))
         {
             template += " | Input: {InputParameters}";
         }
 
-        if (includeOutput && !string.IsNullOrEmpty(entry.OutputValue))
+        if (includeOutput && !string.IsNullOrEmpty(entry.OutputValue?.ToString()))
         {
             template += " | Output: {OutputValue}";
         }
@@ -261,13 +261,13 @@ public sealed class SuccessErrorFormatter(IMessageTranslator translator) : IMess
         Dictionary<string, object?> parameters,
         in LogEntry entry)
     {
-        var inputDisplay = JsonParameterUtils.FormatParametersForDisplay(entry.InputParameters);
+        var inputDisplay = JsonParameterUtils.FormatParametersForDisplay(entry.InputParameters?.ToString());
         if (!string.IsNullOrEmpty(inputDisplay))
         {
             parameters["InputParameters"] = inputDisplay;
         }
 
-        parameters["OutputValue"] = JsonParameterUtils.FormatOutputForDisplay(entry.OutputValue);
+        parameters["OutputValue"] = JsonParameterUtils.FormatOutputForDisplay(entry.OutputValue?.ToString());
     }
 
     /// <summary>
