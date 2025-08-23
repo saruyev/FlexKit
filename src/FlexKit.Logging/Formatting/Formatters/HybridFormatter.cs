@@ -303,18 +303,21 @@ public sealed class HybridFormatter : IMessageFormatter
         in LogEntry entry,
         HybridFormatterSettings settings)
     {
+        var inputParameters = entry.InputParameters?.ToString();
+        var outputValue = entry.OutputValue?.ToString();
+
         if ((settings.MetadataFields.Count == 0 || settings.MetadataFields.Contains("input_parameters"))
-            && !string.IsNullOrEmpty(entry.InputParameters))
+            && !string.IsNullOrEmpty(inputParameters))
         {
-            metadata["input_parameters"] = JsonParameterUtils.ParseParametersAsJson(entry.InputParameters);
+            metadata["input_parameters"] = JsonParameterUtils.ParseParametersAsJson(inputParameters);
         }
 
         if ((settings.MetadataFields.Count != 0 && !settings.MetadataFields.Contains("output_value"))
-            || string.IsNullOrEmpty(entry.OutputValue))
+            || string.IsNullOrEmpty(outputValue))
         {
             return;
         }
 
-        metadata["output_value"] = JsonParameterUtils.ParseOutputAsJson(entry.OutputValue);
+        metadata["output_value"] = JsonParameterUtils.ParseOutputAsJson(outputValue);
     }
 }
