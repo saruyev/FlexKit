@@ -27,8 +27,17 @@ public sealed class InterceptionDecisionCache(LoggingConfig loggingConfig)
     private readonly ConcurrentDictionary<Type, ConcurrentDictionary<MethodInfo, InterceptionDecision?>>
         _typeDecisions = new();
 
-    private readonly LoggingConfig _loggingConfig =
-        loggingConfig ?? throw new ArgumentNullException(nameof(loggingConfig));
+    /// <summary>
+    /// Gets the configuration settings for logging, used to store
+    /// logging-related configuration and determine interception decisions
+    /// within the system.
+    /// </summary>
+    /// <remarks>
+    /// The <see cref="Config"/> property is initialized through the constructor
+    /// and cannot be null. It provides access to the logging configuration
+    /// defined in the application's settings.
+    /// </remarks>
+    public LoggingConfig Config { get; } = loggingConfig ?? throw new ArgumentNullException(nameof(loggingConfig));
 
     /// <summary>
     /// Gets the cached interception decision for a method, or computes and caches it if not present.
@@ -123,14 +132,7 @@ public sealed class InterceptionDecisionCache(LoggingConfig loggingConfig)
         }
 
         // TIER 2: Check configuration patterns (medium priority)
-        var configDecision = ResolveFromConfiguration(declaringType);
-        if (configDecision.HasValue)
-        {
-            return configDecision.Value; // Use configuration-based decision
-        }
-
-        // TIER 3: Check auto-interception (the lowest priority)
-        return ResolveFromAutoIntercept(declaringType);
+        return ResolveFromConfiguration(declaringType) ?? ResolveFromAutoIntercept(declaringType);
     }
 
     /// <summary>
@@ -141,19 +143,19 @@ public sealed class InterceptionDecisionCache(LoggingConfig loggingConfig)
     /// <returns>The configured InterceptionDecision if a matching pattern is found; null otherwise.</returns>
     private InterceptionDecision? ResolveFromConfiguration(Type type)
     {
-        if (type.FullName == null || _loggingConfig.Services.Count == 0)
+        if (type.FullName == null || Config.Services.Count == 0)
         {
             return null;
         }
 
         // Check for the exact match first (the highest precedence within configuration)
-        if (_loggingConfig.Services.TryGetValue(type.FullName, out var exactConfig))
+        if (Config.Services.TryGetValue(type.FullName, out var exactConfig))
         {
             return exactConfig.GetDecision();
         }
 
         // Check for wildcard patterns (lower precedence within configuration)
-        foreach (var (pattern, config) in _loggingConfig.Services)
+        foreach (var (pattern, config) in Config.Services)
         {
             if (pattern.EndsWith('*') && type.FullName.StartsWith(pattern[..^1], StringComparison.InvariantCulture))
             {
@@ -173,7 +175,7 @@ public sealed class InterceptionDecisionCache(LoggingConfig loggingConfig)
     private InterceptionDecision? ResolveFromAutoIntercept(Type type)
     {
         // Only auto-intercept if enabled in configuration
-        if (!_loggingConfig.AutoIntercept)
+        if (!Config.AutoIntercept)
         {
             return null;
         }
@@ -270,13 +272,13 @@ public sealed class InterceptionDecisionCache(LoggingConfig loggingConfig)
     private InterceptionConfig? FindMatchingConfiguration(string typeName)
     {
         // Check the exact match first
-        if (_loggingConfig.Services.TryGetValue(typeName, out var exactConfig))
+        if (Config.Services.TryGetValue(typeName, out var exactConfig))
         {
             return exactConfig;
         }
 
         // Check wildcard patterns
-        foreach (var (pattern, config) in _loggingConfig.Services)
+        foreach (var (pattern, config) in Config.Services)
         {
             if (pattern.EndsWith('*') && typeName.StartsWith(pattern[..^1], StringComparison.InvariantCulture))
             {

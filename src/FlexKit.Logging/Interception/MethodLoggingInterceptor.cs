@@ -124,7 +124,9 @@ public sealed class MethodLoggingInterceptor(
 
         if (ShouldLogOutput(decision))
         {
-            var output = SerializeOutputValue(invocation.ReturnValue);
+            var output = _cache.Config.RequiresSerialization
+                ? SerializeOutputValue(invocation.ReturnValue)
+                : invocation.ReturnValue;
             entry = entry.WithOutput(output);
         }
 
@@ -306,8 +308,16 @@ public sealed class MethodLoggingInterceptor(
             decision.Level).WithErrorLevel(decision.ExceptionLevel).WithTarget(decision.Target);
 
         // Add input parameters if required
-        return decision.Behavior is not InterceptionBehavior.LogInput and not InterceptionBehavior.LogBoth ?
-            entry : entry.WithInput(SerializeInputParameters(invocation.Arguments, invocation.Method));
+        if (decision.Behavior is not InterceptionBehavior.LogInput and not InterceptionBehavior.LogBoth)
+        {
+            return entry;
+        }
+
+        object inputData = _cache.Config.RequiresSerialization
+            ? SerializeInputParameters(invocation.Arguments, invocation.Method)
+            : CreateParameterStructures(invocation.Arguments, invocation.Method.GetParameters());
+
+        return entry.WithInput(inputData);
     }
 
     /// <summary>
@@ -360,7 +370,7 @@ public sealed class MethodLoggingInterceptor(
     /// <param name="arguments">The method arguments to structure.</param>
     /// <param name="parameters">The parameter metadata from the method.</param>
     /// <returns>An array of structured parameter objects.</returns>
-    private static object[] CreateParameterStructures(
+    private object[] CreateParameterStructures(
         object[] arguments,
         ParameterInfo[] parameters) =>
         [.. arguments.Select((arg, index) => CreateSingleParameterStructure(arg, index, parameters))];
@@ -373,20 +383,20 @@ public sealed class MethodLoggingInterceptor(
     /// <param name="index">The parameter index in the argument list.</param>
     /// <param name="parameters">The parameter metadata array.</param>
     /// <returns>An anonymous object containing a parameter name, type, and serialized value.</returns>
-    private static object CreateSingleParameterStructure(
+    private object CreateSingleParameterStructure(
         object? argument,
         int index,
         ParameterInfo[] parameters)
     {
         var parameterName = GetParameterName(index, parameters);
         var parameterType = GetParameterType(argument, index, parameters);
-        var serializedValue = SerializeValueForJson(argument);
+        var parameterValue = _cache.Config.RequiresSerialization ? SerializeValueForJson(argument) : argument;
 
         return new
         {
             name = parameterName,
             type = parameterType,
-            value = serializedValue
+            value = parameterValue
         };
     }
 
