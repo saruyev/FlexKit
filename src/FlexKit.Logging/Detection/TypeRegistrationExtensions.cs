@@ -33,7 +33,7 @@ internal static class TypeRegistrationExtensions
     /// </summary>
     /// <param name="builder">The Autofac container builder.</param>
     /// <param name="type">Type to register with logging interception.</param>
-    public static void RegisterTypeWithLogging(this ContainerBuilder builder, Type type)
+    private static void RegisterTypeWithLogging(this ContainerBuilder builder, Type type)
     {
         var userInterfaces = GetUserInterfaces(type);
 
@@ -58,7 +58,7 @@ internal static class TypeRegistrationExtensions
     /// <param name="builder">The Autofac container builder.</param>
     /// <param name="type">The implementation type.</param>
     /// <param name="interfaces">User-defined interfaces to register as.</param>
-    public static void RegisterWithInterfaceInterception(this ContainerBuilder builder, Type type, IList<Type> interfaces) =>
+    private static void RegisterWithInterfaceInterception(this ContainerBuilder builder, Type type, IList<Type> interfaces) =>
         builder.RegisterType(type)
             .As(interfaces.ToArray())
             .EnableInterfaceInterceptors()
@@ -71,7 +71,7 @@ internal static class TypeRegistrationExtensions
     /// </summary>
     /// <param name="builder">The Autofac container builder.</param>
     /// <param name="type">The type to register with class interception.</param>
-    public static void RegisterWithClassInterception(this ContainerBuilder builder, Type type) =>
+    private static void RegisterWithClassInterception(this ContainerBuilder builder, Type type) =>
         builder.RegisterType(type)
             .AsSelf()
             .EnableClassInterceptors()
@@ -84,7 +84,7 @@ internal static class TypeRegistrationExtensions
     /// </summary>
     /// <param name="builder">The Autofac container builder.</param>
     /// <param name="type">The type to register without interception.</param>
-    public static void RegisterWithoutInterception(this ContainerBuilder builder, Type type)
+    private static void RegisterWithoutInterception(this ContainerBuilder builder, Type type)
     {
         Debug.WriteLine(
             $"Warning: Cannot intercept {type.FullName} - class is sealed or has no virtual methods. " +
@@ -95,9 +95,20 @@ internal static class TypeRegistrationExtensions
             .InstancePerLifetimeScope();
     }
 
+    /// <summary>
+    /// Retrieves a list of user-defined interfaces implemented by the specified type,
+    /// excluding interfaces from .NET or Microsoft system libraries.
+    /// </summary>
+    /// <param name="type">The type for which user-defined interfaces are to be retrieved.</param>
+    /// <returns>A list of user-defined interface types implemented by the specified type.</returns>
     private static List<Type> GetUserInterfaces(Type type) =>
         [.. type.GetInterfaces().Where(i => !IsSystemInterface(i))];
 
+    /// <summary>
+    /// Determines whether the given interface type belongs to the .NET or Microsoft system libraries.
+    /// </summary>
+    /// <param name="interfaceType">The interface type to evaluate.</param>
+    /// <returns>True if the interface is part of the system libraries; otherwise, false.</returns>
     private static bool IsSystemInterface(Type interfaceType)
     {
         var name = interfaceType.FullName ?? "";
@@ -107,6 +118,13 @@ internal static class TypeRegistrationExtensions
                interfaceType.Assembly == typeof(object).Assembly;
     }
 
+    /// <summary>
+    /// Determines whether a given type can be intercepted using class-based interception.
+    /// A type is eligible if it is non-sealed and has at least one public virtual method
+    /// that is not final and is not inherited from the <see cref="object"/> class.
+    /// </summary>
+    /// <param name="type">The type to evaluate for class-based interception support.</param>
+    /// <returns>True if the type can be intercepted using class-based interception; otherwise, false.</returns>
     private static bool CanUseClassInterception(Type type)
     {
         // Class must not be sealed

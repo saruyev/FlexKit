@@ -26,8 +26,10 @@ public sealed class FormattedLogWriter(
     IMessageFormatterFactory formatterFactory,
     ILoggerFactory loggerFactory) : ILogEntryProcessor
 {
-    private readonly IMessageFormatterFactory _formatterFactory = formatterFactory ?? throw new ArgumentNullException(nameof(formatterFactory));
-    private readonly ILoggerFactory _loggerFactory = loggerFactory ?? throw new ArgumentNullException(nameof(loggerFactory));
+    private readonly IMessageFormatterFactory _formatterFactory =
+        formatterFactory ?? throw new ArgumentNullException(nameof(formatterFactory));
+    private readonly ILoggerFactory _loggerFactory =
+        loggerFactory ?? throw new ArgumentNullException(nameof(loggerFactory));
     private readonly ConcurrentDictionary<string, ILogger> _loggerCache = new();
     private static readonly Action<ILogger, string, Exception?> _logTrace =
         LoggerMessage.Define<string>(LogLevel.Trace, new EventId(1), "{Message}");

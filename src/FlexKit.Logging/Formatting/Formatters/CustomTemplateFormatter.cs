@@ -1,12 +1,10 @@
 using System.Collections.Concurrent;
-using System.Diagnostics.CodeAnalysis;
 using System.Text.RegularExpressions;
 using FlexKit.Logging.Configuration;
 using FlexKit.Logging.Formatting.Core;
 using FlexKit.Logging.Formatting.Models;
 using FlexKit.Logging.Formatting.Translation;
 using FlexKit.Logging.Formatting.Utils;
-using FlexKit.Logging.Models;
 using JetBrains.Annotations;
 
 namespace FlexKit.Logging.Formatting.Formatters;
@@ -58,13 +56,28 @@ public sealed partial class CustomTemplateFormatter(IMessageTranslator translato
                 ? GetCachedTemplate(template)
                 : template;
 
-            var parameters = ExtractParameters(context);
+            IReadOnlyDictionary<string, object?> parameters;
+
+            if (context.DisableFormatting)
+            {
+                parameters = context.ExtractParameters();
+            }
+            else
+
+            {
+                parameters = context.FormatterType == FormatterType.CustomTemplate
+                    ? context.Stringify().ExtractParameters()
+                    : context.Jsonify().ExtractParameters();
+            }
+
             var translatedTemplate = _translator.TranslateTemplate(processedTemplate);
-            var translatedParameters = _translator.TranslateParameters(parameters);
+            var translatedParameters =
+                _translator.TranslateParameters(parameters, processedTemplate);
 
-            var message = FormatMessage(translatedTemplate, translatedParameters);
-
-            return FormattedMessage.Success(message);
+            return context.DisableFormatting
+                ? FormattedMessage.Success(translatedTemplate, translatedParameters)
+                : FormattedMessage.Success(FormatMessage(translatedTemplate, translatedParameters))
+                    .WithParameters(translatedParameters);
         }
         catch (Exception ex)
         {
@@ -82,7 +95,7 @@ public sealed partial class CustomTemplateFormatter(IMessageTranslator translato
         var customSettings = context.Configuration.Formatters.CustomTemplate;
         var template = GetCustomTemplate(context, customSettings);
         return !string.IsNullOrEmpty(template) &&
-               _translator.CanTranslate(template, ExtractParameters(context));
+               _translator.CanTranslate(template, context.ExtractParameters());
     }
 
     /// <summary>
@@ -202,133 +215,6 @@ public sealed partial class CustomTemplateFormatter(IMessageTranslator translato
     }
 
     /// <summary>
-    /// Extracts all available parameters from the formatting context for template substitution.
-    /// </summary>
-    /// <param name="context">The formatting context containing log entry and additional properties.</param>
-    /// <returns>A dictionary of parameters available for template substitution.</returns>
-    [SuppressMessage(
-        "Performance",
-        "CA1859:Use concrete types when possible for improved performance")]
-    private static IReadOnlyDictionary<string, object?> ExtractParameters(in FormattingContext context)
-    {
-        var parameters = new Dictionary<string, object?>();
-
-        AddBasicParameters(parameters, context.LogEntry);
-        AddDurationParameters(parameters, context.LogEntry);
-        AddExceptionParameters(parameters, context.LogEntry);
-        AddActivityParameters(parameters, context.LogEntry);
-        AddInputOutputParameters(parameters, context.LogEntry);
-        AddContextProperties(parameters, context.Properties);
-
-        return parameters;
-    }
-
-    /// <summary>
-    /// Adds basic log entry parameters like method name, type, success status, etc.
-    /// </summary>
-    /// <param name="parameters">The parameter dictionary to populate.</param>
-    /// <param name="entry">The log entry containing basic information.</param>
-    private static void AddBasicParameters(
-        Dictionary<string, object?> parameters,
-        in LogEntry entry)
-    {
-        parameters["MethodName"] = entry.MethodName;
-        parameters["TypeName"] = entry.TypeName;
-        parameters["Success"] = entry.Success;
-        parameters["ThreadId"] = entry.ThreadId;
-        parameters["Id"] = entry.Id.ToString();
-        parameters["Timestamp"] = entry.Timestamp.ToString("O");
-    }
-
-    /// <summary>
-    /// Adds duration-related parameters if available in the log entry.
-    /// </summary>
-    /// <param name="parameters">The parameter dictionary to populate.</param>
-    /// <param name="entry">The log entry that may contain duration information.</param>
-    private static void AddDurationParameters(
-        Dictionary<string, object?> parameters,
-        in LogEntry entry)
-    {
-        if (!entry.DurationTicks.HasValue)
-        {
-            parameters["Duration"] = 0;
-            return;
-        }
-
-        var duration = TimeSpan.FromTicks(entry.DurationTicks.Value);
-        parameters["Duration"] = Math.Round(duration.TotalMilliseconds, 2);
-        parameters["DurationSeconds"] = Math.Round(duration.TotalSeconds, 3);
-    }
-
-    /// <summary>
-    /// Adds exception-related parameters if the log entry represents a failure.
-    /// </summary>
-    /// <param name="parameters">The parameter dictionary to populate.</param>
-    /// <param name="entry">The log entry that may contain exception information.</param>
-    private static void AddExceptionParameters(
-        Dictionary<string, object?> parameters,
-        in LogEntry entry)
-    {
-        if (entry.Success)
-        {
-            return;
-        }
-
-        parameters["ExceptionType"] = entry.ExceptionType;
-        parameters["ExceptionMessage"] = entry.ExceptionMessage;
-    }
-
-    /// <summary>
-    /// Adds activity tracking parameters if available in the log entry.
-    /// </summary>
-    /// <param name="parameters">The parameter dictionary to populate.</param>
-    /// <param name="entry">The log entry that may contain activity information.</param>
-    private static void AddActivityParameters(
-        Dictionary<string, object?> parameters,
-        in LogEntry entry)
-    {
-        if (string.IsNullOrEmpty(entry.ActivityId))
-        {
-            return;
-        }
-
-        parameters["ActivityId"] = entry.ActivityId;
-    }
-
-    /// <summary>
-    /// Adds formatted input and output parameters if available in the log entry.
-    /// </summary>
-    /// <param name="parameters">The parameter dictionary to populate.</param>
-    /// <param name="entry">The log entry that may contain input/output data.</param>
-    private static void AddInputOutputParameters(
-        Dictionary<string, object?> parameters,
-        in LogEntry entry)
-    {
-        var inputDisplay = JsonParameterUtils.FormatParametersForDisplay(entry.InputParameters?.ToString());
-        if (!string.IsNullOrEmpty(inputDisplay))
-        {
-            parameters["InputParameters"] = inputDisplay;
-        }
-
-        parameters["OutputValue"] = JsonParameterUtils.FormatOutputForDisplay(entry.OutputValue?.ToString());
-    }
-
-    /// <summary>
-    /// Adds additional properties from the formatting context to the parameter dictionary.
-    /// </summary>
-    /// <param name="parameters">The parameter dictionary to populate.</param>
-    /// <param name="contextProperties">Additional properties from the formatting context.</param>
-    private static void AddContextProperties(
-        Dictionary<string, object?> parameters,
-        IReadOnlyDictionary<string, object?> contextProperties)
-    {
-        foreach (var property in contextProperties)
-        {
-            parameters[property.Key] = property.Value;
-        }
-    }
-
-    /// <summary>
     /// Formats a template string by replacing placeholders with parameter values.
     /// </summary>
     /// <param name="template">The template string containing placeholders.</param>
@@ -399,7 +285,7 @@ public sealed partial class CustomTemplateFormatter(IMessageTranslator translato
         }
 
         // Additional validation could check if all placeholders have corresponding parameters
-        var parameters = ExtractParameters(context);
+        var parameters = context.ExtractParameters();
 
         // Extract placeholder names from the template
         var placeholders = PlaceholderRegex().Matches(template)

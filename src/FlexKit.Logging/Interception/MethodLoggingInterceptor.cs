@@ -1,8 +1,6 @@
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using Castle.DynamicProxy;
 using FlexKit.Logging.Configuration;
 using FlexKit.Logging.Core;
@@ -124,10 +122,7 @@ public sealed class MethodLoggingInterceptor(
 
         if (ShouldLogOutput(decision))
         {
-            var output = _cache.Config.RequiresSerialization
-                ? SerializeOutputValue(invocation.ReturnValue)
-                : invocation.ReturnValue;
-            entry = entry.WithOutput(output);
+            entry = entry.WithOutput(invocation.ReturnValue);
         }
 
         TryEnqueueEntry(entry);
@@ -168,9 +163,7 @@ public sealed class MethodLoggingInterceptor(
 
             if (details.Success && ShouldLogOutput(decision))
             {
-                var actualResult = ExtractTaskResult(completedTask);
-                var output = SerializeOutputValue(actualResult);
-                entry = entry.WithOutput(output);
+                entry = entry.WithOutput(ExtractTaskResult(completedTask));
             }
 
             TryEnqueueEntry(entry);
@@ -298,9 +291,9 @@ public sealed class MethodLoggingInterceptor(
     /// <param name="invocation">The method invocation context.</param>
     /// <param name="decision">The interception decision that determines what to log and at what level.</param>
     /// <returns>A log entry representing the method's start with optional input parameters.</returns>
-    private LogEntry CreateStartEntry(
+    private static LogEntry CreateStartEntry(
         IInvocation invocation,
-        InterceptionDecision decision)
+        in InterceptionDecision decision)
     {
         var entry = LogEntry.CreateStart(
             invocation.Method.Name,
@@ -308,16 +301,9 @@ public sealed class MethodLoggingInterceptor(
             decision.Level).WithErrorLevel(decision.ExceptionLevel).WithTarget(decision.Target);
 
         // Add input parameters if required
-        if (decision.Behavior is not InterceptionBehavior.LogInput and not InterceptionBehavior.LogBoth)
-        {
-            return entry;
-        }
-
-        object inputData = _cache.Config.RequiresSerialization
-            ? SerializeInputParameters(invocation.Arguments, invocation.Method)
-            : CreateParameterStructures(invocation.Arguments, invocation.Method.GetParameters());
-
-        return entry.WithInput(inputData);
+        return decision.Behavior is not InterceptionBehavior.LogInput and not InterceptionBehavior.LogBoth
+            ? entry
+            : entry.WithInput(CreateParameterStructures(invocation.Arguments, invocation.Method.GetParameters()));
     }
 
     /// <summary>
@@ -335,42 +321,13 @@ public sealed class MethodLoggingInterceptor(
     }
 
     /// <summary>
-    /// Serializes method input parameters for logging with actual parameter names.
-    /// Creates a structured format that works well for both JSON and text formatters.
-    /// </summary>
-    /// <param name="arguments">The method arguments to serialize.</param>
-    /// <param name="method">The method info to get parameter names from.</param>
-    /// <returns>A JSON string containing structured parameter information.</returns>
-    private string SerializeInputParameters(
-        object[]? arguments,
-        MethodInfo method)
-    {
-        try
-        {
-            if (arguments == null || arguments.Length == 0)
-            {
-                return JsonSerializer.Serialize(Array.Empty<object>());
-            }
-
-            var parameters = method.GetParameters();
-            var structuredArgs = CreateParameterStructures(arguments, parameters);
-            return JsonSerializer.Serialize(structuredArgs);
-        }
-        catch (Exception ex)
-        {
-            _logSerializationFailure(_logger, ex);
-            return JsonSerializer.Serialize(new[] { new { error = "Serialization failed", message = ex.Message } });
-        }
-    }
-
-    /// <summary>
     /// Creates structured parameter objects from method arguments and parameter metadata.
-    /// Each parameter includes name, type, and serialized value information.
+    /// Each parameter includes a name, type, and serialized value information.
     /// </summary>
     /// <param name="arguments">The method arguments to structure.</param>
     /// <param name="parameters">The parameter metadata from the method.</param>
     /// <returns>An array of structured parameter objects.</returns>
-    private object[] CreateParameterStructures(
+    private static object[] CreateParameterStructures(
         object[] arguments,
         ParameterInfo[] parameters) =>
         [.. arguments.Select((arg, index) => CreateSingleParameterStructure(arg, index, parameters))];
@@ -383,22 +340,14 @@ public sealed class MethodLoggingInterceptor(
     /// <param name="index">The parameter index in the argument list.</param>
     /// <param name="parameters">The parameter metadata array.</param>
     /// <returns>An anonymous object containing a parameter name, type, and serialized value.</returns>
-    private object CreateSingleParameterStructure(
+    private static InputParameter CreateSingleParameterStructure(
         object? argument,
         int index,
-        ParameterInfo[] parameters)
-    {
-        var parameterName = GetParameterName(index, parameters);
-        var parameterType = GetParameterType(argument, index, parameters);
-        var parameterValue = _cache.Config.RequiresSerialization ? SerializeValueForJson(argument) : argument;
-
-        return new
-        {
-            name = parameterName,
-            type = parameterType,
-            value = parameterValue
-        };
-    }
+        ParameterInfo[] parameters) =>
+        new(
+            GetParameterName(index, parameters),
+            GetParameterType(argument, index, parameters),
+            argument);
 
     /// <summary>
     /// Gets the parameter name from metadata or generates a fallback name for the given index.
@@ -425,110 +374,4 @@ public sealed class MethodLoggingInterceptor(
         int index,
         ParameterInfo[] parameters) =>
         index < parameters.Length ? parameters[index].ParameterType.Name : argument?.GetType().Name ?? "null";
-
-    /// <summary>
-    /// Serializes method output value for logging with type information.
-    /// Creates a structured format containing both the return type and serialized value.
-    /// </summary>
-    /// <param name="returnValue">The method's return value to serialize.</param>
-    /// <returns>A JSON string containing structured output information.</returns>
-    private string SerializeOutputValue(object? returnValue)
-    {
-        try
-        {
-            var result = new
-            {
-                type = returnValue?.GetType().Name ?? "null",
-                value = SerializeValueForJson(returnValue)
-            };
-
-            return JsonSerializer.Serialize(result);
-        }
-        catch (Exception ex)
-        {
-            _logSerializationFailure(_logger, ex);
-            return JsonSerializer.Serialize(new { error = "Serialization failed", message = ex.Message });
-        }
-    }
-
-    /// <summary>
-    /// Serializes a value specifically for JSON output, returning objects that can be properly JSON serialized.
-    /// Handles various data types including primitives, collections, and complex objects with appropriate formatting.
-    /// </summary>
-    /// <param name="value">The value to serialize for JSON output.</param>
-    /// <returns>A JSON-serializable representation of the value.</returns>
-    private static object? SerializeValueForJson(object? value)
-    {
-        return value switch
-        {
-            null => null,
-            string or bool or byte or sbyte or short or ushort or int or uint or long or ulong or float or double
-                or decimal => value,
-            DateTime dt => dt.ToString("O"),
-            DateTimeOffset dto => dto.ToString("O"),
-            Guid guid => guid.ToString(),
-
-            // For collections, create a proper array structure
-            System.Collections.ICollection { Count: > 10 } collection =>
-                new
-                {
-                    _type = "Collection",
-                    _count = collection.Count,
-                    _truncated = true,
-                    items = collection.Cast<object>().Take(3).Select(SerializeValueForJson).ToArray()
-                },
-
-            System.Collections.IEnumerable enumerable =>
-                enumerable.Cast<object>().Take(10).Select(SerializeValueForJson).ToArray(),
-
-            // For complex objects, try to create a JSON-serializable representation
-            var complexObj => SerializeComplexObjectForJson(complexObj)
-        };
-    }
-
-    /// <summary>
-    /// Serializes complex objects for JSON output with truncation and error handling.
-    /// Attempts deep serialization with cycle detection and size limits to prevent performance issues.
-    /// </summary>
-    /// <param name="obj">The complex object to serialize.</param>
-    /// <returns>A JSON-serializable representation of the complex object with metadata.</returns>
-    private static object SerializeComplexObjectForJson(object obj)
-    {
-        try
-        {
-            // Try to serialize to get actual object structure
-            var options = new JsonSerializerOptions
-            {
-                WriteIndented = false,
-                ReferenceHandler = ReferenceHandler.IgnoreCycles,
-                MaxDepth = 3,
-                DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
-            };
-
-            // Serialize and deserialize to get a clean object structure
-            var json = JsonSerializer.Serialize(obj, options);
-
-            if (json.Length > 2000)
-            {
-                return new
-                {
-                    _type = obj.GetType().Name,
-                    _truncated = true,
-                    _preview = json[..100] + "..."
-                };
-            }
-
-            return JsonSerializer.Deserialize<object>(json, options) ??
-                   new { _type = obj.GetType().Name, _value = obj.ToString() };
-        }
-        catch
-        {
-            return new
-            {
-                _type = obj.GetType().Name,
-                _error = "Serialization failed",
-                _toString = obj.ToString() ?? "null"
-            };
-        }
-    }
 }

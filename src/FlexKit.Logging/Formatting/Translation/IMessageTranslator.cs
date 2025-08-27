@@ -62,6 +62,7 @@ public interface IMessageTranslator
     /// Translates parameter names and values for provider-specific formatting requirements.
     /// </summary>
     /// <param name="parameters">Dictionary of parameter names and their values.</param>
+    /// <param name="currentTemplate">The template string containing placeholders for parameter names.</param>
     /// <returns>Translated parameters with provider-specific names and formatting.</returns>
     /// <remarks>
     /// <para>
@@ -78,7 +79,9 @@ public interface IMessageTranslator
     /// provides flexibility for providers with specific parameter requirements.
     /// </para>
     /// </remarks>
-    IReadOnlyDictionary<string, object?> TranslateParameters(IReadOnlyDictionary<string, object?>? parameters);
+    IReadOnlyDictionary<string, object?> TranslateParameters(
+        IReadOnlyDictionary<string, object?>? parameters,
+        string currentTemplate);
 
     /// <summary>
     /// Determines whether this translator can handle the specified template and parameters.
