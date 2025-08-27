@@ -1,5 +1,6 @@
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyModel;
 using Serilog;
 using Serilog.Configuration;
@@ -22,7 +23,7 @@ public static class SerilogComponentDetector
         /// Gets the name of the detected Serilog component, such as a sink or enricher.
         /// The name corresponds to the component's configuration method name.
         /// </summary>
-        public string Name { get; init; } = string.Empty;
+        public string Name { [UsedImplicitly] get; init; } = string.Empty;
 
         /// <summary>
         /// Gets the MethodInfo representing the detected Serilog component's configuration method.
@@ -42,13 +43,13 @@ public static class SerilogComponentDetector
         /// such as a sink or enricher.
         /// This property indicates the source assembly from which the component originates.
         /// </summary>
-        public string AssemblyName { get; init; } = string.Empty;
+        public string AssemblyName { [UsedImplicitly] get; init; } = string.Empty;
     }
 
     /// <summary>
     /// Type of Serilog component.
     /// </summary>
-    public enum ComponentType
+    private enum ComponentType
     {
         /// <summary>
         /// Represents a Serilog sink component type. Sinks are responsible for defining
@@ -141,20 +142,27 @@ public static class SerilogComponentDetector
 
         foreach (var extensionClass in extensionClasses)
         {
-            DetectComponentsInType(extensionClass, configurationType, assembly, components);
+            var methods = extensionClass.GetMethods(BindingFlags.Public | BindingFlags.Static)
+                .Where(m => IsValidComponentExtensionMethod(m, configurationType))
+                .ToArray();
+            DetectComponentsInType(methods, assembly, components);
         }
     }
 
+    /// <summary>
+    /// Detects Serilog components (sinks or enrichers) in a given set of methods, mapping them
+    /// to their metadata, including the configuration method, parameters, and originating assembly.
+    /// </summary>
+    /// <param name="methods">The collection of methods to be analyzed for Serilog components.</param>
+    /// <param name="assembly">The assembly containing the methods used for identifying component origin.</param>
+    /// <param name="components">
+    /// The dictionary to populate with detected components, mapping component names to their metadata.
+    /// </param>
     private static void DetectComponentsInType(
-        Type extensionClass,
-        Type configurationType,
+        MethodInfo[] methods,
         Assembly assembly,
         Dictionary<string, ComponentInfo> components)
     {
-        var methods = extensionClass.GetMethods(BindingFlags.Public | BindingFlags.Static)
-            .Where(m => IsValidComponentExtensionMethod(m, configurationType))
-            .ToArray();
-
         foreach (var method in methods)
         {
             var componentName = method.Name;
@@ -218,39 +226,5 @@ public static class SerilogComponentDetector
 
         // Must return LoggerConfiguration (for method chaining)
         return method.ReturnType == typeof(LoggerConfiguration);
-    }
-
-    /// <summary>
-    /// Gets a list of all detected sink names for diagnostic purposes.
-    /// </summary>
-    public static IEnumerable<string> GetAvailableSinkNames()
-    {
-        return DetectAvailableSinks().Keys;
-    }
-
-    /// <summary>
-    /// Gets a list of all detected enricher names for diagnostic purposes.
-    /// </summary>
-    public static IEnumerable<string> GetAvailableEnricherNames()
-    {
-        return DetectAvailableEnrichers().Keys;
-    }
-
-    /// <summary>
-    /// Checks if a specific sink type is available.
-    /// </summary>
-    public static bool IsSinkAvailable(string sinkType)
-    {
-        var sinks = DetectAvailableSinks();
-        return sinks.ContainsKey(sinkType);
-    }
-
-    /// <summary>
-    /// Checks if a specific enricher is available.
-    /// </summary>
-    public static bool IsEnricherAvailable(string enricherName)
-    {
-        var enrichers = DetectAvailableEnrichers();
-        return enrichers.ContainsKey(enricherName);
     }
 }

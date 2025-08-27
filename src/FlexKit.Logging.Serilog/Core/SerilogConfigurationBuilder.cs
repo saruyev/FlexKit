@@ -73,7 +73,9 @@ public class SerilogConfigurationBuilder
     /// </summary>
     /// <param name="loggerConfig">LoggerConfiguration to configure.</param>
     /// <param name="enricherName">Name of the enricher to add.</param>
-    private void TryAddEnricher(LoggerConfiguration loggerConfig, string enricherName)
+    private void TryAddEnricher(
+        LoggerConfiguration loggerConfig,
+        string enricherName)
     {
         if (!_availableEnrichers.TryGetValue(enricherName, out var enricherInfo))
         {
@@ -98,7 +100,9 @@ public class SerilogConfigurationBuilder
     /// <param name="config">The logging configuration containing the details of the targets to configure.</param>
     /// <param name="loggerConfig">The Serilog logger configuration to be updated with the configured targets.</param>
     /// <returns>The number of successfully configured logging targets.</returns>
-    private int ConfigureTargets(LoggingConfig config, LoggerConfiguration loggerConfig) =>
+    private int ConfigureTargets(
+        LoggingConfig config,
+        LoggerConfiguration loggerConfig) =>
         config.Targets.Values
             .Where(t => t.Enabled)
             .Count(target => TryConfigureSink(target, loggerConfig));
@@ -116,7 +120,9 @@ public class SerilogConfigurationBuilder
     /// A boolean value indicating whether the sink was successfully configured. Returns <c>true</c> if
     /// the sink was configured without errors; otherwise, returns <c>false</c>.
     /// </returns>
-    private bool TryConfigureSink(LoggingTarget target, LoggerConfiguration config)
+    private bool TryConfigureSink(
+        LoggingTarget target,
+        LoggerConfiguration config)
     {
         if (!_availableSinks.TryGetValue(target.Type, out var sinkInfo))
         {
@@ -212,16 +218,11 @@ public class SerilogConfigurationBuilder
     /// <returns>The configuration section that matches the parameter name, or null if no match is found.</returns>
     private static IConfigurationSection? FindPropertySection(
         Dictionary<string, IConfigurationSection?> properties,
-        string? parameterName)
-    {
-        if (string.IsNullOrEmpty(parameterName))
-        {
-            return null;
-        }
-
-        return properties.FirstOrDefault(kvp =>
-            string.Equals(kvp.Key, parameterName, StringComparison.OrdinalIgnoreCase)).Value;
-    }
+        string? parameterName) =>
+        string.IsNullOrEmpty(parameterName)
+            ? null
+            : properties.FirstOrDefault(kvp =>
+                string.Equals(kvp.Key, parameterName, StringComparison.OrdinalIgnoreCase)).Value;
 
     /// <summary>
     /// Converts a configuration value from an <see cref="IConfigurationSection"/> into an object
@@ -233,16 +234,16 @@ public class SerilogConfigurationBuilder
     /// The converted value as an object of the specified type, or a default value of the target
     /// type if the conversion fails.
     /// </returns>
-    private static object? ConvertConfigurationValue(IConfigurationSection configSection, Type targetType)
+    private static object? ConvertConfigurationValue(
+        IConfigurationSection configSection,
+        Type targetType)
     {
         try
         {
-            object? convertedValue;
-
             if (configSection.Value == null)
             {
                 // Try to bind a complex object from configuration
-                convertedValue = Convert.ChangeType(
+                return Convert.ChangeType(
                     configSection.Get(targetType),
                     targetType,
                     CultureInfo.InvariantCulture);
@@ -250,18 +251,16 @@ public class SerilogConfigurationBuilder
             else if (targetType.IsEnum)
             {
                 // Handle enum conversion from string (case-insensitive)
-                convertedValue = Enum.Parse(targetType, configSection.Value, ignoreCase: true);
+                return Enum.Parse(targetType, configSection.Value, ignoreCase: true);
             }
             else
             {
                 // Handle primitive type conversion
-                convertedValue = Convert.ChangeType(
+                return Convert.ChangeType(
                     configSection.Value,
                     targetType,
                     CultureInfo.InvariantCulture);
             }
-
-            return convertedValue;
         }
         catch (Exception)
         {

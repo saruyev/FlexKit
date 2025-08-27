@@ -69,12 +69,4 @@ public sealed class JsonFormatter(IMessageTranslator translator) : IMessageForma
             translator.TranslateTemplate("{Metadata}"),
             new Dictionary<string, object?> { ["Metadata"] = entry });
     }
-
-    /// <summary>
-    /// Determines whether this formatter can handle the given formatting context.
-    /// The JSON formatter can handle any log entry.
-    /// </summary>
-    /// <param name="context">The formatting context to evaluate.</param>
-    /// <returns>Always returns true as JSON formatter can handle any log entry.</returns>
-    public bool CanFormat(FormattingContext context) => true; // JSON formatter can handle any log entry
 }

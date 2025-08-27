@@ -8,19 +8,14 @@ namespace FlexKit.Logging.Serilog.Core;
 /// Background log implementation that leverages Serilog's built-in batching and background processing.
 /// Eliminates the need for FlexKit's Channel-based queuing by directly using Serilog's optimized batching.
 /// </summary>
-public sealed class SerilogBackgroundLog : IBackgroundLog, IDisposable
+/// <remarks>
+/// Initializes a new instance of SerilogBackgroundLog.
+/// </remarks>
+/// <param name="processor">The log entry processor that writes to Serilog.</param>
+public sealed class SerilogBackgroundLog(ILogEntryProcessor processor) : IBackgroundLog, IDisposable
 {
-    private readonly ILogEntryProcessor _processor;
+    private readonly ILogEntryProcessor _processor = processor ?? throw new ArgumentNullException(nameof(processor));
     private volatile bool _disposed;
-
-    /// <summary>
-    /// Initializes a new instance of SerilogBackgroundLog.
-    /// </summary>
-    /// <param name="processor">The log entry processor that writes to Serilog.</param>
-    public SerilogBackgroundLog(ILogEntryProcessor processor)
-    {
-        _processor = processor ?? throw new ArgumentNullException(nameof(processor));
-    }
 
     /// <inheritdoc />
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -60,7 +55,7 @@ public sealed class SerilogBackgroundLog : IBackgroundLog, IDisposable
         // Serilog handles background processing internally, so this enumerable is empty
         // The BackgroundLoggingService won't find any entries to process, which is correct
         // since Serilog is handling all the background work
-        await Task.CompletedTask; // Move before yield break
+        await Task.CompletedTask;
         yield break;
     }
 

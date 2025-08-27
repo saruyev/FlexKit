@@ -137,8 +137,10 @@ public sealed class SerilogLogWriter(
     }
 
     /// <summary>
-    /// Converts FlexKit/MEL log level to Serilog log level.
+    /// Converts a Microsoft.Extensions.Logging.LogLevel to a Serilog.Events.LogEventLevel.
     /// </summary>
+    /// <param name="level">The log level defined by Microsoft.Extensions.Logging.LogLevel.</param>
+    /// <returns>The corresponding Serilog.Events.LogEventLevel.</returns>
     private static LogEventLevel ConvertLogLevel(LogLevel level)
     {
         return level switch

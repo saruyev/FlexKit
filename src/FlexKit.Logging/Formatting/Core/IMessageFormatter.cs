@@ -41,15 +41,4 @@ public interface IMessageFormatter
     /// </para>
     /// </remarks>
     FormattedMessage Format(FormattingContext context);
-
-    /// <summary>
-    /// Determines whether this formatter can handle the specified formatting context.
-    /// </summary>
-    /// <param name="context">The formatting context to evaluate.</param>
-    /// <returns>True if this formatter can process the context; otherwise, false.</returns>
-    /// <remarks>
-    /// This method allows formatters to reject contexts they cannot handle,
-    /// enabling the factory to select an appropriate alternative formatter.
-    /// </remarks>
-    bool CanFormat(FormattingContext context);
 }

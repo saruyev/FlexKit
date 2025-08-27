@@ -17,14 +17,13 @@ namespace FlexKit.Logging.Formatting.Formatters;
 public sealed class HybridFormatter : IMessageFormatter
 {
     private readonly IMessageFormatter _messageFormatter;
-    private readonly IMessageFormatter _jsonFormatter;
     private readonly IMessageTranslator _translator;
 
     private readonly JsonSerializerOptions _options = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
         WriteIndented = false,
-        Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+        Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
     };
 
     /// <summary>
@@ -36,7 +35,6 @@ public sealed class HybridFormatter : IMessageFormatter
         ArgumentNullException.ThrowIfNull(translator);
 
         _messageFormatter = new StandardStructuredFormatter(translator);
-        _jsonFormatter = new JsonFormatter(translator);
         _translator = translator;
     }
 
@@ -66,31 +64,20 @@ public sealed class HybridFormatter : IMessageFormatter
                 ? GetMetadataPart(messageResult.Parameters)
                 : string.Empty;
 
-            var separator = string.IsNullOrEmpty(metadataPart) ? string.Empty : hybridSettings.MetadataSeparator;
-
             if (context.DisableFormatting)
             {
                 return FormattedMessage.Success(
-                    _translator.TranslateTemplate(messageResult.Template + separator + " {Metadata}"),
+                    messageResult.Template + _translator.TranslateTemplate(hybridSettings.MetadataSeparator + " {Metadata}"),
                     messageResult.Parameters);
             }
 
-            return FormattedMessage.Success(messageResult.Message + separator + metadataPart);
+            return FormattedMessage.Success(messageResult.Message + hybridSettings.MetadataSeparator + metadataPart);
         }
         catch (Exception ex)
         {
             return FormattedMessage.Failure($"Hybrid formatting failed: {ex.Message}");
         }
     }
-
-    /// <summary>
-    /// Determines whether this formatter can handle the given formatting context.
-    /// Requires both message and JSON formatters to be capable of formatting the context.
-    /// </summary>
-    /// <param name="context">The formatting context to evaluate.</param>
-    /// <returns>True if both underlying formatters can handle the context; otherwise, false.</returns>
-    public bool CanFormat(FormattingContext context) =>
-        _messageFormatter.CanFormat(context) && _jsonFormatter.CanFormat(context);
 
     /// <summary>
     /// Generates the structured message part of the hybrid output using either a custom template or the standard formatter.
@@ -145,8 +132,6 @@ public sealed class HybridFormatter : IMessageFormatter
     /// Generates the JSON metadata part of the hybrid output containing additional log entry details.
     /// </summary>
     /// <returns>A JSON string containing the metadata, or an empty string if no metadata is available.</returns>
-    private string GetMetadataPart(IReadOnlyDictionary<string, object?> parameters)
-    {
-        return parameters.Count > 0 ? JsonSerializer.Serialize(parameters, _options) : string.Empty;
-    }
+    private string GetMetadataPart(IReadOnlyDictionary<string, object?> parameters) =>
+        parameters.Count > 0 ? JsonSerializer.Serialize(parameters, _options) : string.Empty;
 }

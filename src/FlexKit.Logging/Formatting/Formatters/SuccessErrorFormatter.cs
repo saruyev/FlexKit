@@ -54,16 +54,6 @@ public sealed class SuccessErrorFormatter(IMessageTranslator translator) : IMess
     }
 
     /// <summary>
-    /// Determines whether this formatter can handle the given formatting context.
-    /// </summary>
-    /// <param name="context">The formatting context to evaluate.</param>
-    /// <returns>True if the translator can handle the template and parameters; otherwise, false.</returns>
-    public bool CanFormat(FormattingContext context) =>
-        _translator.CanTranslate(
-            context.GetTemplate(FormatterType),
-            context.ExtractParameters());
-
-    /// <summary>
     /// Formats a template string by replacing placeholders with parameter values.
     /// </summary>
     /// <param name="template">The template string containing placeholders in {PropertyName} format.</param>

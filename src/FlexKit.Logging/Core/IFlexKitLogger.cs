@@ -11,6 +11,7 @@ public interface IFlexKitLogger
     /// <summary>
     /// Logs a LogEntry to the background queue.
     /// </summary>
+    /// <param name="entry">The log entry to log.</param>
     void Log(LogEntry entry);
 
     /// <summary>

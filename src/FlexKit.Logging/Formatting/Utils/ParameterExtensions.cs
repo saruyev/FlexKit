@@ -35,21 +35,29 @@ public static class ParameterExtensions
     /// <returns>The log entry with parameter and output information added to the JSON object.</returns>
     public static LogEntry WithParametersJson(this LogEntry entry)
     {
-        if (entry.InputParameters != null)
+        if (entry.InputParameters is not object[] rawInput || rawInput.Length == 0)
+        {
+            entry = entry.WithInput(entry.InputParameters ?? Array.Empty<object>());
+        }
+        else
         {
             entry = entry.WithInput(
-                JsonParameterUtils.ParseParametersAsJson(SerializeValueForJson(entry.InputParameters)?.ToString()));
+                rawInput.Cast<InputParameter>().Select(item => new
+                {
+                    name = item.Name,
+                    type = item.Type,
+                    value = item.Value ?? "null"
+                }));
         }
 
-        if (entry.OutputValue != null)
-        {
-            entry = entry.WithOutput(
-                JsonParameterUtils.ParseOutputAsJson(SerializeValueForJson(entry.OutputValue)?.ToString()));
-        }
-
-        return entry;
+        return entry.OutputValue == null ? entry : entry.WithOutput(entry.OutputValue);
     }
 
+    /// <summary>
+    /// Enriches a log entry with input parameters and output values serialized as strings.
+    /// </summary>
+    /// <param name="entry">The log entry to be populated with string-formatted parameters.</param>
+    /// <returns>The updated log entry with parameters and outputs serialized as strings.</returns>
     public static LogEntry WithParametersString(this LogEntry entry)
     {
         try
@@ -71,12 +79,9 @@ public static class ParameterExtensions
                     })));
             }
 
-            if (entry.OutputValue == null)
-            {
-                return entry;
-            }
-
-            return entry.WithOutput(SerializeValueForJson(entry.OutputValue) ?? "null");
+            return entry.OutputValue == null
+                ? entry
+                : entry.WithOutput(SerializeValueForJson(entry.OutputValue) ?? "null");
         }
         catch (Exception)
         {
@@ -102,14 +107,7 @@ public static class ParameterExtensions
         parameters["ActivityId"] = entry.ActivityId;
         parameters["Duration"] = entry.Duration;
         parameters["DurationSeconds"] = entry.DurationSeconds;
-
-        if (entry.InputParameters != null)
-        {
-            parameters["InputParameters"] = entry.InputParameters as ICollection<object> ?? [
-                entry.InputParameters
-            ];
-        }
-
+        parameters["InputParameters"] = entry.InputParameters;
         parameters["OutputValue"] = entry.OutputValue;
     }
 

@@ -228,6 +228,7 @@ public sealed class FormattedLogWriter(
 
         // Add InputParameters and OutputValue to fallback
         var inputParameters = entry.InputParameters?.ToString();
+
         if (!string.IsNullOrEmpty(inputParameters))
         {
             result = result.Replace(
@@ -236,12 +237,10 @@ public sealed class FormattedLogWriter(
                 StringComparison.OrdinalIgnoreCase);
         }
 
-        result = result.Replace(
+        return result.Replace(
             "{OutputValue}",
             entry.OutputValue?.ToString() ?? string.Empty,
             StringComparison.OrdinalIgnoreCase);
-
-        return result;
     }
 
     /// <summary>

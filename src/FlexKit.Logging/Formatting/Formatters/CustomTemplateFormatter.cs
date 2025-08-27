@@ -86,19 +86,6 @@ public sealed partial class CustomTemplateFormatter(IMessageTranslator translato
     }
 
     /// <summary>
-    /// Determines whether this formatter can handle the given formatting context.
-    /// </summary>
-    /// <param name="context">The formatting context to evaluate.</param>
-    /// <returns>True if the formatter can handle the context; otherwise, false.</returns>
-    public bool CanFormat(FormattingContext context)
-    {
-        var customSettings = context.Configuration.Formatters.CustomTemplate;
-        var template = GetCustomTemplate(context, customSettings);
-        return !string.IsNullOrEmpty(template) &&
-               _translator.CanTranslate(template, context.ExtractParameters());
-    }
-
-    /// <summary>
     /// Gets the appropriate custom template for the given context using priority-based resolution.
     /// </summary>
     /// <param name="context">The formatting context.</param>
