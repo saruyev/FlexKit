@@ -1,4 +1,5 @@
 using FlexKit.Logging.Configuration;
+using FlexKit.Logging.Formatting.Utils;
 using FlexKit.Logging.Models;
 
 namespace FlexKit.Logging.Formatting.Models;
@@ -40,8 +41,20 @@ public readonly record struct FormattingContext
     public bool EnableFallback { get; private init; }
 
     /// <summary>
-    /// Creates a new formatting context.
+    /// Indicates whether formatting is disabled for the current context.
+    /// When set to true, the raw template and parameters are used without applying formatting transformations.
     /// </summary>
+    public bool DisableFormatting { get; private init; }
+
+    /// <summary>
+    /// Creates a new instance of the <see cref="FormattingContext"/> with the specified
+    /// <paramref name="logEntry"/> and <paramref name="configuration"/>.
+    /// </summary>
+    /// <param name="logEntry">The log entry to be associated with the formatting context.</param>
+    /// <param name="configuration">The logging configuration to use for the formatting context.</param>
+    /// <returns>
+    /// A new <see cref="FormattingContext"/> configured with the specified log entry and logging configuration.
+    /// </returns>
     public static FormattingContext Create(
         in LogEntry logEntry,
         LoggingConfig configuration) =>
@@ -82,4 +95,31 @@ public readonly record struct FormattingContext
     /// <returns>A new <see cref="FormattingContext"/> with the provided template name set.</returns>
     public FormattingContext WithTemplateName(string templateName) =>
         this with { TemplateName = templateName };
+
+    /// <summary>
+    /// Returns a new <see cref="FormattingContext"/> instance with formatting explicitly disabled.
+    /// </summary>
+    /// <returns>A copy of the current <see cref="FormattingContext"/> with formatting disabled.</returns>
+    public FormattingContext WithoutFormatting() =>
+        this with { DisableFormatting = true };
+
+    /// <summary>
+    /// Creates a new instance of the <see cref="FormattingContext"/> with the log entry's parameters
+    /// converted to their string representations.
+    /// </summary>
+    /// <returns>
+    /// A new <see cref="FormattingContext"/> containing the log entry with its parameters represented as strings.
+    /// </returns>
+    public FormattingContext Stringify() =>
+        this with { LogEntry = LogEntry.WithParametersString() };
+
+    /// <summary>
+    /// Converts the parameters in the associated log entry to their JSON representation.
+    /// </summary>
+    /// <returns>
+    /// A new <see cref="FormattingContext"/> with the parameters of the associated log entry
+    /// represented in JSON format.
+    /// </returns>
+    public FormattingContext Jsonify() =>
+        this with { LogEntry = LogEntry.WithParametersJson() };
 }

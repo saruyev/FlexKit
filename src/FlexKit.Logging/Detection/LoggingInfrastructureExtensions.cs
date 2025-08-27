@@ -30,18 +30,20 @@ internal static class LoggingInfrastructureExtensions
         builder.RegisterInterceptionComponents();
         builder.RegisterManualLogging();
 
-        if (!HasLoggingProviderAssemblies())
+        if (HasLoggingProviderAssemblies())
         {
-            builder.RegisterBackgroundLogging();
-            builder.RegisterMicrosoftExtensionsLogging();
+            return;
         }
+
+        builder.RegisterBackgroundLogging();
+        builder.RegisterMicrosoftExtensionsLogging();
     }
 
     /// <summary>
     /// Registers the logging configuration, loading from app configuration or using defaults.
     /// </summary>
     /// <param name="builder">The container builder.</param>
-    public static void RegisterLoggingConfiguration(this ContainerBuilder builder) =>
+    private static void RegisterLoggingConfiguration(this ContainerBuilder builder) =>
         builder.Register(c =>
             {
                 var configuration = c.Resolve<IConfiguration>();
@@ -55,7 +57,7 @@ internal static class LoggingInfrastructureExtensions
     /// Registers all message formatters and formatting infrastructure.
     /// </summary>
     /// <param name="builder">The container builder.</param>
-    public static void RegisterMessageFormatting(this ContainerBuilder builder)
+    private static void RegisterMessageFormatting(this ContainerBuilder builder)
     {
         // Register all available formatters
         builder.RegisterType<CustomTemplateFormatter>().As<IMessageFormatter>().InstancePerDependency();
@@ -74,7 +76,7 @@ internal static class LoggingInfrastructureExtensions
     /// Registers the method interception components.
     /// </summary>
     /// <param name="builder">The container builder.</param>
-    public static void RegisterInterceptionComponents(this ContainerBuilder builder) =>
+    private static void RegisterInterceptionComponents(this ContainerBuilder builder) =>
         builder.RegisterType<MethodLoggingInterceptor>()
             .AsSelf()
             .InstancePerLifetimeScope();
@@ -83,7 +85,7 @@ internal static class LoggingInfrastructureExtensions
     /// Registers components for manual logging (non-interception-based logging).
     /// </summary>
     /// <param name="builder">The container builder.</param>
-    public static void RegisterManualLogging(this ContainerBuilder builder)
+    private static void RegisterManualLogging(this ContainerBuilder builder)
     {
         // Register ActivitySource for distributed tracing
         builder.Register(c =>
@@ -114,7 +116,7 @@ internal static class LoggingInfrastructureExtensions
     /// Only registers if no external logging providers are detected.
     /// </summary>
     /// <param name="builder">The container builder.</param>
-    public static void RegisterBackgroundLogging(this ContainerBuilder builder)
+    private static void RegisterBackgroundLogging(this ContainerBuilder builder)
     {
         // Register the background log queue
         builder.RegisterType<BackgroundLog>()
@@ -151,7 +153,7 @@ internal static class LoggingInfrastructureExtensions
     /// Only registers if logging targets are configured and no external providers exist.
     /// </summary>
     /// <param name="builder">The container builder.</param>
-    public static void RegisterMicrosoftExtensionsLogging(this ContainerBuilder builder)
+    private static void RegisterMicrosoftExtensionsLogging(this ContainerBuilder builder)
     {
         builder.RegisterType<DefaultMessageTranslator>().As<IMessageTranslator>();
 
@@ -185,6 +187,11 @@ internal static class LoggingInfrastructureExtensions
             .InstancePerDependency();
     }
 
+    /// <summary>
+    /// Determines whether the current application domain contains any assemblies that provide logging providers.
+    /// This method is used to check if additional logging systems need to be registered during infrastructure setup.
+    /// </summary>
+    /// <returns>True if any assemblies providing logging providers are found; otherwise, false.</returns>
     private static bool HasLoggingProviderAssemblies() =>
         AppDomain.CurrentDomain.GetAssemblies()
             .Any(assembly =>
@@ -194,6 +201,12 @@ internal static class LoggingInfrastructureExtensions
                        name != "FlexKit.Logging";
             });
 
+    /// <summary>
+    /// Runs the background logging service asynchronously, ensuring it remains active
+    /// until a cancellation is requested or the application shuts down.
+    /// </summary>
+    /// <param name="backgroundService">The instance of the background logging service to be run.</param>
+    /// <returns>A task representing the asynchronous operation of the background service.</returns>
     private static async Task RunBackgroundServiceAsync(BackgroundLoggingService backgroundService)
     {
         using var cancellationTokenSource = new CancellationTokenSource();
@@ -216,6 +229,12 @@ internal static class LoggingInfrastructureExtensions
         }
     }
 
+    /// <summary>
+    /// Stops the background logging service safely, ensuring any exceptions during the stop process
+    /// are handled gracefully.
+    /// </summary>
+    /// <param name="backgroundService">The instance of the background logging service to be stopped.</param>
+    /// <returns>A task that represents the asynchronous operation of stopping the background service.</returns>
     private static async Task StopBackgroundServiceSafelyAsync(BackgroundLoggingService backgroundService)
     {
         try
@@ -228,6 +247,11 @@ internal static class LoggingInfrastructureExtensions
         }
     }
 
+    /// <summary>
+    /// Ensures that all remaining log entries are flushed before the application exits.
+    /// Intended to prevent the loss of any pending log messages by invoking the background logging service's flush operation.
+    /// </summary>
+    /// <param name="backgroundService">The instance of <see cref="BackgroundLoggingService"/> responsible for managing and flushing log entries.</param>
     private static void FlushLogsOnExit(BackgroundLoggingService backgroundService)
     {
         try

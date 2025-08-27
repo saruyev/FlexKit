@@ -48,30 +48,15 @@ public sealed class MessageFormatterFactory : IMessageFormatterFactory
     public IMessageFormatter GetFormatter(FormattingContext context)
     {
         // Try the primary formatter first
-        if (_formatters.TryGetValue(context.FormatterType, out var primaryFormatter)
-            && primaryFormatter.CanFormat(context))
+        if (_formatters.TryGetValue(context.FormatterType, out var primaryFormatter))
         {
             return primaryFormatter;
         }
 
         // If primary fails and fallback is enabled, try other formatters
-        if (context.EnableFallback)
-        {
-            // Try fallback formatter
-            if (_fallbackFormatter.CanFormat(context))
-            {
-                return _fallbackFormatter;
-            }
-
-            // Last resort - try any available formatter
-            var availableFormatter = _formatters.Values.FirstOrDefault(f => f.CanFormat(context));
-            if (availableFormatter is not null)
-            {
-                return availableFormatter;
-            }
-        }
-
-        throw new InvalidOperationException(
+        return context.EnableFallback
+            ? _fallbackFormatter
+            : throw new InvalidOperationException(
             $"No suitable formatter found for type {context.FormatterType}. " +
             $"EnableFallback: {context.EnableFallback}");
     }

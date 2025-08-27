@@ -32,32 +32,46 @@ namespace FlexKit.Logging.Formatting.Translation;
 [UsedImplicitly]
 public partial class DefaultMessageTranslator : IMessageTranslator
 {
+    [UsedImplicitly]
     [GeneratedRegex(@"\{([^}]+):[^}]+\}")]
-    private static partial Regex SerilogRegex();
+    protected static partial Regex SerilogRegex();
+
+    [UsedImplicitly]
     [GeneratedRegex(@"\$\{([^}]+)\}")]
-    private static partial Regex NlogRenderRegex();
+    protected static partial Regex NlogRenderRegex();
+
+    [UsedImplicitly]
     [GeneratedRegex(@"\$\{when:[^}]+\}")]
-    private static partial Regex NlogConditionalRegex();
+    protected static partial Regex NlogConditionalRegex();
+
+    [UsedImplicitly]
     [GeneratedRegex(@"\$\{var:[^}]+\}")]
-    private static partial Regex NlogVariablesRegex();
+    protected static partial Regex NlogVariablesRegex();
+
+    [UsedImplicitly]
     [GeneratedRegex(@"%([a-zA-Z]+)")]
-    private static partial Regex Log4NetRegex();
+    protected static partial Regex Log4NetRegex();
+
+    [UsedImplicitly]
     [GeneratedRegex(@"%property\{([^}]+)\}")]
-    private static partial Regex Log4NetPropertyRegex();
+    protected static partial Regex Log4NetPropertyRegex();
+
+    [UsedImplicitly]
     [GeneratedRegex(@"%date\{[^}]+\}")]
-    private static partial Regex Log4NetDateRegex();
+    protected static partial Regex Log4NetDateRegex();
 
     /// <inheritdoc />
-    public string TranslateTemplate(string? messageTemplate) =>
+    public virtual string TranslateTemplate(string? messageTemplate) =>
         CleanNotSupportedFeatures(messageTemplate ?? string.Empty);
 
     /// <inheritdoc />
-    public IReadOnlyDictionary<string, object?> TranslateParameters(
-        IReadOnlyDictionary<string, object?>? parameters) =>
+    public virtual IReadOnlyDictionary<string, object?> TranslateParameters(
+        IReadOnlyDictionary<string, object?>? parameters,
+        string currentTemplate) =>
         parameters ?? new Dictionary<string, object?>();
 
     /// <inheritdoc />
-    public bool CanTranslate(
+    public virtual bool CanTranslate(
         string? messageTemplate,
         IReadOnlyDictionary<string, object?> parameters) => true;
 

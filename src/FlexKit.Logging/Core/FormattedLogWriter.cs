@@ -26,8 +26,10 @@ public sealed class FormattedLogWriter(
     IMessageFormatterFactory formatterFactory,
     ILoggerFactory loggerFactory) : ILogEntryProcessor
 {
-    private readonly IMessageFormatterFactory _formatterFactory = formatterFactory ?? throw new ArgumentNullException(nameof(formatterFactory));
-    private readonly ILoggerFactory _loggerFactory = loggerFactory ?? throw new ArgumentNullException(nameof(loggerFactory));
+    private readonly IMessageFormatterFactory _formatterFactory =
+        formatterFactory ?? throw new ArgumentNullException(nameof(formatterFactory));
+    private readonly ILoggerFactory _loggerFactory =
+        loggerFactory ?? throw new ArgumentNullException(nameof(loggerFactory));
     private readonly ConcurrentDictionary<string, ILogger> _loggerCache = new();
     private static readonly Action<ILogger, string, Exception?> _logTrace =
         LoggerMessage.Define<string>(LogLevel.Trace, new EventId(1), "{Message}");
@@ -226,6 +228,7 @@ public sealed class FormattedLogWriter(
 
         // Add InputParameters and OutputValue to fallback
         var inputParameters = entry.InputParameters?.ToString();
+
         if (!string.IsNullOrEmpty(inputParameters))
         {
             result = result.Replace(
@@ -234,12 +237,10 @@ public sealed class FormattedLogWriter(
                 StringComparison.OrdinalIgnoreCase);
         }
 
-        result = result.Replace(
+        return result.Replace(
             "{OutputValue}",
             entry.OutputValue?.ToString() ?? string.Empty,
             StringComparison.OrdinalIgnoreCase);
-
-        return result;
     }
 
     /// <summary>

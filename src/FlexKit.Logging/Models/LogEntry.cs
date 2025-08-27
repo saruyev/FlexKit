@@ -1,8 +1,18 @@
 using System.Diagnostics;
+using System.Text.Json.Serialization;
 using JetBrains.Annotations;
 using Microsoft.Extensions.Logging;
 
 namespace FlexKit.Logging.Models;
+
+/// <summary>
+/// Represents a single parameter input with its name, type, and value.
+/// Used to encapsulate details of method parameters for logging or interception purposes.
+/// </summary>
+/// <param name="Name">The name of the parameter.</param>
+/// <param name="Type">The type of the parameter represented as a string.</param>
+/// <param name="Value">The actual value of the parameter.</param>
+public record InputParameter(string? Name, string? Type, object? Value);
 
 /// <summary>
 /// Lightweight model for capturing method execution data with minimal allocation overhead.
@@ -19,6 +29,7 @@ public readonly record struct LogEntry
     /// Gets the timestamp when the method execution began.
     /// Uses high-precision timestamp for accurate performance measurements.
     /// </summary>
+    [JsonIgnore]
     private long TimestampTicks { get; init; }
 
     /// <summary>
@@ -34,11 +45,13 @@ public readonly record struct LogEntry
     /// <summary>
     /// Gets the execution duration in ticks, or null if execution is still in progress.
     /// </summary>
+    [JsonIgnore]
     public long? DurationTicks { get; private init; }
 
     /// <summary>
     /// Gets whether the method execution completed successfully.
     /// </summary>
+    [JsonIgnore]
     public bool Success { get; private init; }
 
     /// <summary>
@@ -81,17 +94,20 @@ public readonly record struct LogEntry
     /// <summary>
     /// Gets the name of the logging template associated with this log entry.
     /// </summary>
+    [JsonIgnore]
     public string? TemplateName { get; private init; }
 
     /// <summary>
     /// Gets the log level that should be used when outputting this log entry.
     /// Defaults to Information if not specified.
     /// </summary>
+    [JsonIgnore]
     public LogLevel Level { get; private init; }
 
     /// <summary>
     /// Gets the log level to use when an exception is thrown.
     /// </summary>
+    [JsonIgnore]
     public LogLevel ExceptionLevel { get; private init; }
 
     /// <summary>
@@ -100,9 +116,20 @@ public readonly record struct LogEntry
     public DateTimeOffset Timestamp => GetActualTimestamp(TimestampTicks);
 
     /// <summary>
+    /// Gets the duration of the operation in milliseconds.
+    /// </summary>
+    public double Duration => GetMilliseconds(DurationTicks);
+
+    /// <summary>
+    /// Gets the duration of the log entry in seconds, rounded to three decimal places.
+    /// </summary>
+    public double DurationSeconds => GetSeconds(DurationTicks);
+
+    /// <summary>
     /// Gets the target or destination associated with the log entry, indicating the intended
     /// recipient or endpoint related to this logging operation.
     /// </summary>
+    [JsonIgnore]
     public string? Target { get; private init; }
 
     /// <summary>
@@ -114,10 +141,27 @@ public readonly record struct LogEntry
     {
         var currentStopwatchTicks = Stopwatch.GetTimestamp();
         var elapsedSinceStart = currentStopwatchTicks - stopwatchTicks;
-        var elapsedTimeSpan = TimeSpan.FromTicks((long)(elapsedSinceStart * TimeSpan.TicksPerSecond / (double)Stopwatch.Frequency));
+        var elapsedTimeSpan = TimeSpan.FromTicks((long)(
+            elapsedSinceStart * TimeSpan.TicksPerSecond / (double)Stopwatch.Frequency));
 
         return DateTimeOffset.UtcNow.Subtract(elapsedTimeSpan);
     }
+
+    /// <summary>
+    /// Converts the provided duration in ticks to milliseconds, rounded to two decimal places.
+    /// </summary>
+    /// <param name="duration">The duration in ticks, or null if no duration is provided.</param>
+    /// <returns>The duration in milliseconds as a double. Returns 0.0 if the duration is null.</returns>
+    private static double GetMilliseconds(long? duration) =>
+        !duration.HasValue ? 0.0 : Math.Round(TimeSpan.FromTicks(duration.Value).TotalMilliseconds, 2);
+
+    /// <summary>
+    /// Converts a duration in ticks to its equivalent in seconds, rounded to three decimal places.
+    /// </summary>
+    /// <param name="duration">The duration in ticks to be converted. If the value is null, the method returns 0.0.</param>
+    /// <returns>The duration in seconds, rounded to three decimal places, or 0.0 if the input is null.</returns>
+    private static double GetSeconds(long? duration) =>
+        !duration.HasValue ? 0.0 : Math.Round(TimeSpan.FromTicks(duration.Value).TotalSeconds, 3);
 
     /// <summary>
     /// Creates a new log entry for method start.

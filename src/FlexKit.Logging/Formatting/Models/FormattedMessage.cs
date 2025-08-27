@@ -27,19 +27,48 @@ public readonly record struct FormattedMessage
     public bool IsFallback { get; private init; }
 
     /// <summary>
+    /// Gets the collection of key-value pairs that represent the parameters used to format the message template.
+    /// </summary>
+    public IReadOnlyDictionary<string, object?> Parameters { get; private init; }
+
+    /// <summary>
+    /// Gets the string template used to define the format of the log message.
+    /// </summary>
+    public string Template { get; private init; }
+
+    /// <summary>
     /// Creates a successful formatted message.
     /// </summary>
+    /// <param name="message">The formatted message string.</param>
     public static FormattedMessage Success(string message) =>
         new()
         {
             Message = message,
             IsSuccess = true,
-            IsFallback = false
+            IsFallback = false,
+        };
+
+    /// <summary>
+    /// Creates a successfully formatted message based on the provided template and parameters.
+    /// </summary>
+    /// <param name="template">The string template that defines the message format.</param>
+    /// <param name="parameters">The collection of key-value pairs to replace placeholders in the template.</param>
+    /// <returns>A successfully formatted message containing the provided template and parameters.</returns>
+    public static FormattedMessage Success(
+        string template,
+        IReadOnlyDictionary<string, object?> parameters) =>
+        new()
+        {
+            IsSuccess = true,
+            IsFallback = false,
+            Template = template,
+            Parameters = parameters
         };
 
     /// <summary>
     /// Creates a failed formatted message.
     /// </summary>
+    /// <param name="errorMessage">The error message describing the failure.</param>
     public static FormattedMessage Failure(string errorMessage) =>
         new()
         {
@@ -48,4 +77,12 @@ public readonly record struct FormattedMessage
             ErrorMessage = errorMessage,
             IsFallback = false
         };
+
+    /// <summary>
+    /// Returns a new instance of the formatted message with the specified parameters applied.
+    /// </summary>
+    /// <param name="parameters">The collection of key-value pairs to be set as the message parameters.</param>
+    /// <returns>A new <see cref="FormattedMessage"/> instance with the updated parameters.</returns>
+    public FormattedMessage WithParameters(IReadOnlyDictionary<string, object?> parameters) =>
+        this with { Parameters = parameters };
 }
