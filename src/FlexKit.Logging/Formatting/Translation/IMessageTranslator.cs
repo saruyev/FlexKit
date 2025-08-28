@@ -1,4 +1,4 @@
-using JetBrains.Annotations;
+using FlexKit.Logging.Configuration;
 
 namespace FlexKit.Logging.Formatting.Translation;
 
@@ -38,6 +38,7 @@ public interface IMessageTranslator
     /// Translates a message template from FlexKit format to the target provider's syntax.
     /// </summary>
     /// <param name="messageTemplate">The message template in FlexKit format using standard placeholder syntax.</param>
+    /// <param name="config">The FlexKit logging configuration.</param>
     /// <returns>The translated template in the target provider's syntax.</returns>
     /// <remarks>
     /// <para>
@@ -56,7 +57,7 @@ public interface IMessageTranslator
     /// rather than throwing exceptions, ensuring graceful degradation.
     /// </para>
     /// </remarks>
-    string TranslateTemplate(string? messageTemplate);
+    string TranslateTemplate(string? messageTemplate, LoggingConfig? config = null);
 
     /// <summary>
     /// Translates parameter names and values for provider-specific formatting requirements.
@@ -82,18 +83,4 @@ public interface IMessageTranslator
     IReadOnlyDictionary<string, object?> TranslateParameters(
         IReadOnlyDictionary<string, object?>? parameters,
         string currentTemplate);
-
-    /// <summary>
-    /// Determines whether this translator can handle the specified template and parameters.
-    /// </summary>
-    /// <param name="messageTemplate">The message template to evaluate.</param>
-    /// <param name="parameters">The parameters associated with the template.</param>
-    /// <returns>True if this translator can process the template; otherwise, false.</returns>
-    /// <remarks>
-    /// This method allows translators to reject templates they cannot handle,
-    /// enabling fallback to other available translators or default formatting.
-    /// </remarks>
-    bool CanTranslate(
-        [UsedImplicitly] string? messageTemplate,
-        IReadOnlyDictionary<string, object?> parameters);
 }

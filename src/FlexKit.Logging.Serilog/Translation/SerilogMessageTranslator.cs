@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using FlexKit.Logging.Configuration;
 using FlexKit.Logging.Formatting.Translation;
 
 namespace FlexKit.Logging.Serilog.Translation;
@@ -30,46 +31,16 @@ public partial class SerilogMessageTranslator : DefaultMessageTranslator
     /// </returns>
     public override IReadOnlyDictionary<string, object?> TranslateParameters(
         IReadOnlyDictionary<string, object?>? parameters,
-        string currentTemplate)
-    {
-        if (parameters == null || string.IsNullOrEmpty(currentTemplate))
-        {
-            return parameters ?? new Dictionary<string, object?>();
-        }
+        string currentTemplate) =>
+        parameters == null || string.IsNullOrEmpty(currentTemplate)
+            ? parameters ?? new Dictionary<string, object?>()
+            : OrderForTemplate(
+                parameters,
+                CleanSerilogFeatures(currentTemplate),
+                ParameterRegex());
 
-        currentTemplate = CleanSerilogFeatures(currentTemplate);
-
-        // Extract parameter names in order they appear in a template
-        var matches = ParameterRegex().Matches(currentTemplate);
-        var orderedParams = new Dictionary<string, object?>();
-
-        foreach (Match match in matches)
-        {
-            var paramName = match.Groups[1].Value;
-            if (parameters.TryGetValue(paramName, out var value))
-            {
-                orderedParams[paramName] = value;
-            }
-        }
-
-        var metadata = new Dictionary<string, object?>();
-
-        foreach (var key in parameters.Keys.Except(orderedParams.Keys))
-        {
-            metadata[key] = parameters[key];
-        }
-
-        orderedParams["Metadata"] = metadata;
-
-        return orderedParams;
-    }
-
-    /// <summary>
-    /// Translates the provided message template by cleaning non-Serilog syntax and enhancing it with Serilog features.
-    /// </summary>
-    /// <param name="messageTemplate">The message template string to be translated. Can be null or empty.</param>
-    /// <returns>A translated string formatted specifically to enhance compatibility with Serilog.</returns>
-    public override string TranslateTemplate(string? messageTemplate)
+    /// <inheritdoc />
+    public override string TranslateTemplate(string? messageTemplate, LoggingConfig? config = null)
     {
         if (string.IsNullOrEmpty(messageTemplate))
         {
@@ -82,9 +53,7 @@ public partial class SerilogMessageTranslator : DefaultMessageTranslator
         template = CleanNonSerilogFeatures(template);
 
         // 2. Enhance with Serilog features (only if not already present)
-        template = EnhanceWithSerilogFeatures(template);
-
-        return template;
+        return EnhanceWithSerilogFeatures(template);
     }
 
     /// <summary>
