@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using FlexKit.Logging.Configuration;
 using JetBrains.Annotations;
 
 namespace FlexKit.Logging.Formatting.Translation;
@@ -61,7 +62,7 @@ public partial class DefaultMessageTranslator : IMessageTranslator
     protected static partial Regex Log4NetDateRegex();
 
     /// <inheritdoc />
-    public virtual string TranslateTemplate(string? messageTemplate) =>
+    public virtual string TranslateTemplate(string? messageTemplate, LoggingConfig? config = null) =>
         CleanNotSupportedFeatures(messageTemplate ?? string.Empty);
 
     /// <inheritdoc />
@@ -69,11 +70,6 @@ public partial class DefaultMessageTranslator : IMessageTranslator
         IReadOnlyDictionary<string, object?>? parameters,
         string currentTemplate) =>
         parameters ?? new Dictionary<string, object?>();
-
-    /// <inheritdoc />
-    public virtual bool CanTranslate(
-        string? messageTemplate,
-        IReadOnlyDictionary<string, object?> parameters) => true;
 
     /// <summary>
     /// Removes provider-specific features from a log message template, leaving only the basic property format.
@@ -129,6 +125,7 @@ public partial class DefaultMessageTranslator : IMessageTranslator
     protected static string CleanNLogFeatures(string template)
     {
         // Convert NLog layout renderers: ${property} → {property}
+        template = template.Replace("{@", "{").Replace("{$", "{");
         template = NlogRenderRegex().Replace(template, "{$1}");
 
         // Remove NLog-specific renderers that don't map to FlexKit
@@ -175,5 +172,48 @@ public partial class DefaultMessageTranslator : IMessageTranslator
         template = template.Replace("{raw}", "{}"); // Raw output
 
         return template;
+    }
+
+    /// <summary>
+    /// Orders the parameters based on the sequence they appear in the provided template
+    /// while also appending metadata for the remaining unmatched parameters.
+    /// </summary>
+    /// <param name="parameters">A read-only dictionary containing the parameters to be ordered.</param>
+    /// <param name="currentTemplate">The template string used to determine the parameter ordering.</param>
+    /// <param name="parameterRegex">
+    /// The regular expression used to identify parameter names within the template.
+    /// </param>
+    /// <returns>
+    /// A dictionary with the ordered parameters and an additional "Metadata" entry for unmatched parameters.
+    /// </returns>
+    [UsedImplicitly]
+    protected static Dictionary<string, object?> OrderForTemplate(
+        IReadOnlyDictionary<string, object?> parameters,
+        string currentTemplate,
+        Regex parameterRegex)
+    {
+        // Extract parameter names in order they appear in a template
+        var matches = parameterRegex.Matches(currentTemplate);
+        var orderedParams = new Dictionary<string, object?>();
+
+        foreach (Match match in matches)
+        {
+            var paramName = match.Groups[1].Value;
+            if (parameters.TryGetValue(paramName, out var value))
+            {
+                orderedParams[paramName] = value;
+            }
+        }
+
+        var metadata = new Dictionary<string, object?>();
+
+        foreach (var key in parameters.Keys.Except(orderedParams.Keys))
+        {
+            metadata[key] = parameters[key];
+        }
+
+        orderedParams["Metadata"] = metadata;
+
+        return orderedParams;
     }
 }

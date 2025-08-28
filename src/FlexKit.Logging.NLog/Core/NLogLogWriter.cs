@@ -4,26 +4,28 @@ using FlexKit.Logging.Core;
 using FlexKit.Logging.Formatting.Core;
 using FlexKit.Logging.Formatting.Models;
 using FlexKit.Logging.Models;
-using Microsoft.Extensions.Logging;
-using Serilog.Events;
-using ILogger = Serilog.ILogger;
+using JetBrains.Annotations;
+using NLog;
+using ILogger = NLog.ILogger;
+using LogLevel = NLog.LogLevel;
 
-namespace FlexKit.Logging.Serilog.Core;
+namespace FlexKit.Logging.NLog.Core;
 
 /// <summary>
-/// Processes log entries by applying formatting and routing to output destinations.
-/// Handles the message formatting pipeline, fallback logic, and output routing.
+/// Processes log entries by applying formatting and routing to NLog targets.
+/// Handles the message formatting pipeline, fallback logic, and output routing using NLog's infrastructure.
 /// </summary>
 /// <remarks>
-/// Initializes a new instance of the LogEntryProcessor.
+/// Initializes a new instance of the NLogLogWriter.
 /// </remarks>
 /// <param name="loggingConfig">Logging configuration.</param>
 /// <param name="formatterFactory">Message formatter factory.</param>
-/// <param name="serilogLogger">Configured Serilog logger instance.</param>
-public sealed class SerilogLogWriter(
+/// <param name="nlogLogger">Configured NLog logger instance.</param>
+[UsedImplicitly]
+public sealed class NLogLogWriter(
     LoggingConfig loggingConfig,
     IMessageFormatterFactory formatterFactory,
-    ILogger serilogLogger) : ILogEntryProcessor
+    ILogger nlogLogger) : ILogEntryProcessor
 {
     /// <inheritdoc />
     public LoggingConfig Config { get; } = loggingConfig ?? throw new ArgumentNullException(nameof(loggingConfig));
@@ -79,7 +81,7 @@ public sealed class SerilogLogWriter(
             return;
         }
 
-        serilogLogger.Debug(
+        nlogLogger.Debug(
             "Used fallback formatting for entry {EntryId}: {ErrorMessage}",
             entryId,
             result.ErrorMessage);
@@ -99,7 +101,7 @@ public sealed class SerilogLogWriter(
             ConvertLogLevel(entry.ExceptionLevel),
             entry.Target ?? Config.DefaultTarget ?? entry.TypeName);
 
-        serilogLogger.Warning(
+        nlogLogger.Warn(
             ex,
             "Failed to process log entry {EntryId} for method {TypeName}.{MethodName}",
             entry.Id,
@@ -108,48 +110,51 @@ public sealed class SerilogLogWriter(
     }
 
     /// <summary>
-    /// Outputs the formatted message to the configured destination.
-    /// For now, includes the log level in the console output for testing purposes.
+    /// Outputs the formatted message to the configured NLog targets.
+    /// Uses NLog's structured logging capabilities to pass parameters as event properties.
     /// </summary>
     /// <param name="message">The formatted message to output.</param>
-    /// <param name="level">The log level for this message.</param>
-    /// <param name="typeName">The type name to create a logger for.</param>
+    /// <param name="level">The NLog log level for this message.</param>
+    /// <param name="typeName">The type name to use as a logger category.</param>
     /// <exception cref="ArgumentOutOfRangeException">Thrown if the log level is invalid.</exception>
     [SuppressMessage("ReSharper", "FlagArgument")]
     private void OutputMessage(
         FormattedMessage message,
-        LogEventLevel level,
+        LogLevel level,
         string typeName)
     {
-        if (!serilogLogger.IsEnabled(level))
+        if (!nlogLogger.IsEnabled(level))
         {
             return;
         }
 
-#pragma warning disable CA2254
-        serilogLogger
-            .ForContext("Target", typeName)
-            .Write(level, message.Template, [.. message.Parameters.Values]);
-#pragma warning restore CA2254
+        // Create log event info for structured logging
+        var logEventInfo = new LogEventInfo(level, nlogLogger.Name, message.Template)
+        {
+            Exception = null,
+            Properties = { ["Target"] = typeName },
+            Parameters = message.Parameters.Values.ToArray()
+        };
+
+        // Log the event
+        nlogLogger.Log(logEventInfo);
     }
 
     /// <summary>
-    /// Converts a Microsoft.Extensions.Logging.LogLevel to a Serilog.Events.LogEventLevel.
+    /// Converts a Microsoft.Extensions.Logging.LogLevel to an NLog.LogLevel.
     /// </summary>
     /// <param name="level">The log level defined by Microsoft.Extensions.Logging.LogLevel.</param>
-    /// <returns>The corresponding Serilog.Events.LogEventLevel.</returns>
-    private static LogEventLevel ConvertLogLevel(LogLevel level)
-    {
-        return level switch
+    /// <returns>The corresponding NLog.LogLevel.</returns>
+    private static LogLevel ConvertLogLevel(Microsoft.Extensions.Logging.LogLevel level) =>
+        level switch
         {
-            LogLevel.Trace => LogEventLevel.Verbose,
-            LogLevel.Debug => LogEventLevel.Debug,
-            LogLevel.Information => LogEventLevel.Information,
-            LogLevel.Warning => LogEventLevel.Warning,
-            LogLevel.Error => LogEventLevel.Error,
-            LogLevel.Critical => LogEventLevel.Fatal,
-            LogLevel.None => LogEventLevel.Verbose,
-            _ => LogEventLevel.Information
+            Microsoft.Extensions.Logging.LogLevel.Trace => LogLevel.Trace,
+            Microsoft.Extensions.Logging.LogLevel.Debug => LogLevel.Debug,
+            Microsoft.Extensions.Logging.LogLevel.Information => LogLevel.Info,
+            Microsoft.Extensions.Logging.LogLevel.Warning => LogLevel.Warn,
+            Microsoft.Extensions.Logging.LogLevel.Error => LogLevel.Error,
+            Microsoft.Extensions.Logging.LogLevel.Critical => LogLevel.Fatal,
+            Microsoft.Extensions.Logging.LogLevel.None => LogLevel.Off,
+            _ => LogLevel.Info
         };
-    }
 }

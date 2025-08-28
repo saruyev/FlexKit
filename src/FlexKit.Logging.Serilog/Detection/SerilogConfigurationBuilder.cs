@@ -1,11 +1,10 @@
 using System.Globalization;
 using System.Reflection;
 using FlexKit.Logging.Configuration;
-using FlexKit.Logging.Serilog.Detection;
 using Microsoft.Extensions.Configuration;
 using Serilog;
 
-namespace FlexKit.Logging.Serilog.Core;
+namespace FlexKit.Logging.Serilog.Detection;
 
 /// <summary>
 /// Builds Serilog LoggerConfiguration from FlexKit LoggingConfig by dynamically

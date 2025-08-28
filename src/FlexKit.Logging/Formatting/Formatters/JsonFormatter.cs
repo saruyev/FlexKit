@@ -50,7 +50,7 @@ public sealed class JsonFormatter(IMessageTranslator translator) : IMessageForma
 
             return context.DisableFormatting ?
                 FormattedMessage.Success(
-                    translator.TranslateTemplate("{Metadata}"),
+                    translator.TranslateTemplate("{Metadata}", context.Configuration),
                     new Dictionary<string, object?> { ["Metadata"] = JsonSerializer.Serialize(entry, options) }) :
                 FormattedMessage.Success(JsonSerializer.Serialize(entry, options));
         }
@@ -60,9 +60,16 @@ public sealed class JsonFormatter(IMessageTranslator translator) : IMessageForma
         }
     }
 
+    /// <summary>
+    /// Prepares a formatted message based on the given log entry by processing its input parameters
+    /// and translating metadata into the desired format.
+    /// </summary>
+    /// <param name="entry">The log entry to process and include in the formatted message.</param>
+    /// <returns>A formatted message containing translated metadata and log entry details.</returns>
     private FormattedMessage PrepareObject(LogEntry entry)
     {
-        entry = entry.InputParameters is not null and not object[]? entry.WithInput(new List<object> { entry.InputParameters })
+        entry = entry.InputParameters is not null and not object[]?
+            entry.WithInput(new List<object> { entry.InputParameters })
             : entry;
 
         return FormattedMessage.Success(
