@@ -94,7 +94,6 @@ public partial class NLogMessageTranslator : DefaultMessageTranslator
     {
         // Use inherited methods to clean other provider syntax but skip NLog cleaning
         template = CleanSerilogFeatures(template);
-        template = CleanLog4NetFeatures(template);
         template = CleanZLoggerFeatures(template);
 
         return template;

@@ -65,7 +65,6 @@ public partial class SerilogMessageTranslator : DefaultMessageTranslator
     {
         // Use inherited methods but skip Serilog cleaning
         template = CleanNLogFeatures(template);
-        template = CleanLog4NetFeatures(template);
         template = CleanZLoggerFeatures(template);
 
         return template;
