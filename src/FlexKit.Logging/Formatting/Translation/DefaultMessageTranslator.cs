@@ -86,10 +86,7 @@ public partial class DefaultMessageTranslator : IMessageTranslator
         // 2. NLog features
         template = CleanNLogFeatures(template);
 
-        // 3. Log4Net features
-        template = CleanLog4NetFeatures(template);
-
-        // 4. ZLogger features
+        // 3. ZLogger features
         template = CleanZLoggerFeatures(template);
 
         return template;
@@ -131,29 +128,6 @@ public partial class DefaultMessageTranslator : IMessageTranslator
         // Remove NLog-specific renderers that don't map to FlexKit
         template = NlogConditionalRegex().Replace(template, ""); // Conditional
         template = NlogVariablesRegex().Replace(template, "");  // Variables
-
-        return template;
-    }
-
-    /// <summary>
-    /// Cleans Log4Net-specific features from the provided logging template,
-    /// converting Log4Net syntax into a standardized format.
-    /// </summary>
-    /// <param name="template">The logging template that may contain Log4Net-specific syntax.</param>
-    /// <returns>
-    /// A string with Log4Net-specific features converted to a standardized format.
-    /// </returns>
-    [UsedImplicitly]
-    protected static string CleanLog4NetFeatures(string template)
-    {
-        // Convert Log4Net patterns: %property → {property}
-        template = Log4NetRegex().Replace(template, "{$1}");
-
-        // Convert property syntax: %property{Name} → {Name}
-        template = Log4NetPropertyRegex().Replace(template, "{$1}");
-
-        // Remove Log4Net date formatting: %date{format} → {Timestamp}
-        template = Log4NetDateRegex().Replace(template, "{Timestamp}");
 
         return template;
     }
