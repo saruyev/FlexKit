@@ -138,9 +138,8 @@ public sealed class SerilogLogWriter(
     /// </summary>
     /// <param name="level">The log level defined by Microsoft.Extensions.Logging.LogLevel.</param>
     /// <returns>The corresponding Serilog.Events.LogEventLevel.</returns>
-    private static LogEventLevel ConvertLogLevel(LogLevel level)
-    {
-        return level switch
+    private static LogEventLevel ConvertLogLevel(LogLevel level) =>
+        level switch
         {
             LogLevel.Trace => LogEventLevel.Verbose,
             LogLevel.Debug => LogEventLevel.Debug,
@@ -151,5 +150,4 @@ public sealed class SerilogLogWriter(
             LogLevel.None => LogEventLevel.Verbose,
             _ => LogEventLevel.Information
         };
-    }
 }

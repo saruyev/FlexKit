@@ -197,12 +197,7 @@ public class NLogConfigurationBuilder
     {
         // Create a rule that filters by Target property to route FlexKit entries
         // This matches the Serilog pattern where each target gets a filtered log event
-        var level = "Info";
-        if (flexKitTarget.Properties.TryGetValue("LogLevel", out var levelSection))
-        {
-            level = levelSection?.Value ?? level;
-        }
-        var rule = new LoggingRule("*", LogLevel.FromString(level), target);
+        var rule = new LoggingRule("*", GetLogLevelFromTarget(flexKitTarget), target);
 
         // Add filter condition to only accept events with matching Target property
         // This ensures FlexKit's target routing works correctly
@@ -314,4 +309,34 @@ public class NLogConfigurationBuilder
     /// <returns>The default value of the specified type.</returns>
     private static object? GetDefaultValueForType(Type type) =>
         type.IsValueType ? Activator.CreateInstance(type) : null;
+
+    /// <summary>
+    /// Gets the log level from target properties, defaulting to Debug if not specified.
+    /// </summary>
+    /// <param name="target">The FlexKit target configuration.</param>
+    /// <returns>The Log4Net Level corresponding to the target's LogLevel property.</returns>
+    private static LogLevel GetLogLevelFromTarget(LoggingTarget target)
+    {
+        var logLevelString = target.Properties.TryGetValue("LogLevel", out var configSection)
+            ? configSection?.Value
+            : null;
+
+        if (string.IsNullOrEmpty(logLevelString))
+        {
+            return LogLevel.Info;
+        }
+
+        // Convert from MEL LogLevel string to Log4Net Level
+        return logLevelString.ToUpperInvariant() switch
+        {
+            "TRACE" => LogLevel.Trace,
+            "DEBUG" => LogLevel.Debug,
+            "INFORMATION" => LogLevel.Info,
+            "WARNING" => LogLevel.Warn,
+            "ERROR" => LogLevel.Error,
+            "CRITICAL" => LogLevel.Fatal,
+            "NONE" => LogLevel.Off,
+            _ => LogLevel.Info
+        };
+    }
 }

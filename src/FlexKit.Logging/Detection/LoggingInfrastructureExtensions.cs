@@ -6,6 +6,7 @@ using FlexKit.Logging.Formatting.Core;
 using FlexKit.Logging.Formatting.Formatters;
 using FlexKit.Logging.Formatting.Translation;
 using FlexKit.Logging.Interception;
+using JetBrains.Annotations;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -16,7 +17,7 @@ namespace FlexKit.Logging.Detection;
 /// Extension methods for registering the complete logging infrastructure in Autofac.
 /// Handles configuration, formatters, background services, and Microsoft Extensions Logging integration.
 /// </summary>
-internal static class LoggingInfrastructureExtensions
+public static class LoggingInfrastructureExtensions
 {
     /// <summary>
     /// Registers all logging infrastructure components required for the logging system to function.
@@ -207,7 +208,8 @@ internal static class LoggingInfrastructureExtensions
     /// </summary>
     /// <param name="backgroundService">The instance of the background logging service to be run.</param>
     /// <returns>A task representing the asynchronous operation of the background service.</returns>
-    private static async Task RunBackgroundServiceAsync(BackgroundLoggingService backgroundService)
+    [UsedImplicitly]
+    public static async Task RunBackgroundServiceAsync(BackgroundLoggingService backgroundService)
     {
         using var cancellationTokenSource = new CancellationTokenSource();
         try
@@ -252,7 +254,8 @@ internal static class LoggingInfrastructureExtensions
     /// Intended to prevent the loss of any pending log messages by invoking the background logging service's flush operation.
     /// </summary>
     /// <param name="backgroundService">The instance of <see cref="BackgroundLoggingService"/> responsible for managing and flushing log entries.</param>
-    private static void FlushLogsOnExit(BackgroundLoggingService backgroundService)
+    [UsedImplicitly]
+    public static void FlushLogsOnExit(BackgroundLoggingService backgroundService)
     {
         try
         {

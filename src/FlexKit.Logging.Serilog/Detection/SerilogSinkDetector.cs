@@ -1,6 +1,6 @@
+using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.CompilerServices;
-using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyModel;
 using Serilog;
 using Serilog.Configuration;
@@ -20,12 +20,6 @@ public static class SerilogComponentDetector
     public class ComponentInfo
     {
         /// <summary>
-        /// Gets the name of the detected Serilog component, such as a sink or enricher.
-        /// The name corresponds to the component's configuration method name.
-        /// </summary>
-        public string Name { [UsedImplicitly] get; init; } = string.Empty;
-
-        /// <summary>
         /// Gets the MethodInfo representing the detected Serilog component's configuration method.
         /// This method contains the implementation details for integrating the component
         /// (e.g., sink or enricher) with Serilog.
@@ -37,13 +31,6 @@ public static class SerilogComponentDetector
         /// Each parameter provides metadata about expected inputs for the method.
         /// </summary>
         public ParameterInfo[] Parameters { get; init; } = [];
-
-        /// <summary>
-        /// Gets the name of the assembly containing the detected Serilog component,
-        /// such as a sink or enricher.
-        /// This property indicates the source assembly from which the component originates.
-        /// </summary>
-        public string AssemblyName { [UsedImplicitly] get; init; } = string.Empty;
     }
 
     /// <summary>
@@ -106,7 +93,8 @@ public static class SerilogComponentDetector
             catch (Exception ex)
             {
                 // Log warning but continue - one bad assembly shouldn't break everything
-                Console.WriteLine($"Warning: Failed to scan assembly {assembly.FullName} for Serilog {componentType.ToString().ToLowerInvariant()}s: {ex.Message}");
+                Debug.WriteLine(
+                    $"Warning: Failed to scan assembly {assembly.FullName} for Serilog {componentType.ToString().ToLowerInvariant()}s: {ex.Message}");
             }
         }
 
@@ -145,7 +133,7 @@ public static class SerilogComponentDetector
             var methods = extensionClass.GetMethods(BindingFlags.Public | BindingFlags.Static)
                 .Where(m => IsValidComponentExtensionMethod(m, configurationType))
                 .ToArray();
-            DetectComponentsInType(methods, assembly, components);
+            DetectComponentsInType(methods, components);
         }
     }
 
@@ -154,13 +142,11 @@ public static class SerilogComponentDetector
     /// to their metadata, including the configuration method, parameters, and originating assembly.
     /// </summary>
     /// <param name="methods">The collection of methods to be analyzed for Serilog components.</param>
-    /// <param name="assembly">The assembly containing the methods used for identifying component origin.</param>
     /// <param name="components">
     /// The dictionary to populate with detected components, mapping component names to their metadata.
     /// </param>
     private static void DetectComponentsInType(
         MethodInfo[] methods,
-        Assembly assembly,
         Dictionary<string, ComponentInfo> components)
     {
         foreach (var method in methods)
@@ -177,10 +163,8 @@ public static class SerilogComponentDetector
 
             components[componentName] = new ComponentInfo
             {
-                Name = componentName,
                 Method = method,
-                Parameters = parameters,
-                AssemblyName = assembly.GetName().Name ?? "Unknown"
+                Parameters = parameters
             };
         }
     }

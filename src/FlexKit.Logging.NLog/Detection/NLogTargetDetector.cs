@@ -1,6 +1,5 @@
 using System.Diagnostics;
 using System.Reflection;
-using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyModel;
 
 namespace FlexKit.Logging.NLog.Detection;
@@ -20,7 +19,7 @@ public static class NLogTargetDetector
         /// Gets the name of the detected NLog target.
         /// The name corresponds to the target's type name or alias.
         /// </summary>
-        public string Name { [UsedImplicitly] get; init; } = string.Empty;
+        public string Name { get; init; } = string.Empty;
 
         /// <summary>
         /// Gets the Type representing the detected NLog target class.
@@ -33,12 +32,6 @@ public static class NLogTargetDetector
         /// Each property can be set through FlexKit configuration.
         /// </summary>
         public PropertyInfo[] Properties { get; init; } = [];
-
-        /// <summary>
-        /// Gets the name of the assembly containing the detected NLog target.
-        /// This property indicates the source assembly from which the target originates.
-        /// </summary>
-        public string AssemblyName { [UsedImplicitly] get; init; } = string.Empty;
 
         /// <summary>
         /// Gets a value indicating whether this target supports async operations.
@@ -145,7 +138,7 @@ public static class NLogTargetDetector
 
             foreach (var type in types)
             {
-                var targetInfo = CreateTargetInfo(type, assembly);
+                var targetInfo = CreateTargetInfo(type);
                 if (targetInfo != null)
                 {
                     targets.TryAdd(targetInfo.Name, targetInfo);
@@ -158,7 +151,7 @@ public static class NLogTargetDetector
             var availableTypes = ex.Types.Where(t => t != null).Cast<Type>();
             foreach (var type in availableTypes.Where(IsValidTargetType))
             {
-                var targetInfo = CreateTargetInfo(type, assembly);
+                var targetInfo = CreateTargetInfo(type);
                 if (targetInfo != null)
                 {
                     targets.TryAdd(targetInfo.Name, targetInfo);
@@ -204,9 +197,8 @@ public static class NLogTargetDetector
     /// Creates a TargetInfo object for a detected NLog target type.
     /// </summary>
     /// <param name="targetType">The target type to analyze.</param>
-    /// <param name="assembly">The assembly containing the target.</param>
     /// <returns>TargetInfo object with target metadata, or null if the target cannot be analyzed.</returns>
-    private static TargetInfo? CreateTargetInfo(Type targetType, Assembly assembly)
+    private static TargetInfo? CreateTargetInfo(Type targetType)
     {
         try
         {
@@ -231,7 +223,6 @@ public static class NLogTargetDetector
                 Name = targetName,
                 TargetType = targetType,
                 Properties = properties,
-                AssemblyName = assembly.GetName().Name ?? "Unknown",
                 SupportsAsync = supportsAsync
             };
         }
