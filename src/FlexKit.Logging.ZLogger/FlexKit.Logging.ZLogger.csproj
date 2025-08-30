@@ -1,0 +1,18 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net9.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\FlexKit.Configuration\FlexKit.Configuration.csproj" />
+      <ProjectReference Include="..\FlexKit.Logging\FlexKit.Logging.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="ZLogger" Version="2.5.10" />
+    </ItemGroup>
+
+</Project>

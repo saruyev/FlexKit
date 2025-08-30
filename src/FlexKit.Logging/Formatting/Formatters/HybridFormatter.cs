@@ -66,12 +66,19 @@ public sealed class HybridFormatter : IMessageFormatter
 
             if (context.DisableFormatting)
             {
-                return FormattedMessage.Success(
-                    messageResult.Template + _translator.TranslateTemplate(hybridSettings.MetadataSeparator + " {Metadata}"),
+                return hybridSettings.IncludeMetadata
+                    ? FormattedMessage.Success(
+                        messageResult.Template +
+                        _translator.TranslateTemplate(hybridSettings.MetadataSeparator + " {Metadata}"),
+                        messageResult.Parameters)
+                    : FormattedMessage.Success(
+                    messageResult.Template,
                     messageResult.Parameters);
             }
 
-            return FormattedMessage.Success(messageResult.Message + hybridSettings.MetadataSeparator + metadataPart);
+            return hybridSettings.IncludeMetadata
+                ? FormattedMessage.Success(messageResult.Message + hybridSettings.MetadataSeparator + metadataPart)
+                : FormattedMessage.Success(messageResult.Message);
         }
         catch (Exception ex)
         {
