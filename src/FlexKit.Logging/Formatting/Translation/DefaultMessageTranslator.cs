@@ -49,18 +49,6 @@ public partial class DefaultMessageTranslator : IMessageTranslator
     [GeneratedRegex(@"\$\{var:[^}]+\}")]
     protected static partial Regex NlogVariablesRegex();
 
-    [UsedImplicitly]
-    [GeneratedRegex(@"%([a-zA-Z]+)")]
-    protected static partial Regex Log4NetRegex();
-
-    [UsedImplicitly]
-    [GeneratedRegex(@"%property\{([^}]+)\}")]
-    protected static partial Regex Log4NetPropertyRegex();
-
-    [UsedImplicitly]
-    [GeneratedRegex(@"%date\{[^}]+\}")]
-    protected static partial Regex Log4NetDateRegex();
-
     /// <inheritdoc />
     public virtual string TranslateTemplate(string? messageTemplate, LoggingConfig? config = null) =>
         CleanNotSupportedFeatures(messageTemplate ?? string.Empty);
@@ -85,9 +73,6 @@ public partial class DefaultMessageTranslator : IMessageTranslator
 
         // 2. NLog features
         template = CleanNLogFeatures(template);
-
-        // 3. ZLogger features
-        template = CleanZLoggerFeatures(template);
 
         return template;
     }
@@ -128,22 +113,6 @@ public partial class DefaultMessageTranslator : IMessageTranslator
         // Remove NLog-specific renderers that don't map to FlexKit
         template = NlogConditionalRegex().Replace(template, ""); // Conditional
         template = NlogVariablesRegex().Replace(template, "");  // Variables
-
-        return template;
-    }
-
-    /// <summary>
-    /// Cleans ZLogger-specific syntax from the provided template, ensuring compatibility with
-    /// standard logging message formatting conventions.
-    /// </summary>
-    /// <param name="template">The message template containing potential ZLogger-specific syntax elements.</param>
-    /// <returns>A cleaned message template where ZLogger-specific syntax has been removed.</returns>
-    [UsedImplicitly]
-    protected static string CleanZLoggerFeatures(string template)
-    {
-        // ZLogger is mostly compatible, just clean special features
-        template = template.Replace("{@", "{");     // JSON serialization
-        template = template.Replace("{raw}", "{}"); // Raw output
 
         return template;
     }

@@ -61,14 +61,7 @@ public partial class SerilogMessageTranslator : DefaultMessageTranslator
     /// </summary>
     /// <param name="template">The template string containing non-Serilog-specific syntax to be cleaned.</param>
     /// <returns>A cleaned template string with only the basic {Property} format retained.</returns>
-    private static string CleanNonSerilogFeatures(string template)
-    {
-        // Use inherited methods but skip Serilog cleaning
-        template = CleanNLogFeatures(template);
-        template = CleanZLoggerFeatures(template);
-
-        return template;
-    }
+    private static string CleanNonSerilogFeatures(string template) => CleanNLogFeatures(template);
 
     /// <summary>
     /// Enhances the given message template by adding Serilog-specific syntax and features

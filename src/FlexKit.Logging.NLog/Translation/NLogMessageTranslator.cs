@@ -90,18 +90,10 @@ public partial class NLogMessageTranslator : DefaultMessageTranslator
     /// </summary>
     /// <param name="template">The template to clean.</param>
     /// <returns>A template with non-NLog syntax removed.</returns>
-    private static string CleanNonNLogFeatures(string template)
-    {
-        // Use inherited methods to clean other provider syntax but skip NLog cleaning
-        template = CleanSerilogFeatures(template);
-        template = CleanZLoggerFeatures(template);
-
-        return template;
-    }
+    private static string CleanNonNLogFeatures(string template) => CleanSerilogFeatures(template);
 
     /// <summary>
     /// Converts FlexKit template syntax {Property} to NLog layout renderer syntax ${property}.
-    /// Also converts PascalCase parameter names to camelCase following NLog conventions.
     /// </summary>
     /// <param name="template">The FlexKit template to convert.</param>
     /// <returns>The template converted to NLog syntax.</returns>
