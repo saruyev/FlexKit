@@ -296,9 +296,12 @@ public sealed class MethodLoggingInterceptor(
         in InterceptionDecision decision)
     {
         var entry = LogEntry.CreateStart(
-            invocation.Method.Name,
-            invocation.Method.DeclaringType?.FullName ?? "Unknown",
-            decision.Level).WithErrorLevel(decision.ExceptionLevel).WithTarget(decision.Target);
+                invocation.Method.Name,
+                invocation.Method.DeclaringType?.FullName ?? "Unknown",
+                decision.Level)
+            .WithErrorLevel(decision.ExceptionLevel)
+            .WithTarget(decision.Target)
+            .WithFormatter(decision.Formatter);
 
         // Add input parameters if required
         return decision.Behavior is not InterceptionBehavior.LogInput and not InterceptionBehavior.LogBoth

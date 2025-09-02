@@ -91,7 +91,8 @@ public static class AttributeResolver
                 .WithBehavior(InterceptionBehavior.LogBoth)
                 .WithTarget(logBothAttr.Target)
                 .WithLevel(logBothAttr.Level)
-                .WithExceptionLevel(logBothAttr.ExceptionLevel ?? LogLevel.Error);
+                .WithExceptionLevel(logBothAttr.ExceptionLevel ?? LogLevel.Error)
+                .WithFormatter(logBothAttr.Formatter);
         }
 
         var logInputAttr = method.GetCustomAttribute<LogInputAttribute>();
@@ -115,7 +116,8 @@ public static class AttributeResolver
                 .WithBehavior(InterceptionBehavior.LogInput)
                 .WithTarget(logInputAttr.Target)
                 .WithLevel(logInputAttr.Level)
-                .WithExceptionLevel(logInputAttr.ExceptionLevel ?? LogLevel.Error);
+                .WithExceptionLevel(logInputAttr.ExceptionLevel ?? LogLevel.Error)
+                .WithFormatter(logInputAttr.Formatter);
         }
 
         return logOutputAttr != null
@@ -124,6 +126,7 @@ public static class AttributeResolver
                 .WithTarget(logOutputAttr.Target)
                 .WithLevel(logOutputAttr.Level)
                 .WithExceptionLevel(logOutputAttr.ExceptionLevel ?? LogLevel.Error)
+                .WithFormatter(logOutputAttr.Formatter)
             : null;
     }
 
@@ -145,7 +148,8 @@ public static class AttributeResolver
                 .WithBehavior(InterceptionBehavior.LogBoth)
                 .WithTarget(logBothAttr.Target)
                 .WithLevel(logBothAttr.Level)
-                .WithExceptionLevel(logBothAttr.ExceptionLevel ?? LogLevel.Error);
+                .WithExceptionLevel(logBothAttr.ExceptionLevel ?? LogLevel.Error)
+                .WithFormatter(logBothAttr.Formatter);
         }
 
         var logInputAttr = classType.GetCustomAttribute<LogInputAttribute>();
@@ -168,7 +172,8 @@ public static class AttributeResolver
                 .WithBehavior(InterceptionBehavior.LogInput)
                 .WithTarget(logInputAttr.Target)
                 .WithLevel(logInputAttr.Level)
-                .WithExceptionLevel(logInputAttr.ExceptionLevel ?? LogLevel.Error);
+                .WithExceptionLevel(logInputAttr.ExceptionLevel ?? LogLevel.Error)
+                .WithFormatter(logInputAttr.Formatter);
         }
 
         return logOutputAttr != null
@@ -177,6 +182,7 @@ public static class AttributeResolver
                 .WithTarget(logOutputAttr.Target)
                 .WithLevel(logOutputAttr.Level)
                 .WithExceptionLevel(logOutputAttr.ExceptionLevel ?? LogLevel.Error)
+                .WithFormatter(logOutputAttr.Formatter)
             : null;
     }
 }

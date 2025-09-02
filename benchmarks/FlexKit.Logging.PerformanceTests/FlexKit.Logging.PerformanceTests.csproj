@@ -1,0 +1,85 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <TargetFramework>net9.0</TargetFramework>
+        <!-- Performance test specific settings -->
+        <ServerGarbageCollection>true</ServerGarbageCollection>
+        <ConcurrentGarbageCollection>true</ConcurrentGarbageCollection>
+        <RetainVMGarbageCollection>true</RetainVMGarbageCollection>
+
+        <!-- Performance test compilation symbols -->
+        <DefineConstants>$(DefineConstants);PERFORMANCE_TESTS;RELEASE</DefineConstants>
+
+        <!-- Allow unsafe code for performance optimizations -->
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+
+        <!-- Disable coverage collection during performance tests -->
+        <CollectCoverage>false</CollectCoverage>
+
+        <!-- Performance test categorization -->
+        <OutputType>Exe</OutputType> <!-- Can run as console app for BenchmarkDotNet -->
+    </PropertyGroup>
+
+    <!-- Performance test specific packages (beyond what's in Directory.Build.props) -->
+    <ItemGroup>
+        <!-- BenchmarkDotNet for micro-benchmarks -->
+        <PackageReference Include="BenchmarkDotNet" Version="[0.15.2,1.0.0)"/>
+        <PackageReference Include="BenchmarkDotNet.Annotations" Version="[0.15.2,1.0.0]"/>
+        <PackageReference Include="BenchmarkDotNet.Diagnostics.Windows" Version="[0.15.2,1.0.0)" Condition="$([MSBuild]::IsOSPlatform('Windows'))"/>
+        <PackageReference Include="BenchmarkDotNet.Diagnostics.dotTrace" Version="[0.15.2,1.0.0)"/>
+
+        <PackageReference Include="Autofac" Version="8.3.0"/>
+        <PackageReference Include="Autofac.Extensions.DependencyInjection" Version="10.0.0"/>
+        <PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.6"/>
+        <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="9.0.6"/>
+        <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="9.0.6"/>
+        <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="9.0.6"/>
+        <PackageReference Include="Microsoft.Extensions.DependencyModel" Version="9.0.6"/>
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.6"/>
+        <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.6" />
+        <PackageReference Include="Microsoft.Extensions.Options" Version="9.0.6"/>
+        <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="9.0.6"/>
+    </ItemGroup>
+
+    <!-- Performance test specific build settings -->
+    <!-- Performance test specific build settings -->
+    <PropertyGroup>
+        <!-- Release mode optimizations always -->
+        <Optimize>true</Optimize>
+        <DebugType>portable</DebugType>
+        <DebugSymbols>true</DebugSymbols>
+
+        <!-- Aggressive inlining and optimizations -->
+        <AggressiveInlining>true</AggressiveInlining>
+
+        <!-- Platform-specific optimizations -->
+        <PlatformTarget>x64</PlatformTarget>
+        <Prefer32Bit>false</Prefer32Bit>
+    </PropertyGroup>
+
+    <!-- Benchmark configuration files -->
+    <ItemGroup>
+        <None Update="**/*.yaml">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+        <None Update="**/*.yml">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+        <None Update="**/*.json">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+        <None Update="**/*.env">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+        <None Update="appsettings.json">
+          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
+    </ItemGroup>
+    <ItemGroup>
+      <ProjectReference Include="..\..\src\FlexKit.Configuration\FlexKit.Configuration.csproj" />
+      <ProjectReference Include="..\..\src\FlexKit.Logging\FlexKit.Logging.csproj" />
+    </ItemGroup>
+    <ItemGroup>
+      <Folder Include="BenchmarkDotNet.Artifacts\" />
+    </ItemGroup>
+
+</Project>

@@ -86,6 +86,7 @@ public partial class SerilogMessageTranslator : DefaultMessageTranslator
 
         // Add format specifiers
         template = template.Replace("{Duration}", "{Duration:N2}");
+        template = template.Replace("{DurationSeconds}", "{DurationSeconds:N2}");
 
         return template;
     }

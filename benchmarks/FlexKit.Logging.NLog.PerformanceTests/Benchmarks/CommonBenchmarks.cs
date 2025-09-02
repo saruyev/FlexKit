@@ -1,0 +1,14 @@
+using FlexKit.Logging.PerformanceTests.Benchmarks;
+// ReSharper disable ClassNeverInstantiated.Global
+
+namespace FlexKit.Logging.NLog.PerformanceTests.Benchmarks;
+
+public class NLogAsyncMethodBenchmarks : AsyncMethodBenchmarks;
+public class NLogComplexParameterBenchmarks : ComplexParameterBenchmarks;
+public class NLogConfigurationOverheadBenchmarks : ConfigurationOverheadBenchmarks;
+public class NLogExclusionPatternBenchmarks : ExclusionPatternBenchmarks;
+public class NLogFormatterBenchmarks : FormatterBenchmarks;
+public class NLogInterceptionDecisionCacheBenchmarks : InterceptionDecisionCacheBenchmarks;
+public class NLogInterceptionOverheadBenchmarks : InterceptionOverheadBenchmarks;
+public class NLogMemoryAllocationBenchmarks : MemoryAllocationBenchmarks;
+public class NLogMethodFrequencyBenchmarks : MethodFrequencyBenchmarks;

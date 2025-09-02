@@ -62,7 +62,7 @@ public readonly record struct FormattingContext
         {
             LogEntry = logEntry,
             Configuration = configuration,
-            FormatterType = configuration.DefaultFormatter,
+            FormatterType = logEntry.Formatter ?? GetTargetFormatter(logEntry.Target, configuration) ?? configuration.DefaultFormatter,
             Properties = new Dictionary<string, object?>(),
             EnableFallback = configuration.EnableFallbackFormatting,
         };
@@ -122,4 +122,22 @@ public readonly record struct FormattingContext
     /// </returns>
     public FormattingContext Jsonify() =>
         this with { LogEntry = LogEntry.WithParametersJson() };
+
+    /// <summary>
+    /// Retrieves the formatter type associated with the specified target name
+    /// using the provided logging configuration.
+    /// </summary>
+    /// <param name="targetName">The name of the logging target whose formatter is to be retrieved.</param>
+    /// <param name="configuration">
+    /// The logging configuration that contains target definitions and their associated formatters.
+    /// </param>
+    /// <returns>
+    /// The <see cref="FormatterType"/> associated with the specified target, or <c>null</c> if no
+    /// matching target is found or the target name is null or empty.
+    /// </returns>
+    private static FormatterType? GetTargetFormatter(string? targetName, LoggingConfig configuration) =>
+        !string.IsNullOrEmpty(targetName) &&
+        configuration.Targets.TryGetValue(targetName, out var target)
+            ? target.Formatter
+            : null;
 }

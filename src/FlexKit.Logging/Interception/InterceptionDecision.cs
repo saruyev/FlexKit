@@ -31,6 +31,23 @@ public readonly record struct InterceptionDecision
     public string? Target { get; private init; }
 
     /// <summary>
+    /// Gets or sets the formatter type for logging messages.
+    /// Specifies the formatting strategy to be used, such as structured logging, JSON, or custom templates.
+    /// </summary>
+    public FormatterType? Formatter { get; private init; }
+
+    /// <summary>
+    /// Sets the formatter type for logging messages.
+    /// </summary>
+    /// <param name="formatterType">The formatter type to assign to the log entry.</param>
+    /// <returns>A new log entry with the specified formatter type.</returns>
+    public InterceptionDecision WithFormatter(FormatterType? formatterType) =>
+        this with
+        {
+            Formatter = formatterType
+        };
+
+    /// <summary>
     /// Creates a new instance of the InterceptionDecision with the specified interception behavior.
     /// </summary>
     /// <param name="behavior">The interception behavior to apply.</param>

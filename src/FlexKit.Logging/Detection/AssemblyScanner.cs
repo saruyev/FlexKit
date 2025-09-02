@@ -43,7 +43,9 @@ internal static class AssemblyScanner
         var name = assembly.FullName ?? "";
 
         // Skip FlexKit framework assemblies
-        if (name.StartsWith("FlexKit.Logging.", StringComparison.InvariantCulture))
+        if (
+            name.StartsWith("FlexKit.Logging.", StringComparison.InvariantCulture) &&
+            !name.Contains("Tests", StringComparison.InvariantCulture))
         {
             return false;
         }

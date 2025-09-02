@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Text.Json.Serialization;
+using FlexKit.Logging.Configuration;
 using JetBrains.Annotations;
 using Microsoft.Extensions.Logging;
 
@@ -131,6 +132,13 @@ public readonly record struct LogEntry
     /// </summary>
     [JsonIgnore]
     public string? Target { get; private init; }
+
+    /// <summary>
+    /// Gets or sets the formatter type for logging messages.
+    /// Specifies the formatting strategy to be used, such as structured logging, JSON, or custom templates.
+    /// </summary>
+    [JsonIgnore]
+    public FormatterType? Formatter { get; private init; }
 
     /// <summary>
     /// Calculates the actual timestamp from Stopwatch ticks.
@@ -266,6 +274,17 @@ public readonly record struct LogEntry
         this with
         {
             OutputValue = outputValue
+        };
+
+    /// <summary>
+    /// Sets the formatter type for the log entry.
+    /// </summary>
+    /// <param name="formatterType">The formatter type to assign to the log entry.</param>
+    /// <returns>A new log entry with the specified formatter type.</returns>
+    public LogEntry WithFormatter(FormatterType? formatterType) =>
+        this with
+        {
+            Formatter = formatterType
         };
 
     /// <summary>

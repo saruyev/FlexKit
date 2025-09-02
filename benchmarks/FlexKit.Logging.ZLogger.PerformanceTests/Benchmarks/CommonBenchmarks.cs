@@ -1,0 +1,14 @@
+using FlexKit.Logging.PerformanceTests.Benchmarks;
+// ReSharper disable ClassNeverInstantiated.Global
+
+namespace FlexKit.Logging.ZLogger.PerformanceTests.Benchmarks;
+
+public class ZLoggerAsyncMethodBenchmarks : AsyncMethodBenchmarks;
+public class ZLoggerComplexParameterBenchmarks : ComplexParameterBenchmarks;
+public class ZLoggerConfigurationOverheadBenchmarks : ConfigurationOverheadBenchmarks;
+public class ZLoggerExclusionPatternBenchmarks : ExclusionPatternBenchmarks;
+public class ZLoggerFormatterBenchmarks : FormatterBenchmarks;
+public class ZLoggerInterceptionDecisionCacheBenchmarks : InterceptionDecisionCacheBenchmarks;
+public class ZLoggerInterceptionOverheadBenchmarks : InterceptionOverheadBenchmarks;
+public class ZLoggerMemoryAllocationBenchmarks : MemoryAllocationBenchmarks;
+public class ZLoggerMethodFrequencyBenchmarks : MethodFrequencyBenchmarks;
