@@ -3,6 +3,7 @@ using System.Reflection;
 using FlexKit.Logging.Configuration;
 using FlexKit.Logging.Core;
 using FlexKit.Logging.Interception.Attributes;
+using JetBrains.Annotations;
 
 namespace FlexKit.Logging.Interception;
 
@@ -37,6 +38,7 @@ public sealed class InterceptionDecisionCache(LoggingConfig loggingConfig)
     /// and cannot be null. It provides access to the logging configuration
     /// defined in the application's settings.
     /// </remarks>
+    [UsedImplicitly]
     public LoggingConfig Config { get; } = loggingConfig ?? throw new ArgumentNullException(nameof(loggingConfig));
 
     /// <summary>
@@ -334,12 +336,8 @@ public sealed class InterceptionDecisionCache(LoggingConfig loggingConfig)
     /// </summary>
     /// <param name="type">The type to check for manual logging injection.</param>
     /// <returns>True if IFlexKitLogger is injected; false otherwise.</returns>
-    private static bool HasFlexKitLoggerInjection(Type type)
-    {
-        var constructors = type.GetConstructors(BindingFlags.Public | BindingFlags.Instance);
-
-        return constructors.Any(constructor =>
+    private static bool HasFlexKitLoggerInjection(Type type) =>
+        type.GetConstructors(BindingFlags.Public | BindingFlags.Instance).Any(constructor =>
             constructor.GetParameters().Any(parameter =>
                 parameter.ParameterType == typeof(IFlexKitLogger)));
-    }
 }

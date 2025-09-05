@@ -98,7 +98,7 @@ public class NLogConfigurationBuilder
             {
                 nlogTarget = new AsyncTargetWrapper(nlogTarget)
                 {
-                    Name = target.Type + "_Async"
+                    Name = target.Type + "_Async",
                 };
             }
 
@@ -206,7 +206,7 @@ public class NLogConfigurationBuilder
             Layout = "${event-properties:Target}",
             Substring = flexKitTarget.Type,
             Action = FilterResult.Log,
-            IgnoreCase = true
+            IgnoreCase = true,
         });
 
         // Set the default action to ignore events that don't match the filter
@@ -336,7 +336,7 @@ public class NLogConfigurationBuilder
             "ERROR" => LogLevel.Error,
             "CRITICAL" => LogLevel.Fatal,
             "NONE" => LogLevel.Off,
-            _ => LogLevel.Info
+            _ => LogLevel.Info,
         };
     }
 }

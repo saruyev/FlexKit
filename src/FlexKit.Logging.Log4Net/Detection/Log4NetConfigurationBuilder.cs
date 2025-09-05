@@ -168,7 +168,10 @@ public class Log4NetConfigurationBuilder
             try
             {
                 // Convert and set the property value
-                var convertedValue = Convert.ChangeType(configSection.Value, property.PropertyType, CultureInfo.InvariantCulture);
+                var convertedValue = Convert.ChangeType(
+                    configSection.Value,
+                    property.PropertyType,
+                    CultureInfo.InvariantCulture);
                 property.SetValue(appender, convertedValue);
             }
             catch (Exception ex)

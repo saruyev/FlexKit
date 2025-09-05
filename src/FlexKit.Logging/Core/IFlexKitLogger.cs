@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using FlexKit.Logging.Models;
+using JetBrains.Annotations;
 
 namespace FlexKit.Logging.Core;
 
@@ -17,5 +18,7 @@ public interface IFlexKitLogger
     /// <summary>
     /// Creates and starts a System.Diagnostics.Activity, returning it for manual management.
     /// </summary>
+    /// <param name="activityName">The name of the activity.</param>
+    [UsedImplicitly]
     Activity? StartActivity(string activityName);
 }

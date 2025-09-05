@@ -35,5 +35,5 @@ public enum FormatterType
     /// Example Success: "Method ProcessPayment completed in 450 ms"
     /// Example Error: "Method ProcessPayment failed: InvalidOperationException after 450 ms"
     /// </summary>
-    SuccessError
+    SuccessError,
 }

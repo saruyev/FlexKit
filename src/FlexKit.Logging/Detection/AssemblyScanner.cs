@@ -53,7 +53,7 @@ internal static class AssemblyScanner
         // Skip system assemblies
         string[] systemPrefixes = [
             "System.", "Microsoft.", "mscorlib", "netstandard", "Windows.",
-            "Autofac", "Castle.", "Newtonsoft."
+            "Autofac", "Castle.", "Newtonsoft.",
         ];
 
         return !Array.Exists(

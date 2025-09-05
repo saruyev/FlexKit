@@ -77,8 +77,10 @@ public sealed class ZLoggerLogWriter(
     ILoggerFactory loggerFactory,
     IZLoggerTemplateEngine engine) : ILogEntryProcessor
 {
-    private readonly IMessageFormatterFactory _formatterFactory = formatterFactory ?? throw new ArgumentNullException(nameof(formatterFactory));
-    private readonly ILoggerFactory _loggerFactory = loggerFactory ?? throw new ArgumentNullException(nameof(loggerFactory));
+    private readonly IMessageFormatterFactory _formatterFactory =
+        formatterFactory ?? throw new ArgumentNullException(nameof(formatterFactory));
+    private readonly ILoggerFactory _loggerFactory =
+        loggerFactory ?? throw new ArgumentNullException(nameof(loggerFactory));
     private readonly ConcurrentDictionary<string, ILogger> _loggerCache = new();
 
     /// <inheritdoc />

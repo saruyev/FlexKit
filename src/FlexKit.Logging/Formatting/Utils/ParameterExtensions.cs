@@ -11,6 +11,14 @@ namespace FlexKit.Logging.Formatting.Utils;
 /// </summary>
 public static class ParameterExtensions
 {
+    private static readonly JsonSerializerOptions _options = new()
+    {
+        WriteIndented = false,
+        ReferenceHandler = ReferenceHandler.IgnoreCycles,
+        MaxDepth = 3,
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+    };
+
     /// <summary>
     /// Extracts all available parameters from a log entry for template substitution.
     /// </summary>
@@ -46,7 +54,7 @@ public static class ParameterExtensions
                 {
                     name = item.Name,
                     type = item.Type,
-                    value = item.Value ?? "null"
+                    value = item.Value ?? "null",
                 }));
         }
 
@@ -62,22 +70,7 @@ public static class ParameterExtensions
     {
         try
         {
-            if (entry.InputParameters is not object[] rawInput || rawInput.Length == 0)
-            {
-                entry = entry.WithInput(entry.InputParameters == null
-                    ? JsonSerializer.Serialize(Array.Empty<object>())
-                    : SerializeValueForJson(entry.InputParameters));
-            }
-            else
-            {
-                entry = entry.WithInput(
-                    JsonSerializer.Serialize(rawInput.Cast<InputParameter>().Select(item => new
-                    {
-                        name = item.Name,
-                        type = item.Type,
-                        value = SerializeValueForJson(item.Value) ?? "null"
-                    })));
-            }
+            entry = SerializeInput(entry);
 
             return entry.OutputValue == null
                 ? entry
@@ -87,6 +80,29 @@ public static class ParameterExtensions
         {
             return entry;
         }
+    }
+
+    /// <summary>
+    /// Processes and serializes the input parameters of the log entry into a JSON format.
+    /// </summary>
+    /// <param name="entry">The log entry containing input parameters to be serialized.</param>
+    /// <returns>A log entry with serialized input parameters.</returns>
+    private static LogEntry SerializeInput(LogEntry entry)
+    {
+        if (entry.InputParameters is not object[] rawInput || rawInput.Length == 0)
+        {
+            return entry.WithInput(entry.InputParameters == null
+                ? JsonSerializer.Serialize(Array.Empty<object>())
+                : SerializeValueForJson(entry.InputParameters));
+        }
+
+        return entry.WithInput(
+            JsonSerializer.Serialize(rawInput.Cast<InputParameter>().Select(item => new
+            {
+                name = item.Name,
+                type = item.Type,
+                value = SerializeValueForJson(item.Value) ?? "null"
+            })));
     }
 
     /// <summary>
@@ -190,39 +206,19 @@ public static class ParameterExtensions
     {
         try
         {
-            // Try to serialize to get actual object structure
-            var options = new JsonSerializerOptions
-            {
-                WriteIndented = false,
-                ReferenceHandler = ReferenceHandler.IgnoreCycles,
-                MaxDepth = 3,
-                DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
-            };
-
-            // Serialize and deserialize to get a clean object structure
-            var json = JsonSerializer.Serialize(obj, options);
+            var json = JsonSerializer.Serialize(obj, _options);
 
             if (json.Length > 2000)
             {
-                return new
-                {
-                    _type = obj.GetType().Name,
-                    _truncated = true,
-                    _preview = json[..100] + "..."
-                };
+                return new { _type = obj.GetType().Name, _truncated = true, _preview = json[..100] + "...", };
             }
 
-            return JsonSerializer.Deserialize<object>(json, options) ??
+            return JsonSerializer.Deserialize<object>(json, _options) ??
                    new { _type = obj.GetType().Name, _value = obj.ToString() };
         }
         catch
         {
-            return new
-            {
-                _type = obj.GetType().Name,
-                _error = "Serialization failed",
-                _toString = obj.ToString() ?? "null"
-            };
+            return new { _type = obj.GetType().Name, _error = "Serialization failed", _toString = obj.ToString() ?? "null", };
         }
     }
 }

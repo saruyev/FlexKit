@@ -35,5 +35,5 @@ public class CustomTemplateFormatterSettings
     /// </summary>
     /// <value>Dictionary mapping service patterns to template names.</value>
     [UsedImplicitly]
-    public Dictionary<string, string> ServiceTemplates { get; set; } = new();
+    public Dictionary<string, string> ServiceTemplates { get; set; } = [];
 }

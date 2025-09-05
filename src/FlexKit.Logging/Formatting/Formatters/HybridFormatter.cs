@@ -64,27 +64,54 @@ public sealed class HybridFormatter : IMessageFormatter
                 ? GetMetadataPart(messageResult.Parameters)
                 : string.Empty;
 
-            if (context.DisableFormatting)
-            {
-                return hybridSettings.IncludeMetadata
-                    ? FormattedMessage.Success(
-                        messageResult.Template +
-                        _translator.TranslateTemplate(hybridSettings.MetadataSeparator + " {Metadata}"),
-                        messageResult.Parameters)
-                    : FormattedMessage.Success(
-                    messageResult.Template,
-                    messageResult.Parameters);
-            }
-
-            return hybridSettings.IncludeMetadata
-                ? FormattedMessage.Success(messageResult.Message + hybridSettings.MetadataSeparator + metadataPart)
-                : FormattedMessage.Success(messageResult.Message);
+            return context.DisableFormatting
+                ? RawMessage(hybridSettings, messageResult)
+                : SerializedMessage(hybridSettings, messageResult, metadataPart);
         }
         catch (Exception ex)
         {
             return FormattedMessage.Failure($"Hybrid formatting failed: {ex.Message}");
         }
     }
+
+    /// <summary>
+    /// Generates a serialized message by combining the main log message
+    /// with metadata if metadata inclusion is enabled in the settings.
+    /// </summary>
+    /// <param name="hybridSettings">
+    /// The settings that define the behavior of the hybrid formatter,
+    /// including metadata inclusion and formatting options.
+    /// </param>
+    /// <param name="messageResult">The primary log message result, including its content and success state.</param>
+    /// <param name="metadataPart">The additional metadata to be appended to the message if metadata inclusion is enabled.</param>
+    /// <returns>A formatted message containing the log message and optionally metadata, depending on the settings.</returns>
+    private static FormattedMessage SerializedMessage(
+        HybridFormatterSettings hybridSettings,
+        FormattedMessage messageResult,
+        string metadataPart) =>
+        hybridSettings.IncludeMetadata
+            ? FormattedMessage.Success(messageResult.Message + hybridSettings.MetadataSeparator + metadataPart)
+            : FormattedMessage.Success(messageResult.Message);
+
+    /// <summary>
+    /// Formats a raw message based on the provided settings and result.
+    /// </summary>
+    /// <param name="hybridSettings">
+    /// The settings that determine the formatting behavior, such as whether to include metadata.
+    /// </param>
+    /// <param name="messageResult">The initial message result, containing the template and parameters.</param>
+    /// <returns>
+    /// A formatted message containing the final template and parameters, optionally including metadata based on settings.
+    /// </returns>
+    private FormattedMessage RawMessage(HybridFormatterSettings hybridSettings, FormattedMessage messageResult) =>
+        hybridSettings.IncludeMetadata
+            ? FormattedMessage.Success(
+                messageResult.Template +
+                _translator.TranslateTemplate(hybridSettings.MetadataSeparator + " {Metadata}"),
+                messageResult.Parameters)
+            : FormattedMessage.Success(
+                messageResult.Template,
+                messageResult.Parameters);
 
     /// <summary>
     /// Generates the structured message part of the hybrid output using either a custom template or the standard formatter.

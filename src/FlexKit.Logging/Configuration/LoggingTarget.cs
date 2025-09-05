@@ -35,5 +35,5 @@ public class LoggingTarget
     /// Properties are framework-specific and passed to the target implementation.
     /// </summary>
     [UsedImplicitly]
-    public Dictionary<string, IConfigurationSection?> Properties { get; set; } = new();
+    public Dictionary<string, IConfigurationSection?> Properties { get; set; } = [];
 }

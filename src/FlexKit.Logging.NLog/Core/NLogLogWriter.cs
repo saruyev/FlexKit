@@ -133,7 +133,7 @@ public sealed class NLogLogWriter(
         {
             Exception = null,
             Properties = { ["Target"] = typeName },
-            Parameters = message.Parameters.Values.ToArray()
+            Parameters = [.. message.Parameters.Values],
         };
 
         // Log the event
@@ -155,6 +155,6 @@ public sealed class NLogLogWriter(
             Microsoft.Extensions.Logging.LogLevel.Error => LogLevel.Error,
             Microsoft.Extensions.Logging.LogLevel.Critical => LogLevel.Fatal,
             Microsoft.Extensions.Logging.LogLevel.None => LogLevel.Off,
-            _ => LogLevel.Info
+            _ => LogLevel.Info,
         };
 }

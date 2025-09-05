@@ -22,5 +22,5 @@ public enum InterceptionBehavior
     /// Log both input parameters and output values.
     /// Provides complete visibility into method execution.
     /// </summary>
-    LogBoth
+    LogBoth,
 }

@@ -56,33 +56,44 @@ public sealed partial class CustomTemplateFormatter(IMessageTranslator translato
                 ? GetCachedTemplate(template)
                 : template;
 
-            IReadOnlyDictionary<string, object?> parameters;
-
-            if (context.DisableFormatting)
-            {
-                parameters = context.ExtractParameters();
-            }
-            else
-
-            {
-                parameters = context.FormatterType == FormatterType.CustomTemplate
-                    ? context.Stringify().ExtractParameters()
-                    : context.Jsonify().ExtractParameters();
-            }
-
-            var translatedTemplate = _translator.TranslateTemplate(processedTemplate);
-            var translatedParameters =
-                _translator.TranslateParameters(parameters, processedTemplate);
-
-            return context.DisableFormatting
-                ? FormattedMessage.Success(translatedTemplate, translatedParameters)
-                : FormattedMessage.Success(FormatMessage(translatedTemplate, translatedParameters))
-                    .WithParameters(translatedParameters);
+            return ProcessParameters(context, processedTemplate);
         }
         catch (Exception ex)
         {
             return FormattedMessage.Failure($"Custom template formatting failed: {ex.Message}");
         }
+    }
+
+    /// <summary>
+    /// Processes the provided parameters in the context of the specified template, translating and formatting them
+    /// as needed based on the given formatting context and template configuration.
+    /// </summary>
+    /// <param name="context">The formatting context containing configuration and parameter extraction details.</param>
+    /// <param name="processedTemplate">The processed template string to be used for formatting and translation.</param>
+    /// <returns>A formatted message containing the result of the parameter processing and translation.</returns>
+    private FormattedMessage ProcessParameters(FormattingContext context, string processedTemplate)
+    {
+        IReadOnlyDictionary<string, object?> parameters;
+
+        if (context.DisableFormatting)
+        {
+            parameters = context.ExtractParameters();
+        }
+        else
+        {
+            parameters = context.FormatterType == FormatterType.CustomTemplate
+                ? context.Stringify().ExtractParameters()
+                : context.Jsonify().ExtractParameters();
+        }
+
+        var translatedTemplate = _translator.TranslateTemplate(processedTemplate);
+        var translatedParameters =
+            _translator.TranslateParameters(parameters, processedTemplate);
+
+        return context.DisableFormatting
+            ? FormattedMessage.Success(translatedTemplate, translatedParameters)
+            : FormattedMessage.Success(FormatMessage(translatedTemplate, translatedParameters))
+                .WithParameters(translatedParameters);
     }
 
     /// <summary>

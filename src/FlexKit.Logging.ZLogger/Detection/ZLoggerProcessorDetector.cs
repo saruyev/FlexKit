@@ -237,13 +237,7 @@ public static class ZLoggerProcessorDetector
     private static bool IsValidAsyncLogProcessor(Type type)
     {
         // Must be a concrete class (not abstract, not interface)
-        if (!type.IsClass || type.IsAbstract)
-        {
-            return false;
-        }
-
-        // Must be public
-        if (!type.IsPublic)
+        if (!type.IsClass || type.IsAbstract || !type.IsPublic)
         {
             return false;
         }
@@ -293,40 +287,46 @@ public static class ZLoggerProcessorDetector
     {
         try
         {
-            if (processorType == null)
-            {
-                return null;
-            }
-
-            // Determine processor name (use type name, removing "Output" suffix if present)
-            var processorName = processorType.Name;
-            if (processorName.EndsWith("Output", StringComparison.InvariantCulture))
-            {
-                // Remove the "Output" suffix: DebugOutput -> Debug
-                processorName = processorName[..^6];
-            }
-            if (processorName.EndsWith("Processor", StringComparison.InvariantCulture))
-            {
-                processorName = processorName[..^9]; // Remove the "Processor" suffix
-            }
-
-            // Get configurable properties
-            var properties = processorType
-                .GetProperties(BindingFlags.Public | BindingFlags.Instance)
-                .Where(p => p is { CanWrite: true, SetMethod.IsPublic: true })
-                .ToArray();
-
-            return new ProcessorInfo
-            {
-                Name = processorName,
-                ProcessorType = processorType,
-                Properties = properties,
-                IsBuiltIn = false
-            };
+            return processorType == null ? null : CreateLogProcessorInfoFromType(processorType);
         }
         catch
         {
             return null;
         }
+    }
+
+    /// <summary>
+    /// Creates a <see cref="ProcessorInfo"/> instance based on the provided processor type,
+    /// extracting its name, configurable properties, and other metadata.
+    /// </summary>
+    /// <param name="processorType">The type of the processor for which information should be created.</param>
+    /// <returns>A <see cref="ProcessorInfo"/> instance containing detailed information about the processor.</returns>
+    private static ProcessorInfo CreateLogProcessorInfoFromType(Type processorType)
+    {
+        // Determine processor name (use type name, removing "Output" suffix if present)
+        var processorName = processorType.Name;
+        if (processorName.EndsWith("Output", StringComparison.InvariantCulture))
+        {
+            // Remove the "Output" suffix: DebugOutput -> Debug
+            processorName = processorName[..^6];
+        }
+        if (processorName.EndsWith("Processor", StringComparison.InvariantCulture))
+        {
+            processorName = processorName[..^9]; // Remove the "Processor" suffix
+        }
+
+        // Get configurable properties
+        var properties = processorType
+            .GetProperties(BindingFlags.Public | BindingFlags.Instance)
+            .Where(p => p is { CanWrite: true, SetMethod.IsPublic: true })
+            .ToArray();
+
+        return new ProcessorInfo
+        {
+            Name = processorName,
+            ProcessorType = processorType,
+            Properties = properties,
+            IsBuiltIn = false
+        };
     }
 }

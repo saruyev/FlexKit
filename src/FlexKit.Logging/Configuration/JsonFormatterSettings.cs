@@ -9,32 +9,11 @@ namespace FlexKit.Logging.Configuration;
 public class JsonFormatterSettings
 {
     /// <summary>
-    /// Gets or sets whether to include exception stack traces in JSON output.
-    /// When true, full stack traces are included for failed method executions.
-    /// </summary>
-    /// <value>True to include stack traces; false to exclude them. Default is false.</value>
-    public bool IncludeStackTrace { get; [UsedImplicitly] set; }
-
-    /// <summary>
     /// Gets or sets whether to format JSON output with indentation for readability.
     /// When true, JSON is formatted with proper indentation and line breaks.
     /// </summary>
     /// <value>True for pretty-printed JSON; false for compact JSON. Default is false.</value>
     public bool PrettyPrint { get; [UsedImplicitly] set; }
-
-    /// <summary>
-    /// Gets or sets whether to include thread information in JSON output.
-    /// When true, thread ID and activity ID are included in the JSON.
-    /// </summary>
-    /// <value>True to include thread info; false to exclude it. Default is true.</value>
-    public bool IncludeThreadInfo { get; [UsedImplicitly] set; } = true;
-
-    /// <summary>
-    /// Gets or sets whether to include timing information in JSON output.
-    /// When true, timestamp and duration are included in the JSON.
-    /// </summary>
-    /// <value>True to include timing info; false to exclude it. Default is true.</value>
-    public bool IncludeTimingInfo { get; [UsedImplicitly] set; } = true;
 
     /// <summary>
     /// Gets or sets custom property names for JSON fields.

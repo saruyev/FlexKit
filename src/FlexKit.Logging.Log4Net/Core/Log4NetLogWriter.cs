@@ -210,6 +210,6 @@ public sealed class Log4NetLogWriter(
             Microsoft.Extensions.Logging.LogLevel.Error => Level.Error,
             Microsoft.Extensions.Logging.LogLevel.Critical => Level.Fatal,
             Microsoft.Extensions.Logging.LogLevel.None => Level.Off,
-            _ => throw new ArgumentOutOfRangeException(nameof(logLevel), logLevel, "Invalid log level")
+            _ => throw new ArgumentOutOfRangeException(nameof(logLevel), logLevel, "Invalid log level"),
         };
 }

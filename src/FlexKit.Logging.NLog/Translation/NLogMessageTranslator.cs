@@ -45,17 +45,10 @@ public partial class NLogMessageTranslator : DefaultMessageTranslator
         }
 
         var template = messageTemplate;
-
-        // 1. Clean other provider syntax (Serilog, Log4Net, ZLogger) but preserve existing NLog
         template = CleanNonNLogFeatures(template);
 
-        if (config?.DefaultFormatter == FormatterType.Json && config.Formatters.Json.PrettyPrint)
-        {
-            return template;
-        }
-
-        // 2. Convert FlexKit template syntax to NLog layout renderers
-        return ConvertToNLogSyntax(template);
+        return config is { DefaultFormatter: FormatterType.Json, Formatters.Json.PrettyPrint: true } ? template :
+            ConvertToNLogSyntax(template);
     }
 
     /// <summary>
