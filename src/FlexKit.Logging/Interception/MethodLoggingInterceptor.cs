@@ -39,6 +39,15 @@ public sealed class MethodLoggingInterceptor(
             LogLevel.Warning,
             new EventId(1),
             "Failed to enqueue the logging task.");
+
+    /// <summary>
+    /// Represents the details of a method execution used for logging completion information.
+    /// Captures metadata including the log entry, stopwatch timing, success status, and any exceptions that occurred.
+    /// </summary>
+    /// <param name="Entry">The log entry representing the method execution details.</param>
+    /// <param name="Stopwatch">The stopwatch instance tracking the duration of the method execution.</param>
+    /// <param name="Success">Indicates whether the method execution completed successfully. Defaults to true.</param>
+    /// <param name="Exception">The exception, if any, that was thrown during method execution. Defaults to null.</param>
     private record struct CompletionDetails(
         LogEntry Entry,
         Stopwatch Stopwatch,
@@ -296,9 +305,12 @@ public sealed class MethodLoggingInterceptor(
         in InterceptionDecision decision)
     {
         var entry = LogEntry.CreateStart(
-            invocation.Method.Name,
-            invocation.Method.DeclaringType?.FullName ?? "Unknown",
-            decision.Level).WithErrorLevel(decision.ExceptionLevel).WithTarget(decision.Target);
+                invocation.Method.Name,
+                invocation.Method.DeclaringType?.FullName ?? "Unknown",
+                decision.Level)
+            .WithErrorLevel(decision.ExceptionLevel)
+            .WithTarget(decision.Target)
+            .WithFormatter(decision.Formatter);
 
         // Add input parameters if required
         return decision.Behavior is not InterceptionBehavior.LogInput and not InterceptionBehavior.LogBoth

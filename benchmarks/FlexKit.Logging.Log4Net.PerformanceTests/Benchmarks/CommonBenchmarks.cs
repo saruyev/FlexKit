@@ -1,0 +1,15 @@
+using FlexKit.Logging.PerformanceTests.Benchmarks;
+// ReSharper disable ClassNeverInstantiated.Global
+
+namespace FlexKit.Logging.Log4Net.PerformanceTests.Benchmarks;
+
+public class Log4NetAsyncMethodBenchmarks : AsyncMethodBenchmarks;
+public class Log4NetComplexParameterBenchmarks : ComplexParameterBenchmarks;
+public class Log4NetConfigurationOverheadBenchmarks : ConfigurationOverheadBenchmarks;
+public class Log4NetExclusionPatternBenchmarks : ExclusionPatternBenchmarks;
+public class Log4NetFormatterBenchmarks : FormatterBenchmarks;
+public class Log4NetInterceptionDecisionCacheBenchmarks : InterceptionDecisionCacheBenchmarks;
+public class Log4NetInterceptionOverheadBenchmarks : InterceptionOverheadBenchmarks;
+public class Log4NetMemoryAllocationBenchmarks : MemoryAllocationBenchmarks;
+public class Log4NetMethodFrequencyBenchmarks : MethodFrequencyBenchmarks;
+public class Log4NetBackgroundQueueBenchmarks : BackgroundQueueBenchmarks;

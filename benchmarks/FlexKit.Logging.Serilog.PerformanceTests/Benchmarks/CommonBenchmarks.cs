@@ -1,0 +1,14 @@
+using FlexKit.Logging.PerformanceTests.Benchmarks;
+// ReSharper disable ClassNeverInstantiated.Global
+
+namespace FlexKit.Logging.Serilog.PerformanceTests.Benchmarks;
+
+public class SerilogAsyncMethodBenchmarks : AsyncMethodBenchmarks;
+public class SerilogComplexParameterBenchmarks : ComplexParameterBenchmarks;
+public class SerilogConfigurationOverheadBenchmarks : ConfigurationOverheadBenchmarks;
+public class SerilogExclusionPatternBenchmarks : ExclusionPatternBenchmarks;
+public class SerilogFormatterBenchmarks : FormatterBenchmarks;
+public class SerilogInterceptionDecisionCacheBenchmarks : InterceptionDecisionCacheBenchmarks;
+public class SerilogInterceptionOverheadBenchmarks : InterceptionOverheadBenchmarks;
+public class SerilogMemoryAllocationBenchmarks : MemoryAllocationBenchmarks;
+public class SerilogMethodFrequencyBenchmarks : MethodFrequencyBenchmarks;

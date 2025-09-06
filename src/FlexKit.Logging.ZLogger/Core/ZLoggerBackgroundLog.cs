@@ -8,20 +8,14 @@ namespace FlexKit.Logging.ZLogger.Core;
 /// Provides a sealed implementation of the IBackgroundLog interface for managing background logging operations.
 /// Integrates with ZLogger and uses ILogEntryProcessor for processing and outputting log entries.
 /// </summary>
-public sealed class ZLoggerBackgroundLog : IBackgroundLog, IDisposable
+/// <remarks>
+/// Provides a sealed implementation of the IBackgroundLog interface for managing background logging operations.
+/// Integrates with ZLogger and uses ILogEntryProcessor for processing and outputting log entries.
+/// </remarks>
+/// <param name="processor">The log entry processor that writes to ZLogger.</param>
+public sealed class ZLoggerBackgroundLog(ILogEntryProcessor processor) : IBackgroundLog, IDisposable
 {
     private volatile bool _disposed;
-    private readonly ILogEntryProcessor _processor;
-
-    /// <summary>
-    /// Provides a sealed implementation of the IBackgroundLog interface for managing background logging operations.
-    /// Integrates with ZLogger and uses ILogEntryProcessor for processing and outputting log entries.
-    /// </summary>
-    /// <param name="processor">The log entry processor that writes to ZLogger.</param>
-    public ZLoggerBackgroundLog(ILogEntryProcessor processor)
-    {
-        _processor = processor;
-    }
 
     /// <inheritdoc />
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -34,7 +28,7 @@ public sealed class ZLoggerBackgroundLog : IBackgroundLog, IDisposable
 
         try
         {
-            _processor.ProcessEntry(entry);
+            processor.ProcessEntry(entry);
             return true;
         }
         catch

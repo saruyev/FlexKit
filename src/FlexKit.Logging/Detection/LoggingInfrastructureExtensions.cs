@@ -199,6 +199,7 @@ public static class LoggingInfrastructureExtensions
             {
                 var name = assembly.GetName().Name;
                 return name?.StartsWith("FlexKit.Logging.", StringComparison.InvariantCulture) == true &&
+                       !name.Contains("Tests", StringComparison.InvariantCulture) &&
                        name != "FlexKit.Logging";
             });
 

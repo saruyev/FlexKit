@@ -99,7 +99,7 @@ public static class NLogTargetDetector
 
         assemblies.AddRange(runtimeAssemblies);
 
-        return assemblies.Distinct().ToArray();
+        return [.. assemblies.Distinct()];
     }
 
     /// <summary>
@@ -202,34 +202,47 @@ public static class NLogTargetDetector
     {
         try
         {
-            // Determine a target name (use type name without "Target" suffix if present)
-            var targetName = targetType.Name;
-            if (targetName.EndsWith("Target", StringComparison.InvariantCulture))
-            {
-                targetName = targetName[..^6]; // Remove "Target" suffix
-            }
-
-            // Get configurable properties
-            var properties = targetType
-                .GetProperties(BindingFlags.Public | BindingFlags.Instance)
-                .Where(p => p is { CanWrite: true, SetMethod.IsPublic: true })
-                .ToArray();
-
-            // Check if the target supports async operations
-            var supportsAsync = CheckAsyncSupport(targetType);
-
-            return new TargetInfo
-            {
-                Name = targetName,
-                TargetType = targetType,
-                Properties = properties,
-                SupportsAsync = supportsAsync
-            };
+            return CreateTargetInfoFromType(targetType);
         }
         catch
         {
             return null;
         }
+    }
+
+    /// <summary>
+    /// Creates a <see cref="TargetInfo"/> instance from the provided type by analyzing its properties,
+    /// determining if it supports asynchronous operations, and inferring its name based on conventions.
+    /// </summary>
+    /// <param name="targetType">The <see cref="Type"/> representing the NLog target to analyze.</param>
+    /// <returns>
+    /// A <see cref="TargetInfo"/> object containing details about the NLog target, or null if an error occurs during processing.
+    /// </returns>
+    private static TargetInfo? CreateTargetInfoFromType(Type targetType)
+    {
+        // Determine a target name (use type name without "Target" suffix if present)
+        var targetName = targetType.Name;
+        if (targetName.EndsWith("Target", StringComparison.InvariantCulture))
+        {
+            targetName = targetName[..^6]; // Remove "Target" suffix
+        }
+
+        // Get configurable properties
+        var properties = targetType
+            .GetProperties(BindingFlags.Public | BindingFlags.Instance)
+            .Where(p => p is { CanWrite: true, SetMethod.IsPublic: true })
+            .ToArray();
+
+        // Check if the target supports async operations
+        var supportsAsync = CheckAsyncSupport(targetType);
+
+        return new TargetInfo
+        {
+            Name = targetName,
+            TargetType = targetType,
+            Properties = properties,
+            SupportsAsync = supportsAsync
+        };
     }
 
     /// <summary>

@@ -43,7 +43,9 @@ internal static class AssemblyScanner
         var name = assembly.FullName ?? "";
 
         // Skip FlexKit framework assemblies
-        if (name.StartsWith("FlexKit.Logging.", StringComparison.InvariantCulture))
+        if (
+            name.StartsWith("FlexKit.Logging.", StringComparison.InvariantCulture) &&
+            !name.Contains("Tests", StringComparison.InvariantCulture))
         {
             return false;
         }
@@ -51,7 +53,7 @@ internal static class AssemblyScanner
         // Skip system assemblies
         string[] systemPrefixes = [
             "System.", "Microsoft.", "mscorlib", "netstandard", "Windows.",
-            "Autofac", "Castle.", "Newtonsoft."
+            "Autofac", "Castle.", "Newtonsoft.",
         ];
 
         return !Array.Exists(

@@ -149,20 +149,12 @@ public static class Log4NetAppenderDetector
     private static bool IsValidAppenderType(Type type)
     {
         // Must be a concrete class (not abstract, not interface)
-        if (!type.IsClass || type.IsAbstract)
+        if (!type.IsClass || type.IsAbstract || !type.IsPublic)
         {
             return false;
         }
 
-        // Must be public
-        if (!type.IsPublic)
-        {
-            return false;
-        }
-
-        // Must implement IAppender interface
-        var interfaces = type.GetInterfaces();
-        if (interfaces.Any(i => i is { Name: "IAppender", Namespace: "log4net.Appender" }))
+        if (type.GetInterfaces().Any(i => i is { Name: "IAppender", Namespace: "log4net.Appender" }))
         {
             return true;
         }
@@ -191,34 +183,48 @@ public static class Log4NetAppenderDetector
     {
         try
         {
-            // Determine an appender name (use type name without "Appender" suffix if present)
-            var appenderName = appenderType.Name;
-            if (appenderName.EndsWith("Appender", StringComparison.InvariantCulture))
-            {
-                appenderName = appenderName[..^8]; // Remove "Appender" suffix
-            }
-
-            // Get configurable properties
-            var properties = appenderType
-                .GetProperties(BindingFlags.Public | BindingFlags.Instance)
-                .Where(p => p is { CanWrite: true, SetMethod.IsPublic: true })
-                .ToArray();
-
-            // Check appender capabilities
-            var requiresActivation = CheckActivationRequirement(appenderType);
-
-            return new AppenderInfo
-            {
-                Name = appenderName,
-                AppenderType = appenderType,
-                Properties = properties,
-                RequiresActivation = requiresActivation
-            };
+            return CreateAppenderInfoFromType(appenderType);
         }
         catch
         {
             return null;
         }
+    }
+
+    /// <summary>
+    /// Creates an <see cref="AppenderInfo"/> object from the specified appender type by extracting its
+    /// name, configurable properties, and activation requirements.
+    /// </summary>
+    /// <param name="appenderType">The type of the appender to analyze.</param>
+    /// <returns>
+    /// An <see cref="AppenderInfo"/> object with configuration and capability details,
+    /// or null if the information cannot be determined.
+    /// </returns>
+    private static AppenderInfo CreateAppenderInfoFromType(Type appenderType)
+    {
+        // Determine an appender name (use type name without "Appender" suffix if present)
+        var appenderName = appenderType.Name;
+        if (appenderName.EndsWith("Appender", StringComparison.InvariantCulture))
+        {
+            appenderName = appenderName[..^8]; // Remove "Appender" suffix
+        }
+
+        // Get configurable properties
+        var properties = appenderType
+            .GetProperties(BindingFlags.Public | BindingFlags.Instance)
+            .Where(p => p is { CanWrite: true, SetMethod.IsPublic: true })
+            .ToArray();
+
+        // Check appender capabilities
+        var requiresActivation = CheckActivationRequirement(appenderType);
+
+        return new AppenderInfo
+        {
+            Name = appenderName,
+            AppenderType = appenderType,
+            Properties = properties,
+            RequiresActivation = requiresActivation,
+        };
     }
 
     /// <summary>

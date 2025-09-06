@@ -24,9 +24,16 @@ public class LoggingTarget
     public bool Enabled { get; set; } = true;
 
     /// <summary>
+    /// Gets or sets the formatter type for logging messages.
+    /// Specifies the formatting strategy to be used, such as structured logging, JSON, or custom templates.
+    /// </summary>
+    [UsedImplicitly]
+    public FormatterType? Formatter { get; set; }
+
+    /// <summary>
     /// Gets or sets flexible properties for target configuration.
     /// Properties are framework-specific and passed to the target implementation.
     /// </summary>
     [UsedImplicitly]
-    public Dictionary<string, IConfigurationSection?> Properties { get; set; } = new();
+    public Dictionary<string, IConfigurationSection?> Properties { get; set; } = [];
 }

@@ -11,7 +11,7 @@ namespace FlexKit.Logging.Serilog.Detection;
 
 /// <summary>
 /// Autofac module that registers Serilog-based logging components for FlexKit.Logging.
-/// Replaces MEL components when FlexKit.Logging.Serilog is present.
+/// Replaces MEL components when "FlexKit.Logging.Serilog" is present.
 /// </summary>
 [UsedImplicitly]
 public class SerilogLoggingModule : Module

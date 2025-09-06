@@ -117,7 +117,7 @@ public sealed class SerilogLogWriter(
     /// <exception cref="ArgumentOutOfRangeException">Thrown if the log level is invalid.</exception>
     [SuppressMessage("ReSharper", "FlagArgument")]
     private void OutputMessage(
-        FormattedMessage message,
+        in FormattedMessage message,
         LogEventLevel level,
         string typeName)
     {
@@ -148,6 +148,6 @@ public sealed class SerilogLogWriter(
             LogLevel.Error => LogEventLevel.Error,
             LogLevel.Critical => LogEventLevel.Fatal,
             LogLevel.None => LogEventLevel.Verbose,
-            _ => LogEventLevel.Information
+            _ => LogEventLevel.Information,
         };
 }

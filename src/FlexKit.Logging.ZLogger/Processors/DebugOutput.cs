@@ -29,8 +29,5 @@ public class DebugOutput : IAsyncLogProcessor
 
     /// <inheritdoc />
     [SuppressMessage("Usage", "CA1816:Dispose methods should call SuppressFinalize")]
-    public ValueTask DisposeAsync()
-    {
-        return default;
-    }
+    public ValueTask DisposeAsync() => default;
 }

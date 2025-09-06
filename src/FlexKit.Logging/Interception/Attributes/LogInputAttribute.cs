@@ -50,27 +50,11 @@ namespace FlexKit.Logging.Interception.Attributes;
 /// <param name="level">The log level to use when logging input parameters.</param>
 /// <param name="exceptionLevel">The log level to use when an exception is thrown.</param>
 /// <param name="target">The target name to route logs to.</param>
+/// <param name="formatter">The formatter to use for formatting log messages.</param>
 [AttributeUsage(AttributeTargets.Method | AttributeTargets.Class)]
 [UsedImplicitly]
 public sealed class LogInputAttribute(
     LogLevel level = LogLevel.Information,
     LogLevel exceptionLevel = LogLevel.Error,
-    string? target = null) : Attribute
-{
-    /// <summary>
-    /// Gets the log level to use when logging input parameters.
-    /// Defaults to Information if not specified.
-    /// </summary>
-    public LogLevel Level { get; } = level;
-
-    /// <summary>
-    /// Gets the log level to use when an exception is thrown.
-    /// </summary>
-    public LogLevel? ExceptionLevel { get; } = exceptionLevel;
-
-    /// <summary>
-    /// Gets the target name to route logs to.
-    /// If null, uses the default target.
-    /// </summary>
-    public string? Target { get; } = target;
-}
+    string? target = null,
+    string? formatter = null) : LoggingAttribute(level, exceptionLevel, target, formatter);

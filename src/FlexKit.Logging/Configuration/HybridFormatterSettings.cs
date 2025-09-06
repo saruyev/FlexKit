@@ -35,5 +35,5 @@ public class HybridFormatterSettings
     /// </summary>
     /// <value>List of metadata field names to include. Empty list includes all fields.</value>
     [UsedImplicitly]
-    public List<string> MetadataFields { get; set; } = new();
+    public List<string> MetadataFields { get; set; } = [];
 }

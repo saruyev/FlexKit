@@ -82,50 +82,7 @@ public static class AttributeResolver
     /// The resolved InterceptionDecision if logging attributes are found at the method level;
     /// null if no method-level logging attributes are present.
     /// </returns>
-    private static InterceptionDecision? GetMethodLevelDecision(MethodInfo method)
-    {
-        var logBothAttr = method.GetCustomAttribute<LogBothAttribute>();
-        if (logBothAttr != null)
-        {
-            return new InterceptionDecision()
-                .WithBehavior(InterceptionBehavior.LogBoth)
-                .WithTarget(logBothAttr.Target)
-                .WithLevel(logBothAttr.Level)
-                .WithExceptionLevel(logBothAttr.ExceptionLevel ?? LogLevel.Error);
-        }
-
-        var logInputAttr = method.GetCustomAttribute<LogInputAttribute>();
-        var logOutputAttr = method.GetCustomAttribute<LogOutputAttribute>();
-
-        if (logInputAttr != null && logOutputAttr != null)
-        {
-            // Both input and output attributes present - use the higher log level
-            //for error level use LogBoth
-            var target = logInputAttr.Target ?? logOutputAttr.Target;
-            var level = (LogLevel)Math.Min((int)logInputAttr.Level, (int)logOutputAttr.Level);
-            return new InterceptionDecision()
-                .WithBehavior(InterceptionBehavior.LogBoth)
-                .WithTarget(target)
-                .WithLevel(level);
-        }
-
-        if (logInputAttr != null)
-        {
-            return new InterceptionDecision()
-                .WithBehavior(InterceptionBehavior.LogInput)
-                .WithTarget(logInputAttr.Target)
-                .WithLevel(logInputAttr.Level)
-                .WithExceptionLevel(logInputAttr.ExceptionLevel ?? LogLevel.Error);
-        }
-
-        return logOutputAttr != null
-            ? new InterceptionDecision()
-                .WithBehavior(InterceptionBehavior.LogOutput)
-                .WithTarget(logOutputAttr.Target)
-                .WithLevel(logOutputAttr.Level)
-                .WithExceptionLevel(logOutputAttr.ExceptionLevel ?? LogLevel.Error)
-            : null;
-    }
+    private static InterceptionDecision? GetMethodLevelDecision(MethodInfo method) => MemberInfoDecision(method);
 
     /// <summary>
     /// Resolves the interception decision from class-level attributes.
@@ -136,47 +93,65 @@ public static class AttributeResolver
     /// The resolved InterceptionDecision if logging attributes are found at the class level;
     /// null if no class-level logging attributes are present.
     /// </returns>
-    private static InterceptionDecision? GetClassLevelDecision(Type classType)
+    private static InterceptionDecision? GetClassLevelDecision(Type classType) => MemberInfoDecision(classType);
+
+    /// <summary>
+    /// Determines the logging interception decision based on the attributes applied to the provided member information.
+    /// Evaluates attributes such as LogBothAttribute, LogInputAttribute, and LogOutputAttribute to decide
+    /// the appropriate logging behavior and levels.
+    /// </summary>
+    /// <param name="member">The member (method or type) to inspect for logging-related attributes.</param>
+    /// <returns>
+    /// An InterceptionDecision object representing the resolved logging behavior, or null if no relevant attributes are found.
+    /// </returns>
+    private static InterceptionDecision? MemberInfoDecision(MemberInfo member)
     {
-        var logBothAttr = classType.GetCustomAttribute<LogBothAttribute>();
+        var logBothAttr = member.GetCustomAttribute<LogBothAttribute>();
         if (logBothAttr != null)
         {
-            return new InterceptionDecision()
-                .WithBehavior(InterceptionBehavior.LogBoth)
-                .WithTarget(logBothAttr.Target)
-                .WithLevel(logBothAttr.Level)
-                .WithExceptionLevel(logBothAttr.ExceptionLevel ?? LogLevel.Error);
+            return GetDecision(logBothAttr, InterceptionBehavior.LogBoth);
         }
 
-        var logInputAttr = classType.GetCustomAttribute<LogInputAttribute>();
-        var logOutputAttr = classType.GetCustomAttribute<LogOutputAttribute>();
+        var logInputAttr = member.GetCustomAttribute<LogInputAttribute>();
+        var logOutputAttr = member.GetCustomAttribute<LogOutputAttribute>();
 
         if (logInputAttr != null && logOutputAttr != null)
         {
             // Both input and output attributes present - use the higher log level
-            var level = (LogLevel)Math.Min((int)logInputAttr.Level, (int)logOutputAttr.Level);
-            var target = logInputAttr.Target ?? logOutputAttr.Target;
-            return new InterceptionDecision()
-                .WithBehavior(InterceptionBehavior.LogBoth)
-                .WithTarget(target)
-                .WithLevel(level);
+            var attribute = new LogBothAttribute(
+                level: (LogLevel)Math.Min((int)logInputAttr.Level, (int)logOutputAttr.Level),
+                exceptionLevel: (LogLevel)Math.Min((int)logInputAttr.ExceptionLevel!, (int)logOutputAttr.ExceptionLevel!),
+                target: logInputAttr.Target ?? logOutputAttr.Target,
+                formatter: logInputAttr.Formatter?.ToString() ?? logOutputAttr.Formatter?.ToString());
+
+            return GetDecision(attribute, InterceptionBehavior.LogBoth);
         }
 
         if (logInputAttr != null)
         {
-            return new InterceptionDecision()
-                .WithBehavior(InterceptionBehavior.LogInput)
-                .WithTarget(logInputAttr.Target)
-                .WithLevel(logInputAttr.Level)
-                .WithExceptionLevel(logInputAttr.ExceptionLevel ?? LogLevel.Error);
+            return GetDecision(logInputAttr, InterceptionBehavior.LogInput);
         }
 
-        return logOutputAttr != null
-            ? new InterceptionDecision()
-                .WithBehavior(InterceptionBehavior.LogOutput)
-                .WithTarget(logOutputAttr.Target)
-                .WithLevel(logOutputAttr.Level)
-                .WithExceptionLevel(logOutputAttr.ExceptionLevel ?? LogLevel.Error)
-            : null;
+        return logOutputAttr != null ? GetDecision(logOutputAttr, InterceptionBehavior.LogInput) : null;
     }
+
+    /// <summary>
+    /// Constructs a decision based on the provided logging attribute and behavior.
+    /// </summary>
+    /// <param name="attribute">
+    /// The logging attribute containing configuration for logging, such as level, target, and formatter.
+    /// </param>
+    /// <param name="behavior">
+    /// The logging behavior specifying how the interception should be processed (e.g., LogInput, LogOutput, or LogBoth).
+    /// </param>
+    /// <returns>
+    /// An <see cref="InterceptionDecision"/> instance encapsulating all relevant configurations for the interception decision.
+    /// </returns>
+    private static InterceptionDecision? GetDecision(LoggingAttribute attribute, InterceptionBehavior behavior) =>
+        new InterceptionDecision()
+            .WithBehavior(behavior)
+            .WithTarget(attribute.Target)
+            .WithLevel(attribute.Level)
+            .WithExceptionLevel(attribute.ExceptionLevel ?? LogLevel.Error)
+            .WithFormatter(attribute.Formatter);
 }

@@ -265,6 +265,7 @@ public partial class ZLoggerTemplateEngine(LoggingConfig config) : IZLoggerTempl
         {
             if (part.IsLiteral)
             {
+                // ReSharper disable once ConstantExpected
 #pragma warning disable CA1857
                 handler.AppendLiteral(string.Intern(part.Text));
 #pragma warning restore CA1857
@@ -418,30 +419,47 @@ public partial class ZLoggerTemplateEngine(LoggingConfig config) : IZLoggerTempl
         var i = 0;
         while (i < template.Length)
         {
-            var brace = template.IndexOf('{', i);
-            if (brace == -1)
+            if (ParseTemplateParts(template, parsedTemplate, ref i))
             {
-                parsedTemplate.Parts.Add(new TemplatePart { IsLiteral = true, Text = template[i..] });
                 break;
             }
-            if (brace > i)
-            {
-                parsedTemplate.Parts.Add(new TemplatePart { IsLiteral = true, Text = template[i..brace] });
-            }
-
-            var end = template.IndexOf('}', brace);
-            var inside = template.Substring(brace + 1, end - brace - 1);
-            var split = inside.Split(':');
-            parsedTemplate.Parts.Add(new TemplatePart
-            {
-                IsLiteral = false,
-                Format = (split.Length > 1 ? split[1] : null) ?? string.Empty
-            });
-            i = end + 1;
         }
 
         parsedTemplate.UpdateCounts();
         return parsedTemplate;
+    }
+
+    /// <summary>
+    /// Parses the parts of a template string into segments and updates the parsed template accordingly.
+    /// Handles identifying literal text and placeholder parts within the template.
+    /// </summary>
+    /// <param name="template">The template string to parse.</param>
+    /// <param name="parsedTemplate">The parsed template object where the extracted parts will be stored.</param>
+    /// <param name="i">The current index in the template string. This will be updated to the new position after parsing.</param>
+    /// <returns>Returns true if the parsing reaches the end of the template string; otherwise, false.</returns>
+    private static bool ParseTemplateParts(string template, ParsedTemplate parsedTemplate, ref int i)
+    {
+        var brace = template.IndexOf('{', i);
+        if (brace == -1)
+        {
+            parsedTemplate.Parts.Add(new TemplatePart { IsLiteral = true, Text = template[i..] });
+            return true;
+        }
+        if (brace > i)
+        {
+            parsedTemplate.Parts.Add(new TemplatePart { IsLiteral = true, Text = template[i..brace] });
+        }
+
+        var end = template.IndexOf('}', brace);
+        var inside = template.Substring(brace + 1, end - brace - 1);
+        var split = inside.Split(':');
+        parsedTemplate.Parts.Add(new TemplatePart
+        {
+            IsLiteral = false,
+            Format = (split.Length > 1 ? split[1] : null) ?? string.Empty
+        });
+        i = end + 1;
+        return false;
     }
 
     /// <summary>
