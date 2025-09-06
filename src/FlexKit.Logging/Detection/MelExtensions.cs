@@ -157,7 +157,7 @@ public static class MelExtensions
         var actionType = typeof(Action<>).MakeGenericType(optionsType);
 
         // Create a closure that captures the target
-        var configureMethod = typeof(MelProviderFactory)
+        var configureMethod = typeof(MelExtensions)
             .GetMethod(nameof(ConfigureOptions), BindingFlags.NonPublic | BindingFlags.Static)
             ?.MakeGenericMethod(optionsType) ?? throw new InvalidOperationException("ConfigureOptions method not found");
 
