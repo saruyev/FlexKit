@@ -78,8 +78,5 @@
       <ProjectReference Include="..\..\src\FlexKit.Configuration\FlexKit.Configuration.csproj" />
       <ProjectReference Include="..\..\src\FlexKit.Logging\FlexKit.Logging.csproj" />
     </ItemGroup>
-    <ItemGroup>
-      <Folder Include="BenchmarkDotNet.Artifacts\" />
-    </ItemGroup>
 
 </Project>
