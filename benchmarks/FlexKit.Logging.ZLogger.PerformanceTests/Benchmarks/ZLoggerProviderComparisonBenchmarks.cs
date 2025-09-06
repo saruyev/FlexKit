@@ -11,6 +11,8 @@ using ZLogger;
 namespace FlexKit.Logging.ZLogger.PerformanceTests.Benchmarks;
 
 [MemoryDiagnoser]
+[MaxIterationCount(16)]
+[InvocationCount(1_000)]
 public class ZLoggerProviderComparisonBenchmarks : FlexKitBenchmarkBase
 {
     private ILogger<ZLoggerProviderComparisonBenchmarks> _nativeZLogger = null!;
@@ -35,17 +37,12 @@ public class ZLoggerProviderComparisonBenchmarks : FlexKitBenchmarkBase
         _flexKitZLoggerService = FlexKitServices.GetService<ILogBothService>()!;
     }
 
-    [GlobalCleanup]
-    public override void Cleanup()
-    {
-        _nativeZLoggerHost.Dispose();
-        base.Cleanup();
-    }
-
     [Benchmark(Baseline = true)]
     public void Native_ZLogger_Manual_Logging()
     {
-        _nativeZLogger.LogInformation("Processing {Input} with result {Result}", "test", "native result");
+        var input = new { Name = "input", Type = "String", Value = "test" };
+        var result = "native result";
+        _nativeZLogger.ZLogInformation($"Processing {input:json} with result {result}");
     }
 
     [Benchmark]
