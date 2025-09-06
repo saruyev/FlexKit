@@ -28,6 +28,7 @@ public sealed class BackgroundLoggingService(
     private readonly ILogEntryProcessor _logEntryProcessor =
         logEntryProcessor ?? throw new ArgumentNullException(nameof(logEntryProcessor));
     private readonly SemaphoreSlim _processingLock = new(1, 1);
+    private volatile bool _disposed;
 
     /// <summary>
     /// Stops the service and flushes any remaining log entries.
@@ -118,24 +119,97 @@ public sealed class BackgroundLoggingService(
             return;
         }
 
-        await _processingLock.WaitAsync(cancellationToken);
+        // Check if disposed before attempting to acquire the semaphore
+        if (_disposed)
+        {
+            ProcessEntriesUnsynchronized(entries);
+            return;
+        }
+
+        await ProcessEntriesSynchronizedAsync(entries, cancellationToken);
+    }
+
+    /// <summary>
+    /// Processes entries without semaphore synchronization during shutdown.
+    /// </summary>
+    /// <param name="entries">The batch of log entries to process.</param>
+    private void ProcessEntriesUnsynchronized(IReadOnlyList<LogEntry> entries)
+    {
+        foreach (var entry in entries)
+        {
+            try
+            {
+                ProcessSingleEntry(entry);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to process log entry {EntryId}", entry.Id);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Processes entries with semaphore synchronization during normal operation.
+    /// </summary>
+    /// <param name="entries">The batch of log entries to process.</param>
+    /// <param name="cancellationToken">Token to cancel the processing operation</param>
+    private async Task ProcessEntriesSynchronizedAsync(
+        IReadOnlyList<LogEntry> entries,
+        CancellationToken cancellationToken)
+    {
+        var lockAcquired = false;
+
         try
         {
-            foreach (var entry in entries)
+            lockAcquired = await TryAcquireLockAsync(cancellationToken);
+
+            if (!lockAcquired)
             {
-                try
-                {
-                    ProcessSingleEntry(entry);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning(ex, "Failed to process log entry {EntryId}", entry.Id);
-                }
+                ProcessEntriesUnsynchronized(entries);
+                return;
             }
+
+            ProcessEntriesUnsynchronized(entries);
         }
         finally
         {
+            if (lockAcquired && !_disposed)
+            {
+                TryReleaseLock();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Attempts to acquire the processing lock safely.
+    /// </summary>
+    /// <param name="cancellationToken">Token to cancel the wait operation</param>
+    /// <returns>True if a lock was acquired, false if disposed during acquisition</returns>
+    private async Task<bool> TryAcquireLockAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            await _processingLock.WaitAsync(cancellationToken);
+            return true;
+        }
+        catch (ObjectDisposedException)
+        {
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Attempts to release the processing lock safely.
+    /// </summary>
+    private void TryReleaseLock()
+    {
+        try
+        {
             _processingLock.Release();
+        }
+        catch (ObjectDisposedException)
+        {
+            // Semaphore was disposed between check and release - acceptable during shutdown
         }
     }
 
@@ -158,6 +232,18 @@ public sealed class BackgroundLoggingService(
     /// <inheritdoc />
     public override void Dispose()
     {
+        _disposed = true;
+
+        // Give any ongoing operations a moment to complete
+        try
+        {
+            _processingLock.Wait(TimeSpan.FromMilliseconds(100));
+        }
+        catch (ObjectDisposedException)
+        {
+            // Expected if already disposed
+        }
+
         _processingLock.Dispose();
         base.Dispose();
     }
