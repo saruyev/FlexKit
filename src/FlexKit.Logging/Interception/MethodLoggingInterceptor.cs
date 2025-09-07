@@ -4,6 +4,7 @@ using System.Reflection;
 using Castle.DynamicProxy;
 using FlexKit.Logging.Configuration;
 using FlexKit.Logging.Core;
+using FlexKit.Logging.Formatting.Utils;
 using FlexKit.Logging.Models;
 using Microsoft.Extensions.Logging;
 
@@ -131,7 +132,7 @@ public sealed class MethodLoggingInterceptor(
 
         if (ShouldLogOutput(decision))
         {
-            entry = entry.WithOutput(invocation.ReturnValue);
+            entry = entry.WithOutput(invocation.ReturnValue.ApplyMasking(null, _cache.Config));
         }
 
         TryEnqueueEntry(entry);
@@ -172,7 +173,7 @@ public sealed class MethodLoggingInterceptor(
 
             if (details.Success && ShouldLogOutput(decision))
             {
-                entry = entry.WithOutput(ExtractTaskResult(completedTask));
+                entry = entry.WithOutput(ExtractTaskResult(completedTask).ApplyMasking(null, _cache.Config));
             }
 
             TryEnqueueEntry(entry);
@@ -300,7 +301,7 @@ public sealed class MethodLoggingInterceptor(
     /// <param name="invocation">The method invocation context.</param>
     /// <param name="decision">The interception decision that determines what to log and at what level.</param>
     /// <returns>A log entry representing the method's start with optional input parameters.</returns>
-    private static LogEntry CreateStartEntry(
+    private LogEntry CreateStartEntry(
         IInvocation invocation,
         in InterceptionDecision decision)
     {
@@ -339,7 +340,7 @@ public sealed class MethodLoggingInterceptor(
     /// <param name="arguments">The method arguments to structure.</param>
     /// <param name="parameters">The parameter metadata from the method.</param>
     /// <returns>An array of structured parameter objects.</returns>
-    private static object[] CreateParameterStructures(
+    private object[] CreateParameterStructures(
         object[] arguments,
         ParameterInfo[] parameters) =>
         [.. arguments.Select((arg, index) => CreateSingleParameterStructure(arg, index, parameters))];
@@ -352,14 +353,18 @@ public sealed class MethodLoggingInterceptor(
     /// <param name="index">The parameter index in the argument list.</param>
     /// <param name="parameters">The parameter metadata array.</param>
     /// <returns>An anonymous object containing a parameter name, type, and serialized value.</returns>
-    private static InputParameter CreateSingleParameterStructure(
+    private InputParameter CreateSingleParameterStructure(
         object? argument,
         int index,
-        ParameterInfo[] parameters) =>
-        new(
-            GetParameterName(index, parameters),
-            GetParameterType(argument, index, parameters),
-            argument);
+        ParameterInfo[] parameters)
+    {
+        var paramName = GetParameterName(index, parameters);
+        var paramType = GetParameterType(argument, index, parameters);
+
+        // Apply masking to the argument value
+        var maskedValue = argument.ApplyParameterMasking(index < parameters.Length ? parameters[index] : null, _cache.Config);
+        return new InputParameter(paramName, paramType, maskedValue);
+    }
 
     /// <summary>
     /// Gets the parameter name from metadata or generates a fallback name for the given index.

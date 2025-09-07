@@ -166,7 +166,11 @@ public static class LoggingInfrastructureExtensions
                 if (loggingConfig.Targets.Count == 0)
                 {
                     var emptyServices = new ServiceCollection();
-                    emptyServices.AddLogging();
+                    emptyServices.AddLogging(b =>
+                    {
+                        b.AddConsole();
+                        b.SetMinimumLevel(LogLevel.Information);
+                    });
                     return emptyServices.BuildServiceProvider().GetRequiredService<ILoggerFactory>();
                 }
 
