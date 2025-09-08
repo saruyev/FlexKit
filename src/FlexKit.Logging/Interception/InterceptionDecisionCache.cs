@@ -210,7 +210,7 @@ public sealed class InterceptionDecisionCache(LoggingConfig loggingConfig)
     /// </summary>
     /// <param name="interfaceType">The interface type to find an implementation for.</param>
     /// <returns>The implementation type if found; null if no implementation is found in cached types.</returns>
-    private Type? FindImplementationType(Type interfaceType) =>
+    internal Type? FindImplementationType(Type interfaceType) =>
         _typeDecisions.Keys
             .FirstOrDefault(cachedType => interfaceType.IsAssignableFrom(cachedType) && !cachedType.IsInterface);
 

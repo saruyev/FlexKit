@@ -1,3 +1,5 @@
+using System.Diagnostics;
+using System.Reflection;
 using Autofac;
 using FlexKit.Logging.Configuration;
 using FlexKit.Logging.Core;
@@ -5,7 +7,9 @@ using FlexKit.Logging.Detection;
 using FlexKit.Logging.Formatting.Translation;
 using FlexKit.Logging.Log4Net.Core;
 using JetBrains.Annotations;
+using log4net.Core;
 using log4net.Repository;
+using Module = Autofac.Module;
 
 namespace FlexKit.Logging.Log4Net.Detection;
 
@@ -113,6 +117,7 @@ public class Log4NetLoggingModule : Module
 
         builder.RegisterBuildCallback(container =>
         {
+            DisableLog4NetAutoShutdown();
             var backgroundService = container.Resolve<BackgroundLoggingService>();
 
             // Start the service in the background
@@ -120,7 +125,44 @@ public class Log4NetLoggingModule : Module
 
             // Ensure logs are flushed on process exit
             AppDomain.CurrentDomain.ProcessExit +=
-                (_, _) => LoggingInfrastructureExtensions.FlushLogsOnExit(backgroundService);
+                (_, _) =>
+                {
+                    LoggingInfrastructureExtensions.FlushLogsOnExit(backgroundService);
+                    LoggerManager.Shutdown();
+                };
         });
+    }
+
+    /// <summary>
+    /// Disables log4net's automatic ProcessExit shutdown handler.
+    /// Solves the Windows problem with an early called auto-registered shutdown handler.
+    /// </summary>
+    private static void DisableLog4NetAutoShutdown()
+    {
+        try
+        {
+            // Force log4net static constructor to run first
+            _ = log4net.LogManager.GetRepository();
+
+            // Get the static field that holds the ProcessExit handler
+            var onProcessExitMethod = typeof(LoggerManager).GetMethod(
+                "OnProcessExit",
+#pragma warning disable S3011
+                BindingFlags.NonPublic | BindingFlags.Static);
+#pragma warning restore S3011
+
+            if (onProcessExitMethod == null)
+            {
+                return;
+            }
+
+            var handler = Delegate.CreateDelegate(typeof(EventHandler), onProcessExitMethod);
+            AppDomain.CurrentDomain.ProcessExit -= (EventHandler)handler;
+            Debug.WriteLine("Log4net automatic shutdown disabled");
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Failed to disable log4net auto shutdown: {ex.Message}");
+        }
     }
 }

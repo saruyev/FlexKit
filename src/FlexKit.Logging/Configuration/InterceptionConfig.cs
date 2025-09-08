@@ -60,6 +60,102 @@ public class InterceptionConfig
     public List<string> ExcludeMethodPatterns { get; set; } = [];
 
     /// <summary>
+    /// Gets or sets parameter name patterns that should be masked during logging.
+    /// Supports wildcard patterns using asterisks (*).
+    /// </summary>
+    /// <value>
+    /// A list of parameter name patterns to mask. Examples: ["*password*", "secret*", "*key"]
+    /// Default is an empty list.
+    /// </value>
+    /// <remarks>
+    /// <para>
+    /// <strong>Pattern Matching Rules:</strong>
+    /// <list type="bullet">
+    /// <item><strong>Exact match:</strong> "password" matches a parameter named exactly "password"</item>
+    /// <item><strong>Starts with:</strong> "secret*" matches any parameter starting with "secret"</item>
+    /// <item><strong>Ends with:</strong> "*key" matches any parameter ending with "key"</item>
+    /// <item><strong>Contains:</strong> "*password*" matches any parameter containing "password"</item>
+    /// </list>
+    /// </para>
+    /// <para>
+    /// <strong>Configuration Example:</strong>
+    /// <code>
+    /// "MaskParameterPatterns": ["*password*", "*secret*", "*key", "apiKey", "connectionString"]
+    /// </code>
+    /// </para>
+    /// </remarks>
+    [UsedImplicitly]
+    public List<string> MaskParameterPatterns { get; set; } = [];
+
+    /// <summary>
+    /// Gets or sets property name patterns that should be masked in complex objects during logging.
+    /// Supports wildcard patterns using asterisks (*).
+    /// </summary>
+    /// <value>
+    /// A list of property name patterns to mask in logged objects. Examples: ["Password", "*Token*", "ApiKey"]
+    /// Default is an empty list.
+    /// </value>
+    /// <remarks>
+    /// <para>
+    /// This setting applies to properties within complex objects that are logged as input parameters
+    /// or return values. When a complex object is logged, properties matching these patterns will
+    /// be replaced with the mask replacement text.
+    /// </para>
+    /// <para>
+    /// <strong>Pattern Matching Rules:</strong>
+    /// <list type="bullet">
+    /// <item><strong>Exact match:</strong> "Password" matches property named exactly "Password"</item>
+    /// <item><strong>Starts with:</strong> "Secret*" matches any property starting with "Secret"</item>
+    /// <item><strong>Ends with:</strong> "*Token" matches any property ending with "Token"</item>
+    /// <item><strong>Contains:</strong> "*Key*" matches any property containing "Key"</item>
+    /// </list>
+    /// </para>
+    /// <para>
+    /// <strong>Configuration Example:</strong>
+    /// <code>
+    /// "MaskPropertyPatterns": ["Password", "ApiKey", "*Token*", "*Secret*"]
+    /// </code>
+    /// </para>
+    /// </remarks>
+    [UsedImplicitly]
+    public List<string> MaskPropertyPatterns { get; set; } = [];
+
+    /// <summary>
+    /// Gets or sets the replacement text to use when masking sensitive data.
+    /// This text will replace the actual values of parameters and properties that match masking patterns.
+    /// </summary>
+    /// <value>
+    /// The text to display instead of sensitive values. Default is "***MASKED***".
+    /// </value>
+    /// <remarks>
+    /// <para>
+    /// This setting provides a global default for masking replacement text within this service configuration.
+    /// Individual [Mask] attributes can override this with their own replacement text.
+    /// </para>
+    /// <para>
+    /// <strong>Usage Examples:</strong>
+    /// <list type="bullet">
+    /// <item><strong>Security-focused:</strong> "[REDACTED]" or "[CLASSIFIED]"</item>
+    /// <item><strong>Development-friendly:</strong> "***HIDDEN***" or "&lt;masked&gt;"</item>
+    /// <item><strong>Compliance-oriented:</strong> "[PII_REMOVED]" or "[SENSITIVE_DATA]"</item>
+    /// </list>
+    /// </para>
+    /// </remarks>
+    [UsedImplicitly]
+    public string MaskReplacement { get; set; } = "***MASKED***";
+
+    /// <summary>
+    /// Gets or sets output value patterns that should be masked during logging.
+    /// Supports wildcard patterns for matching return values that contain sensitive data.
+    /// </summary>
+    /// <value>
+    /// A list of output patterns to mask. Examples: ["*connection*", "*password*"]
+    /// Default is an empty list.
+    /// </value>
+    [UsedImplicitly]
+    public List<string> MaskOutputPatterns { get; set; } = [];
+
+    /// <summary>
     /// Gets the effective interception decision based on the configured flags and level.
     /// </summary>
     /// <returns>The appropriate InterceptionDecision with behavior and log level.</returns>

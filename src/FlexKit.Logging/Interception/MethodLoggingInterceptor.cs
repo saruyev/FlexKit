@@ -4,6 +4,7 @@ using System.Reflection;
 using Castle.DynamicProxy;
 using FlexKit.Logging.Configuration;
 using FlexKit.Logging.Core;
+using FlexKit.Logging.Formatting.Utils;
 using FlexKit.Logging.Models;
 using Microsoft.Extensions.Logging;
 
@@ -41,20 +42,6 @@ public sealed class MethodLoggingInterceptor(
             "Failed to enqueue the logging task.");
 
     /// <summary>
-    /// Represents the details of a method execution used for logging completion information.
-    /// Captures metadata including the log entry, stopwatch timing, success status, and any exceptions that occurred.
-    /// </summary>
-    /// <param name="Entry">The log entry representing the method execution details.</param>
-    /// <param name="Stopwatch">The stopwatch instance tracking the duration of the method execution.</param>
-    /// <param name="Success">Indicates whether the method execution completed successfully. Defaults to true.</param>
-    /// <param name="Exception">The exception, if any, that was thrown during method execution. Defaults to null.</param>
-    private record struct CompletionDetails(
-        LogEntry Entry,
-        Stopwatch Stopwatch,
-        bool Success = true,
-        Exception? Exception = null);
-
-    /// <summary>
     /// Intercepts method calls and applies logging based on cached decisions.
     /// This is the main entry point for all intercepted method calls.
     /// </summary>
@@ -86,7 +73,8 @@ public sealed class MethodLoggingInterceptor(
     {
         var details = new CompletionDetails(
             Entry: CreateStartEntry(invocation, decision),
-            Stopwatch: Stopwatch.StartNew());
+            Stopwatch: Stopwatch.StartNew(),
+            DeclaringType: FindDeclaringType(invocation.Method.DeclaringType!));
 
         try
         {
@@ -131,7 +119,10 @@ public sealed class MethodLoggingInterceptor(
 
         if (ShouldLogOutput(decision))
         {
-            entry = entry.WithOutput(invocation.ReturnValue);
+            entry = entry.WithOutput(
+                invocation.ReturnValue.ApplyOutputMasking(
+                    details.DeclaringType,
+                    _cache.Config));
         }
 
         TryEnqueueEntry(entry);
@@ -172,7 +163,7 @@ public sealed class MethodLoggingInterceptor(
 
             if (details.Success && ShouldLogOutput(decision))
             {
-                entry = entry.WithOutput(ExtractTaskResult(completedTask));
+                entry = entry.WithOutput(ExtractTaskResult(completedTask).ApplyOutputMasking(details.DeclaringType, _cache.Config));
             }
 
             TryEnqueueEntry(entry);
@@ -300,7 +291,7 @@ public sealed class MethodLoggingInterceptor(
     /// <param name="invocation">The method invocation context.</param>
     /// <param name="decision">The interception decision that determines what to log and at what level.</param>
     /// <returns>A log entry representing the method's start with optional input parameters.</returns>
-    private static LogEntry CreateStartEntry(
+    private LogEntry CreateStartEntry(
         IInvocation invocation,
         in InterceptionDecision decision)
     {
@@ -315,8 +306,29 @@ public sealed class MethodLoggingInterceptor(
         // Add input parameters if required
         return decision.Behavior is not InterceptionBehavior.LogInput and not InterceptionBehavior.LogBoth
             ? entry
-            : entry.WithInput(CreateParameterStructures(invocation.Arguments, invocation.Method.GetParameters()));
+            : entry.WithInput(
+                CreateParameterStructures(
+                    new InputContext(
+                        invocation.Arguments,
+                        invocation.Method.GetParameters(),
+                        FindDeclaringType(invocation.Method.DeclaringType!),
+                        _cache.Config)));
     }
+
+    /// <summary>
+    /// Identifies the declaring type for the provided type definition, resolving interfaces
+    /// to their implementing types where applicable, and returning the original type if no
+    /// implementation mapping exists or if the type is not an interface.
+    /// </summary>
+    /// <param name="declaringType">The type to evaluate, which could be an interface or a class.</param>
+    /// <returns>
+    /// The resolved type if the input is an interface with a mapped implementation.
+    /// Returns the input type itself if it is not an interface or no mapping is found.
+    /// </returns>
+    private Type FindDeclaringType(Type declaringType) =>
+        declaringType.IsInterface
+            ? _cache.FindImplementationType(declaringType) ?? declaringType
+        : declaringType;
 
     /// <summary>
     /// Attempts to enqueue a log entry to the background queue with error handling for queue full scenarios.
@@ -336,13 +348,11 @@ public sealed class MethodLoggingInterceptor(
     /// Creates structured parameter objects from method arguments and parameter metadata.
     /// Each parameter includes a name, type, and serialized value information.
     /// </summary>
-    /// <param name="arguments">The method arguments to structure.</param>
-    /// <param name="parameters">The parameter metadata from the method.</param>
+    /// <param name="context">The input context containing method arguments and metadata.</param>
     /// <returns>An array of structured parameter objects.</returns>
     private static object[] CreateParameterStructures(
-        object[] arguments,
-        ParameterInfo[] parameters) =>
-        [.. arguments.Select((arg, index) => CreateSingleParameterStructure(arg, index, parameters))];
+        InputContext context) =>
+        [.. context.Arguments.Select((arg, index) => CreateSingleParameterStructure(arg, index, context))];
 
     /// <summary>
     /// Creates a structured representation of a single parameter with name, type, and value.
@@ -350,16 +360,22 @@ public sealed class MethodLoggingInterceptor(
     /// </summary>
     /// <param name="argument">The argument value to structure.</param>
     /// <param name="index">The parameter index in the argument list.</param>
-    /// <param name="parameters">The parameter metadata array.</param>
+    /// <param name="context">The input context containing method arguments and metadata.</param>
     /// <returns>An anonymous object containing a parameter name, type, and serialized value.</returns>
     private static InputParameter CreateSingleParameterStructure(
         object? argument,
         int index,
-        ParameterInfo[] parameters) =>
-        new(
-            GetParameterName(index, parameters),
-            GetParameterType(argument, index, parameters),
-            argument);
+        InputContext context)
+    {
+        var paramName = GetParameterName(index, context.Parameters);
+        var paramType = GetParameterType(argument, index, context.Parameters);
+
+        // Apply masking to the argument value
+        var maskedValue = argument.ApplyParameterMasking(
+            index < context.Parameters.Length ? context.Parameters[index] : null,
+            context);
+        return new InputParameter(paramName, paramType, maskedValue);
+    }
 
     /// <summary>
     /// Gets the parameter name from metadata or generates a fallback name for the given index.
@@ -386,4 +402,40 @@ public sealed class MethodLoggingInterceptor(
         int index,
         ParameterInfo[] parameters) =>
         index < parameters.Length ? parameters[index].ParameterType.Name : argument?.GetType().Name ?? "null";
+
+    /// <summary>
+    /// Represents the context for method input parameters, encapsulating method arguments, parameter metadata,
+    /// and the declaring type. Useful for scenarios like logging or method interception where detailed information about
+    /// inputs is required.
+    /// </summary>
+    /// <remarks>
+    /// Provides a structured encapsulation of method input data, including arguments, parameter details, and the type
+    /// that declares the method. Typically used in logging or interception frameworks to facilitate operations like parameter
+    /// serialization or validation.
+    /// </remarks>
+    /// <param name="Arguments">The array of arguments passed to the method.</param>
+    /// <param name="Parameters">The metadata describing the method parameters.</param>
+    /// <param name="DeclaringType">The type that declares the method being invoked.</param>
+    /// <param name="Config">The logging configuration.</param>
+    internal sealed record InputContext(
+        object[] Arguments,
+        ParameterInfo[] Parameters,
+        Type DeclaringType,
+        LoggingConfig Config);
+
+    /// <summary>
+    /// Represents the details of a method execution used for logging completion information.
+    /// Captures metadata including the log entry, stopwatch timing, success status, and any exceptions that occurred.
+    /// </summary>
+    /// <param name="Entry">The log entry representing the method execution details.</param>
+    /// <param name="Stopwatch">The stopwatch instance tracking the duration of the method execution.</param>
+    /// <param name="DeclaringType">The type that declares the method being invoked.</param>
+    /// <param name="Success">Indicates whether the method execution completed successfully. Defaults to true.</param>
+    /// <param name="Exception">The exception, if any, that was thrown during method execution. Defaults to null.</param>
+    private record struct CompletionDetails(
+        LogEntry Entry,
+        Stopwatch Stopwatch,
+        Type DeclaringType,
+        bool Success = true,
+        Exception? Exception = null);
 }
