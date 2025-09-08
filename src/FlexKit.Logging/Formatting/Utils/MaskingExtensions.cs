@@ -1,6 +1,7 @@
 ﻿using System.Collections.Concurrent;
 using System.Reflection;
 using FlexKit.Logging.Configuration;
+using FlexKit.Logging.Interception;
 using FlexKit.Logging.Interception.Attributes;
 
 namespace FlexKit.Logging.Formatting.Utils;
@@ -16,16 +17,59 @@ internal static class MaskingExtensions
     private static readonly ConcurrentDictionary<Type, bool> _typeHasMaskAttributeCache = new();
 
     /// <summary>
-    /// Applies masking to a value based on parameter name, type attributes, and configuration patterns.
-    /// This is the main entry point for all masking operations.
+    /// Applies masking specifically for method parameters with parameter info.
+    /// Used during input parameter processing in the interceptor.
     /// </summary>
-    /// <param name="value">The value to potentially mask.</param>
-    /// <param name="parameterName">The parameter name (for parameter-level masking).</param>
+    /// <param name="value">The parameter value to potentially mask.</param>
+    /// <param name="parameterInfo">The parameter metadata.</param>
+    /// <param name="context">The input context containing method arguments and metadata.</param>
+    /// <returns>The original value or a masked version depending on masking rules.</returns>
+    internal static object? ApplyParameterMasking(
+        this object? value,
+        ParameterInfo? parameterInfo,
+        MethodLoggingInterceptor.InputContext context)
+    {
+        if (value == null || parameterInfo == null)
+        {
+            return value;
+        }
+
+        if (HasParameterMaskAttribute(value.GetType()))
+        {
+            return GetDefaultMaskReplacement(context.Config);
+        }
+
+        if (parameterInfo.GetCustomAttribute<MaskAttribute>() != null)
+        {
+            return parameterInfo.GetCustomAttribute<MaskAttribute>()?.Replacement ?? GetDefaultMaskReplacement(context.Config);
+        }
+
+        // Check parameter-level masking (cases 2 & 3)
+        var parameterMaskReplacement = GetParameterMaskReplacement(
+            parameterInfo.Name ?? "",
+            context.DeclaringType,
+            context.Config);
+
+        if (parameterMaskReplacement != null)
+        {
+            return parameterMaskReplacement;
+        }
+
+        // Check property-level masking (cases 1 & 3)
+        return HasMaskedProperties(value.GetType()) ? CreateMaskedCopy(value, context.Config) : value;
+    }
+
+    /// <summary>
+    /// Applies masking to output values based on configuration patterns and attributes.
+    /// Used for masking return values that may contain sensitive data.
+    /// </summary>
+    /// <param name="value">The output value to potentially mask.</param>
+    /// <param name="declaringType">The type that declares the method (for config lookup).</param>
     /// <param name="config">The logging configuration.</param>
     /// <returns>The original value or a masked version depending on masking rules.</returns>
-    internal static object? ApplyMasking(
+    internal static object? ApplyOutputMasking(
         this object? value,
-        string? parameterName,
+        Type? declaringType,
         LoggingConfig config)
     {
         if (value == null)
@@ -33,85 +77,66 @@ internal static class MaskingExtensions
             return null;
         }
 
-        // Fast path: check if any masking is configured at all
-        if (!IsMaskingConfigured(config))
+        // Check if the output value should be masked based on configuration patterns
+        var outputMaskReplacement = GetOutputMaskReplacement(value, declaringType, config);
+        if (outputMaskReplacement != null)
         {
-            return value;
-        }
-
-        var valueType = value.GetType();
-
-        // Check parameter-level masking (cases 2 & 3)
-        if (!string.IsNullOrEmpty(parameterName))
-        {
-            var parameterMaskReplacement = GetParameterMaskReplacement(parameterName, valueType, config);
-            if (parameterMaskReplacement != null)
-            {
-                return parameterMaskReplacement;
-            }
-        }
-
-        // Check if value has [Mask] attribute on parameter level
-        if (HasParameterMaskAttribute(valueType))
-        {
-            return GetDefaultMaskReplacement(config);
+            return outputMaskReplacement;
         }
 
         // Check property-level masking (cases 1 & 3)
-        return HasMaskedProperties(valueType) ? CreateMaskedCopy(value, config) : value;
+        return HasMaskedProperties(value.GetType()) ? CreateMaskedCopy(value, config) : value;
     }
 
     /// <summary>
-    /// Applies masking specifically for method parameters with parameter info.
-    /// Used during input parameter processing in the interceptor.
+    /// Gets the mask replacement text for output values based on configuration patterns.
     /// </summary>
-    /// <param name="value">The parameter value to potentially mask.</param>
-    /// <param name="parameterInfo">The parameter metadata.</param>
+    /// <param name="outputValue">The output value to check.</param>
+    /// <param name="declaringType">The type that declares the method (service class).</param>
     /// <param name="config">The logging configuration.</param>
-    /// <returns>The original value or a masked version depending on masking rules.</returns>
-    internal static object? ApplyParameterMasking(
-        this object? value,
-        ParameterInfo? parameterInfo,
+    /// <returns>The mask replacement text if output should be masked; null otherwise.</returns>
+    private static string? GetOutputMaskReplacement(
+        object? outputValue,
+        Type? declaringType,
         LoggingConfig config)
     {
-        if (value == null || parameterInfo == null)
+        if (outputValue == null || declaringType == null)
         {
-            return value;
+            return null;
         }
 
-        // Fast path: check if any masking is configured
-        if (!IsMaskingConfigured(config))
-        {
-            return value;
-        }
+        var matchingConfig = FindMatchingConfigurationForType(declaringType, config);
 
-        // Check the parameter attribute first (the highest priority)
-        if (parameterInfo.GetCustomAttribute<MaskAttribute>() != null)
-        {
-            return parameterInfo.GetCustomAttribute<MaskAttribute>()?.Replacement ?? GetDefaultMaskReplacement(config);
-        }
-
-        // Delegate to general masking logic
-        return value.ApplyMasking(parameterInfo.Name, config);
+        return matchingConfig?.MaskOutputPatterns.Any(pattern => MatchesOutputPattern(outputValue, pattern)) == true
+            ? matchingConfig.MaskReplacement
+            : null;
     }
 
     /// <summary>
-    /// Checks if any masking is configured in the system to enable fast-path optimization.
+    /// Checks if an output value matches a masking pattern.
     /// </summary>
-    /// <param name="config">The logging configuration to check.</param>
-    /// <returns>True if any masking configuration is present; false otherwise.</returns>
-    private static bool IsMaskingConfigured(LoggingConfig config) =>
-        config.Services.Values.Any(HasMaskingPatterns) ||
-        _typeHasMaskAttributeCache.Values.Any(hasAttribute => hasAttribute);
+    /// <param name="outputValue">The output value to check.</param>
+    /// <param name="pattern">The pattern to match against.</param>
+    /// <returns>True if the output value matches the pattern; false otherwise.</returns>
+    private static bool MatchesOutputPattern(object outputValue, string pattern)
+    {
+        var outputString = outputValue.ToString();
 
-    /// <summary>
-    /// Checks if the specified interception config has any masking patterns configured.
-    /// </summary>
-    /// <param name="interceptionConfig">The interception configuration to check.</param>
-    /// <returns>True if masking patterns are configured; false otherwise.</returns>
-    private static bool HasMaskingPatterns(InterceptionConfig interceptionConfig) =>
-        interceptionConfig.MaskParameterPatterns.Count > 0 ||
-        interceptionConfig.MaskPropertyPatterns.Count > 0;
+        if (string.IsNullOrEmpty(outputString))
+        {
+            return false;
+        }
+
+        // For connection strings, check if they contain sensitive patterns
+        if (pattern.Equals("*connection*", StringComparison.OrdinalIgnoreCase))
+        {
+            return outputString.Contains("Password=", StringComparison.InvariantCultureIgnoreCase) ||
+                   outputString.Contains("Pwd=", StringComparison.InvariantCultureIgnoreCase);
+        }
+
+        // Add more output pattern matching as needed
+        return MatchesPattern(outputString, pattern);
+    }
 
     /// <summary>
     /// Gets the mask replacement text for a parameter based on configuration patterns.
@@ -178,8 +203,10 @@ internal static class MaskingExtensions
     /// <param name="type">The type to check.</param>
     /// <returns>True if the type has a [Mask] attribute; false otherwise.</returns>
     private static bool HasParameterMaskAttribute(Type type) =>
-        _typeHasMaskAttributeCache.GetOrAdd(type, t =>
-            t.GetCustomAttribute<MaskAttribute>() != null);
+        _typeHasMaskAttributeCache.GetOrAdd(
+            type,
+            t =>
+                t.GetCustomAttribute<MaskAttribute>() != null);
 
     /// <summary>
     /// Checks if a type has any properties marked with the [Mask] attribute.
@@ -188,9 +215,11 @@ internal static class MaskingExtensions
     /// <param name="type">The type to check.</param>
     /// <returns>True if the type has properties with [Mask] attribute; false otherwise.</returns>
     private static bool HasMaskedProperties(Type type) =>
-        _typeHasMaskedPropsCache.GetOrAdd(type, t =>
-            t.GetProperties(BindingFlags.Public | BindingFlags.Instance)
-                .Any(prop => prop.GetCustomAttribute<MaskAttribute>() != null));
+        _typeHasMaskedPropsCache.GetOrAdd(
+            type,
+            t =>
+                t.GetProperties(BindingFlags.Public | BindingFlags.Instance)
+                    .Any(prop => prop.GetCustomAttribute<MaskAttribute>() != null));
 
     /// <summary>
     /// Creates a masked copy of an object, replacing marked properties with mask text.
@@ -201,58 +230,22 @@ internal static class MaskingExtensions
     /// <returns>A new object with masked properties.</returns>
     private static object CreateMaskedCopy(object original, LoggingConfig config)
     {
-        var type = original.GetType();
-        var maskedProperties = GetMaskedProperties(type);
+        var context = new MaskingContext(
+            original,
+            config,
+            original.GetType(),
+            GetMaskedProperties(original.GetType()),
+            GetDefaultMaskReplacement(config));
 
         // If no properties need masking, return the original
-        if (maskedProperties.Length == 0)
+        if (context.MaskedProperties.Length == 0)
         {
             return original;
         }
 
         try
         {
-            // Create a new instance
-            var clone = Activator.CreateInstance(type);
-            if (clone == null)
-            {
-                return original;
-            }
-
-            var defaultMaskText = GetDefaultMaskReplacement(config);
-
-            // Copy all properties, masking the marked ones
-            foreach (var prop in type.GetProperties(BindingFlags.Public | BindingFlags.Instance))
-            {
-                if (!prop.CanRead || !prop.CanWrite)
-                {
-                    continue;
-                }
-
-                var originalValue = prop.GetValue(original);
-
-                if (maskedProperties.Contains(prop))
-                {
-                    // Use custom mask text from attribute or default
-                    var maskAttr = prop.GetCustomAttribute<MaskAttribute>();
-                    var maskText = maskAttr?.Replacement ?? defaultMaskText;
-
-                    // Also check configuration patterns for this property
-                    var configMaskText = GetPropertyMaskReplacement(prop.Name, type, config);
-                    if (configMaskText != null)
-                    {
-                        maskText = configMaskText;
-                    }
-
-                    prop.SetValue(clone, maskText);
-                }
-                else
-                {
-                    prop.SetValue(clone, originalValue);
-                }
-            }
-
-            return clone;
+            return CreateClone(context);
         }
         catch (Exception)
         {
@@ -262,13 +255,80 @@ internal static class MaskingExtensions
     }
 
     /// <summary>
+    /// Creates a clone of the original object with properties copied from the source object.
+    /// Applies masking to properties indicated by the masking context.
+    /// </summary>
+    /// <param name="context">
+    /// The masking context containing the original object, its type, configuration, masked properties, and default mask text.
+    /// </param>
+    /// <returns>
+    /// A new object instance with copied properties, where masked properties are set according to the masking rules.
+    /// </returns>
+    private static object CreateClone(MaskingContext context)
+    {
+        // Create a new instance
+        var clone = Activator.CreateInstance(context.Type);
+        if (clone == null)
+        {
+            return context.Original;
+        }
+
+        // Copy all properties, masking the marked ones
+        foreach (var prop in context.Type.GetProperties(BindingFlags.Public | BindingFlags.Instance))
+        {
+            if (!prop.CanRead || !prop.CanWrite)
+            {
+                continue;
+            }
+
+            var originalValue = prop.GetValue(context.Original);
+
+            if (context.MaskedProperties.Contains(prop))
+            {
+                // Use custom mask text from attribute or default
+                prop.SetMaskText(context, clone);
+            }
+            else
+            {
+                prop.SetValue(clone, originalValue);
+            }
+        }
+
+        return clone;
+    }
+
+    /// <summary>
+    /// Sets the masking text on the given property of an object clone, using masking rules
+    /// from the property's custom attribute, default context settings, or configuration patterns.
+    /// </summary>
+    /// <param name="prop">The property to apply the masking text to.</param>
+    /// <param name="context">The context containing the masking configurations and default rules.</param>
+    /// <param name="clone">The cloned object where the masked value will be set.</param>
+    private static void SetMaskText(this PropertyInfo prop, MaskingContext context, object clone)
+    {
+        var maskAttr = prop.GetCustomAttribute<MaskAttribute>();
+        var maskText = maskAttr?.Replacement ?? context.DefaultMaskText;
+
+        // Also check configuration patterns for this property
+        var configMaskText = GetPropertyMaskReplacement(prop.Name, context.Type, context.Config);
+        if (configMaskText != null)
+        {
+            maskText = configMaskText;
+        }
+
+        prop.SetValue(clone, maskText);
+    }
+
+    /// <summary>
     /// Gets the properties of a type that are marked for masking.
     /// Uses caching for performance optimization.
     /// </summary>
     /// <param name="type">The type to get masked properties for.</param>
     /// <returns>Array of properties that should be masked.</returns>
     private static PropertyInfo[] GetMaskedProperties(Type type) =>
-        _maskedPropertiesCache.GetOrAdd(type, t =>
+        _maskedPropertiesCache.GetOrAdd(
+            type,
+            t =>
             [
                 .. t.GetProperties(BindingFlags.Public | BindingFlags.Instance)
                     .Where(prop => prop.GetCustomAttribute<MaskAttribute>() != null),
@@ -339,4 +399,21 @@ internal static class MaskingExtensions
         var configWithMask = config.Services.Values.FirstOrDefault(c => !string.IsNullOrEmpty(c.MaskReplacement));
         return configWithMask?.MaskReplacement ?? "***MASKED***";
     }
+
+    /// <summary>
+    /// Represents the contextual information required for applying masking logic to sensitive properties within an object.
+    /// This includes the original object, associated logging configuration, metadata for the object's type,
+    /// properties flagged for masking, and a default mask replacement text.
+    /// </summary>
+    /// <param name="Original">The original object to mask.</param>
+    /// <param name="Config">The logging configuration containing mask settings.</param>
+    /// <param name="Type">The type of the original object.</param>
+    /// <param name="MaskedProperties">Array of properties that should be masked.</param>
+    /// <param name="DefaultMaskText">The default mask replacement text.</param>
+    private sealed record MaskingContext(
+        object Original,
+        LoggingConfig Config,
+        Type Type,
+        PropertyInfo[] MaskedProperties,
+        string DefaultMaskText);
 }

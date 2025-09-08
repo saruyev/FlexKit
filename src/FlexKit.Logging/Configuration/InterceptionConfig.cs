@@ -145,6 +145,17 @@ public class InterceptionConfig
     public string MaskReplacement { get; set; } = "***MASKED***";
 
     /// <summary>
+    /// Gets or sets output value patterns that should be masked during logging.
+    /// Supports wildcard patterns for matching return values that contain sensitive data.
+    /// </summary>
+    /// <value>
+    /// A list of output patterns to mask. Examples: ["*connection*", "*password*"]
+    /// Default is an empty list.
+    /// </value>
+    [UsedImplicitly]
+    public List<string> MaskOutputPatterns { get; set; } = [];
+
+    /// <summary>
     /// Gets the effective interception decision based on the configured flags and level.
     /// </summary>
     /// <returns>The appropriate InterceptionDecision with behavior and log level.</returns>
