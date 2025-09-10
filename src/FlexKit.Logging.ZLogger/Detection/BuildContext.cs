@@ -35,6 +35,8 @@ public sealed class BuildContext
     /// </summary>
     public required ILoggingBuilder LoggingBuilder { get; init; }
 
+    public required LoggingConfig Config { get; init; }
+
     /// <summary>
     /// Attempts to configure a fallback method for a ZLogger logging provider
     /// when the method signature does not match known patterns.

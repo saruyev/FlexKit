@@ -130,13 +130,9 @@ public class SerilogConfigurationBuilder
 
         try
         {
-            config.WriteTo.Logger(lc =>
-            {
-                lc.Filter.ByIncludingOnly(e =>
-                    e.Properties.ContainsKey("Target") &&
-                    e.Properties["Target"].ToString().Contains(target.Type));
-                InvokeSinkMethod(sinkInfo, target, lc);
-            });
+            ConfigureFlexKitSink(target, config, sinkInfo);
+            ConfigureMelBridgeSink(target, config, sinkInfo);
+
             return true;
         }
         catch (Exception)
@@ -144,6 +140,44 @@ public class SerilogConfigurationBuilder
             return false;
         }
     }
+
+    /// <summary>
+    /// Configures the FlexKit sink for the given logging target by using the specified LoggerConfiguration
+    /// and detected sink information.
+    /// </summary>
+    /// <param name="target">The logging target containing configuration details for the sink.</param>
+    /// <param name="config">The LoggerConfiguration instance to apply the sink configuration to.</param>
+    /// <param name="sinkInfo">Detection information for the specific sink, including configuration method and parameters.</param>
+    private static void ConfigureFlexKitSink(
+        LoggingTarget target,
+        LoggerConfiguration config,
+        SerilogComponentDetector.ComponentInfo sinkInfo) =>
+        config.WriteTo.Logger(lc =>
+        {
+            lc.Filter.ByIncludingOnly(e =>
+                e.Properties.ContainsKey("Target") &&
+                e.Properties["Target"].ToString().Contains(target.Type));
+
+            InvokeSinkMethod(sinkInfo, target, lc);
+        });
+
+    /// <summary>
+    /// Configures a sink for MEL bridge logs (framework logs from ASP.NET Core, etc.).
+    /// These logs don't have the Target property, so we route them to all sinks.
+    /// </summary>
+    /// <param name="target">The FlexKit target configuration.</param>
+    /// <param name="loggerConfig">The LoggerConfiguration to configure.</param>
+    /// <param name="sinkInfo">Information about the detected sink.</param>
+    private static void ConfigureMelBridgeSink(
+        LoggingTarget target,
+        LoggerConfiguration loggerConfig,
+        SerilogComponentDetector.ComponentInfo sinkInfo) =>
+        loggerConfig.WriteTo.Logger(lc =>
+        {
+            // Only accept events that DON'T have the Target property (MEL bridge logs)
+            lc.Filter.ByIncludingOnly(e => !e.Properties.ContainsKey("Target"));
+            InvokeSinkMethod(sinkInfo, target, lc);
+        });
 
     /// <summary>
     /// Invokes a method of a detected Serilog sink using reflection with the provided target

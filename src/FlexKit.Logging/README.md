@@ -426,6 +426,29 @@ FLEXKIT__LOGGING__SERVICES__MYAPP_SERVICES__LOGINPUT=true
 FLEXKIT__LOGGING__SERVICES__MYAPP_SERVICES__LEVEL=Warning
 ```
 
+#### YAML Configuration
+```csharp
+var host = Host.CreateDefaultBuilder(args)
+    .AddFlexConfig(config => config
+        .AddYamlFile("logging.yaml", optional: true))
+    .Build();
+```
+
+```yaml
+# logging.yaml
+FlexKit:
+  Logging:
+    DefaultFormatter: StandardStructured
+    Services:
+      "MyApp.Services.*":
+        LogInput: true
+        Level: Information
+        ExcludeMethodPatterns:
+          - "ToString"
+          - "Get*"
+          - "*Internal"
+```
+
 #### Cloud Configuration Sources
 ```csharp
 // AWS Parameter Store
@@ -3326,14 +3349,14 @@ public void ValidateRegistration(IServiceProvider services)
 **Solutions:**
 ```csharp
 // ❌ Problem: High-frequency method with logging
-public class CacheService
+public class CacheService : ICacheService
 {
     [LogBoth] // Called thousands of times per second
     public string GetCacheKey(int id) => $"cache:{id}";
 }
 
 // ✅ Solution: Add NoLog attribute  
-public class CacheService
+public class CacheService : ICacheService
 {
     [NoLog] // 94% performance improvement
     public string GetCacheKey(int id) => $"cache:{id}";
@@ -3365,12 +3388,12 @@ public class AuthService
 // ✅ Solution: Make interceptable
 public interface IAuthService
 {
-    bool ValidateUser(string username, string password);
+    bool ValidateUser(string username, [Mask] string password);
 }
 
 public class AuthService : IAuthService
 {
-    public bool ValidateUser(string username, [Mask] string password) // Now works
+    public bool ValidateUser(string username, string password) // Now works
     {
         return password.Length > 8;
     }

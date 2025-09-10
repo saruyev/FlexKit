@@ -1,4 +1,5 @@
 using JetBrains.Annotations;
+using Microsoft.Extensions.Logging;
 
 namespace FlexKit.Logging.Configuration;
 
@@ -170,6 +171,24 @@ public class LoggingConfig
     /// </summary>
     /// <value>The default target name. Default is null (auto-detect).</value>
     public string? DefaultTarget { get; [UsedImplicitly] set; }
+
+    /// <summary>
+    /// Gets or sets the collection of logging categories that should be suppressed and not logged.
+    /// </summary>
+    /// <value>A list of category names to be excluded from logging. Default includes common framework categories.</value>
+    [UsedImplicitly]
+    public List<string> SuppressedCategories { get; set; } = [
+        "Microsoft",
+        "System",
+        "FlexKit",
+    ];
+
+    /// <summary>
+    /// Gets or sets the minimum log level for which logs should be suppressed.
+    /// </summary>
+    /// <value>The log level below which log entries will not be processed. Default is <see cref="LogLevel.None"/>.</value>
+    [UsedImplicitly]
+    public LogLevel SuppressedLogLevel { get; set; } = LogLevel.None;
 
     /// <summary>
     /// Gets or sets the name of the ActivitySource to use for manual logging.

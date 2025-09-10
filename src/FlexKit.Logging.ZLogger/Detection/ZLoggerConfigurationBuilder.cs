@@ -60,29 +60,28 @@ public class ZLoggerConfigurationBuilder
         string[] types) =>
         config.Targets.Values
             .Where(t => t.Enabled)
-            .Count(target => TryConfigureProcessor(target, loggingBuilder, types));
+            .Count(target => TryConfigureProcessor(
+                new BuildContext { LoggingBuilder = loggingBuilder, Target = target, Config = config },
+                types));
 
     /// <summary>
     /// Attempts to configure a ZLogger processor for the specified FlexKit logging target.
     /// </summary>
-    /// <param name="target">The FlexKit logging target to configure.</param>
-    /// <param name="loggingBuilder">The ILoggingBuilder to configure.</param>
+    /// <param name="context">Context for the current configuration.</param>
     /// <param name="types">Array of all target types for filtering purposes.</param>
     /// <returns>True if the processor was successfully configured; otherwise, false.</returns>
     private bool TryConfigureProcessor(
-        LoggingTarget target,
-        ILoggingBuilder loggingBuilder,
+        BuildContext context,
         string[] types)
     {
-        if (!_availableProcessors.TryGetValue(target.Type, out var processorInfo))
+        if (!_availableProcessors.TryGetValue(context.Target.Type, out var processorInfo))
         {
-            Debug.WriteLine($"Warning: ZLogger processor '{target.Type}' not found in available processors");
+            Debug.WriteLine($"Warning: ZLogger processor '{context.Target.Type}' not found in available processors");
             return false;
         }
 
         try
         {
-            var context = new BuildContext { LoggingBuilder = loggingBuilder, Target = target };
             var success = processorInfo.IsBuiltIn
                 ? context.ConfigureBuiltInProcessor(processorInfo)
                 : context.ConfigureAsyncLogProcessor(processorInfo);
@@ -97,7 +96,7 @@ public class ZLoggerConfigurationBuilder
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"Warning: Failed to configure ZLogger processor '{target.Type}': {ex.Message}");
+            Debug.WriteLine($"Warning: Failed to configure ZLogger processor '{context.Target.Type}': {ex.Message}");
             return false;
         }
     }
@@ -128,7 +127,16 @@ public class ZLoggerConfigurationBuilder
         Debug.WriteLine("Warning: Could not configure fallback ZLogger console - no suitable method found");
     }
 
-    private static bool InvokeConsoleLoggerMethod(ILoggingBuilder loggingBuilder, ZLoggerProcessorDetector.ProcessorInfo consoleProcessor)
+    /// <summary>
+    /// Invokes the method to configure a ZLogger console logger using the specified logging builder
+    /// and console processor information.
+    /// </summary>
+    /// <param name="loggingBuilder">The logging builder used to configure logging settings.</param>
+    /// <param name="consoleProcessor">The processor information containing details about the ZLogger console configuration.</param>
+    /// <returns>True if the console logger method was successfully invoked, otherwise false.</returns>
+    private static bool InvokeConsoleLoggerMethod(
+        ILoggingBuilder loggingBuilder,
+        ZLoggerProcessorDetector.ProcessorInfo consoleProcessor)
     {
         // Call AddZLoggerConsole() without parameters
         var method = consoleProcessor.ExtensionMethod;
@@ -178,6 +186,11 @@ public class ZLoggerConfigurationBuilder
 
         try
         {
+            foreach (var suppressedCategory in context.Config.SuppressedCategories)
+            {
+                specificMethod.Invoke(null, [context.LoggingBuilder, suppressedCategory, context.Config.SuppressedLogLevel]);
+            }
+
             // Block other categories from this provider
             foreach (var otherCategory in types.Where(t => t != context.Target.Type))
             {

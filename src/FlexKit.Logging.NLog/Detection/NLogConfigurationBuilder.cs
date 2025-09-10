@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Globalization;
 using FlexKit.Logging.Configuration;
+using JetBrains.Annotations;
 using Microsoft.Extensions.Configuration;
 using NLog;
 using NLog.Config;
@@ -107,6 +108,7 @@ public class NLogConfigurationBuilder
 
             // Create logging rules for this target
             CreateLoggingRules(nlogConfig, nlogTarget, target);
+            CreateMelBridgeLoggingRules(nlogConfig, nlogTarget, target);
 
             return true;
         }
@@ -210,6 +212,34 @@ public class NLogConfigurationBuilder
         });
 
         // Set the default action to ignore events that don't match the filter
+        rule.FilterDefaultAction = FilterResult.Ignore;
+
+        nlogConfig.LoggingRules.Add(rule);
+    }
+
+    /// <summary>
+    /// Creates logging rules for MEL bridge logging (framework logs from ASP.NET Core, etc.).
+    /// These logs don't have the Target property, so we route them to all targets.
+    /// </summary>
+    /// <param name="nlogConfig">The NLog configuration to add rules to.</param>
+    /// <param name="target">The target to create rules for.</param>
+    /// <param name="flexKitTarget">FlexKit target configuration.</param>
+    private static void CreateMelBridgeLoggingRules(
+        LoggingConfiguration nlogConfig,
+        Target target,
+        LoggingTarget flexKitTarget)
+    {
+        // Create a rule for MEL bridge logs (framework logs without Target property)
+        var rule = new LoggingRule("*", GetLogLevelFromTarget(flexKitTarget), target);
+
+        // Only accept events that DON'T have the Target property (MEL bridge logs)
+        rule.Filters.Add(new WhenNotExistsFilter
+        {
+            Layout = "${event-properties:Target}",
+            Action = FilterResult.Log,
+        });
+
+        // Set the default action to ignore events that have the Target property
         rule.FilterDefaultAction = FilterResult.Ignore;
 
         nlogConfig.LoggingRules.Add(rule);
@@ -338,5 +368,30 @@ public class NLogConfigurationBuilder
             "NONE" => LogLevel.Off,
             _ => LogLevel.Info,
         };
+    }
+
+    /// <summary>
+    /// Custom NLog filter that checks if a layout renderer value exists (is not empty).
+    /// </summary>
+    private sealed class WhenNotExistsFilter : Filter
+    {
+        /// <summary>
+        /// Gets or sets the layout to evaluate.
+        /// </summary>
+        public Layout? Layout { get; [UsedImplicitly] set; }
+
+        /// <inheritdoc />
+        protected override FilterResult Check(LogEventInfo logEvent)
+        {
+            if (Layout == null)
+            {
+                return FilterResult.Neutral;
+            }
+
+            var value = Layout.Render(logEvent);
+
+            // If the layout renders to an empty string, the property doesn't exist
+            return string.IsNullOrEmpty(value) ? FilterResult.Log : FilterResult.Ignore;
+        }
     }
 }

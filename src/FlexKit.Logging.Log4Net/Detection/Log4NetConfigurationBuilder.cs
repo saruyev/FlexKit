@@ -48,7 +48,7 @@ public class Log4NetConfigurationBuilder
             ConfigureFallbackConsoleAppender(repository);
         }
 
-        repository.Threshold = Level.Debug;
+        repository.Threshold = Level.Trace;
         repository.Configured = true;
 
         return repository;

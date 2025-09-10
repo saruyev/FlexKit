@@ -341,6 +341,11 @@ public class MelProviderFactory
             specificMethod.Invoke(null, [_builder, otherCategory, LogLevel.None]);
         }
 
+        foreach (var suppressedCategory in _config.SuppressedCategories)
+        {
+            specificMethod.Invoke(null, [_builder, suppressedCategory, _config.SuppressedLogLevel]);
+        }
+
         // Allow this target's category through
         specificMethod.Invoke(null, [_builder, target.Type, target.GetLogLevel()]);
 
