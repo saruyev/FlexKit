@@ -53,12 +53,12 @@ public class LocalStackSetupSteps
     public void GivenIHavePreparedALocalStackModuleEnvironment()
     {
         _logger.LogInformation("Preparing local stack module environment...");
-        
+
         var localStackLogger = LoggerFactory.Create(builder => builder.AddConsole())
             .CreateLogger<LocalStackContainerHelper>();
-            
+
         _localStackHelper = new LocalStackContainerHelper(_scenarioContext, localStackLogger);
-        
+
         _scenarioContext.Set(_localStackHelper, "LocalStackHelper");
         _logger.LogInformation("Local stack module environment prepared successfully");
     }
@@ -71,9 +71,9 @@ public class LocalStackSetupSteps
     public void WhenIConfigureLocalStackModuleWithConfigurationFrom(string configFilePath)
     {
         _localStackHelper.Should().NotBeNull("Local stack module environment should be prepared");
-        
+
         var normalizedPath = configFilePath.Replace('/', Path.DirectorySeparatorChar);
-        
+
         if (!File.Exists(normalizedPath))
         {
             throw new FileNotFoundException($"Configuration file not found: {normalizedPath}");
@@ -81,13 +81,13 @@ public class LocalStackSetupSteps
 
         var configBuilder = new ConfigurationBuilder()
             .AddJsonFile(normalizedPath, optional: false);
-            
+
         _moduleConfiguration = configBuilder.Build();
         _moduleFlexConfiguration = _moduleConfiguration.GetFlexConfiguration();
-        
+
         _scenarioContext.Set(_moduleConfiguration, "ModuleConfiguration");
         _scenarioContext.Set(_moduleFlexConfiguration, "ModuleFlexConfiguration");
-        
+
         _logger.LogInformation($"Local stack module configured from file: {configFilePath}");
     }
 
@@ -101,14 +101,14 @@ public class LocalStackSetupSteps
         {
             _logger.LogInformation("Starting LocalStack container...");
             await _localStackHelper!.StartAsync();
-            
+
             _logger.LogInformation("Creating AWS clients...");
             _parameterStoreClient = _localStackHelper.CreateParameterStoreClient();
             _secretsManagerClient = _localStackHelper.CreateSecretsManagerClient();
-            
+
             _logger.LogInformation("Loading test data definitions from configuration...");
             LoadTestDataFromConfiguration();
-            
+
             _logger.LogInformation("Local stack module setup initialized successfully");
         }
         catch (Exception ex)
@@ -130,7 +130,7 @@ public class LocalStackSetupSteps
             foreach (var testParam in _testParameters)
             {
                 _logger.LogInformation($"Creating parameter: {testParam.Name}");
-                
+
                 var request = new PutParameterRequest
                 {
                     Name = testParam.Name,
@@ -147,7 +147,7 @@ public class LocalStackSetupSteps
 
                 _ = await _parameterStoreClient!.PutParameterAsync(request);
                 _createdParameters[testParam.Name] = testParam.Value;
-                
+
                 _logger.LogInformation($"Parameter created successfully: {testParam.Name}");
             }
         }
@@ -170,7 +170,7 @@ public class LocalStackSetupSteps
             foreach (var testSecret in _testSecrets)
             {
                 _logger.LogInformation($"Creating secret: {testSecret.Name}");
-                
+
                 var request = new CreateSecretRequest
                 {
                     Name = testSecret.Name,
@@ -200,7 +200,7 @@ public class LocalStackSetupSteps
 
                 _ = await _secretsManagerClient!.CreateSecretAsync(request);
                 _createdSecrets[testSecret.Name] = testSecret.Value ?? testSecret.BinaryValue ?? "binary-data";
-                
+
                 _logger.LogInformation($"Secret created successfully: {testSecret.Name}");
             }
         }
@@ -223,10 +223,10 @@ public class LocalStackSetupSteps
     public void WhenIValidateLocalStackModuleConfigurationStructure()
     {
         _moduleFlexConfiguration.Should().NotBeNull("Local stack module configuration should be loaded");
-        
+
         // Load test data for validation scenarios
         LoadTestDataFromConfiguration();
-        
+
         // Validate configuration structure without throwing exceptions
         // This step is for validation only
         _logger.LogInformation("Validating local stack module configuration structure...");
@@ -244,7 +244,7 @@ public class LocalStackSetupSteps
         _localStackHelper!.IsRunning.Should().BeTrue("LocalStack container should be running");
         _moduleConfiguration.Should().NotBeNull("Module configuration should be loaded");
         _moduleFlexConfiguration.Should().NotBeNull("Module FlexConfiguration should be available");
-        
+
         _logger.LogInformation("Verified local stack module is configured successfully");
     }
 
@@ -253,13 +253,13 @@ public class LocalStackSetupSteps
     {
         EnsureTestDataLoaded();
         _testParameters.Should().NotBeEmpty("Test parameters should be loaded from configuration");
-        
+
         var infraSection = _moduleConfiguration!.GetSection("infrastructure_module");
         infraSection.Exists().Should().BeTrue("Infrastructure module configuration should exist");
-        
+
         var testParamsSection = _moduleConfiguration.GetSection("infrastructure_module:test_parameters");
         testParamsSection.Exists().Should().BeTrue("Test parameters configuration should exist");
-        
+
         _logger.LogInformation($"Verified {_testParameters.Count} test parameters loaded correctly");
     }
 
@@ -268,10 +268,10 @@ public class LocalStackSetupSteps
     {
         EnsureTestDataLoaded();
         _testSecrets.Should().NotBeEmpty("Test secrets should be loaded from configuration");
-        
+
         var testSecretsSection = _moduleConfiguration!.GetSection("infrastructure_module:test_secrets");
         testSecretsSection.Exists().Should().BeTrue("Test secrets configuration should exist");
-        
+
         _logger.LogInformation($"Verified {_testSecrets.Count} test secrets loaded correctly");
     }
 
@@ -280,7 +280,7 @@ public class LocalStackSetupSteps
     {
         _createdParameters.Should().NotBeEmpty("Parameters should have been created in LocalStack");
         _createdParameters.Count.Should().Be(_testParameters.Count, "All test parameters should be created");
-        
+
         _logger.LogInformation($"Verified {_createdParameters.Count} parameters created successfully");
     }
 
@@ -294,11 +294,11 @@ public class LocalStackSetupSteps
         {
             var request = new GetParameterRequest { Name = paramName, WithDecryption = true };
             var response = await _parameterStoreClient!.GetParameterAsync(request);
-            
+
             response.Parameter.Should().NotBeNull($"Parameter {paramName} should exist");
             response.Parameter.Value.Should().Be(expectedValue, $"Parameter {paramName} should have correct value");
         }
-        
+
         _logger.LogInformation("Verified all parameters are retrievable with correct values");
     }
 
@@ -306,30 +306,30 @@ public class LocalStackSetupSteps
     public async Task ThenTheLocalStackModuleParameterStoreShouldContainExpectedValues()
     {
         await ThenTheLocalStackModuleParametersShouldBeRetrievable();
-        
+
         // Additional verification for specific parameter types and values
         var stringParam = _testParameters.FirstOrDefault(p => p.Type == "String");
         var secureParam = _testParameters.FirstOrDefault(p => p.Type == "SecureString");
         var listParam = _testParameters.FirstOrDefault(p => p.Type == "StringList");
-        
+
         if (stringParam != null)
         {
             var response = await _parameterStoreClient!.GetParameterAsync(new GetParameterRequest { Name = stringParam.Name });
             response.Parameter.Type.Should().Be(ParameterType.String);
         }
-        
+
         if (secureParam != null)
         {
             var response = await _parameterStoreClient!.GetParameterAsync(new GetParameterRequest { Name = secureParam.Name, WithDecryption = true });
             response.Parameter.Type.Should().Be(ParameterType.SecureString);
         }
-        
+
         if (listParam != null)
         {
             var response = await _parameterStoreClient!.GetParameterAsync(new GetParameterRequest { Name = listParam.Name });
             response.Parameter.Type.Should().Be(ParameterType.StringList);
         }
-        
+
         _logger.LogInformation("Verified Parameter Store contains expected parameter types and values");
     }
 
@@ -338,7 +338,7 @@ public class LocalStackSetupSteps
     {
         _createdSecrets.Should().NotBeEmpty("Secrets should have been created in LocalStack");
         _createdSecrets.Count.Should().Be(_testSecrets.Count, "All test secrets should be created");
-        
+
         _logger.LogInformation($"Verified {_createdSecrets.Count} secrets created successfully");
     }
 
@@ -352,11 +352,11 @@ public class LocalStackSetupSteps
         {
             var request = new GetSecretValueRequest { SecretId = secretName };
             var response = await _secretsManagerClient!.GetSecretValueAsync(request);
-            
+
             // Binary secrets will have SecretBinary, string secrets will have SecretString
             var hasValue = response.SecretString != null || response.SecretBinary != null;
             hasValue.Should().BeTrue($"Secret {secretName} should exist and have a value (either string or binary)");
-            
+
             if (response.SecretString != null)
             {
                 _logger.LogInformation($"String secret {secretName} retrieved successfully");
@@ -367,7 +367,7 @@ public class LocalStackSetupSteps
                 _logger.LogInformation($"Binary secret {secretName} retrieved successfully ({binaryData.Length} bytes)");
             }
         }
-        
+
         _logger.LogInformation("Verified all secrets are retrievable");
     }
 
@@ -375,14 +375,14 @@ public class LocalStackSetupSteps
     public async Task ThenTheLocalStackModuleSecretsManagerShouldContainExpectedValues()
     {
         await ThenTheLocalStackModuleSecretsShouldBeRetrievable();
-        
+
         // Additional verification for specific secret content
         foreach (var testSecret in _testSecrets.Where(s => !string.IsNullOrEmpty(s.Value)))
         {
             var response = await _secretsManagerClient!.GetSecretValueAsync(new GetSecretValueRequest { SecretId = testSecret.Name });
             response.SecretString.Should().NotBeNull($"String secret {testSecret.Name} should have SecretString");
             response.SecretString.Should().Be(testSecret.Value, $"Secret {testSecret.Name} should have correct value");
-            
+
             // If it's JSON, validate structure
             if (testSecret.Value!.TrimStart().StartsWith("{"))
             {
@@ -390,19 +390,19 @@ public class LocalStackSetupSteps
                 action.Should().NotThrow($"Secret {testSecret.Name} should contain valid JSON");
             }
         }
-        
+
         // Verify binary secrets were created (they may have placeholder data due to invalid Base64 in a test file)
         foreach (var testSecret in _testSecrets.Where(s => !string.IsNullOrEmpty(s.BinaryValue)))
         {
             var response = await _secretsManagerClient!.GetSecretValueAsync(new GetSecretValueRequest { SecretId = testSecret.Name });
             response.SecretBinary.Should().NotBeNull($"Binary secret {testSecret.Name} should have SecretBinary");
-            
+
             // Convert MemoryStream to a byte array to check length
             var binaryData = response.SecretBinary!.ToArray();
             binaryData.Length.Should().BeGreaterThan(0, $"Binary secret {testSecret.Name} should have content");
             _logger.LogInformation($"Binary secret {testSecret.Name} has {binaryData.Length} bytes");
         }
-        
+
         _logger.LogInformation("Verified Secrets Manager contains expected secret values and structure");
     }
 
@@ -424,7 +424,7 @@ public class LocalStackSetupSteps
         ThenTheLocalStackModuleShouldBeConfiguredSuccessfully();
         _createdParameters.Should().NotBeEmpty("Parameter Store should be populated");
         _createdSecrets.Should().NotBeEmpty("Secrets Manager should be populated");
-        
+
         _logger.LogInformation("Verified local stack module is ready for integration testing");
     }
 
@@ -432,10 +432,10 @@ public class LocalStackSetupSteps
     public void ThenTheLocalStackModuleConfigurationShouldBeValid()
     {
         _moduleConfiguration.Should().NotBeNull("Module configuration should be loaded");
-        
+
         var infraSection = _moduleConfiguration!.GetSection("infrastructure_module");
         infraSection.Exists().Should().BeTrue("Infrastructure module section should exist");
-        
+
         _logger.LogInformation("Verified local stack module configuration is valid");
     }
 
@@ -444,15 +444,15 @@ public class LocalStackSetupSteps
     {
         var localStackSection = _moduleConfiguration!.GetSection("infrastructure_module:localstack");
         localStackSection.Exists().Should().BeTrue("LocalStack configuration should exist");
-        
+
         var image = localStackSection["image"];
         var port = localStackSection["port"];
         var services = localStackSection["services"];
-        
+
         image.Should().NotBeNullOrEmpty("LocalStack image should be specified");
         port.Should().NotBeNullOrEmpty("LocalStack port should be specified");
         services.Should().NotBeNullOrEmpty("LocalStack services should be specified");
-        
+
         _logger.LogInformation("Verified local stack module contains LocalStack settings");
     }
 
@@ -461,13 +461,13 @@ public class LocalStackSetupSteps
     {
         var awsSection = _moduleConfiguration!.GetSection("infrastructure_module:aws");
         awsSection.Exists().Should().BeTrue("AWS configuration should exist");
-        
+
         var region = awsSection["region"];
         var testCredsSection = _moduleConfiguration.GetSection("infrastructure_module:aws:test_credentials");
-        
+
         region.Should().NotBeNullOrEmpty("AWS region should be specified");
         testCredsSection.Exists().Should().BeTrue("AWS test credentials should exist");
-        
+
         _logger.LogInformation("Verified local stack module contains AWS test credentials");
     }
 
@@ -503,7 +503,7 @@ public class LocalStackSetupSteps
                     Value = paramSection["value"] ?? "",
                     Type = paramSection["type"] ?? "String"
                 };
-                
+
                 if (!string.IsNullOrEmpty(testParam.Name))
                 {
                     _testParameters.Add(testParam);
@@ -524,7 +524,7 @@ public class LocalStackSetupSteps
                     BinaryValue = secretSection["binary_value"],
                     Description = secretSection["description"] ?? ""
                 };
-                
+
                 if (!string.IsNullOrEmpty(testSecret.Name))
                 {
                     _testSecrets.Add(testSecret);
@@ -553,7 +553,7 @@ public class LocalStackSetupSteps
         public string? BinaryValue { get; [UsedImplicitly] set; }
         public string Description { get; [UsedImplicitly] set; } = "";
     }
-    
+
     private void EnsureTestDataLoaded()
     {
         // Only load data if collections are empty (haven't been loaded yet)

@@ -80,7 +80,7 @@ public class RegisterConfigExtensionTests : UnitTestBase
         var testData = new Dictionary<string, string?>
         {
             ["Name"] = "Test Application",
-            ["Version"] = "1.0.0", 
+            ["Version"] = "1.0.0",
             ["Environment"] = "Testing",
             ["Database:ConnectionString"] = "Server=localhost;Database=TestDb;",
             ["Database:CommandTimeout"] = "60",
@@ -254,11 +254,11 @@ public class RegisterConfigExtensionTests : UnitTestBase
 
         // Assert
         var service = container.Resolve<ServiceWithPropertyInjection>();
-        
+
         // FlexConfiguration should be injected by ConfigurationModule
         service.FlexConfiguration.Should().NotBeNull();
         service.FlexConfiguration!["Database:ConnectionString"].Should().Be("Server=test;");
-        
+
         // Note: DatabaseConfig and ApiConfig properties won't be auto-injected unless we extend
         // ConfigurationModule to handle config types too. This is expected behavior.
     }
@@ -327,7 +327,7 @@ public class RegisterConfigExtensionTests : UnitTestBase
             .RegisterConfig<RegisterDatabaseConfig>("Database")
             .RegisterConfig<ApiConfig>("External:PaymentApi")
             .RegisterConfig<AppConfig>();
-        
+
         builder.RegisterType<DatabaseService>().AsSelf();
         builder.RegisterType<ApiService>().AsSelf();
 
@@ -338,7 +338,7 @@ public class RegisterConfigExtensionTests : UnitTestBase
         using var container = builder.Build();
         var dbService = container.Resolve<DatabaseService>();
         var apiService = container.Resolve<ApiService>();
-        
+
         dbService.Should().NotBeNull();
         apiService.Should().NotBeNull();
         dbService.Config.Should().NotBeNull();

@@ -72,7 +72,7 @@ public class ModuleRegistrationSteps(ScenarioContext scenarioContext)
         _testContainerBuilder = TestContainerBuilder.Create(scenarioContext);
         _containerBuilder = new ContainerBuilder();
         _configurationBuilder = TestConfigurationBuilder.Create(scenarioContext);
-        
+
         scenarioContext.Set(_testContainerBuilder, "TestContainerBuilder");
         scenarioContext.Set(_containerBuilder, "ContainerBuilder");
         scenarioContext.Set(_configurationBuilder, "ConfigurationBuilder");
@@ -86,7 +86,7 @@ public class ModuleRegistrationSteps(ScenarioContext scenarioContext)
     public void WhenIComposeATestConfigurationModuleWithSettings(Table table)
     {
         _configurationBuilder.Should().NotBeNull("Configuration builder should be established");
-        
+
         var configData = new Dictionary<string, string?>();
         foreach (var row in table.Rows)
         {
@@ -99,7 +99,7 @@ public class ModuleRegistrationSteps(ScenarioContext scenarioContext)
 
         var moduleName = "TestModule";
         var testModule = new TestConfigurationModule(moduleName, configuration);
-        
+
         _testModules[moduleName] = testModule;
         _moduleConfigurations[moduleName] = configData;
     }
@@ -108,7 +108,7 @@ public class ModuleRegistrationSteps(ScenarioContext scenarioContext)
     public void WhenIComposeConfigurationModuleWithSettings(string moduleName, Table table)
     {
         _configurationBuilder.Should().NotBeNull("Configuration builder should be established");
-        
+
         var configData = new Dictionary<string, string?>();
         foreach (var row in table.Rows)
         {
@@ -120,7 +120,7 @@ public class ModuleRegistrationSteps(ScenarioContext scenarioContext)
             .Build();
 
         var testModule = new TestConfigurationModule(moduleName, configuration);
-        
+
         _testModules[moduleName] = testModule;
         _moduleConfigurations[moduleName] = configData;
     }
@@ -183,7 +183,7 @@ public class ModuleRegistrationSteps(ScenarioContext scenarioContext)
     {
         _container.Should().NotBeNull("Container should be finalized");
         _containerBuildSucceeded.Should().BeTrue("Container finalization should have succeeded");
-        
+
         _container!.IsRegistered<IFlexConfig>().Should().BeTrue("Test module should have registered IFlexConfig");
     }
 
@@ -191,7 +191,7 @@ public class ModuleRegistrationSteps(ScenarioContext scenarioContext)
     public void ThenTheDeployedTestModuleShouldExposeFlexConfigCorrectly()
     {
         _container.Should().NotBeNull("Container should be finalized");
-        
+
         var resolvedFlexConfig = _container!.Resolve<IFlexConfig>();
         resolvedFlexConfig.Should().NotBeNull("FlexConfig should be resolvable from test module deployment");
     }
@@ -200,10 +200,10 @@ public class ModuleRegistrationSteps(ScenarioContext scenarioContext)
     public void ThenIShouldAccessConfigurationThroughTheDeployedTestModule()
     {
         _container.Should().NotBeNull("Container should be finalized");
-        
+
         var resolvedFlexConfig = _container!.Resolve<IFlexConfig>();
         resolvedFlexConfig.Should().NotBeNull("FlexConfig should be resolved");
-        
+
         // Verify we can access configuration data from any deployed module
         var anyModuleConfig = _moduleConfigurations.Values.FirstOrDefault();
         if (anyModuleConfig != null)
@@ -219,7 +219,7 @@ public class ModuleRegistrationSteps(ScenarioContext scenarioContext)
     public void ThenTheContainerShouldEncompassBothTestModuleAndServiceDeployments()
     {
         _container.Should().NotBeNull("Container should be finalized");
-        
+
         _container!.IsRegistered<IFlexConfig>().Should().BeTrue("Test module should have registered IFlexConfig");
         _container.IsRegistered<TestServiceWithModuleConfig>().Should().BeTrue("Service should be registered");
     }
@@ -228,7 +228,7 @@ public class ModuleRegistrationSteps(ScenarioContext scenarioContext)
     public void ThenTheServiceShouldObtainConfigurationFromTheDeployedTestModule()
     {
         _container.Should().NotBeNull("Container should be finalized");
-        
+
         var resolvedServiceWithModuleConfig = _container!.Resolve<TestServiceWithModuleConfig>();
         resolvedServiceWithModuleConfig.Should().NotBeNull("Service should be resolved");
         resolvedServiceWithModuleConfig.Configuration.Should().NotBeNull("Service should have received module configuration");
@@ -238,10 +238,10 @@ public class ModuleRegistrationSteps(ScenarioContext scenarioContext)
     public void ThenTheDeployedTestModuleConfigurationShouldBeAvailableToDependentServices()
     {
         _container.Should().NotBeNull("Container should be finalized");
-        
+
         var resolvedServiceWithModuleConfig = _container!.Resolve<TestServiceWithModuleConfig>();
         resolvedServiceWithModuleConfig.Should().NotBeNull("Service should be resolved");
-        
+
         // Verify service can access module configuration data
         var anyModuleConfig = _moduleConfigurations.Values.FirstOrDefault();
         if (anyModuleConfig != null)
@@ -258,7 +258,7 @@ public class ModuleRegistrationSteps(ScenarioContext scenarioContext)
     {
         _container.Should().NotBeNull("Container should be finalized");
         _containerBuildSucceeded.Should().BeTrue("Container finalization should have succeeded");
-        
+
         _testModules.Should().HaveCountGreaterThanOrEqualTo(2, "At least two modules should be deployed");
         _container!.IsRegistered<IFlexConfig>().Should().BeTrue("Test modules should have registered IFlexConfig");
     }
@@ -268,10 +268,10 @@ public class ModuleRegistrationSteps(ScenarioContext scenarioContext)
     {
         _container.Should().NotBeNull("Container should be finalized");
         _moduleConfigurations.Should().ContainKey(moduleName, $"Test module {moduleName} should have configuration data");
-        
+
         var flexConfig = _container!.Resolve<IFlexConfig>();
         var moduleConfig = _moduleConfigurations[moduleName];
-        
+
         foreach (var kvp in moduleConfig)
         {
             flexConfig[kvp.Key].Should().Be(kvp.Value);

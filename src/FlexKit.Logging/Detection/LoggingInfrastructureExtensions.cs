@@ -165,13 +165,7 @@ public static class LoggingInfrastructureExtensions
                 // Return minimal logger factory if no targets configured
                 if (loggingConfig.Targets.Count == 0)
                 {
-                    var emptyServices = new ServiceCollection();
-                    emptyServices.AddLogging(b =>
-                    {
-                        b.AddConsole();
-                        b.SetMinimumLevel(LogLevel.Information);
-                    });
-                    return emptyServices.BuildServiceProvider().GetRequiredService<ILoggerFactory>();
+                    return SetupDefaultLogging();
                 }
 
                 // Configure full logging with targets
@@ -190,6 +184,22 @@ public static class LoggingInfrastructureExtensions
         builder.RegisterGeneric(typeof(Logger<>))
             .As(typeof(ILogger<>))
             .InstancePerDependency();
+    }
+
+    /// <summary>
+    /// Sets up a default logging configuration with a console logger and a minimum log level of Information.
+    /// Provides a minimal implementation of <see cref="ILoggerFactory"/> when no other logging targets are configured.
+    /// </summary>
+    /// <returns>A configured <see cref="ILoggerFactory"/> instance with a default console logger.</returns>
+    private static ILoggerFactory SetupDefaultLogging()
+    {
+        var emptyServices = new ServiceCollection();
+        emptyServices.AddLogging(b =>
+        {
+            b.AddConsole();
+            b.SetMinimumLevel(LogLevel.Information);
+        });
+        return emptyServices.BuildServiceProvider().GetRequiredService<ILoggerFactory>();
     }
 
     /// <summary>

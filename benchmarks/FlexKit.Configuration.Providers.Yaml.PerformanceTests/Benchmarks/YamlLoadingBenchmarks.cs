@@ -24,7 +24,7 @@ public class YamlLoadingBenchmarks
         ValidateYamlFile("simple-config.yaml");
         ValidateYamlFile("complex-config.yaml");
         ValidateYamlFile("large-config.yaml");
-        
+
         // Load equivalent JSON for comparison
         _equivalentJsonContent = LoadJsonFile("equivalent-config.json");
     }
@@ -32,7 +32,7 @@ public class YamlLoadingBenchmarks
     private static void ValidateYamlFile(string fileName)
     {
         var yamlPath = Path.Combine("TestData", fileName);
-        
+
         if (!File.Exists(yamlPath))
         {
             throw new FileNotFoundException($"YAML test file not found at: {yamlPath}. " +
@@ -43,13 +43,13 @@ public class YamlLoadingBenchmarks
     private string LoadJsonFile(string fileName)
     {
         var jsonPath = Path.Combine("TestData", fileName);
-        
+
         if (!File.Exists(jsonPath))
         {
             throw new FileNotFoundException($"JSON test file not found at: {jsonPath}. " +
                 $"Please ensure {fileName} exists in the TestData folder.");
         }
-        
+
         return File.ReadAllText(jsonPath);
     }
 

@@ -371,7 +371,7 @@ public class AzureKeyVaultConfigurationSourceTests
         // Arrange
         var source = new AzureKeyVaultConfigurationSource
         {
-            VaultUri = string.Empty 
+            VaultUri = string.Empty
         };
         var builder = Substitute.For<IConfigurationBuilder>();
 

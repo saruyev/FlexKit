@@ -71,19 +71,19 @@ public class MemoryAllocationBenchmarks
     {
         var results = new List<object>();
         dynamic config = _flexConfig;
-        
+
         var database = config.Database;
         var server = config.Server;
         var api = config.Api;
         var features = config.Features;
-        
+
         results.Add(database?.Configuration["ConnectionString"] ?? "");
         results.Add(((string?)database?.Configuration["Timeout"])?.ToType<int>() ?? 0);
         results.Add(((string?)server?.Configuration["Port"])?.ToType<int>() ?? 0);
         results.Add(((string?)server?.Configuration["IsSecure"])?.ToType<bool>() ?? false);
         results.Add(((string?)features?.Configuration["NewFeature"])?.ToType<bool>() ?? false);
         results.Add(api?.Configuration["Key"] ?? "");
-        
+
         return results;
     }
 
@@ -92,14 +92,14 @@ public class MemoryAllocationBenchmarks
     {
         // Test allocation overhead of repeated dynamic access to the same configuration
         var results = new List<object>();
-        
+
         for (int i = 0; i < 10; i++)
         {
             dynamic config = _flexConfig;
             var database = config.Database;
             results.Add(database?.Configuration["ConnectionString"] ?? "");
         }
-        
+
         return results;
     }
 
@@ -110,13 +110,13 @@ public class MemoryAllocationBenchmarks
         var results = new List<object>();
         var databaseSection = _flexConfig.Configuration.CurrentConfig("Database");
         var serverSection = _flexConfig.Configuration.CurrentConfig("Server");
-        
+
         for (int i = 0; i < 10; i++)
         {
             results.Add(databaseSection?.Configuration["ConnectionString"] ?? "");
             results.Add(serverSection?.Configuration["Port"]?.ToType<int>() ?? 0);
         }
-        
+
         return results;
     }
 }

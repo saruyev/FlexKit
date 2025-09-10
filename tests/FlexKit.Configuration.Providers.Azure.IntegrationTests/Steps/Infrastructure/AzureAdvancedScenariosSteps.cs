@@ -216,7 +216,7 @@ public class AzureAdvancedScenariosSteps(ScenarioContext scenarioContext)
     #endregion
 
     #region When Steps - Actions
-    
+
     [When(@"I configure advanced controller by building the configuration")]
     public void WhenIConfigureAdvancedControllerByBuildingTheConfiguration()
     {
@@ -1089,7 +1089,8 @@ public class AzureAdvancedScenariosSteps(ScenarioContext scenarioContext)
                 {
                     var regionConfig = _advancedConfiguration!["infrastructure-module:deployment:region"];
                     return !string.IsNullOrEmpty(regionConfig);
-                }));
+                }
+                ));
             }
 
             var successfulRegionConfigs = 0;

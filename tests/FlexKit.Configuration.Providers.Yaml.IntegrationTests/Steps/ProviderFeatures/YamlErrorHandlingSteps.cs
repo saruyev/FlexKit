@@ -43,7 +43,7 @@ public class YamlErrorHandlingSteps(ScenarioContext scenarioContext)
         var testDataPath = Path.Combine("TestData", normalizedPath);
 
         _errorHandlingBuilder!.AddYamlFile(testDataPath, optional: false);
-        
+
         scenarioContext.Set(_errorHandlingBuilder, "ErrorHandlingBuilder");
     }
 
@@ -53,7 +53,7 @@ public class YamlErrorHandlingSteps(ScenarioContext scenarioContext)
         _errorHandlingBuilder.Should().NotBeNull("Error handling builder should be established");
 
         _errorHandlingBuilder!.AddTempYamlFile(yamlContent, optional: false);
-        
+
         scenarioContext.Set(_errorHandlingBuilder, "ErrorHandlingBuilder");
     }
 
@@ -70,7 +70,7 @@ public class YamlErrorHandlingSteps(ScenarioContext scenarioContext)
         {
             _errorHandlingConfiguration = _errorHandlingBuilder!.Build();
             _errorHandlingFlexConfiguration = _errorHandlingConfiguration.GetFlexConfiguration();
-            
+
             scenarioContext.Set(_errorHandlingConfiguration, "ErrorHandlingConfiguration");
             scenarioContext.Set(_errorHandlingFlexConfiguration, "ErrorHandlingFlexConfiguration");
         }
@@ -273,7 +273,7 @@ public class YamlErrorHandlingSteps(ScenarioContext scenarioContext)
         _lastErrorException.Should().BeNull("Missing optional files should not cause exceptions");
         _errorHandlingConfiguration.Should().NotBeNull("Configuration should be built even with missing optional files");
         _errorHandlingFlexConfiguration.Should().NotBeNull("FlexConfiguration should be available with missing optional files");
-        
+
         // Verify an empty configuration is created
         var configKeys = _errorHandlingConfiguration!.AsEnumerable().ToList();
         configKeys.Should().BeEmpty("Missing optional files should result in empty configuration");
@@ -302,15 +302,15 @@ public class YamlErrorHandlingSteps(ScenarioContext scenarioContext)
     public void ThenTheErrorHandlingModuleShouldMaintainFlexConfigFunctionality()
     {
         _errorHandlingFlexConfiguration.Should().NotBeNull("FlexConfiguration should be available");
-        
+
         // Verify that basic FlexConfig operations work even in error scenarios
         var flexConfig = _errorHandlingFlexConfiguration!;
         flexConfig.Configuration.Should().NotBeNull("Underlying IConfiguration should be accessible");
-        
+
         // Verify that indexer access doesn't throw
         var indexerTest = () => flexConfig["test:key"];
         indexerTest.Should().NotThrow("Indexer access should not throw for missing keys");
-        
+
         // Verify that sections access works
         var sectionTest = () => flexConfig.Configuration.GetSection("test");
         sectionTest.Should().NotThrow("Section access should not throw for missing sections");

@@ -34,7 +34,7 @@ public class AwsSecretsManagerConfigurationProviderTests : IDisposable
         };
 
         _provider = new AwsSecretsManagerConfigurationProvider(_source);
-        
+
         // Use reflection to replace the private _secretsClient field
         var secretsClientField = typeof(AwsSecretsManagerConfigurationProvider)
             .GetField("_secretsClient", BindingFlags.NonPublic | BindingFlags.Instance);
@@ -528,7 +528,7 @@ public class AwsSecretsManagerConfigurationProviderTests : IDisposable
 
         providerWithoutReload.Dispose();
     }
-    
+
     [Fact]
     public void Constructor_WithAwsClientCreationFailure_ThrowsInvalidOperationException()
     {
@@ -545,7 +545,7 @@ public class AwsSecretsManagerConfigurationProviderTests : IDisposable
             .WithMessage("Failed to create AWS Secrets Manager client. Ensure AWS credentials are properly configured.")
             .WithInnerException<Amazon.Runtime.AmazonClientException>();
     }
-    
+
     [Fact]
     public async Task Constructor_WithReloadAfter_TimerCallbackExecutesLoadAsync()
     {
@@ -572,7 +572,7 @@ public class AwsSecretsManagerConfigurationProviderTests : IDisposable
 
         // Act
         var provider = new AwsSecretsManagerConfigurationProvider(sourceWithReload);
-   
+
         // Replace the client with mock using reflection
         var secretsClientField = typeof(AwsSecretsManagerConfigurationProvider)
             .GetField("_secretsClient", BindingFlags.NonPublic | BindingFlags.Instance);
@@ -583,10 +583,10 @@ public class AwsSecretsManagerConfigurationProviderTests : IDisposable
 
         // Assert
         await mockSecretsClient.Received().GetSecretValueAsync(Arg.Any<GetSecretValueRequest>());
-   
+
         provider.Dispose();
     }
-    
+
     [Fact]
     public void Load_WithResourceNotFoundAndRequiredSecret_ThrowsSpecificInvalidOperationException()
     {
@@ -606,7 +606,7 @@ public class AwsSecretsManagerConfigurationProviderTests : IDisposable
             .WithInnerException<InvalidOperationException>()
             .Which.Message.Should().Be("Required secret 'required-secret' not found in AWS Secrets Manager.");
     }
-    
+
     [Fact]
     public void Load_WithResourceNotFoundAndNotRequiredSecret_NotThrowsInvalidOperationException()
     {

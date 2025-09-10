@@ -34,21 +34,21 @@ public class AwsConfigurationLoadingBenchmarks
 {
     private const int LocalStackPort = 4566;
     private const string LocalStackImage = "localstack/localstack:latest";
-    
+
     private string _simpleConfigData = null!;
     private string _complexConfigData = null!;
     private string _largeConfigData = null!;
-    
+
     private const string SimpleParameterPath = "/flexkit_test/simple_config";
     private const string ComplexParameterPath = "/flexkit_test/complex_config";
     private const string LargeParameterPath = "/flexkit_test/large_config";
     private const string OverlapParameterPath = "/flexkit_test/overlap_config";
-    
+
     private const string SimpleSecretName = "flexkit_test_simple_secret";
     private const string ComplexSecretName = "flexkit_test_complex_secret";
     private const string LargeSecretName = "flexkit_test_large_secret";
     private const string OverlapSecretName = "flexkit_test_overlap_secret";
-    
+
     private AWSOptions _localstackOptions = null!;
     private IAmazonSimpleSystemsManagement _ssmClient = null!;
     private IAmazonSecretsManager _secretsManagerClient = null!;
@@ -68,7 +68,7 @@ public class AwsConfigurationLoadingBenchmarks
         // Setup LocalStack connection options
         var mappedPort = _container!.GetMappedPublicPort(LocalStackPort);
         var endpointUrl = $"http://localhost:{mappedPort}";
-        
+
         _localstackOptions = new AWSOptions
         {
             Credentials = new AnonymousAWSCredentials(),
@@ -83,7 +83,7 @@ public class AwsConfigurationLoadingBenchmarks
 
         // Setup test data in both Parameter Store and Secrets Manager
         await SetupTestData();
-        
+
         // Update AWS options with the correct endpoint for the benchmarks
         _localstackOptions.DefaultClientConfig.ServiceURL = endpointUrl;
         _localstackOptions.DefaultClientConfig.UseHttp = true;
@@ -105,7 +105,7 @@ public class AwsConfigurationLoadingBenchmarks
             .Build();
 
         await _container.StartAsync();
-        
+
         // Wait for services to be ready
         await Task.Delay(3000);
     }
@@ -120,7 +120,7 @@ public class AwsConfigurationLoadingBenchmarks
             MaxErrorRetry = 0,
             Timeout = TimeSpan.FromSeconds(30)
         };
-        
+
         var secretsConfig = new AmazonSecretsManagerConfig
         {
             RegionEndpoint = RegionEndpoint.USEast1,
@@ -129,7 +129,7 @@ public class AwsConfigurationLoadingBenchmarks
             MaxErrorRetry = 0,
             Timeout = TimeSpan.FromSeconds(30)
         };
-        
+
         _ssmClient = new AmazonSimpleSystemsManagementClient(new AnonymousAWSCredentials(), ssmConfig);
         _secretsManagerClient = new AmazonSecretsManagerClient(new AnonymousAWSCredentials(), secretsConfig);
     }
@@ -139,12 +139,12 @@ public class AwsConfigurationLoadingBenchmarks
         try
         {
             // Test SSM connectivity
-            await _ssmClient.GetParametersByPathAsync(new GetParametersByPathRequest 
-            { 
-                Path = "/", 
-                MaxResults = 1 
+            await _ssmClient.GetParametersByPathAsync(new GetParametersByPathRequest
+            {
+                Path = "/",
+                MaxResults = 1
             });
-            
+
             // Test Secrets Manager connectivity
             await _secretsManagerClient.ListSecretsAsync(new ListSecretsRequest { MaxResults = 1 });
         }
@@ -164,7 +164,7 @@ public class AwsConfigurationLoadingBenchmarks
             await SetupParameter(ComplexParameterPath, _complexConfigData);
             await SetupParameter(LargeParameterPath, _largeConfigData);
             await SetupParameter(OverlapParameterPath, _simpleConfigData); // Same data for precedence testing
-            
+
             // Setup Secrets in Secrets Manager
             await SetupSecret(SimpleSecretName, _simpleConfigData);
             await SetupSecret(ComplexSecretName, _complexConfigData);
@@ -226,7 +226,7 @@ public class AwsConfigurationLoadingBenchmarks
     public IConfiguration LoadSimpleMixedSourcesConfiguration()
     {
         var builder = new ConfigurationBuilder();
-        
+
         // Add Parameter Store
         builder.Add(new AwsParameterStoreConfigurationSource
         {
@@ -234,7 +234,7 @@ public class AwsConfigurationLoadingBenchmarks
             Optional = false,
             AwsOptions = _localstackOptions
         });
-        
+
         // Add Secrets Manager
         builder.Add(new AwsSecretsManagerConfigurationSource
         {
@@ -242,7 +242,7 @@ public class AwsConfigurationLoadingBenchmarks
             Optional = false,
             AwsOptions = _localstackOptions
         });
-        
+
         return builder.Build();
     }
 
@@ -250,21 +250,21 @@ public class AwsConfigurationLoadingBenchmarks
     public FlexConfiguration LoadSimpleMixedSourcesFlexConfiguration()
     {
         var builder = new ConfigurationBuilder();
-        
+
         builder.Add(new AwsParameterStoreConfigurationSource
         {
             Path = "/flexkit_test/",
             Optional = false,
             AwsOptions = _localstackOptions
         });
-        
+
         builder.Add(new AwsSecretsManagerConfigurationSource
         {
             SecretNames = [SimpleSecretName],
             Optional = false,
             AwsOptions = _localstackOptions
         });
-        
+
         var standardConfig = builder.Build();
         return new FlexConfiguration(standardConfig);
     }
@@ -507,7 +507,7 @@ public class AwsConfigurationLoadingBenchmarks
     public object MultipleMixedConfigurationBuilds()
     {
         var configs = new List<IFlexConfig>();
-        
+
         // Simulate building multiple mixed configurations (e.g., per-tenant scenarios)
         for (int i = 0; i < 5; i++)
         {
@@ -527,7 +527,7 @@ public class AwsConfigurationLoadingBenchmarks
                 .Build();
             configs.Add(config);
         }
-        
+
         return configs;
     }
 
@@ -535,17 +535,17 @@ public class AwsConfigurationLoadingBenchmarks
     public object SingleMixedConfigurationMultipleAccess()
     {
         var results = new List<string?>();
-        
+
         // Simulate multiple configuration accesses from mixed sources
         for (int i = 0; i < 50; i++)
         {
             results.Add(_mixedConfig!["simple_config"]);
             results.Add(_mixedConfig[SimpleSecretName]);
-            
+
             dynamic config = _mixedConfig;
             results.Add(config.Application?.Name);
         }
-        
+
         return results;
     }
 
@@ -574,13 +574,13 @@ public class AwsConfigurationLoadingBenchmarks
     {
         // Access and convert multiple values from different sources using flattened keys
         var appName = _mixedConfig!["simple_config:Application:Name"];
-        
+
         var timeoutValue = _mixedConfig!["simple_config:Database:Timeout"] ?? "30";
         var timeout = timeoutValue.ToType<int>();
-        
+
         var cacheEnabledValue = _mixedConfig![SimpleSecretName + ":Features:CacheEnabled"] ?? "true";
         var cacheEnabled = cacheEnabledValue.ToType<bool>();
-        
+
         return (appName, timeout, cacheEnabled);
     }
 
@@ -594,7 +594,7 @@ public class AwsConfigurationLoadingBenchmarks
             await CleanupParameter(ComplexParameterPath);
             await CleanupParameter(LargeParameterPath);
             await CleanupParameter(OverlapParameterPath);
-            
+
             // Cleanup secrets
             await CleanupSecret(SimpleSecretName);
             await CleanupSecret(ComplexSecretName);
@@ -609,7 +609,7 @@ public class AwsConfigurationLoadingBenchmarks
         {
             _ssmClient.Dispose();
             _secretsManagerClient.Dispose();
-            
+
             // Stop and dispose container
             if (_container != null)
             {

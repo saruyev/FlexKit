@@ -47,7 +47,7 @@ public class AzureErrorHandlingSteps(ScenarioContext scenarioContext)
         var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
         scenarioContext.Set(keyVaultEmulator, "KeyVaultEmulator");
         scenarioContext.Set(appConfigEmulator, "AppConfigEmulator");
-        
+
         _errorHandlingValidationResults.Add($"✓ Error handling controller environment established for prefix '{scenarioPrefix}'");
     }
 
@@ -56,18 +56,18 @@ public class AzureErrorHandlingSteps(ScenarioContext scenarioContext)
     {
         var keyVaultEmulator = scenarioContext.GetKeyVaultEmulator();
         var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
-        
+
         keyVaultEmulator.Should().NotBeNull("Key Vault emulator should be established");
 
         var fullPath = Path.Combine("TestData", testDataPath);
-        
+
         try
         {
             // Load test data for network failure scenarios with a scenario prefix
             var createTask = keyVaultEmulator!.CreateTestDataAsync(fullPath, scenarioPrefix);
             createTask.Wait(TimeSpan.FromMinutes(1));
             _networkFailureSimulated = true;
-            
+
             _errorHandlingValidationResults.Add($"✓ Key Vault test data loaded for network failure simulation with prefix '{scenarioPrefix}'");
         }
         catch (Exception ex)
@@ -83,11 +83,11 @@ public class AzureErrorHandlingSteps(ScenarioContext scenarioContext)
     {
         var appConfigEmulator = scenarioContext.GetAppConfigEmulator();
         var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
-        
+
         appConfigEmulator.Should().NotBeNull("App Configuration emulator should be established");
 
         var fullPath = Path.Combine("TestData", testDataPath);
-        
+
         try
         {
             // For invalid App Configuration, we'll simulate failure during build with a scenario prefix
@@ -95,7 +95,7 @@ public class AzureErrorHandlingSteps(ScenarioContext scenarioContext)
             createTask.Wait(TimeSpan.FromMinutes(1));
             _invalidConfigurationSimulated = true;
             _shouldFailAppConfig = true; // Mark for configuration build failure
-            
+
             _errorHandlingValidationResults.Add($"✓ App Configuration test data loaded for invalid configuration simulation with prefix '{scenarioPrefix}'");
         }
         catch (Exception ex)
@@ -111,17 +111,17 @@ public class AzureErrorHandlingSteps(ScenarioContext scenarioContext)
     {
         var keyVaultEmulator = scenarioContext.GetKeyVaultEmulator();
         var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
-        
+
         keyVaultEmulator.Should().NotBeNull("Key Vault emulator should be established");
 
         var fullPath = Path.Combine("TestData", testDataPath);
-        
+
         try
         {
             // Load test data, but it will reference non-existent secrets with the scenario prefix
             var createTask = keyVaultEmulator!.CreateTestDataAsync(fullPath, scenarioPrefix);
             createTask.Wait(TimeSpan.FromMinutes(1));
-            
+
             _errorHandlingValidationResults.Add($"✓ Key Vault configured with test data that may reference missing secrets for prefix '{scenarioPrefix}'");
         }
         catch (Exception ex)
@@ -136,11 +136,11 @@ public class AzureErrorHandlingSteps(ScenarioContext scenarioContext)
     {
         var keyVaultEmulator = scenarioContext.GetKeyVaultEmulator();
         var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
-        
+
         keyVaultEmulator.Should().NotBeNull("Key Vault emulator should be established");
 
         var fullPath = Path.Combine("TestData", testDataPath);
-        
+
         try
         {
             // Load test data for credential failure scenarios with scenario prefix
@@ -148,7 +148,7 @@ public class AzureErrorHandlingSteps(ScenarioContext scenarioContext)
             createTask.Wait(TimeSpan.FromMinutes(1));
             _credentialFailureSimulated = true;
             _shouldFailKeyVault = true; // Will fail during authentication
-            
+
             _errorHandlingValidationResults.Add($"✓ Key Vault configured for credential failure simulation with prefix '{scenarioPrefix}'");
         }
         catch (Exception ex)
@@ -164,11 +164,11 @@ public class AzureErrorHandlingSteps(ScenarioContext scenarioContext)
     {
         var keyVaultEmulator = scenarioContext.GetKeyVaultEmulator();
         var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
-        
+
         keyVaultEmulator.Should().NotBeNull("Key Vault emulator should be established");
 
         var fullPath = Path.Combine("TestData", testDataPath);
-        
+
         try
         {
             // Load test data for rate limiting scenarios with a scenario prefix
@@ -176,7 +176,7 @@ public class AzureErrorHandlingSteps(ScenarioContext scenarioContext)
             createTask.Wait(TimeSpan.FromMinutes(1));
             _rateLimitingSimulated = true;
             _shouldFailKeyVault = true; // Will fail due to rate limiting
-            
+
             _errorHandlingValidationResults.Add($"✓ Key Vault configured for rate limiting simulation with prefix '{scenarioPrefix}'");
         }
         catch (Exception ex)
@@ -195,7 +195,7 @@ public class AzureErrorHandlingSteps(ScenarioContext scenarioContext)
     public void WhenIConfigureErrorHandlingControllerWithNetworkFailureSimulation()
     {
         var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
-        
+
         _networkFailureSimulated = true;
         _shouldFailKeyVault = true;
         _errorHandlingValidationResults.Add($"✓ Network failure simulation configured for prefix '{scenarioPrefix}'");
@@ -205,7 +205,7 @@ public class AzureErrorHandlingSteps(ScenarioContext scenarioContext)
     public void WhenIConfigureErrorHandlingControllerWithInvalidConnectionString()
     {
         var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
-        
+
         _invalidConfigurationSimulated = true;
         _shouldFailAppConfig = true;
         _errorHandlingValidationResults.Add($"✓ Invalid connection string configured for prefix '{scenarioPrefix}'");
@@ -215,7 +215,7 @@ public class AzureErrorHandlingSteps(ScenarioContext scenarioContext)
     public void WhenIConfigureErrorHandlingControllerWithMissingSecretReferences()
     {
         var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
-        
+
         _errorHandlingValidationResults.Add($"✓ Missing secret references configured for prefix '{scenarioPrefix}'");
     }
 
@@ -223,7 +223,7 @@ public class AzureErrorHandlingSteps(ScenarioContext scenarioContext)
     public void WhenIConfigureErrorHandlingControllerWithCredentialFailureSimulation()
     {
         var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
-        
+
         _credentialFailureSimulated = true;
         _shouldFailKeyVault = true;
         _errorHandlingValidationResults.Add($"✓ Credential failure simulation configured for prefix '{scenarioPrefix}'");
@@ -233,7 +233,7 @@ public class AzureErrorHandlingSteps(ScenarioContext scenarioContext)
     public void WhenIConfigureErrorHandlingControllerWithThrottlingSimulation()
     {
         var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
-        
+
         _rateLimitingSimulated = true;
         _shouldFailKeyVault = true;
         _errorHandlingValidationResults.Add($"✓ Throttling simulation configured for prefix '{scenarioPrefix}'");
@@ -243,7 +243,7 @@ public class AzureErrorHandlingSteps(ScenarioContext scenarioContext)
     public void WhenIConfigureErrorHandlingControllerByBuildingTheConfigurationWithErrorTolerance()
     {
         var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
-        
+
         try
         {
             var keyVaultEmulator = scenarioContext.GetKeyVaultEmulator();
@@ -270,10 +270,10 @@ public class AzureErrorHandlingSteps(ScenarioContext scenarioContext)
                         try
                         {
                             // Use FailingConfigurationSource to guarantee an error is captured
-                            builder.AddSource(new FailingConfigurationSource 
-                            { 
-                                ErrorMessage = "Simulated Key Vault network failure for testing", 
-                                SourceType = "KeyVault" 
+                            builder.AddSource(new FailingConfigurationSource
+                            {
+                                ErrorMessage = "Simulated Key Vault network failure for testing",
+                                SourceType = "KeyVault"
                             });
                             _errorHandlingValidationResults.Add($"✓ Key Vault configured with failing source for prefix '{scenarioPrefix}'");
                         }
@@ -355,7 +355,7 @@ public class AzureErrorHandlingSteps(ScenarioContext scenarioContext)
                 _errorLogMessages.Add($"Configuration build failed: {ex.Message}");
                 _errorHandlingValidationResults.Add($"✗ Configuration build failed: {ex.GetType().Name}");
             }
-            
+
             // Store results in a scenario context
             if (_errorHandlingConfiguration != null)
             {
@@ -365,7 +365,7 @@ public class AzureErrorHandlingSteps(ScenarioContext scenarioContext)
             {
                 scenarioContext.Set(_errorHandlingFlexConfiguration, "ErrorHandlingFlexConfiguration");
             }
-            
+
             _errorHandlingValidationResults.Add($"✓ Error handling configuration attempt completed with {_capturedErrorExceptions.Count} errors captured for prefix '{scenarioPrefix}'");
         }
         catch (Exception ex)
@@ -382,7 +382,7 @@ public class AzureErrorHandlingSteps(ScenarioContext scenarioContext)
     public void WhenIConfigureErrorHandlingControllerByBuildingTheConfigurationWithRetryLogic()
     {
         var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
-        
+
         // Implement retry logic for error scenarios
         var maxRetries = 3;
         var retryDelay = TimeSpan.FromSeconds(1);
@@ -394,7 +394,7 @@ public class AzureErrorHandlingSteps(ScenarioContext scenarioContext)
             try
             {
                 _errorLogMessages.Add($"Attempt {attempt}: Starting configuration build for prefix '{scenarioPrefix}'");
-                
+
                 var builder = new FlexConfigurationBuilder();
 
                 // Try to start and configure emulators with retry logic and scenario prefix filtering
@@ -424,10 +424,10 @@ public class AzureErrorHandlingSteps(ScenarioContext scenarioContext)
 
                 _errorHandlingFlexConfiguration = builder.Build();
                 _errorHandlingConfiguration = _errorHandlingFlexConfiguration.Configuration;
-                
+
                 scenarioContext.Set(_errorHandlingConfiguration, "ErrorHandlingConfiguration");
                 scenarioContext.Set(_errorHandlingFlexConfiguration, "ErrorHandlingFlexConfiguration");
-                
+
                 _errorHandlingValidationResults.Add($"✓ Error handling configuration built successfully on attempt {attempt} for prefix '{scenarioPrefix}'");
                 _errorLogMessages.Add($"Attempt {attempt}: Success for prefix '{scenarioPrefix}'");
                 break;
@@ -436,7 +436,7 @@ public class AzureErrorHandlingSteps(ScenarioContext scenarioContext)
             {
                 _capturedErrorExceptions.Add(ex);
                 _errorLogMessages.Add($"Attempt {attempt} failed for prefix '{scenarioPrefix}': {ex.Message}");
-                
+
                 if (attempt == maxRetries)
                 {
                     _lastErrorHandlingException = ex;
@@ -459,11 +459,11 @@ public class AzureErrorHandlingSteps(ScenarioContext scenarioContext)
     public void ThenTheErrorHandlingControllerShouldHandleNetworkFailuresGracefully()
     {
         var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
-        
+
         if (_networkFailureSimulated)
         {
             var networkErrors = _capturedErrorExceptions
-                .Where(ex => ex is HttpRequestException || 
+                .Where(ex => ex is HttpRequestException ||
                            ex.Message.Contains("network", StringComparison.OrdinalIgnoreCase) ||
                            ex.Message.Contains("connection", StringComparison.OrdinalIgnoreCase) ||
                            ex.Message.Contains("timeout", StringComparison.OrdinalIgnoreCase) ||
@@ -472,11 +472,11 @@ public class AzureErrorHandlingSteps(ScenarioContext scenarioContext)
                 .ToList();
 
             // With network failure simulation, we expect either graceful handling or appropriate errors
-            bool handledGracefully = _errorHandlingConfiguration != null || 
+            bool handledGracefully = _errorHandlingConfiguration != null ||
                                     networkErrors.Any() ||
                                     _capturedErrorExceptions.Any() || // Any error during network failure simulation counts
                                     _lastErrorHandlingException != null;
-            
+
             handledGracefully.Should().BeTrue("Network failures should be handled gracefully or result in appropriate exceptions");
             _errorHandlingValidationResults.Add($"✓ Network failure handling verified: {networkErrors.Count} network errors, {_capturedErrorExceptions.Count} total errors for prefix '{scenarioPrefix}'");
         }
@@ -484,7 +484,7 @@ public class AzureErrorHandlingSteps(ScenarioContext scenarioContext)
         {
             _errorHandlingValidationResults.Add($"ⓘ Network failure not simulated in this scenario for prefix '{scenarioPrefix}'");
         }
-        
+
         scenarioContext.Set(_errorHandlingValidationResults, "ErrorHandlingValidationResults");
     }
 
@@ -492,7 +492,7 @@ public class AzureErrorHandlingSteps(ScenarioContext scenarioContext)
     public void ThenTheErrorHandlingControllerShouldDemonstrateFallbackBehavior()
     {
         var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
-        
+
         try
         {
             // Test fallback mechanisms with a scenario prefix
@@ -500,7 +500,7 @@ public class AzureErrorHandlingSteps(ScenarioContext scenarioContext)
             {
                 // Test that FlexKit can provide fallback values or handle missing configuration
                 dynamic config = _errorHandlingFlexConfiguration;
-                
+
                 var fallbackTests = new List<(string description, Func<object?> test)>
                 {
                     ("Fallback for missing key", () => config[$"{scenarioPrefix}:non-existent-key"] ?? "fallback-value"),
@@ -535,7 +535,7 @@ public class AzureErrorHandlingSteps(ScenarioContext scenarioContext)
         {
             _errorHandlingValidationResults.Add($"✗ Fallback behavior verification failed: {ex.Message}");
         }
-        
+
         scenarioContext.Set(_errorHandlingValidationResults, "ErrorHandlingValidationResults");
     }
 
@@ -543,9 +543,9 @@ public class AzureErrorHandlingSteps(ScenarioContext scenarioContext)
     public void ThenTheErrorHandlingControllerShouldReportNetworkErrorDetails()
     {
         var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
-        
+
         var networkErrors = _capturedErrorExceptions
-            .Where(ex => ex is HttpRequestException || 
+            .Where(ex => ex is HttpRequestException ||
                        ex.Message.Contains("network", StringComparison.OrdinalIgnoreCase) ||
                        ex.Message.Contains("connection", StringComparison.OrdinalIgnoreCase) ||
                        ex.Message.Contains("timeout", StringComparison.OrdinalIgnoreCase) ||
@@ -556,7 +556,7 @@ public class AzureErrorHandlingSteps(ScenarioContext scenarioContext)
         {
             // During network failure simulation, we expect some kind of error to be reported
             bool hasErrorReports = networkErrors.Any() || _capturedErrorExceptions.Any() || _errorLogMessages.Any();
-            
+
             hasErrorReports.Should().BeTrue("Should have captured network-related errors or other errors when simulation is active");
             _errorHandlingValidationResults.Add($"✓ Network error details reported: {networkErrors.Count} network errors, {_capturedErrorExceptions.Count} total errors, {_errorLogMessages.Count} log messages for prefix '{scenarioPrefix}'");
         }
@@ -564,7 +564,7 @@ public class AzureErrorHandlingSteps(ScenarioContext scenarioContext)
         {
             _errorHandlingValidationResults.Add($"ⓘ Network errors not expected in this scenario for prefix '{scenarioPrefix}'");
         }
-        
+
         scenarioContext.Set(_errorHandlingValidationResults, "ErrorHandlingValidationResults");
     }
 
@@ -572,7 +572,7 @@ public class AzureErrorHandlingSteps(ScenarioContext scenarioContext)
     public void ThenTheErrorHandlingControllerShouldHandleInvalidConfigurationGracefully()
     {
         var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
-        
+
         if (_invalidConfigurationSimulated)
         {
             // With invalid configuration, we expect either graceful handling or appropriate configuration errors
@@ -581,7 +581,7 @@ public class AzureErrorHandlingSteps(ScenarioContext scenarioContext)
                 .ToList();
 
             bool handledGracefully = _errorHandlingConfiguration != null || configErrors.Any() || _capturedErrorExceptions.Any();
-            
+
             handledGracefully.Should().BeTrue("Invalid configuration should be handled gracefully or result in appropriate exceptions");
             _errorHandlingValidationResults.Add($"✓ Invalid configuration handling verified: {configErrors.Count} config errors, {_capturedErrorExceptions.Count} total errors for prefix '{scenarioPrefix}'");
         }
@@ -589,7 +589,7 @@ public class AzureErrorHandlingSteps(ScenarioContext scenarioContext)
         {
             _errorHandlingValidationResults.Add($"ⓘ Invalid configuration not simulated in this scenario for prefix '{scenarioPrefix}'");
         }
-        
+
         scenarioContext.Set(_errorHandlingValidationResults, "ErrorHandlingValidationResults");
     }
 
@@ -597,20 +597,20 @@ public class AzureErrorHandlingSteps(ScenarioContext scenarioContext)
     public void ThenTheErrorHandlingControllerShouldDemonstrateErrorReporting()
     {
         var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
-        
+
         // Verify that errors are properly captured and reported
         var totalErrors = _capturedErrorExceptions.Count + _errorLogMessages.Count;
-        
+
         if (totalErrors > 0)
         {
             _errorHandlingValidationResults.Add($"✓ Error reporting verified: {_capturedErrorExceptions.Count} exceptions, {_errorLogMessages.Count} log messages for prefix '{scenarioPrefix}'");
-            
+
             // Log some error details for verification
             foreach (var error in _capturedErrorExceptions.Take(3))
             {
                 _errorHandlingValidationResults.Add($"  - Exception: {error.GetType().Name}: {error.Message}");
             }
-            
+
             foreach (var logMessage in _errorLogMessages.Take(3))
             {
                 _errorHandlingValidationResults.Add($"  - Log: {logMessage}");
@@ -620,7 +620,7 @@ public class AzureErrorHandlingSteps(ScenarioContext scenarioContext)
         {
             _errorHandlingValidationResults.Add($"ⓘ No errors captured (this may be expected for successful scenarios) for prefix '{scenarioPrefix}'");
         }
-        
+
         scenarioContext.Set(_errorHandlingValidationResults, "ErrorHandlingValidationResults");
     }
 
@@ -628,7 +628,7 @@ public class AzureErrorHandlingSteps(ScenarioContext scenarioContext)
     public void ThenTheErrorHandlingControllerShouldMaintainApplicationStability()
     {
         var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
-        
+
         // Verify that despite errors, the application remains stable
         var stabilityTests = new List<(string description, Func<bool> test)>
         {
@@ -662,11 +662,11 @@ public class AzureErrorHandlingSteps(ScenarioContext scenarioContext)
         }
 
         _errorHandlingValidationResults.Add($"Application stability verification: {stabilityScore}/{stabilityTests.Count} stability checks passed for prefix '{scenarioPrefix}'");
-        
+
         // Application should remain stable even with errors - require at least 50% stability
         var minimumStability = Math.Max(2, stabilityTests.Count / 2);
         stabilityScore.Should().BeGreaterThanOrEqualTo(minimumStability, "Application should maintain basic stability despite errors");
-        
+
         scenarioContext.Set(_errorHandlingValidationResults, "ErrorHandlingValidationResults");
     }
 
@@ -674,7 +674,7 @@ public class AzureErrorHandlingSteps(ScenarioContext scenarioContext)
     public void ThenTheErrorHandlingControllerShouldHandleMissingSecretsGracefully()
     {
         var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
-        
+
         try
         {
             if (_errorHandlingFlexConfiguration != null)
@@ -714,7 +714,7 @@ public class AzureErrorHandlingSteps(ScenarioContext scenarioContext)
         {
             _errorHandlingValidationResults.Add($"✗ Missing secrets handling verification failed: {ex.Message}");
         }
-        
+
         scenarioContext.Set(_errorHandlingValidationResults, "ErrorHandlingValidationResults");
     }
 
@@ -722,7 +722,7 @@ public class AzureErrorHandlingSteps(ScenarioContext scenarioContext)
     public void ThenTheErrorHandlingControllerShouldProvideMeaningfulErrorMessages()
     {
         var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
-        
+
         var meaningfulErrors = _capturedErrorExceptions
             .Where(ex => !string.IsNullOrWhiteSpace(ex.Message) && ex.Message.Length > 10)
             .ToList();
@@ -732,7 +732,7 @@ public class AzureErrorHandlingSteps(ScenarioContext scenarioContext)
             .ToList();
 
         var totalMeaningfulMessages = meaningfulErrors.Count + meaningfulLogs.Count;
-        
+
         if (_capturedErrorExceptions.Any() || _errorLogMessages.Any())
         {
             totalMeaningfulMessages.Should().BeGreaterThan(0, "Should have meaningful error messages when errors occur");
@@ -742,7 +742,7 @@ public class AzureErrorHandlingSteps(ScenarioContext scenarioContext)
         {
             _errorHandlingValidationResults.Add($"ⓘ No errors to verify (this may be expected for successful scenarios) for prefix '{scenarioPrefix}'");
         }
-        
+
         scenarioContext.Set(_errorHandlingValidationResults, "ErrorHandlingValidationResults");
     }
 
@@ -750,7 +750,7 @@ public class AzureErrorHandlingSteps(ScenarioContext scenarioContext)
     public void ThenTheErrorHandlingControllerShouldAllowPartialConfigurationLoading()
     {
         var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
-        
+
         if (_errorHandlingConfiguration != null)
         {
             var availableKeys = _errorHandlingConfiguration
@@ -763,7 +763,7 @@ public class AzureErrorHandlingSteps(ScenarioContext scenarioContext)
 
             // Even with errors, some configuration should be available if we have optional sources
             _errorHandlingValidationResults.Add($"✓ Partial configuration loading verified: {availableKeys} total keys available, {scenarioSpecificKeys} scenario-specific keys for prefix '{scenarioPrefix}'");
-            
+
             if (availableKeys == 0)
             {
                 _errorHandlingValidationResults.Add($"ⓘ No configuration keys available, but this may be expected for error scenarios with optional sources for prefix '{scenarioPrefix}'");
@@ -773,7 +773,7 @@ public class AzureErrorHandlingSteps(ScenarioContext scenarioContext)
         {
             _errorHandlingValidationResults.Add($"⚠ No configuration available for partial loading verification for prefix '{scenarioPrefix}'");
         }
-        
+
         scenarioContext.Set(_errorHandlingValidationResults, "ErrorHandlingValidationResults");
     }
 
@@ -781,7 +781,7 @@ public class AzureErrorHandlingSteps(ScenarioContext scenarioContext)
     public void ThenTheErrorHandlingControllerShouldHandleCredentialFailuresGracefully()
     {
         var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
-        
+
         if (_credentialFailureSimulated)
         {
             var credentialErrors = _capturedErrorExceptions
@@ -796,11 +796,11 @@ public class AzureErrorHandlingSteps(ScenarioContext scenarioContext)
                 .ToList();
 
             // Either we handled it gracefully (configuration still works) or we got appropriate errors
-            bool handledGracefully = _errorHandlingConfiguration != null || 
+            bool handledGracefully = _errorHandlingConfiguration != null ||
                                     credentialErrors.Any() ||
                                     _capturedErrorExceptions.Any() ||
                                     _lastErrorHandlingException != null;
-            
+
             handledGracefully.Should().BeTrue("Credential failures should be handled gracefully or result in appropriate authentication errors");
             _errorHandlingValidationResults.Add($"✓ Credential failure handling verified: {credentialErrors.Count} credential errors, {_capturedErrorExceptions.Count} total errors for prefix '{scenarioPrefix}'");
         }
@@ -808,7 +808,7 @@ public class AzureErrorHandlingSteps(ScenarioContext scenarioContext)
         {
             _errorHandlingValidationResults.Add($"ⓘ Credential failure not simulated in this scenario for prefix '{scenarioPrefix}'");
         }
-        
+
         scenarioContext.Set(_errorHandlingValidationResults, "ErrorHandlingValidationResults");
     }
 
@@ -816,9 +816,9 @@ public class AzureErrorHandlingSteps(ScenarioContext scenarioContext)
     public void ThenTheErrorHandlingControllerShouldDemonstrateAuthenticationErrorHandling()
     {
         var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
-        
+
         var authErrors = _capturedErrorExceptions
-            .Where(ex => ex.GetType().Name.Contains("Authentication") || 
+            .Where(ex => ex.GetType().Name.Contains("Authentication") ||
                         ex.Message.Contains("authentication", StringComparison.OrdinalIgnoreCase) ||
                         ex.Message.Contains("credential", StringComparison.OrdinalIgnoreCase))
             .ToList();
@@ -836,7 +836,7 @@ public class AzureErrorHandlingSteps(ScenarioContext scenarioContext)
         {
             _errorHandlingValidationResults.Add($"ⓘ Authentication errors not expected in this scenario for prefix '{scenarioPrefix}'");
         }
-        
+
         scenarioContext.Set(_errorHandlingValidationResults, "ErrorHandlingValidationResults");
     }
 
@@ -844,10 +844,10 @@ public class AzureErrorHandlingSteps(ScenarioContext scenarioContext)
     public void ThenTheErrorHandlingControllerShouldProvideSecuritySafeErrorMessages()
     {
         var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
-        
+
         // Verify that error messages don't contain sensitive information
         var unsafeKeywords = new[] { "password", "secret", "key", "token", "credential" };
-        
+
         var unsafeMessages = _capturedErrorExceptions
             .Where(ex => unsafeKeywords.Any(keyword => ex.Message.Contains(keyword, StringComparison.OrdinalIgnoreCase)))
             .ToList();
@@ -861,7 +861,7 @@ public class AzureErrorHandlingSteps(ScenarioContext scenarioContext)
         if (unsafeMessages.Any() || unsafeLogs.Any())
         {
             _errorHandlingValidationResults.Add($"⚠ Security review needed: {unsafeMessages.Count} messages, {unsafeLogs.Count} logs contain security keywords for prefix '{scenarioPrefix}'");
-            
+
             // Log examples for review (but don't expose full messages in production)
             foreach (var msg in unsafeMessages.Take(2))
             {
@@ -872,7 +872,7 @@ public class AzureErrorHandlingSteps(ScenarioContext scenarioContext)
         {
             _errorHandlingValidationResults.Add($"✓ Security-safe error messages verified: no sensitive keywords detected for prefix '{scenarioPrefix}'");
         }
-        
+
         scenarioContext.Set(_errorHandlingValidationResults, "ErrorHandlingValidationResults");
     }
 
@@ -880,7 +880,7 @@ public class AzureErrorHandlingSteps(ScenarioContext scenarioContext)
     public void ThenTheErrorHandlingControllerShouldHandleRateLimitingGracefully()
     {
         var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
-        
+
         if (_rateLimitingSimulated)
         {
             var rateLimitErrors = _capturedErrorExceptions
@@ -891,11 +891,11 @@ public class AzureErrorHandlingSteps(ScenarioContext scenarioContext)
                 .ToList();
 
             // With rate limiting simulation, we expect either graceful handling or appropriate errors
-            bool handledGracefully = _errorHandlingConfiguration != null || 
+            bool handledGracefully = _errorHandlingConfiguration != null ||
                                     rateLimitErrors.Any() ||
                                     _capturedErrorExceptions.Any() || // Any error during rate limiting simulation counts
                                     _lastErrorHandlingException != null;
-            
+
             handledGracefully.Should().BeTrue("Rate limiting should be handled gracefully or result in appropriate throttling errors");
             _errorHandlingValidationResults.Add($"✓ Rate limiting handling verified: {rateLimitErrors.Count} rate limit errors, {_capturedErrorExceptions.Count} total errors for prefix '{scenarioPrefix}'");
         }
@@ -903,7 +903,7 @@ public class AzureErrorHandlingSteps(ScenarioContext scenarioContext)
         {
             _errorHandlingValidationResults.Add($"ⓘ Rate limiting not simulated in this scenario for prefix '{scenarioPrefix}'");
         }
-        
+
         scenarioContext.Set(_errorHandlingValidationResults, "ErrorHandlingValidationResults");
     }
 
@@ -911,7 +911,7 @@ public class AzureErrorHandlingSteps(ScenarioContext scenarioContext)
     public void ThenTheErrorHandlingControllerShouldDemonstrateRetryMechanisms()
     {
         var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
-        
+
         // Check if retry logic was executed based on captured logs
         var retryLogs = _errorLogMessages
             .Where(log => log.Contains("attempt", StringComparison.OrdinalIgnoreCase) ||
@@ -921,7 +921,7 @@ public class AzureErrorHandlingSteps(ScenarioContext scenarioContext)
         if (retryLogs.Any())
         {
             _errorHandlingValidationResults.Add($"✓ Retry mechanisms demonstrated: {retryLogs.Count} retry-related logs for prefix '{scenarioPrefix}'");
-            
+
             // Show some retry details
             foreach (var retryLog in retryLogs.Take(3))
             {
@@ -936,7 +936,7 @@ public class AzureErrorHandlingSteps(ScenarioContext scenarioContext)
         {
             _errorHandlingValidationResults.Add($"ⓘ Retry mechanisms not clearly demonstrated in this scenario for prefix '{scenarioPrefix}'");
         }
-        
+
         scenarioContext.Set(_errorHandlingValidationResults, "ErrorHandlingValidationResults");
     }
 
@@ -944,22 +944,22 @@ public class AzureErrorHandlingSteps(ScenarioContext scenarioContext)
     public void ThenTheErrorHandlingControllerShouldReportThrottlingEncounters()
     {
         var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
-        
+
         if (_rateLimitingSimulated)
         {
             // During rate-limiting simulation, we expect some kind of error to be reported
             var throttlingReports = _capturedErrorExceptions.Count + _errorLogMessages.Count;
-            
+
             throttlingReports.Should().BeGreaterThan(0, "Should have reports of throttling encounters or other errors when simulation is active");
             _errorHandlingValidationResults.Add($"✓ Throttling encounters reported: {throttlingReports} total reports ({_capturedErrorExceptions.Count} exceptions, {_errorLogMessages.Count} log messages) for prefix '{scenarioPrefix}'");
-            
+
             // Look for specific throttling indicators
             var throttlingIndicators = _capturedErrorExceptions
                 .Where(ex => ex.Message.Contains("throttl", StringComparison.OrdinalIgnoreCase) ||
                            ex.Message.Contains("rate", StringComparison.OrdinalIgnoreCase) ||
                            ex.Message.Contains("429"))
                 .ToList();
-                
+
             if (throttlingIndicators.Any())
             {
                 _errorHandlingValidationResults.Add($"  - Specific throttling indicators: {throttlingIndicators.Count}");
@@ -969,7 +969,7 @@ public class AzureErrorHandlingSteps(ScenarioContext scenarioContext)
         {
             _errorHandlingValidationResults.Add($"ⓘ Throttling not simulated, no encounters expected for prefix '{scenarioPrefix}'");
         }
-        
+
         scenarioContext.Set(_errorHandlingValidationResults, "ErrorHandlingValidationResults");
     }
 

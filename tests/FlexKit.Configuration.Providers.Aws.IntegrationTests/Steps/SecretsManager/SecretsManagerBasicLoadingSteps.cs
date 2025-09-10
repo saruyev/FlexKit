@@ -38,7 +38,7 @@ public class SecretsManagerBasicLoadingSteps(ScenarioContext scenarioContext)
 
         var fullPath = Path.Combine("TestData", testDataPath);
         _secretsModuleBuilder!.AddSecretsManagerFromTestData(fullPath, optional: false, jsonProcessor: false);
-        
+
         scenarioContext.Set(_secretsModuleBuilder, "SecretsModuleBuilder");
     }
 
@@ -49,7 +49,7 @@ public class SecretsManagerBasicLoadingSteps(ScenarioContext scenarioContext)
 
         var fullPath = Path.Combine("TestData", testDataPath);
         _secretsModuleBuilder!.AddSecretsManagerFromTestData(fullPath, optional: false, jsonProcessor: true);
-        
+
         scenarioContext.Set(_secretsModuleBuilder, "SecretsModuleBuilder");
     }
 
@@ -60,7 +60,7 @@ public class SecretsManagerBasicLoadingSteps(ScenarioContext scenarioContext)
 
         var fullPath = Path.Combine("TestData", testDataPath);
         _secretsModuleBuilder!.AddSecretsManagerFromTestData(fullPath, optional: false, jsonProcessor: false);
-        
+
         scenarioContext.Set(_secretsModuleBuilder, "SecretsModuleBuilder");
     }
 
@@ -71,7 +71,7 @@ public class SecretsManagerBasicLoadingSteps(ScenarioContext scenarioContext)
 
         var fullPath = Path.Combine("TestData", testDataPath);
         _secretsModuleBuilder!.AddSecretsManagerFromTestData(fullPath, optional: true, jsonProcessor: false);
-        
+
         scenarioContext.Set(_secretsModuleBuilder, "SecretsModuleBuilder");
     }
 
@@ -82,7 +82,7 @@ public class SecretsManagerBasicLoadingSteps(ScenarioContext scenarioContext)
 
         var fullPath = Path.Combine("TestData", testDataPath);
         _secretsModuleBuilder!.AddSecretsManagerFromTestData(fullPath, optional: false, jsonProcessor: false);
-        
+
         scenarioContext.Set(_secretsModuleBuilder, "SecretsModuleBuilder");
     }
 
@@ -99,7 +99,7 @@ public class SecretsManagerBasicLoadingSteps(ScenarioContext scenarioContext)
         {
             _secretsModuleConfiguration = _secretsModuleBuilder!.Build();
             _secretsModuleFlexConfiguration = _secretsModuleConfiguration.GetFlexConfiguration();
-            
+
             scenarioContext.Set(_secretsModuleConfiguration, "SecretsModuleConfiguration");
             scenarioContext.Set(_secretsModuleFlexConfiguration, "SecretsModuleFlexConfiguration");
         }
@@ -119,9 +119,9 @@ public class SecretsManagerBasicLoadingSteps(ScenarioContext scenarioContext)
         {
             // Test dynamic access to secret data
             var databaseCredentials = AwsTestConfigurationBuilder.GetDynamicProperty(
-                _secretsModuleFlexConfiguration!, 
+                _secretsModuleFlexConfiguration!,
                 "infrastructure-module-database-credentials");
-            
+
             databaseCredentials.Should().NotBeNull("Database credentials should be accessible via dynamic interface");
         }
         catch (Exception ex)
@@ -152,10 +152,10 @@ public class SecretsManagerBasicLoadingSteps(ScenarioContext scenarioContext)
 
         var actualValue = _secretsModuleConfiguration![configKey];
         actualValue.Should().NotBeNullOrEmpty($"Configuration key '{configKey}' should have a base64 encoded value");
-        
+
         // For test data that may be truncated with "...", check if it looks like base64
         var cleanValue = actualValue.TrimEnd('.'); // Remove trailing dots from truncated test data
-        
+
         // Verify it looks like base64 (contains only valid base64 characters)
         if (cleanValue.Length > 0 && cleanValue.All(c => char.IsLetterOrDigit(c) || c == '+' || c == '/' || c == '='))
         {
@@ -165,7 +165,7 @@ public class SecretsManagerBasicLoadingSteps(ScenarioContext scenarioContext)
                 return; // Test passes - it's base64-like data
             }
         }
-        
+
         // Try actual base64 decoding for complete data
         try
         {

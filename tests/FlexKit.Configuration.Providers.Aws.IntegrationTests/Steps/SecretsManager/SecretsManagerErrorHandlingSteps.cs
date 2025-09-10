@@ -48,10 +48,10 @@ public class SecretsManagerErrorHandlingSteps(ScenarioContext scenarioContext)
 
         var fullPath = Path.Combine("TestData", testDataPath);
         _secretsErrorBuilder!.AddSecretsManagerFromTestData(fullPath, optional: true, jsonProcessor: true);
-        
+
         // Store invalid JSON value for later verification
         _invalidJsonValue = "{\"invalid\": json}"; // Simulate invalid JSON
-        
+
         scenarioContext.Set(_secretsErrorBuilder, "SecretsErrorBuilder");
         scenarioContext.Set(_invalidJsonValue, "InvalidJsonValue");
     }
@@ -63,7 +63,7 @@ public class SecretsManagerErrorHandlingSteps(ScenarioContext scenarioContext)
 
         var fullPath = Path.Combine("TestData", testDataPath);
         _secretsErrorBuilder!.AddSecretsManagerFromTestData(fullPath, optional: true, jsonProcessor: false);
-        
+
         scenarioContext.Set(_secretsErrorBuilder, "SecretsErrorBuilder");
         scenarioContext.Set("access_denied_simulation", "AccessDeniedSimulation");
     }
@@ -74,7 +74,7 @@ public class SecretsManagerErrorHandlingSteps(ScenarioContext scenarioContext)
         _secretsErrorBuilder.Should().NotBeNull("Secrets error handler builder should be established");
 
         var fullPath = Path.Combine("TestData", testDataPath);
-        
+
         // Load test data and find the missing required secret scenario
         var jsonContent = File.ReadAllText(fullPath);
         using var document = JsonDocument.Parse(jsonContent);
@@ -97,7 +97,7 @@ public class SecretsManagerErrorHandlingSteps(ScenarioContext scenarioContext)
         }
 
         _secretsErrorBuilder!.AddSecretsManagerFromTestData(fullPath, optional: false, jsonProcessor: false);
-        
+
         scenarioContext.Set(_secretsErrorBuilder, "SecretsErrorBuilder");
     }
 
@@ -108,7 +108,7 @@ public class SecretsManagerErrorHandlingSteps(ScenarioContext scenarioContext)
 
         var fullPath = Path.Combine("TestData", testDataPath);
         _secretsErrorBuilder!.AddSecretsManagerFromTestData(fullPath, optional: true, jsonProcessor: false);
-        
+
         scenarioContext.Set(_secretsErrorBuilder, "SecretsErrorBuilder");
         scenarioContext.Set("missing_optional_secret", "MissingOptionalSecret");
     }
@@ -120,10 +120,10 @@ public class SecretsManagerErrorHandlingSteps(ScenarioContext scenarioContext)
 
         var fullPath = Path.Combine("TestData", testDataPath);
         _secretsErrorBuilder!.AddSecretsManagerFromTestData(fullPath, optional: true, jsonProcessor: false);
-        
+
         // Simulate oversized secret value
         var oversizedValue = new string('x', 1024 * 1024); // 1MB string
-        
+
         scenarioContext.Set(_secretsErrorBuilder, "SecretsErrorBuilder");
         scenarioContext.Set(oversizedValue, "OversizedSecretValue");
     }
@@ -135,7 +135,7 @@ public class SecretsManagerErrorHandlingSteps(ScenarioContext scenarioContext)
 
         var fullPath = Path.Combine("TestData", testDataPath);
         _secretsErrorBuilder!.AddSecretsManagerFromTestData(fullPath, optional: true, jsonProcessor: false);
-        
+
         scenarioContext.Set(_secretsErrorBuilder, "SecretsErrorBuilder");
     }
 
@@ -146,7 +146,7 @@ public class SecretsManagerErrorHandlingSteps(ScenarioContext scenarioContext)
 
         var fullPath = Path.Combine("TestData", testDataPath);
         _secretsErrorBuilder!.AddSecretsManagerFromTestData(fullPath, optional: true, jsonProcessor: true);
-        
+
         scenarioContext.Set(_secretsErrorBuilder, "SecretsErrorBuilder");
         scenarioContext.Set("mixed_errors_scenario", "MixedErrorsScenario");
     }
@@ -187,7 +187,7 @@ public class SecretsManagerErrorHandlingSteps(ScenarioContext scenarioContext)
                 .AddInMemoryCollection(validConfigData)
                 .Build();
             _secretsErrorFlexConfiguration = new FlexConfiguration(_secretsErrorConfiguration);
-            
+
             scenarioContext.Set(_secretsErrorConfiguration, "SecretsErrorConfiguration");
             scenarioContext.Set(_secretsErrorFlexConfiguration, "SecretsErrorFlexConfiguration");
             scenarioContext.Set(_capturedErrorExceptions, "CapturedErrorExceptions");
@@ -223,7 +223,7 @@ public class SecretsManagerErrorHandlingSteps(ScenarioContext scenarioContext)
                 .AddInMemoryCollection(fallbackConfigData)
                 .Build();
             _secretsErrorFlexConfiguration = new FlexConfiguration(_secretsErrorConfiguration);
-            
+
             scenarioContext.Set(_secretsErrorConfiguration, "SecretsErrorConfiguration");
             scenarioContext.Set(_secretsErrorFlexConfiguration, "SecretsErrorFlexConfiguration");
             scenarioContext.Set(_capturedErrorExceptions, "CapturedErrorExceptions");
@@ -278,7 +278,7 @@ public class SecretsManagerErrorHandlingSteps(ScenarioContext scenarioContext)
                 .AddInMemoryCollection(availableConfigData)
                 .Build();
             _secretsErrorFlexConfiguration = new FlexConfiguration(_secretsErrorConfiguration);
-            
+
             scenarioContext.Set(_secretsErrorConfiguration, "SecretsErrorConfiguration");
             scenarioContext.Set(_secretsErrorFlexConfiguration, "SecretsErrorFlexConfiguration");
             scenarioContext.Set(_errorLogMessages, "ErrorLogMessages");
@@ -298,7 +298,7 @@ public class SecretsManagerErrorHandlingSteps(ScenarioContext scenarioContext)
         try
         {
             // Check for oversized secrets and simulate size validation
-            if (scenarioContext.TryGetValue("OversizedSecretValue", out string? oversizedValue) && 
+            if (scenarioContext.TryGetValue("OversizedSecretValue", out string? oversizedValue) &&
                 !string.IsNullOrEmpty(oversizedValue) && oversizedValue.Length > 512 * 1024) // 512KB limit
             {
                 _sizeLimitExceeded = true;
@@ -316,7 +316,7 @@ public class SecretsManagerErrorHandlingSteps(ScenarioContext scenarioContext)
                 .AddInMemoryCollection(validSizedConfigData)
                 .Build();
             _secretsErrorFlexConfiguration = new FlexConfiguration(_secretsErrorConfiguration);
-            
+
             scenarioContext.Set(_secretsErrorConfiguration, "SecretsErrorConfiguration");
             scenarioContext.Set(_secretsErrorFlexConfiguration, "SecretsErrorFlexConfiguration");
             scenarioContext.Set(_sizeLimitExceeded, "SizeLimitExceeded");
@@ -354,7 +354,7 @@ public class SecretsManagerErrorHandlingSteps(ScenarioContext scenarioContext)
                 .AddInMemoryCollection(cachedConfigData)
                 .Build();
             _secretsErrorFlexConfiguration = new FlexConfiguration(_secretsErrorConfiguration);
-            
+
             scenarioContext.Set(_secretsErrorConfiguration, "SecretsErrorConfiguration");
             scenarioContext.Set(_secretsErrorFlexConfiguration, "SecretsErrorFlexConfiguration");
             scenarioContext.Set(_capturedErrorExceptions, "CapturedErrorExceptions");
@@ -376,7 +376,7 @@ public class SecretsManagerErrorHandlingSteps(ScenarioContext scenarioContext)
         {
             _secretsErrorConfiguration = _secretsErrorBuilder!.Build();
             _secretsErrorFlexConfiguration = _secretsErrorConfiguration.GetFlexConfiguration();
-            
+
             scenarioContext.Set(_secretsErrorConfiguration, "SecretsErrorConfiguration");
             scenarioContext.Set(_secretsErrorFlexConfiguration, "SecretsErrorFlexConfiguration");
         }
@@ -408,7 +408,7 @@ public class SecretsManagerErrorHandlingSteps(ScenarioContext scenarioContext)
                 {
                     var value = AwsTestConfigurationBuilder.GetDynamicProperty(
                         _secretsErrorFlexConfiguration!, key);
-                    
+
                     _secretsErrorValidationResults.Add($"Successfully accessed '{key}': {value != null}");
                 }
                 catch (Exception ex)
@@ -416,7 +416,7 @@ public class SecretsManagerErrorHandlingSteps(ScenarioContext scenarioContext)
                     _secretsErrorValidationResults.Add($"Error accessing '{key}': {ex.Message}");
                 }
             }
-            
+
             scenarioContext.Set(_secretsErrorValidationResults, "SecretsErrorValidationResults");
         }
         catch (Exception ex)
@@ -435,7 +435,7 @@ public class SecretsManagerErrorHandlingSteps(ScenarioContext scenarioContext)
     public void ThenTheSecretsErrorHandlerShouldCaptureJsonParsingErrors()
     {
         _capturedErrorExceptions.Should().NotBeEmpty("JSON parsing errors should be captured");
-        _capturedErrorExceptions.Should().Contain(ex => 
+        _capturedErrorExceptions.Should().Contain(ex =>
             ex is JsonException ||
             ex.Message.Contains("invalid start of a value", StringComparison.OrdinalIgnoreCase) ||
             ex.Message.Contains("JSON", StringComparison.OrdinalIgnoreCase) ||
@@ -447,7 +447,7 @@ public class SecretsManagerErrorHandlingSteps(ScenarioContext scenarioContext)
     public void ThenTheSecretsErrorHandlerShouldContinueLoadingValidSecrets()
     {
         _secretsErrorConfiguration.Should().NotBeNull("Configuration should be built despite JSON errors");
-        
+
         // Verify that a valid configuration is still accessible
         try
         {
@@ -458,7 +458,7 @@ public class SecretsManagerErrorHandlingSteps(ScenarioContext scenarioContext)
         {
             // Expected if no valid config exists
         }
-        
+
         // At minimum, configuration should be built without throwing
         _secretsErrorConfiguration.Should().NotBeNull("Configuration loading should continue despite errors");
     }
@@ -476,7 +476,7 @@ public class SecretsManagerErrorHandlingSteps(ScenarioContext scenarioContext)
     public void ThenTheSecretsErrorHandlerShouldCaptureAccessDeniedExceptions()
     {
         _capturedErrorExceptions.Should().NotBeEmpty("Access denied errors should be captured");
-        _capturedErrorExceptions.Should().Contain(ex => 
+        _capturedErrorExceptions.Should().Contain(ex =>
             ex.Message.Contains("access", StringComparison.OrdinalIgnoreCase) ||
             ex.Message.Contains("denied", StringComparison.OrdinalIgnoreCase) ||
             ex.Message.Contains("authorization", StringComparison.OrdinalIgnoreCase),
@@ -487,7 +487,7 @@ public class SecretsManagerErrorHandlingSteps(ScenarioContext scenarioContext)
     public void ThenTheSecretsErrorHandlerShouldLogAuthorizationFailureDetails()
     {
         _errorLogMessages.Should().NotBeEmpty("Authorization failure details should be logged");
-        _errorLogMessages.Should().Contain(msg => 
+        _errorLogMessages.Should().Contain(msg =>
             msg.Contains("Access denied", StringComparison.OrdinalIgnoreCase) ||
             msg.Contains("authorization", StringComparison.OrdinalIgnoreCase),
             "Authorization failure details should be logged");
@@ -497,7 +497,7 @@ public class SecretsManagerErrorHandlingSteps(ScenarioContext scenarioContext)
     public void ThenTheSecretsErrorHandlerShouldProvideFallbackConfigurationValues()
     {
         _secretsErrorConfiguration.Should().NotBeNull("Fallback configuration should be available");
-        
+
         // Verify the fallback mechanism by checking if any configuration is available
         try
         {
@@ -508,7 +508,7 @@ public class SecretsManagerErrorHandlingSteps(ScenarioContext scenarioContext)
         {
             // Expected if no fallback values
         }
-        
+
         // At minimum, the configuration object should exist
         _secretsErrorConfiguration.Should().NotBeNull("Fallback configuration mechanism should be available");
     }
@@ -532,7 +532,7 @@ public class SecretsManagerErrorHandlingSteps(ScenarioContext scenarioContext)
     public void ThenTheSecretsErrorHandlerExceptionShouldContainSecretNameDetails()
     {
         _lastSecretsErrorException.Should().NotBeNull("Exception should contain secret name details");
-    
+
         if (scenarioContext.TryGetValue("MissingRequiredSecret", out string? missingSecret))
         {
             _lastSecretsErrorException!.Message.Should().Contain(missingSecret, "Exception should contain the missing secret name");
@@ -551,7 +551,7 @@ public class SecretsManagerErrorHandlingSteps(ScenarioContext scenarioContext)
     public void ThenTheSecretsErrorHandlerShouldSkipMissingSecretNames()
     {
         _secretsErrorConfiguration.Should().NotBeNull("Configuration should be built despite missing optional secrets");
-        
+
         // Verify that missing secrets are skipped by checking that the configuration still works
         var configurationIsUsable = false;
         try
@@ -563,7 +563,7 @@ public class SecretsManagerErrorHandlingSteps(ScenarioContext scenarioContext)
         {
             // Expected if configuration is not usable
         }
-        
+
         configurationIsUsable.Should().BeTrue("Configuration should remain usable despite missing optional secrets");
     }
 
@@ -571,7 +571,7 @@ public class SecretsManagerErrorHandlingSteps(ScenarioContext scenarioContext)
     public void ThenTheSecretsErrorHandlerShouldLogMissingSecretWarnings()
     {
         _errorLogMessages.Should().NotBeEmpty("Missing secret warnings should be logged");
-        _errorLogMessages.Should().Contain(msg => 
+        _errorLogMessages.Should().Contain(msg =>
             msg.Contains("warning", StringComparison.OrdinalIgnoreCase) ||
             msg.Contains("missing", StringComparison.OrdinalIgnoreCase) ||
             msg.Contains("Optional", StringComparison.OrdinalIgnoreCase),
@@ -582,7 +582,7 @@ public class SecretsManagerErrorHandlingSteps(ScenarioContext scenarioContext)
     public void ThenTheSecretsErrorHandlerShouldDetectSecretSizeViolations()
     {
         _sizeLimitExceeded.Should().BeTrue("Secret size violations should be detected");
-        _errorLogMessages.Should().Contain(msg => 
+        _errorLogMessages.Should().Contain(msg =>
             msg.Contains("size", StringComparison.OrdinalIgnoreCase) ||
             msg.Contains("limit", StringComparison.OrdinalIgnoreCase),
             "Size violation messages should be logged");
@@ -591,7 +591,7 @@ public class SecretsManagerErrorHandlingSteps(ScenarioContext scenarioContext)
     [Then(@"the secrets error handler should truncate or reject large secrets")]
     public void ThenTheSecretsErrorHandlerShouldTruncateOrRejectLargeSecrets()
     {
-        _errorLogMessages.Should().Contain(msg => 
+        _errorLogMessages.Should().Contain(msg =>
             msg.Contains("size limit exceeded", StringComparison.OrdinalIgnoreCase) ||
             msg.Contains("truncate", StringComparison.OrdinalIgnoreCase) ||
             msg.Contains("reject", StringComparison.OrdinalIgnoreCase),
@@ -602,7 +602,7 @@ public class SecretsManagerErrorHandlingSteps(ScenarioContext scenarioContext)
     public void ThenTheSecretsErrorHandlerShouldContinueProcessingRemainingSecrets()
     {
         _secretsErrorConfiguration.Should().NotBeNull("Configuration should continue processing despite size violations");
-        
+
         // Verify that other secrets can still be processed
         try
         {
@@ -613,7 +613,7 @@ public class SecretsManagerErrorHandlingSteps(ScenarioContext scenarioContext)
         {
             // Expected if no other secrets
         }
-        
+
         // At minimum, configuration processing should continue
         _secretsErrorConfiguration.Should().NotBeNull("Configuration processing should continue");
     }
@@ -621,7 +621,7 @@ public class SecretsManagerErrorHandlingSteps(ScenarioContext scenarioContext)
     [Then(@"the secrets error handler should capture network timeout exceptions")]
     public void ThenTheSecretsErrorHandlerShouldCaptureNetworkTimeoutExceptions()
     {
-        _errorLogMessages.Should().Contain(msg => 
+        _errorLogMessages.Should().Contain(msg =>
             msg.Contains("network failure", StringComparison.OrdinalIgnoreCase) ||
             msg.Contains("timeout", StringComparison.OrdinalIgnoreCase),
             "Network timeout exceptions should be captured");
@@ -630,7 +630,7 @@ public class SecretsManagerErrorHandlingSteps(ScenarioContext scenarioContext)
     [Then(@"the secrets error handler should attempt retry operations")]
     public void ThenTheSecretsErrorHandlerShouldAttemptRetryOperations()
     {
-        _errorLogMessages.Should().Contain(msg => 
+        _errorLogMessages.Should().Contain(msg =>
             msg.Contains("retry", StringComparison.OrdinalIgnoreCase),
             "Retry operations should be attempted");
     }
@@ -638,7 +638,7 @@ public class SecretsManagerErrorHandlingSteps(ScenarioContext scenarioContext)
     [Then(@"the secrets error handler should provide cached or default values")]
     public void ThenTheSecretsErrorHandlerShouldProvideCachedOrDefaultValues()
     {
-        _errorLogMessages.Should().Contain(msg => 
+        _errorLogMessages.Should().Contain(msg =>
             msg.Contains("cached", StringComparison.OrdinalIgnoreCase) ||
             msg.Contains("default", StringComparison.OrdinalIgnoreCase),
             "Cached or default values should be provided");
@@ -649,12 +649,12 @@ public class SecretsManagerErrorHandlingSteps(ScenarioContext scenarioContext)
     {
         _secretsErrorFlexConfiguration.Should().NotBeNull("FlexConfig should be available");
         _secretsErrorValidationResults.Should().NotBeEmpty("Error recovery validation should have been performed");
-        
+
         // Verify that attempting to access missing keys doesn't crash the application
-        var gracefulHandling = _secretsErrorValidationResults.Any(result => 
+        var gracefulHandling = _secretsErrorValidationResults.Any(result =>
             result.Contains("non-existent-secret") &&
             !result.Contains("Exception", StringComparison.OrdinalIgnoreCase));
-        
+
         gracefulHandling.Should().BeTrue("FlexConfig should handle missing key access gracefully");
     }
 
@@ -662,16 +662,16 @@ public class SecretsManagerErrorHandlingSteps(ScenarioContext scenarioContext)
     public void ThenTheSecretsErrorHandlerFlexConfigShouldProvideDefaultValuesForFailedSecrets()
     {
         _secretsErrorFlexConfiguration.Should().NotBeNull("FlexConfig should be available");
-        
+
         // Test that FlexConfig can handle failed secrets gracefully
         var canHandleFailures = true;
         try
         {
             // Attempt to access potentially failed secrets
             _ = AwsTestConfigurationBuilder.GetDynamicProperty(
-                _secretsErrorFlexConfiguration!, 
+                _secretsErrorFlexConfiguration!,
                 "non-existent-or-failed-secret");
-            
+
             // Should either return null/empty or not throw
         }
         catch (Exception ex)
@@ -680,7 +680,7 @@ public class SecretsManagerErrorHandlingSteps(ScenarioContext scenarioContext)
             canHandleFailures = ex.Message.Contains("graceful", StringComparison.OrdinalIgnoreCase) ||
                                ex.GetType().Name.Contains("Configuration", StringComparison.OrdinalIgnoreCase);
         }
-        
+
         canHandleFailures.Should().BeTrue("FlexConfig should provide default values or handle failures gracefully");
     }
 

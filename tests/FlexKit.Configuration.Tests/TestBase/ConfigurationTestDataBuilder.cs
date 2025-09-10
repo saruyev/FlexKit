@@ -11,9 +11,9 @@ public static class ConfigurationTestDataBuilder
     /// <summary>
     /// Creates fake database configuration settings.
     /// </summary>
-    public static Faker<DatabaseConfig> DatabaseConfig { get; } = 
+    public static Faker<DatabaseConfig> DatabaseConfig { get; } =
         new Faker<DatabaseConfig>()
-            .RuleFor(d => d.ConnectionString, f => 
+            .RuleFor(d => d.ConnectionString, f =>
                 $"Server={f.Internet.DomainName()};Database={f.Database.Engine()};User Id={f.Internet.UserName()};Password={f.Internet.Password()};")
             .RuleFor(d => d.CommandTimeout, f => f.Random.Int(30, 300))
             .RuleFor(d => d.MaxRetryCount, f => f.Random.Int(1, 5))
@@ -23,7 +23,7 @@ public static class ConfigurationTestDataBuilder
     /// <summary>
     /// Creates fake API configuration settings.
     /// </summary>
-    public static Faker<ApiConfig> ApiConfig { get; } = 
+    public static Faker<ApiConfig> ApiConfig { get; } =
         new Faker<ApiConfig>()
             .RuleFor(a => a.BaseUrl, f => f.Internet.Url())
             .RuleFor(a => a.ApiKey, f => f.Random.AlphaNumeric(32))
@@ -35,7 +35,7 @@ public static class ConfigurationTestDataBuilder
     /// <summary>
     /// Creates fake user configuration data.
     /// </summary>
-    public static Faker<UserConfig> UserConfig { get; } = 
+    public static Faker<UserConfig> UserConfig { get; } =
         new Faker<UserConfig>()
             .RuleFor(u => u.Id, f => f.Random.Guid())
             .RuleFor(u => u.Email, f => f.Internet.Email())
@@ -51,33 +51,33 @@ public static class ConfigurationTestDataBuilder
     public static Dictionary<string, string> CreateConfigurationDictionary()
     {
         var faker = new Faker();
-        
+
         return new Dictionary<string, string>
         {
             // Database settings
             ["ConnectionStrings:DefaultConnection"] = DatabaseConfig.Generate().ConnectionString,
             ["Database:CommandTimeout"] = faker.Random.Int(30, 300).ToString(),
             ["Database:MaxRetryCount"] = faker.Random.Int(1, 5).ToString(),
-            
+
             // API settings
             ["External:PaymentApi:BaseUrl"] = faker.Internet.Url(),
             ["External:PaymentApi:ApiKey"] = faker.Random.AlphaNumeric(32),
             ["External:PaymentApi:Timeout"] = faker.Random.Int(5000, 30000).ToString(),
-            
+
             // Application settings
             ["Application:Name"] = faker.Company.CompanyName(),
             ["Application:Version"] = faker.System.Version().ToString(),
             ["Application:Environment"] = faker.PickRandom("Development", "Staging", "Production"),
-            
+
             // Feature flags
             ["Features:EnableAdvancedSearch"] = faker.Random.Bool().ToString(),
             ["Features:EnableMetrics"] = faker.Random.Bool().ToString(),
             ["Features:MaxUploadSize"] = faker.Random.Int(1024, 10240).ToString(),
-            
+
             // Logging
             ["Logging:LogLevel:Default"] = faker.PickRandom("Debug", "Information", "Warning", "Error"),
             ["Logging:LogLevel:Microsoft"] = faker.PickRandom("Information", "Warning", "Error"),
-            
+
             // Cache settings
             ["Cache:DefaultTtl"] = faker.Random.Int(300, 3600).ToString(),
             ["Cache:MaxSize"] = faker.Random.Int(100, 1000).ToString()

@@ -52,7 +52,7 @@ public class AzureConfigurationLoadingBenchmarks
         await _appConfigEmulator.SetConfigurationAsync("app:features:logging", "verbose");
         await _appConfigEmulator.SetConfigurationAsync("app:timeout:default", "30");
         await _appConfigEmulator.SetConfigurationAsync("app:retry:maxAttempts", "3");
-        
+
         // Setup production labeled configuration
         await _appConfigEmulator.SetConfigurationAsync("app:environment", "production", "prod");
         await _appConfigEmulator.SetConfigurationAsync("app:database:host", "prod-db.example.com", "prod");
@@ -436,7 +436,7 @@ public class AzureConfigurationLoadingBenchmarks
         var password = _combinedConfig["database:credentials:password"];
         var caching = _combinedConfig["app:features:caching"].ToType<bool>();
         var timeout = _combinedConfig["app:timeout:default"].ToType<int>();
-        
+
         return (host, password, caching, timeout);
     }
 
@@ -447,7 +447,7 @@ public class AzureConfigurationLoadingBenchmarks
         var dbHost = _productionConfig["app:database:host"];
         var apiKey = _productionConfig["api:keys:payment"];
         var cacheTimeout = _productionConfig["app:cache:timeout"].ToType<int>();
-        
+
         return (environment, dbHost, apiKey, cacheTimeout);
     }
 
@@ -520,7 +520,7 @@ public class AzureConfigurationLoadingBenchmarks
         var cachingEnabled = _productionConfig["app:features:caching"].ToType<bool>();
         var timeout = _productionConfig["app:timeout:default"].ToType<int>();
         var retries = _productionConfig["app:retry:maxAttempts"].ToType<int>();
-        
+
         return (dbHost, dbPassword, apiKey, cachingEnabled, timeout, retries);
     }
 }

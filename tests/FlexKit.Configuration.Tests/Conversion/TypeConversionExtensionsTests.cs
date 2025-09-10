@@ -21,7 +21,7 @@ public class TypeConversionExtensionsTests : UnitTestBase
     protected override void RegisterFixtureCustomizations()
     {
         // Customize string generation to avoid null values and control characters
-        Fixture.Customize<string>(composer => composer.FromFactory(() => 
+        Fixture.Customize<string>(composer => composer.FromFactory(() =>
             "test-string-" + Guid.NewGuid().ToString("N")[..8]));
     }
 
@@ -35,7 +35,7 @@ public class TypeConversionExtensionsTests : UnitTestBase
 
         // Act & Assert
         var action = () => text.ToType(null!)!;
-        
+
         action.Should().Throw<ArgumentNullException>()
             .WithParameterName("type");
     }
@@ -161,7 +161,7 @@ public class TypeConversionExtensionsTests : UnitTestBase
         {
             // Set to a culture that uses comma as a decimal separator
             CultureInfo.CurrentCulture = new CultureInfo("de-DE");
-            
+
             // Act - Use period as decimal separator (invariant culture format)
             var result = "3.14".ToType(typeof(double));
 
@@ -767,7 +767,7 @@ public class TypeConversionExtensionsTests : UnitTestBase
         {
             // Set to Turkish culture where 'i' uppercases to 'İ' (dotted I)
             CultureInfo.CurrentCulture = new CultureInfo("tr-TR");
-            
+
             // Act
             var result = "istanbul".Capitalize();
 

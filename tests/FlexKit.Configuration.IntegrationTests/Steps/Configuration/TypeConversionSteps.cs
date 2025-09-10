@@ -24,7 +24,7 @@ public class TypeConversionSteps(ScenarioContext scenarioContext)
     private TestConfigurationBuilder? _configurationBuilder;
     private IConfiguration? _testConfiguration;
     private IFlexConfig? _testFlexConfiguration;
-    
+
     // Conversion results storage
     private int _convertedIntegerResult;
     private bool _convertedBooleanResult;
@@ -37,7 +37,7 @@ public class TypeConversionSteps(ScenarioContext scenarioContext)
     private string[]? _convertedStringCollection;
     private int[]? _convertedIntegerCollection;
     private double[]? _convertedDoubleCollection;
-    
+
     // Error handling
     private Exception? _lastConversionException;
     private bool _conversionSucceeded;
@@ -49,7 +49,7 @@ public class TypeConversionSteps(ScenarioContext scenarioContext)
     {
         _configurationBuilder = TestConfigurationBuilder.Create(scenarioContext);
         scenarioContext.Set(_configurationBuilder, "TypeConversionBuilder");
-        
+
         // Debug: Test if the ToType extension method is available
         try
         {
@@ -70,7 +70,7 @@ public class TypeConversionSteps(ScenarioContext scenarioContext)
     public void WhenILoadTypeConversionTestData(Table table)
     {
         _configurationBuilder.Should().NotBeNull("Configuration builder should be initialized");
-        
+
         var configData = new Dictionary<string, string?>();
         foreach (var row in table.Rows)
         {
@@ -83,7 +83,7 @@ public class TypeConversionSteps(ScenarioContext scenarioContext)
         _configurationBuilder!.AddInMemoryCollection(configData);
         _testConfiguration = _configurationBuilder.Build();
         _testFlexConfiguration = _testConfiguration.GetFlexConfiguration();
-        
+
         // Debug: Verify data was loaded correctly
         Console.WriteLine("=== Verifying loaded configuration data ===");
         foreach (var key in configData.Keys)
@@ -92,7 +92,7 @@ public class TypeConversionSteps(ScenarioContext scenarioContext)
             Console.WriteLine($"Retrieved: '{key}' = '{retrievedValue}' (Original: '{configData[key]}')");
         }
         Console.WriteLine("=== End verification ===");
-        
+
         scenarioContext.Set(_testConfiguration, "TypeConversionConfiguration");
         scenarioContext.Set(_testFlexConfiguration, "TypeConversionFlexConfiguration");
     }
@@ -101,11 +101,11 @@ public class TypeConversionSteps(ScenarioContext scenarioContext)
     public void WhenILoadConfigurationFromJsonFile(string filePath)
     {
         _configurationBuilder.Should().NotBeNull("Configuration builder should be initialized");
-        
+
         // Normalize path separators for the current OS
         var normalizedPath = filePath.Replace('/', Path.DirectorySeparatorChar);
         var fullPath = Path.Combine(Directory.GetCurrentDirectory(), normalizedPath);
-        
+
         if (!File.Exists(fullPath))
         {
             throw new FileNotFoundException($"Test data file not found: {fullPath}");
@@ -115,11 +115,11 @@ public class TypeConversionSteps(ScenarioContext scenarioContext)
         var jsonContent = File.ReadAllText(fullPath);
         var jsonDocument = JsonDocument.Parse(jsonContent);
         var configData = FlattenJsonElement(jsonDocument.RootElement);
-        
+
         _configurationBuilder!.AddInMemoryCollection(configData);
         _testConfiguration = _configurationBuilder.Build();
         _testFlexConfiguration = _testConfiguration.GetFlexConfiguration();
-        
+
         scenarioContext.Set(_testConfiguration, "TypeConversionConfiguration");
         scenarioContext.Set(_testFlexConfiguration, "TypeConversionFlexConfiguration");
     }
@@ -128,14 +128,14 @@ public class TypeConversionSteps(ScenarioContext scenarioContext)
     public void WhenIRetrieveAndConvertToIntegerType(string configurationKey)
     {
         _testConfiguration.Should().NotBeNull("Test configuration should be loaded");
-        
+
         try
         {
             var stringValue = _testConfiguration![configurationKey];
             Console.WriteLine($"Converting integer: '{configurationKey}' = '{stringValue}'");
-            
+
             _convertedIntegerResult = string.IsNullOrEmpty(stringValue) ? 0 : // Default for int
-                // Use direct conversion instead of ToType extension method
+                                                                              // Use direct conversion instead of ToType extension method
                 Convert.ToInt32(stringValue, CultureInfo.InvariantCulture);
             _conversionSucceeded = true;
         }
@@ -151,14 +151,14 @@ public class TypeConversionSteps(ScenarioContext scenarioContext)
     public void WhenIRetrieveAndConvertToBooleanType(string configurationKey)
     {
         _testConfiguration.Should().NotBeNull("Test configuration should be loaded");
-        
+
         try
         {
             var stringValue = _testConfiguration![configurationKey];
             Console.WriteLine($"Converting boolean: '{configurationKey}' = '{stringValue}'");
-            
+
             _convertedBooleanResult = !string.IsNullOrEmpty(stringValue) && // Default for bool
-                                      // Use direct conversion instead of ToType extension method
+                                                                            // Use direct conversion instead of ToType extension method
                                       Convert.ToBoolean(stringValue, CultureInfo.InvariantCulture);
             _conversionSucceeded = true;
         }
@@ -174,14 +174,14 @@ public class TypeConversionSteps(ScenarioContext scenarioContext)
     public void WhenIRetrieveAndConvertToDoubleType(string configurationKey)
     {
         _testConfiguration.Should().NotBeNull("Test configuration should be loaded");
-        
+
         try
         {
             var stringValue = _testConfiguration![configurationKey];
             Console.WriteLine($"Converting double: '{configurationKey}' = '{stringValue}'");
-            
+
             _convertedDoubleResult = string.IsNullOrEmpty(stringValue) ? 0.0 : // Default for double
-                // Use direct conversion instead of ToType extension method
+                                                                               // Use direct conversion instead of ToType extension method
                 Convert.ToDouble(stringValue, CultureInfo.InvariantCulture);
             _conversionSucceeded = true;
         }
@@ -197,7 +197,7 @@ public class TypeConversionSteps(ScenarioContext scenarioContext)
     public void WhenIRetrieveAndConvertToLongType(string configurationKey)
     {
         _testConfiguration.Should().NotBeNull("Test configuration should be loaded");
-        
+
         try
         {
             var stringValue = _testConfiguration![configurationKey];
@@ -215,7 +215,7 @@ public class TypeConversionSteps(ScenarioContext scenarioContext)
     public void WhenIRetrieveAndConvertToStringType(string configurationKey)
     {
         _testConfiguration.Should().NotBeNull("Test configuration should be loaded");
-        
+
         try
         {
             var stringValue = _testConfiguration![configurationKey];
@@ -233,12 +233,12 @@ public class TypeConversionSteps(ScenarioContext scenarioContext)
     public void WhenIRetrieveAndConvertToNullableIntegerType(string configurationKey)
     {
         _testConfiguration.Should().NotBeNull("Test configuration should be loaded");
-        
+
         try
         {
             var stringValue = _testConfiguration![configurationKey];
             Console.WriteLine($"Converting nullable integer: '{configurationKey}' = '{stringValue}' (IsNull: {stringValue == null}, IsEmpty: {string.IsNullOrEmpty(stringValue)})");
-            
+
             // Use direct conversion instead of the ToType extension method
             if (string.IsNullOrEmpty(stringValue))
             {
@@ -265,12 +265,12 @@ public class TypeConversionSteps(ScenarioContext scenarioContext)
     public void WhenIRetrieveAndConvertToNullableBooleanType(string configurationKey)
     {
         _testConfiguration.Should().NotBeNull("Test configuration should be loaded");
-        
+
         try
         {
             var stringValue = _testConfiguration![configurationKey];
             Console.WriteLine($"Converting nullable boolean: '{configurationKey}' = '{stringValue}' (IsNull: {stringValue == null}, IsEmpty: {string.IsNullOrEmpty(stringValue)})");
-            
+
             // Use direct conversion instead of the ToType extension method
             if (string.IsNullOrEmpty(stringValue))
             {
@@ -297,12 +297,12 @@ public class TypeConversionSteps(ScenarioContext scenarioContext)
     public void WhenIRetrieveAndConvertToNullableDoubleType(string configurationKey)
     {
         _testConfiguration.Should().NotBeNull("Test configuration should be loaded");
-        
+
         try
         {
             var stringValue = _testConfiguration![configurationKey];
             Console.WriteLine($"Converting nullable double: '{configurationKey}' = '{stringValue}' (IsNull: {stringValue == null}, IsEmpty: {string.IsNullOrEmpty(stringValue)})");
-            
+
             // Use direct conversion instead of the ToType extension method
             if (string.IsNullOrEmpty(stringValue))
             {
@@ -329,12 +329,12 @@ public class TypeConversionSteps(ScenarioContext scenarioContext)
     public void WhenIRetrieveAndConvertToStringCollectionUsingSeparator(string configurationKey, string separatorName)
     {
         _testConfiguration.Should().NotBeNull("Test configuration should be loaded");
-        
+
         try
         {
             var stringValue = _testConfiguration![configurationKey];
             Console.WriteLine($"Converting string collection: '{configurationKey}' = '{stringValue}' with {separatorName} separator");
-            
+
             if (string.IsNullOrEmpty(stringValue))
             {
                 _convertedStringCollection = null;
@@ -359,12 +359,12 @@ public class TypeConversionSteps(ScenarioContext scenarioContext)
     public void WhenIRetrieveAndConvertToIntegerCollectionUsingSeparator(string configurationKey, string separatorName)
     {
         _testConfiguration.Should().NotBeNull("Test configuration should be loaded");
-        
+
         try
         {
             var stringValue = _testConfiguration![configurationKey];
             Console.WriteLine($"Converting integer collection: '{configurationKey}' = '{stringValue}' with {separatorName} separator");
-            
+
             if (string.IsNullOrEmpty(stringValue))
             {
                 _convertedIntegerCollection = null;
@@ -390,12 +390,12 @@ public class TypeConversionSteps(ScenarioContext scenarioContext)
     public void WhenIRetrieveAndConvertToDoubleCollectionUsingSeparator(string configurationKey, string separatorName)
     {
         _testConfiguration.Should().NotBeNull("Test configuration should be loaded");
-        
+
         try
         {
             var stringValue = _testConfiguration![configurationKey];
             Console.WriteLine($"Converting double collection: '{configurationKey}' = '{stringValue}' with {separatorName} separator");
-            
+
             if (string.IsNullOrEmpty(stringValue))
             {
                 _convertedDoubleCollection = null;

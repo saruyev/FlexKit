@@ -34,7 +34,7 @@ public class AzureKeyVaultBenchmarks
 
         // Setup simple configuration
         await _keyVaultEmulator.CreateTestDataAsync("./TestData/simple-config.json");
-        
+
         var simpleConfigBuilder = new FlexConfigurationBuilder()
             .AddAzureKeyVault(options =>
             {
@@ -47,7 +47,7 @@ public class AzureKeyVaultBenchmarks
 
         // Setup complex configuration
         await _keyVaultEmulator.CreateTestDataAsync("./TestData/complex-secret.json");
-        
+
         var complexConfigBuilder = new FlexConfigurationBuilder()
             .AddAzureKeyVault(options =>
             {
@@ -60,7 +60,7 @@ public class AzureKeyVaultBenchmarks
 
         // Setup large configuration
         await _keyVaultEmulator.CreateTestDataAsync("./TestData/large-secret.json");
-        
+
         var largeConfigBuilder = new FlexConfigurationBuilder()
             .AddAzureKeyVault(options =>
             {
@@ -262,7 +262,7 @@ public class AzureKeyVaultBenchmarks
         var dbPort = _complexConfig["database:primary:port"];
         var dbUser = _complexConfig["database:primary:username"];
         var sslEnabled = _complexConfig["database:primary:ssl"].ToType<bool>();
-        
+
         return (dbHost, dbPort, dbUser, sslEnabled);
     }
 

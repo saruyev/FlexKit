@@ -15,7 +15,7 @@ namespace FlexKit.IntegrationTests.Hooks;
 [Binding]
 public class ScenarioCleanupHooks
 {
-    private static readonly ILogger<ScenarioCleanupHooks> Logger = 
+    private static readonly ILogger<ScenarioCleanupHooks> Logger =
         LoggerFactory.Create(builder => builder.AddConsole()).CreateLogger<ScenarioCleanupHooks>();
 
     private const string TempFilesKey = "TempFiles";
@@ -40,12 +40,12 @@ public class ScenarioCleanupHooks
             scenarioContext.Set(new List<object>(), ConfigurationBuildersKey);
             scenarioContext.Set(new Dictionary<string, string?>(), EnvironmentVariablesKey);
 
-            Logger.LogDebug("Initialized cleanup tracking for scenario: {ScenarioTitle}", 
+            Logger.LogDebug("Initialized cleanup tracking for scenario: {ScenarioTitle}",
                 scenarioContext.ScenarioInfo.Title);
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Failed to initialize cleanup tracking for scenario: {ScenarioTitle}", 
+            Logger.LogError(ex, "Failed to initialize cleanup tracking for scenario: {ScenarioTitle}",
                 scenarioContext.ScenarioInfo.Title);
             throw;
         }
@@ -74,14 +74,14 @@ public class ScenarioCleanupHooks
 
             if (errorCount == 0)
             {
-                Logger.LogDebug("Cleanup completed successfully for scenario: {ScenarioTitle} ({SuccessCount} items)", 
+                Logger.LogDebug("Cleanup completed successfully for scenario: {ScenarioTitle} ({SuccessCount} items)",
                     scenarioTitle, successCount);
             }
             else
             {
-                Logger.LogWarning("Cleanup completed with {ErrorCount} errors for scenario: {ScenarioTitle}", 
+                Logger.LogWarning("Cleanup completed with {ErrorCount} errors for scenario: {ScenarioTitle}",
                     errorCount, scenarioTitle);
-                
+
                 foreach (var error in cleanupResults.Where(r => r.StartsWith("❌")))
                 {
                     Logger.LogWarning("Cleanup issue: {Error}", error);

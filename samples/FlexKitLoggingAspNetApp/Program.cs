@@ -74,7 +74,7 @@ public class OrdersController(IOrderService orderService) : ControllerBase
         var order = await orderService.GetOrderAsync(orderId);
         if (order == null)
             return NotFound();
-        
+
         return Ok(order);
     }
 
@@ -239,18 +239,18 @@ public class OrderService : IOrderService
     public async Task<OrderResult> ProcessOrderAsync(CreateOrderRequest request)
     {
         Console.WriteLine($"[OrderService] Processing order for customer: {request.CustomerId}");
-        
+
         // Simulate processing time
         await Task.Delay(Random.Shared.Next(100, 500));
-        
+
         if (request.Items?.Count == 0)
             throw new ArgumentException("Order must contain at least one item");
 
         var orderId = $"ORD-{DateTime.UtcNow.Ticks}";
-        return new OrderResult 
-        { 
-            OrderId = orderId, 
-            Success = true, 
+        return new OrderResult
+        {
+            OrderId = orderId,
+            Success = true,
             TotalAmount = request.Items?.Sum(i => i.Price * i.Quantity) ?? 0,
             ProcessedAt = DateTime.UtcNow
         };
@@ -259,13 +259,13 @@ public class OrderService : IOrderService
     public async Task<Order?> GetOrderAsync(string orderId)
     {
         Console.WriteLine($"[OrderService] Retrieving order: {orderId}");
-        
+
         // Simulate database lookup
         await Task.Delay(50);
-        
-        return new Order 
-        { 
-            OrderId = orderId, 
+
+        return new Order
+        {
+            OrderId = orderId,
             Status = "Completed",
             CreatedAt = DateTime.UtcNow.AddMinutes(-30),
             TotalAmount = 150.75m
@@ -291,10 +291,10 @@ public class PaymentService : IPaymentService
     public async Task<PaymentResult> ProcessPaymentAsync(PaymentRequest request)
     {
         Console.WriteLine($"[PaymentService] Processing payment: {request.Amount} {request.Currency}");
-        
+
         // Simulate payment processing
         await Task.Delay(Random.Shared.Next(200, 800));
-        
+
         if (request.Amount <= 0)
             throw new ArgumentException("Payment amount must be greater than zero");
 
@@ -304,9 +304,9 @@ public class PaymentService : IPaymentService
             Console.WriteLine($"[PaymentService] High value transaction detected: {request.Amount}");
         }
 
-        return new PaymentResult 
-        { 
-            Success = true, 
+        return new PaymentResult
+        {
+            Success = true,
             TransactionId = $"TXN-{DateTime.UtcNow.Ticks}",
             ProcessedAmount = request.Amount,
             ProcessedAt = DateTime.UtcNow
@@ -317,11 +317,11 @@ public class PaymentService : IPaymentService
     public bool ValidatePayment(PaymentValidationRequest request)
     {
         Console.WriteLine($"[PaymentService] Validating payment for card: {request.CardNumber?[^4..]}");
-        
+
         // Simple validation logic
-        return !string.IsNullOrEmpty(request.CardNumber) && 
-               request.CardNumber.Length >= 16 && 
-               !string.IsNullOrEmpty(request.CVV) && 
+        return !string.IsNullOrEmpty(request.CardNumber) &&
+               request.CardNumber.Length >= 16 &&
+               !string.IsNullOrEmpty(request.CVV) &&
                request.CVV.Length == 3;
     }
 }
@@ -338,16 +338,16 @@ public class UserService : IUserService
     public async Task<UserResult> CreateUserAsync(CreateUserRequest request)
     {
         Console.WriteLine($"[UserService] Creating user: {request.Username}");
-        
+
         // Simulate user creation
         await Task.Delay(Random.Shared.Next(100, 300));
-        
+
         if (string.IsNullOrEmpty(request.Username))
             throw new ArgumentException("Username is required");
 
-        return new UserResult 
-        { 
-            Success = true, 
+        return new UserResult
+        {
+            Success = true,
             UserId = Guid.NewGuid().ToString(),
             Username = request.Username,
             CreatedAt = DateTime.UtcNow
@@ -357,14 +357,14 @@ public class UserService : IUserService
     public async Task<PasswordChangeResult> ChangePasswordAsync(int userId, ChangePasswordRequest request)
     {
         Console.WriteLine($"[UserService] Changing password for user: {userId}");
-        
+
         // Simulate password change
         await Task.Delay(100);
-        
-        return new PasswordChangeResult 
-        { 
-            Success = true, 
-            ChangedAt = DateTime.UtcNow 
+
+        return new PasswordChangeResult
+        {
+            Success = true,
+            ChangedAt = DateTime.UtcNow
         };
     }
 }
@@ -388,10 +388,11 @@ public class ComplexWorkflowService : IComplexWorkflowService
     public async Task<WorkflowResult> ExecuteComplexWorkflowAsync(WorkflowExecutionRequest request)
     {
         using var activity = _logger.StartActivity("ExecuteComplexWorkflow");
-        
+
         var startEntry = LogEntry.CreateStart(nameof(ExecuteComplexWorkflowAsync), GetType().FullName!)
-            .WithInput(new { 
-                WorkflowId = request.WorkflowId, 
+            .WithInput(new
+            {
+                WorkflowId = request.WorkflowId,
                 WorkflowType = request.WorkflowType,
                 Priority = request.Priority,
                 EstimatedDuration = request.EstimatedDuration
@@ -443,10 +444,10 @@ public class ComplexWorkflowService : IComplexWorkflowService
                 _logger.Log(priorityEntry.WithCompletion(success: true));
             }
 
-            var result = new WorkflowResult 
-            { 
+            var result = new WorkflowResult
+            {
                 WorkflowId = request.WorkflowId,
-                Success = true, 
+                Success = true,
                 ExecutedSteps = request.Steps?.Count ?? 0,
                 ExecutionTime = TimeSpan.FromMilliseconds(Random.Shared.Next(500, 1500)),
                 CompletedAt = DateTime.UtcNow
@@ -457,8 +458,9 @@ public class ComplexWorkflowService : IComplexWorkflowService
 
             var completionEntry = startEntry
                 .WithCompletion(success: true)
-                .WithOutput(new { 
-                    Success = result.Success, 
+                .WithOutput(new
+                {
+                    Success = result.Success,
                     ExecutedSteps = result.ExecutedSteps,
                     TotalExecutionTime = result.ExecutionTime
                 });
@@ -486,8 +488,8 @@ public class ComplexWorkflowService : IComplexWorkflowService
             // Simulate status lookup
             await Task.Delay(25);
 
-            var status = new WorkflowStatus 
-            { 
+            var status = new WorkflowStatus
+            {
                 WorkflowId = workflowId,
                 Status = "Completed",
                 Progress = 100,
@@ -517,15 +519,15 @@ public class AuthenticationService : IAuthenticationService
     public async Task<AuthenticationResult> AuthenticateAsync(LoginRequest request)
     {
         Console.WriteLine($"[AuthenticationService] Authenticating user: {request.Username}");
-        
+
         // Simulate authentication
         await Task.Delay(Random.Shared.Next(100, 300));
-        
+
         if (request.Username == "admin" && request.Password == "secret123")
         {
-            return new AuthenticationResult 
-            { 
-                Success = true, 
+            return new AuthenticationResult
+            {
+                Success = true,
                 Token = $"jwt_token_{DateTime.UtcNow.Ticks}",
                 RefreshToken = $"refresh_{DateTime.UtcNow.Ticks}",
                 ExpiresAt = DateTime.UtcNow.AddHours(1)
@@ -539,13 +541,13 @@ public class AuthenticationService : IAuthenticationService
     public async Task<TokenRefreshResult> RefreshTokenAsync(RefreshTokenRequest request)
     {
         Console.WriteLine("[AuthenticationService] Refreshing authentication token");
-        
+
         // Simulate token refresh
         await Task.Delay(50);
-        
-        return new TokenRefreshResult 
-        { 
-            Success = true, 
+
+        return new TokenRefreshResult
+        {
+            Success = true,
             NewToken = $"jwt_token_{DateTime.UtcNow.Ticks}",
             ExpiresAt = DateTime.UtcNow.AddHours(1)
         };
@@ -591,9 +593,9 @@ public class CreateOrderRequest
 {
     [Required]
     public string CustomerId { get; set; } = string.Empty;
-    
+
     public List<OrderItem>? Items { get; set; }
-    
+
     public string? Notes { get; set; }
 }
 
@@ -624,16 +626,16 @@ public class PaymentRequest
 {
     [Required]
     public decimal Amount { get; set; }
-    
+
     [Required]
     public string Currency { get; set; } = "USD";
-    
+
     [Mask] // Sensitive data masking
     public string CardNumber { get; set; } = string.Empty;
-    
+
     [Mask]
     public string CVV { get; set; } = string.Empty;
-    
+
     public string ExpiryDate { get; set; } = string.Empty;
 }
 
@@ -641,10 +643,10 @@ public class PaymentValidationRequest
 {
     [Mask] // Mask in logs
     public string CardNumber { get; set; } = string.Empty;
-    
+
     [Mask]
     public string CVV { get; set; } = string.Empty;
-    
+
     public string ExpiryDate { get; set; } = string.Empty;
 }
 
@@ -661,12 +663,12 @@ public class CreateUserRequest
 {
     [Required]
     public string Username { get; set; } = string.Empty;
-    
+
     [Required]
     public string Email { get; set; } = string.Empty;
-    
+
     public string PhoneNumber { get; set; } = string.Empty;
-    
+
     [Mask] // Password masking
     public string Password { get; set; } = string.Empty;
 }
@@ -675,7 +677,7 @@ public class ChangePasswordRequest
 {
     [Mask]
     public string CurrentPassword { get; set; } = string.Empty;
-    
+
     [Mask]
     public string NewPassword { get; set; } = string.Empty;
 }
@@ -699,14 +701,14 @@ public class WorkflowExecutionRequest
 {
     [Required]
     public string WorkflowId { get; set; } = string.Empty;
-    
+
     [Required]
     public string WorkflowType { get; set; } = string.Empty;
-    
+
     public string Priority { get; set; } = "Normal";
-    
+
     public TimeSpan EstimatedDuration { get; set; }
-    
+
     public List<WorkflowStep>? Steps { get; set; }
 }
 
@@ -739,7 +741,7 @@ public class LoginRequest
 {
     [Required]
     public string Username { get; set; } = string.Empty;
-    
+
     [Required]
     [Mask] // Mask password in logs
     public string Password { get; set; } = string.Empty;
@@ -755,13 +757,13 @@ public class RefreshTokenRequest
 public class AuthenticationResult
 {
     public bool Success { get; set; }
-    
+
     [Mask] // Mask token in output logs
     public string Token { get; set; } = string.Empty;
-    
+
     [Mask] // Mask refresh token
     public string RefreshToken { get; set; } = string.Empty;
-    
+
     public DateTime ExpiresAt { get; set; }
     public string? ErrorMessage { get; set; }
 }
@@ -769,10 +771,10 @@ public class AuthenticationResult
 public class TokenRefreshResult
 {
     public bool Success { get; set; }
-    
+
     [Mask] // Mask new token
     public string NewToken { get; set; } = string.Empty;
-    
+
     public DateTime ExpiresAt { get; set; }
     public string? ErrorMessage { get; set; }
 }

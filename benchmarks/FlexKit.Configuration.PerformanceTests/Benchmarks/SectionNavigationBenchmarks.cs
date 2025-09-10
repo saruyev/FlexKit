@@ -78,7 +78,7 @@ public class SectionNavigationBenchmarks
         var dbPrimary = _flexConfig["Database:ConnectionStrings:Primary"];
         var dbTimeout = _flexConfig["Database:Settings:Timeout"];
         var apiKey = _flexConfig["Api:Authentication:Key"];
-        
+
         // Return a concatenated result to ensure all work is done
         return $"{dbPrimary}-{dbTimeout}-{apiKey}";
     }

@@ -16,11 +16,11 @@ public class FormatterBenchmarks : FlexKitBenchmarkBase
 
     [UsedImplicitly]
     [ParamsSource(nameof(FormatterTypes))] public string FormatterType { get; set; } = null!;
-    
+
     public static IEnumerable<string> FormatterTypes =>
     [
         "Json",
-        "Hybrid", 
+        "Hybrid",
         "CustomTemplate",
         "StandardStructured",
         "SuccessError"
@@ -32,10 +32,10 @@ public class FormatterBenchmarks : FlexKitBenchmarkBase
         base.Setup();
         _attributeService = FlexKitServices.GetService<IFormatterAttributeService>()!;
         _manualService = FlexKitServices.GetService<IFormatterManualService>()!;
-        
+
         _testData = new ComplexTestData("formatter test", 42)
         {
-            Properties = new() { {"key1", "value1"}, {"key2", 123} }
+            Properties = new() { { "key1", "value1" }, { "key2", 123 } }
         };
     }
 

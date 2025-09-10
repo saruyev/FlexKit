@@ -18,10 +18,10 @@ public class FlexKitBenchmarkBase
         FlexKitHost = Host.CreateDefaultBuilder()
             .AddFlexConfig()  // Provider auto-detected based on project references
             .Build();
-        
+
         FlexKitServices = FlexKitHost.Services;
     }
-    
+
     [GlobalCleanup]
     public virtual void Cleanup()
     {

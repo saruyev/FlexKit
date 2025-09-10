@@ -39,7 +39,7 @@ public class BasicConfigurationSteps
     public void GivenIHaveAConfigurationSourceWithTheFollowingData(Table table)
     {
         var configData = new Dictionary<string, string?>();
-        
+
         foreach (var row in table.Rows)
         {
             var key = row["Key"];
@@ -63,7 +63,7 @@ public class BasicConfigurationSteps
     {
         var existingConfig = _scenarioContext.Get<IConfiguration>("Configuration");
         var additionalData = new Dictionary<string, string?>();
-        
+
         foreach (var row in table.Rows)
         {
             var key = row["Key"];
@@ -73,13 +73,13 @@ public class BasicConfigurationSteps
 
         // Create a new configuration builder with existing data plus additional data
         var allData = new Dictionary<string, string?>();
-        
+
         // Copy existing configuration data
         foreach (var kvp in existingConfig.AsEnumerable())
         {
             allData[kvp.Key] = kvp.Value;
         }
-        
+
         // Add new data
         foreach (var kvp in additionalData)
         {
@@ -114,18 +114,18 @@ public class BasicConfigurationSteps
     public void WhenIAccessTheConfigurationDynamically(string expression)
     {
         _flexConfiguration.Should().NotBeNull("FlexConfiguration should be initialized");
-        
+
         // Parse the dynamic expression and navigate through the configuration
         // Expected format: "config.Section.SubSection.Property"
         var parts = expression.Replace("config.", "").Split('.');
-        
+
         dynamic config = _flexConfiguration!;
         object? current = config;
 
         foreach (var part in parts)
         {
             if (current == null) break;
-            
+
             // Use reflection to get the property value dynamically
             current = GetDynamicProperty(current, part);
         }
@@ -138,10 +138,10 @@ public class BasicConfigurationSteps
     public void WhenIAccessTheConfigurationSectionUsingNumericIndexer(string sectionName, int index)
     {
         _flexConfiguration.Should().NotBeNull("FlexConfiguration should be initialized");
-        
+
         var section = _configuration!.GetSection(sectionName);
         var sectionFlexConfig = section.GetFlexConfiguration();
-        
+
         _lastSectionResult = sectionFlexConfig[index];
     }
 
@@ -306,7 +306,7 @@ public class BasicConfigurationSteps
     {
         _accessResults.Should().HaveCount(3, "Should have results from three access methods");
         _accessResults.Should().AllSatisfy(result => result.Should().Be(expectedValue));
-        
+
         // Clear results for the next scenario
         _accessResults.Clear();
     }

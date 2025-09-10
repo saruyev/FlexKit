@@ -46,11 +46,11 @@ public class AppConfigurationBasicOperationsSteps(ScenarioContext scenarioContex
     {
         var appConfigEmulator = scenarioContext.GetAppConfigEmulator();
         var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
-        
+
         var fullPath = Path.Combine("TestData", testDataPath);
         var jsonContent = await File.ReadAllTextAsync(fullPath);
         _testData = JsonConvert.DeserializeObject<Dictionary<string, object>>(jsonContent)!;
-        
+
         // Load App Configuration settings from test data with the scenario prefix
         if (_testData.TryGetValue("appConfigurationSettings", out var settingsObj) && settingsObj is Newtonsoft.Json.Linq.JObject settingsJson)
         {
@@ -59,7 +59,7 @@ public class AppConfigurationBasicOperationsSteps(ScenarioContext scenarioContex
                 await appConfigEmulator.SetConfigurationAsync($"{scenarioPrefix}:{setting.Key}", setting.Value?.ToString() ?? "");
             }
         }
-        
+
         _appConfigValidationResults.Add($"✓ App Configuration source added with prefix '{scenarioPrefix}'");
     }
 
@@ -72,7 +72,7 @@ public class AppConfigurationBasicOperationsSteps(ScenarioContext scenarioContex
         var fullPath = Path.Combine("TestData", testDataPath);
         var jsonContent = await File.ReadAllTextAsync(fullPath);
         _testData = JsonConvert.DeserializeObject<Dictionary<string, object>>(jsonContent)!;
-        
+
         // Load labeled App Configuration settings from test data with the scenario prefix
         if (_testData.TryGetValue("labeledAppConfigurationSettings", out var labeledSettingsObj) && labeledSettingsObj is Newtonsoft.Json.Linq.JObject labeledSettingsJson)
         {
@@ -88,7 +88,7 @@ public class AppConfigurationBasicOperationsSteps(ScenarioContext scenarioContex
                 }
             }
         }
-        
+
         _labelFilteringEnabled = true;
         _appConfigValidationResults.Add($"✓ Labeled App Configuration source added with prefix '{scenarioPrefix}'");
     }
@@ -106,11 +106,11 @@ public class AppConfigurationBasicOperationsSteps(ScenarioContext scenarioContex
     {
         var appConfigEmulator = scenarioContext.GetAppConfigEmulator();
         var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
-        
+
         var fullPath = Path.Combine("TestData", testDataPath);
         var jsonContent = await File.ReadAllTextAsync(fullPath);
         _testData = JsonConvert.DeserializeObject<Dictionary<string, object>>(jsonContent)!;
-        
+
         // Load App Configuration settings from test data with the scenario prefix
         if (_testData.TryGetValue("appConfigurationSettings", out var settingsObj) && settingsObj is Newtonsoft.Json.Linq.JObject settingsJson)
         {
@@ -119,7 +119,7 @@ public class AppConfigurationBasicOperationsSteps(ScenarioContext scenarioContex
                 await appConfigEmulator.SetConfigurationAsync($"{scenarioPrefix}:{setting.Key}", setting.Value?.ToString() ?? "");
             }
         }
-        
+
         // Load feature flags as configuration settings with the scenario prefix
         if (_testData.TryGetValue("featureFlags", out var featureFlagsObj) && featureFlagsObj is Newtonsoft.Json.Linq.JObject featureFlagsJson)
         {
@@ -128,7 +128,7 @@ public class AppConfigurationBasicOperationsSteps(ScenarioContext scenarioContex
                 await appConfigEmulator.SetConfigurationAsync($"{scenarioPrefix}:FeatureFlags:{featureFlag.Key}", featureFlag.Value?.ToString() ?? "false");
             }
         }
-        
+
         _featureFlagsConfigured = true;
         _appConfigValidationResults.Add($"✓ Feature flags configured with prefix '{scenarioPrefix}'");
     }
@@ -155,13 +155,13 @@ public class AppConfigurationBasicOperationsSteps(ScenarioContext scenarioContex
                 options.KeyFilter = $"{scenarioPrefix}:*";
                 options.Label = _environmentLabel;
             });
-            
+
             _appConfigFlexConfiguration = builder.Build();
             _appConfigConfiguration = _appConfigFlexConfiguration.Configuration;
-            
+
             scenarioContext.Set(_appConfigConfiguration, "AppConfigConfiguration");
             scenarioContext.Set(_appConfigFlexConfiguration, "AppConfigFlexConfiguration");
-            
+
             _appConfigValidationResults.Add("✓ App config configuration built successfully");
         }
         catch (Exception ex)
@@ -201,7 +201,7 @@ public class AppConfigurationBasicOperationsSteps(ScenarioContext scenarioContex
         {
             // Test dynamic access patterns specific to FlexKit with a scenario prefix
             dynamic config = _appConfigFlexConfiguration!;
-            
+
             // Test various FlexKit access patterns with prefixed keys
             var dynamicTests = new List<(string description, Func<object?> test)>
             {
@@ -238,7 +238,7 @@ public class AppConfigurationBasicOperationsSteps(ScenarioContext scenarioContex
         {
             _appConfigValidationResults.Add($"✗ Dynamic access patterns verification failed: {ex.Message}");
         }
-        
+
         scenarioContext.Set(_appConfigValidationResults, "AppConfigValidationResults");
     }
 
@@ -252,7 +252,7 @@ public class AppConfigurationBasicOperationsSteps(ScenarioContext scenarioContex
         var prefixedKey = $"{scenarioPrefix}:{expectedKey}";
         var actualValue = _appConfigConfiguration![prefixedKey];
         actualValue.Should().Be(expectedValue, $"Configuration key '{prefixedKey}' should have the expected value");
-        
+
         _appConfigValidationResults.Add($"✓ Configuration validation passed: {prefixedKey} = {expectedValue}");
         scenarioContext.Set(_appConfigValidationResults, "AppConfigValidationResults");
     }
@@ -267,14 +267,14 @@ public class AppConfigurationBasicOperationsSteps(ScenarioContext scenarioContex
         var prefixedKey = $"{scenarioPrefix}:{expectedKey}";
         var actualValue = _appConfigConfiguration![prefixedKey];
         actualValue.Should().NotBeNullOrEmpty($"Production configuration key '{prefixedKey}' should have a value");
-        
+
         // Verify it's a production-specific value (should contain "prod" or be production-appropriate)
         bool isProductionValue = actualValue.Contains("prod", StringComparison.OrdinalIgnoreCase) ||
                                actualValue.Contains("production", StringComparison.OrdinalIgnoreCase) ||
                                actualValue == "Warning"; // Logging level for production
-        
+
         isProductionValue.Should().BeTrue($"Value '{actualValue}' should be production-appropriate");
-        
+
         _appConfigValidationResults.Add($"✓ Production configuration validation passed: {prefixedKey} = {actualValue}");
         scenarioContext.Set(_appConfigValidationResults, "AppConfigValidationResults");
     }
@@ -318,7 +318,7 @@ public class AppConfigurationBasicOperationsSteps(ScenarioContext scenarioContex
         {
             _appConfigValidationResults.Add($"✗ Type conversion verification failed: {ex.Message}");
         }
-        
+
         scenarioContext.Set(_appConfigValidationResults, "AppConfigValidationResults");
     }
 
@@ -368,7 +368,7 @@ public class AppConfigurationBasicOperationsSteps(ScenarioContext scenarioContex
         {
             _appConfigValidationResults.Add($"✗ Labeled configuration access verification failed: {ex.Message}");
         }
-        
+
         scenarioContext.Set(_appConfigValidationResults, "AppConfigValidationResults");
     }
 
@@ -392,9 +392,9 @@ public class AppConfigurationBasicOperationsSteps(ScenarioContext scenarioContex
             var unfilteredKeys = allKeys.Where(key => !key.StartsWith(expectedPrefix, StringComparison.OrdinalIgnoreCase)).ToList();
 
             filteredKeys.Should().NotBeEmpty("Should have keys matching the filter pattern");
-            
+
             _appConfigValidationResults.Add($"✓ Key filtering verification: {filteredKeys.Count} keys match pattern '{expectedPrefix}:*'");
-            
+
             if (unfilteredKeys.Any())
             {
                 _appConfigValidationResults.Add($"ⓘ {unfilteredKeys.Count} keys don't match filter (this may be expected)");
@@ -404,7 +404,7 @@ public class AppConfigurationBasicOperationsSteps(ScenarioContext scenarioContex
         {
             _appConfigValidationResults.Add($"✗ Filtered configuration access verification failed: {ex.Message}");
         }
-        
+
         scenarioContext.Set(_appConfigValidationResults, "AppConfigValidationResults");
     }
 
@@ -426,14 +426,14 @@ public class AppConfigurationBasicOperationsSteps(ScenarioContext scenarioContex
         var nonMatchingKeys = allKeys.Where(key => !key.StartsWith(expectedFullPrefix, StringComparison.OrdinalIgnoreCase)).ToList();
 
         matchingKeys.Should().NotBeEmpty($"Should have keys starting with '{expectedFullPrefix}'");
-        
+
         _appConfigValidationResults.Add($"✓ Key prefix validation: {matchingKeys.Count} keys start with '{expectedFullPrefix}'");
-        
+
         if (nonMatchingKeys.Any())
         {
             _appConfigValidationResults.Add($"ⓘ {nonMatchingKeys.Count} keys don't match prefix (may include system keys)");
         }
-        
+
         scenarioContext.Set(_appConfigValidationResults, "AppConfigValidationResults");
     }
 
@@ -449,7 +449,7 @@ public class AppConfigurationBasicOperationsSteps(ScenarioContext scenarioContex
             .ToList();
 
         // Check for keys that might belong to other applications (different scenario prefixes)
-        var otherAppKeys = allKeys.Where(key => 
+        var otherAppKeys = allKeys.Where(key =>
             !key.StartsWith(scenarioPrefix, StringComparison.OrdinalIgnoreCase) &&
             (key.StartsWith("test-", StringComparison.OrdinalIgnoreCase) || // Other scenario prefixes
              key.StartsWith("otherapp:", StringComparison.OrdinalIgnoreCase) ||
@@ -458,7 +458,7 @@ public class AppConfigurationBasicOperationsSteps(ScenarioContext scenarioContex
         ).ToList();
 
         otherAppKeys.Should().BeEmpty("Should not contain keys from other applications when filtering is applied");
-        
+
         _appConfigValidationResults.Add("✓ Application isolation verification: No keys from other applications found");
         scenarioContext.Set(_appConfigValidationResults, "AppConfigValidationResults");
     }
@@ -517,7 +517,7 @@ public class AppConfigurationBasicOperationsSteps(ScenarioContext scenarioContex
         {
             _appConfigValidationResults.Add($"✗ Feature flag evaluation verification failed: {ex.Message}");
         }
-        
+
         scenarioContext.Set(_appConfigValidationResults, "AppConfigValidationResults");
     }
 

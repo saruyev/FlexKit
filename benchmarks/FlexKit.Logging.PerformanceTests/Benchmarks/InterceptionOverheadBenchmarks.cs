@@ -9,7 +9,7 @@ namespace FlexKit.Logging.PerformanceTests.Benchmarks;
 public class InterceptionOverheadBenchmarks : FlexKitBenchmarkBase
 {
     private INativeService _nativeService = null!;
-    private IManualService _manualService = null!; 
+    private IManualService _manualService = null!;
     private INoLogService _noLogService = null!;
     private ILogInputService _logInputService = null!;
     private ILogBothService _logBothService = null!;

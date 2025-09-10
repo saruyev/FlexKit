@@ -276,11 +276,11 @@ public class AwsParameterStoreConfigurationSourceTests
 
         // Assert
         provider.Should().NotBeNull();
-        
+
         // Use reflection to access the private _source field to verify it's the same instance
         var sourceField = typeof(AwsParameterStoreConfigurationProvider)
             .GetField("_source", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-        
+
         sourceField.Should().NotBeNull();
         var providerSource = sourceField.GetValue(provider);
         providerSource.Should().BeSameAs(source);

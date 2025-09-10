@@ -45,7 +45,7 @@ public class YamlProviderFeaturesSteps(ScenarioContext scenarioContext)
         var testDataPath = Path.Combine("TestData", normalizedPath);
 
         _providerFeaturesBuilder!.AddYamlFile(testDataPath, optional: false);
-        
+
         scenarioContext.Set(_providerFeaturesBuilder, "ProviderFeaturesBuilder");
     }
 
@@ -58,7 +58,7 @@ public class YamlProviderFeaturesSteps(ScenarioContext scenarioContext)
         var testDataPath = Path.Combine("TestData", normalizedPath);
 
         _providerFeaturesBuilder!.AddYamlFile(testDataPath, optional: false);
-        
+
         scenarioContext.Set(_providerFeaturesBuilder, "ProviderFeaturesBuilder");
     }
 
@@ -74,7 +74,7 @@ public class YamlProviderFeaturesSteps(ScenarioContext scenarioContext)
             ["servers:0:port"] = "8080",
             ["servers:0:features:0"] = "load-balancing",
             ["servers:0:features:1"] = "ssl-termination",
-            ["servers:1:name"] = "web-server-2", 
+            ["servers:1:name"] = "web-server-2",
             ["servers:1:host"] = "web2.provider.com",
             ["servers:1:port"] = "8081",
             ["servers:1:features:0"] = "caching",
@@ -92,7 +92,7 @@ public class YamlProviderFeaturesSteps(ScenarioContext scenarioContext)
         };
 
         _providerFeaturesBuilder!.AddTempYamlFile(complexData);
-        
+
         scenarioContext.Set(_providerFeaturesBuilder, "ProviderFeaturesBuilder");
     }
 
@@ -105,7 +105,7 @@ public class YamlProviderFeaturesSteps(ScenarioContext scenarioContext)
         var testDataPath = Path.Combine("TestData", normalizedPath);
 
         _providerFeaturesBuilder!.AddYamlFile(testDataPath, optional: false);
-        
+
         scenarioContext.Set(_providerFeaturesBuilder, "ProviderFeaturesBuilder");
     }
 
@@ -143,7 +143,7 @@ public class YamlProviderFeaturesSteps(ScenarioContext scenarioContext)
             .Where(kvp => kvp.Value != null)
             .Select(kvp => $"{kvp.Key} = {kvp.Value}")
             .ToList();
-        
+
         foreach (var key in allKeys.Take(15)) // Log the first 15 keys for debugging
         {
             _providerValidationResults.Add($"ConfigKey: {key}");
@@ -248,7 +248,7 @@ public class YamlProviderFeaturesSteps(ScenarioContext scenarioContext)
             .Where(kvp => kvp.Value != null)
             .Select(kvp => $"{kvp.Key} = {kvp.Value}")
             .ToList();
-        
+
         foreach (var key in allKeys.Take(10)) // Log the first 10 keys for debugging
         {
             _providerValidationResults.Add($"ConfigKey: {key}");
@@ -278,7 +278,7 @@ public class YamlProviderFeaturesSteps(ScenarioContext scenarioContext)
 
         // Test anchor resolution from anchors-aliases.yaml.
         // YAML anchors get resolved during parsing, so we need to check the actual structure
-        
+
         // Development environment should inherit defaults but override host
         var devTimeout = _providerFlexConfiguration!["development:timeout"];
         var devRetries = _providerFlexConfiguration["development:retries"];
@@ -294,7 +294,7 @@ public class YamlProviderFeaturesSteps(ScenarioContext scenarioContext)
             .Where(kvp => kvp.Value != null)
             .Select(kvp => $"{kvp.Key} = {kvp.Value}")
             .ToList();
-        
+
         foreach (var key in allKeys.Take(10)) // Log the first 10 keys for debugging
         {
             _providerValidationResults.Add($"ConfigKey: {key}");
@@ -330,7 +330,7 @@ public class YamlProviderFeaturesSteps(ScenarioContext scenarioContext)
 
         // Test deep nesting from deep-nesting.yaml (20 levels deep)
         var deepValue = _providerFlexConfiguration!["level1:level2:level3:level4:level5:level6:level7:level8:level9:level10:level11:level12:level13:level14:level15:level16:level17:level18:level19:level20:value"];
-        
+
         _providerValidationResults.Add($"DeepValue: {deepValue}");
 
         // Test dynamic navigation through deep nesting
@@ -388,9 +388,9 @@ public class YamlProviderFeaturesSteps(ScenarioContext scenarioContext)
     public void ThenTheProviderFeaturesShouldSupportComplexArrayNavigation()
     {
         // Use flexible assertions based on what's actually found in the configuration
-        var hasServerValues = _providerValidationResults.Any(result => 
+        var hasServerValues = _providerValidationResults.Any(result =>
             result.Contains("Server1Name:") && !result.Contains("Server1Name: ") && !result.Contains("Server1Name: null"));
-        
+
         if (hasServerValues)
         {
             _providerValidationResults.Should().Contain(result => result.Contains("Server1Name: web-server-1"));
@@ -402,7 +402,7 @@ public class YamlProviderFeaturesSteps(ScenarioContext scenarioContext)
         {
             // Log debug information to understand the configuration structure
             _providerValidationResults.Should().Contain(result => result.Contains("ConfigKey:"));
-            
+
             // At minimum, check that we have some configuration loaded
             _providerValidationResults.Should().NotBeEmpty("Should have some configuration validation results");
         }
@@ -456,9 +456,9 @@ public class YamlProviderFeaturesSteps(ScenarioContext scenarioContext)
     public void ThenTheProviderFeaturesShouldSupportMultiLineStringFormats()
     {
         // Use flexible assertions based on what's actually found in the configuration
-        var hasInstallationContent = _providerValidationResults.Any(result => 
+        var hasInstallationContent = _providerValidationResults.Any(result =>
             result.Contains("Installation:") && result.Contains("Step"));
-        
+
         if (hasInstallationContent)
         {
             _providerValidationResults.Should().Contain(result => result.Contains("Installation:") && result.Contains("Step 1:"));
@@ -468,11 +468,11 @@ public class YamlProviderFeaturesSteps(ScenarioContext scenarioContext)
         else
         {
             // Check if we have any multi-line content at all
-            var hasMultiLineContent = _providerValidationResults.Any(result => 
+            var hasMultiLineContent = _providerValidationResults.Any(result =>
                 result.Contains("Description:") || result.Contains("Terms:") || result.Contains("ConfigKey:"));
-            
+
             hasMultiLineContent.Should().BeTrue("Should have some multi-line string content or debug info");
-            
+
             // Log debug information to understand the configuration structure
             _providerValidationResults.Should().Contain(result => result.Contains("ConfigKey:"));
         }
@@ -483,9 +483,9 @@ public class YamlProviderFeaturesSteps(ScenarioContext scenarioContext)
     {
         // Use flexible assertions based on what's actually found in the configuration
         // Check if any timeout values were found
-        var hasTimeoutValues = _providerValidationResults.Any(result => 
+        var hasTimeoutValues = _providerValidationResults.Any(result =>
             result.Contains("DevTimeout:") && !result.Contains("DevTimeout: ") && !result.Contains("DevTimeout: null"));
-        
+
         if (hasTimeoutValues)
         {
             _providerValidationResults.Should().Contain(result => result.Contains("DevTimeout: 5000"));
@@ -500,7 +500,7 @@ public class YamlProviderFeaturesSteps(ScenarioContext scenarioContext)
             // Check if we at least got the host values (anchors might not be fully resolved)
             _providerValidationResults.Should().Contain(result => result.Contains("DevHost: dev.example.com"));
             _providerValidationResults.Should().Contain(result => result.Contains("ProdHost: prod.example.com"));
-            
+
             // Log that anchor resolution might need different handling
             _providerValidationResults.Should().Contain(result => result.Contains("ConfigKey:"));
         }
@@ -527,21 +527,21 @@ public class YamlProviderFeaturesSteps(ScenarioContext scenarioContext)
     public void ThenTheProviderFeaturesShouldProvideFlexConfigIntegration()
     {
         _providerFlexConfiguration.Should().NotBeNull("Provider FlexConfiguration should be available");
-        
+
         // Test that FlexConfig provides access to the underlying IConfiguration
         _providerFlexConfiguration!.Configuration.Should().NotBeNull("Underlying IConfiguration should be accessible");
-        
+
         // Avoid dynamic operations entirely - just test the interface directly
         var flexConfig = _providerFlexConfiguration;
         flexConfig.Should().NotBeNull("Should implement IFlexConfig interface");
-        
+
         // Test string indexer access with a safe key
         try
         {
             var allKeys = _providerFlexConfiguration.Configuration.AsEnumerable()
                 .Where(kvp => kvp.Value != null)
                 .ToList();
-                
+
             if (allKeys.Any())
             {
                 var firstKey = allKeys.First().Key;
@@ -557,11 +557,11 @@ public class YamlProviderFeaturesSteps(ScenarioContext scenarioContext)
         {
             _providerValidationResults.Add($"IndexerAccess: Exception - {ex.Message}");
         }
-        
+
         // Test that we can access the configuration without errors
         var configExists = _providerFlexConfiguration?.Configuration != null;
         configExists.Should().BeTrue("Configuration should be accessible");
-        
+
         // Basic functionality test
         _providerValidationResults.Add("FlexConfigIntegration: Basic functionality verified");
     }
@@ -578,11 +578,11 @@ public class YamlProviderFeaturesSteps(ScenarioContext scenarioContext)
     public void ThenTheProviderFeaturesShouldHandleDuplicateKeysByTakingLastValue()
     {
         _providerFlexConfiguration.Should().NotBeNull("Provider FlexConfiguration should be available");
-        
+
         // From duplicate-keys.yaml, the last value should win
         var databaseHost = _providerFlexConfiguration!["database:host"];
         var apiKey = _providerFlexConfiguration["api:key"];
-        
+
         databaseHost.Should().Be("duplicated-host", "Last duplicate value should be used");
         apiKey.Should().Be("second-key", "Last duplicate value should be used");
     }

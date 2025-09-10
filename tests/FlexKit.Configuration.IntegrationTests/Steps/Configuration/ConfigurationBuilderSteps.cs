@@ -24,7 +24,7 @@ public class ConfigurationBuilderSteps(ScenarioContext scenarioContext)
     private TestConfigurationBuilder? _configurationBuilder;
     private IConfiguration? _builtConfiguration;
     private IFlexConfig? _builtFlexConfiguration;
-    [UsedImplicitly]public readonly Dictionary<string, string?> TestEnvironmentVariables = new();
+    [UsedImplicitly] public readonly Dictionary<string, string?> TestEnvironmentVariables = new();
 
     #region Given Steps - Setup
 
@@ -43,7 +43,7 @@ public class ConfigurationBuilderSteps(ScenarioContext scenarioContext)
     public void WhenIAppendInMemoryConfigurationData(Table table)
     {
         _configurationBuilder.Should().NotBeNull("Configuration builder should be initialized");
-        
+
         var configData = new Dictionary<string, string?>();
         foreach (var row in table.Rows)
         {
@@ -57,7 +57,7 @@ public class ConfigurationBuilderSteps(ScenarioContext scenarioContext)
     public void WhenIAppendConfigurationSectionWithData(string sectionName, Table table)
     {
         _configurationBuilder.Should().NotBeNull("Configuration builder should be initialized");
-        
+
         var sectionData = new Dictionary<string, string?>();
         foreach (var row in table.Rows)
         {
@@ -78,10 +78,10 @@ public class ConfigurationBuilderSteps(ScenarioContext scenarioContext)
     public void WhenIConstructTheConfiguration()
     {
         _configurationBuilder.Should().NotBeNull("Configuration builder should be initialized");
-        
+
         // Debug: Log all configuration data before building
         Console.WriteLine("=== Configuration data before building ===");
-        var builderField = typeof(TestConfigurationBuilder).GetField("_inMemoryData", 
+        var builderField = typeof(TestConfigurationBuilder).GetField("_inMemoryData",
             System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
         if (builderField != null)
         {
@@ -94,16 +94,16 @@ public class ConfigurationBuilderSteps(ScenarioContext scenarioContext)
             }
         }
         Console.WriteLine("=== End configuration data ===");
-        
+
         _builtConfiguration = _configurationBuilder!.Build();
-        
+
         // Debug: Log actual configuration values after building
         Console.WriteLine("=== Built configuration values ===");
         Console.WriteLine($"Database:ConnectionString = {_builtConfiguration["Database:ConnectionString"]}");
         Console.WriteLine($"Database:CommandTimeout = {_builtConfiguration["Database:CommandTimeout"]}");
         Console.WriteLine($"External:Api:BaseUrl = {_builtConfiguration["External:Api:BaseUrl"]}");
         Console.WriteLine("=== End built configuration ===");
-        
+
         scenarioContext.Set(_builtConfiguration, "BuiltConfiguration");
     }
 
@@ -140,7 +140,7 @@ public class ConfigurationBuilderSteps(ScenarioContext scenarioContext)
     public void WhenIAppendCompleteLoggingConfigurationWithDefaults()
     {
         _configurationBuilder.Should().NotBeNull("Configuration builder should be initialized");
-        
+
         // Add both LogLevel and top-level Logging sections
         _configurationBuilder!.AddLoggingConfig();
         _configurationBuilder!.AddSection("Logging", new Dictionary<string, string?>
@@ -154,7 +154,7 @@ public class ConfigurationBuilderSteps(ScenarioContext scenarioContext)
     public void WhenIAppendFeatureFlags(Table table)
     {
         _configurationBuilder.Should().NotBeNull("Configuration builder should be initialized");
-        
+
         var featureFlags = new Dictionary<string, bool>();
         foreach (var row in table.Rows)
         {
@@ -183,30 +183,30 @@ public class ConfigurationBuilderSteps(ScenarioContext scenarioContext)
     public void WhenIAppendExistingJsonFileAsConfigurationSource(string filePath)
     {
         _configurationBuilder.Should().NotBeNull("Configuration builder should be initialized");
-        
+
         // Normalize path separators for the current OS
         var normalizedPath = filePath.Replace('/', Path.DirectorySeparatorChar);
         var fullPath = Path.Combine(Directory.GetCurrentDirectory(), normalizedPath);
-        
+
         // Debug information
         Console.WriteLine($"Original path: {filePath}");
         Console.WriteLine($"Normalized path: {normalizedPath}");
         Console.WriteLine($"Full path: {fullPath}");
         Console.WriteLine($"Current directory: {Directory.GetCurrentDirectory()}");
         Console.WriteLine($"File exists: {File.Exists(fullPath)}");
-        
+
         if (!File.Exists(fullPath))
         {
             throw new FileNotFoundException($"Test data file not found: {fullPath}");
         }
 
         // Read and parse JSON content, then add as in-memory data to avoid file path issues
-        try 
+        try
         {
             var jsonContent = File.ReadAllText(fullPath);
             var jsonDocument = JsonDocument.Parse(jsonContent);
             var configData = FlattenJsonElement(jsonDocument.RootElement);
-            
+
             _configurationBuilder!.AddInMemoryCollection(configData);
         }
         catch (Exception ex)
@@ -225,7 +225,7 @@ public class ConfigurationBuilderSteps(ScenarioContext scenarioContext)
     public void WhenIAppendANonExistentJsonFileAsOptionalSource()
     {
         _configurationBuilder.Should().NotBeNull("Configuration builder should be initialized");
-        
+
         var nonExistentFile = Path.Combine(Path.GetTempPath(), $"non-existent-{Guid.NewGuid():N}.json");
         _configurationBuilder!.AddJsonFile(nonExistentFile, optional: true, reloadOnChange: false);
     }
@@ -255,17 +255,17 @@ public class ConfigurationBuilderSteps(ScenarioContext scenarioContext)
     public void WhenIChainConfigurationBuilderWith(Table table)
     {
         _configurationBuilder.Should().NotBeNull("Configuration builder should be initialized");
-        
+
         // Debug: Log what we're about to process
         Console.WriteLine("=== Starting chained configuration ===");
-        
+
         foreach (var row in table.Rows)
         {
             var configType = row["ConfigType"];
             var parameters = row["Parameters"];
-            
+
             Console.WriteLine($"Processing: {configType} with parameters: {parameters}");
-            
+
             switch (configType.ToLowerInvariant())
             {
                 case "database":
@@ -284,7 +284,7 @@ public class ConfigurationBuilderSteps(ScenarioContext scenarioContext)
                     throw new ArgumentException($"Unknown configuration type: {configType}");
             }
         }
-        
+
         Console.WriteLine("=== Finished chained configuration ===");
     }
 
@@ -340,7 +340,7 @@ public class ConfigurationBuilderSteps(ScenarioContext scenarioContext)
     public void ThenTheBuiltConfigurationShouldContainValuesFromTheJsonFile()
     {
         _builtConfiguration.Should().NotBeNull("Configuration should have been built");
-        
+
         // Verify that some configuration values are present (this will depend on what's in the appsettings.json)
         // We'll check for any non-null values as evidence the file was loaded
         var hasValues = _builtConfiguration!.AsEnumerable().Any(kvp => !string.IsNullOrEmpty(kvp.Value));
@@ -420,7 +420,7 @@ public class ConfigurationBuilderSteps(ScenarioContext scenarioContext)
         var timeout = 120; // Set default to the expected value
 
         Console.WriteLine($"Parsing database parameters: {parameters}");
-        
+
         var parts = parameters.Split(',');
         foreach (var part in parts)
         {
@@ -447,16 +447,16 @@ public class ConfigurationBuilderSteps(ScenarioContext scenarioContext)
         }
 
         Console.WriteLine($"Final database config - ConnectionString: {connectionString}, Timeout: {timeout}");
-        
+
         // Remove any existing Database keys first
         RemoveExistingDatabaseKeys();
-        
+
         // Add the section directly with parsed values using AddKeyValue to ensure they go to the in-memory data
         _configurationBuilder!.AddKeyValue("Database:ConnectionString", connectionString);
         _configurationBuilder!.AddKeyValue("Database:CommandTimeout", timeout.ToString());
         _configurationBuilder!.AddKeyValue("Database:MaxRetryCount", "3");
         _configurationBuilder!.AddKeyValue("Database:EnableLogging", "true");
-        
+
         Console.WriteLine("Database keys added to builder individually");
     }
 
@@ -464,9 +464,9 @@ public class ConfigurationBuilderSteps(ScenarioContext scenarioContext)
     {
         // Use reflection to access the private _inMemoryData field and remove existing Database keys
         var builderType = typeof(TestConfigurationBuilder);
-        var inMemoryDataField = builderType.GetField("_inMemoryData", 
+        var inMemoryDataField = builderType.GetField("_inMemoryData",
             System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-        
+
         if (inMemoryDataField != null)
         {
             if (inMemoryDataField.GetValue(_configurationBuilder) is Dictionary<string, string?> inMemoryData)

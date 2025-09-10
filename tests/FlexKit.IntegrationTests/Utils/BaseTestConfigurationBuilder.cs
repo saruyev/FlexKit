@@ -40,7 +40,7 @@ public abstract class BaseTestConfigurationBuilder<T> where T : BaseTestConfigur
     /// <returns>New TestConfigurationBuilder instance</returns>
     public static T Create(ScenarioContext scenarioContext)
     {
-        return new T{ ScenarioContext = scenarioContext };
+        return new T { ScenarioContext = scenarioContext };
     }
 
     /// <summary>
@@ -276,7 +276,7 @@ public abstract class BaseTestConfigurationBuilder<T> where T : BaseTestConfigur
         var featureData = features.ToDictionary(
             kvp => kvp.Key,
             kvp => kvp.Value.ToString());
-        
+
         return AddSection("Features", featureData!);
     }
 
@@ -290,7 +290,7 @@ public abstract class BaseTestConfigurationBuilder<T> where T : BaseTestConfigur
     public T AddAssemblyMappingConfig(string? prefix = null, string[]? names = null)
     {
         var mappingData = new Dictionary<string, string?>();
-        
+
         if (!string.IsNullOrEmpty(prefix))
         {
             mappingData["Prefix"] = prefix;
@@ -314,7 +314,7 @@ public abstract class BaseTestConfigurationBuilder<T> where T : BaseTestConfigur
     public IConfiguration Build()
     {
         ApplyEnvironmentVariables();
-        
+
         var builder = new ConfigurationBuilder();
 
         // Add in-memory data first (the lowest priority)
@@ -336,11 +336,11 @@ public abstract class BaseTestConfigurationBuilder<T> where T : BaseTestConfigur
     {
         var fs = _fileSystem ?? new FileSystem();
         var tempPath = Path.Combine(Path.GetTempPath(), $"flexkit_test_{Guid.NewGuid():N}{extension}");
-        
+
         fs.File.WriteAllText(tempPath, content);
-        
+
         TempFiles.Add(tempPath);
-        
+
         // Register for cleanup if a scenario context is available
         if (ScenarioContext != null)
         {
@@ -399,7 +399,7 @@ public abstract class BaseTestConfigurationBuilder<T> where T : BaseTestConfigur
             })
             .Build();
     }
-    
+
     /// <summary>
     /// Clears all configuration sources and environment variables from the builder.
     /// </summary>
@@ -410,7 +410,7 @@ public abstract class BaseTestConfigurationBuilder<T> where T : BaseTestConfigur
         InMemoryData.Clear();
         _environmentVariables.Clear();
         TempFiles.Clear();
-        
+
         return (T)this;
     }
 }

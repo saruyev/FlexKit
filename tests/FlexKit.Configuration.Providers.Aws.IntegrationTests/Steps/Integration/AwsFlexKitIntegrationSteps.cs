@@ -49,7 +49,7 @@ public class AwsFlexKitIntegrationSteps(ScenarioContext scenarioContext)
         var fullPath = Path.Combine("TestData", testDataPath);
         _integrationBuilder!.AddParameterStoreFromTestData(fullPath, optional: false, jsonProcessor: false);
         _parameterStoreConfigured = true;
-        
+
         scenarioContext.Set(_integrationBuilder, "IntegrationBuilder");
     }
 
@@ -61,7 +61,7 @@ public class AwsFlexKitIntegrationSteps(ScenarioContext scenarioContext)
         var fullPath = Path.Combine("TestData", testDataPath);
         _integrationBuilder!.AddSecretsManagerFromTestData(fullPath, optional: false, jsonProcessor: false);
         _secretsManagerConfigured = true;
-        
+
         scenarioContext.Set(_integrationBuilder, "IntegrationBuilder");
     }
 
@@ -74,7 +74,7 @@ public class AwsFlexKitIntegrationSteps(ScenarioContext scenarioContext)
         _integrationBuilder!.AddParameterStoreFromTestData(fullPath, optional: false, jsonProcessor: true);
         _parameterStoreConfigured = true;
         _jsonProcessingEnabled = true;
-        
+
         scenarioContext.Set(_integrationBuilder, "IntegrationBuilder");
     }
 
@@ -87,7 +87,7 @@ public class AwsFlexKitIntegrationSteps(ScenarioContext scenarioContext)
         _integrationBuilder!.AddSecretsManagerFromTestData(fullPath, optional: false, jsonProcessor: true);
         _secretsManagerConfigured = true;
         _jsonProcessingEnabled = true;
-        
+
         scenarioContext.Set(_integrationBuilder, "IntegrationBuilder");
     }
 
@@ -99,10 +99,10 @@ public class AwsFlexKitIntegrationSteps(ScenarioContext scenarioContext)
         var fullPath = Path.Combine("TestData", testDataPath);
         _integrationBuilder!.AddParameterStoreFromTestData(fullPath, optional: true, jsonProcessor: false);
         _integrationBuilder.AddSecretsManagerFromTestData(fullPath, optional: true, jsonProcessor: false);
-        
+
         _parameterStoreConfigured = true;
         _secretsManagerConfigured = true;
-        
+
         scenarioContext.Set(_integrationBuilder, "IntegrationBuilder");
     }
 
@@ -112,15 +112,15 @@ public class AwsFlexKitIntegrationSteps(ScenarioContext scenarioContext)
         _integrationBuilder.Should().NotBeNull("Integration builder should be established");
 
         var fullPath = Path.Combine("TestData", testDataPath);
-        
+
         // Add both Parameter Store and Secrets Manager with different configurations
         _integrationBuilder!.AddParameterStoreFromTestData(fullPath, optional: false, jsonProcessor: true);
         _integrationBuilder.AddSecretsManagerFromTestData(fullPath, optional: false, jsonProcessor: true);
-        
+
         _parameterStoreConfigured = true;
         _secretsManagerConfigured = true;
         _jsonProcessingEnabled = true;
-        
+
         scenarioContext.Set(_integrationBuilder, "IntegrationBuilder");
     }
 
@@ -140,7 +140,7 @@ public class AwsFlexKitIntegrationSteps(ScenarioContext scenarioContext)
 
             scenarioContext.Set(_integrationConfiguration, "IntegrationConfiguration");
             scenarioContext.Set(_integrationFlexConfiguration, "IntegrationFlexConfiguration");
-            
+
             _integrationValidationResults.Add("✓ Integration configuration built successfully");
         }
         catch (Exception ex)
@@ -164,7 +164,7 @@ public class AwsFlexKitIntegrationSteps(ScenarioContext scenarioContext)
 
             scenarioContext.Set(_integrationConfiguration, "IntegrationConfiguration");
             scenarioContext.Set(_integrationFlexConfiguration, "IntegrationFlexConfiguration");
-            
+
             _integrationValidationResults.Add("✓ Integration configuration built successfully with error tolerance");
         }
         catch (Exception ex)
@@ -184,7 +184,7 @@ public class AwsFlexKitIntegrationSteps(ScenarioContext scenarioContext)
         {
             // Test dynamic access capabilities
             dynamic config = _integrationFlexConfiguration!;
-            
+
             // Test various FlexKit access patterns
             var dynamicTests = new List<(string description, Func<object?> test)>
             {
@@ -222,7 +222,7 @@ public class AwsFlexKitIntegrationSteps(ScenarioContext scenarioContext)
         {
             _integrationValidationResults.Add($"✗ Advanced capabilities verification failed: {ex.Message}");
         }
-        
+
         scenarioContext.Set(_integrationValidationResults, "IntegrationValidationResults");
     }
 
@@ -239,14 +239,14 @@ public class AwsFlexKitIntegrationSteps(ScenarioContext scenarioContext)
         {
             // Test dynamic access patterns specific to FlexKit
             dynamic config = _integrationFlexConfiguration!;
-        
+
             // Verify dynamic access works by testing actual functionality
             var dynamicResult = config;
             if (dynamicResult == null)
             {
                 throw new InvalidOperationException("Dynamic access returned null");
             }
-        
+
             // Test that we can actually use the dynamic object
             var testValue = config["infrastructure-module:database:host"];
             _integrationValidationResults.Add(testValue == null
@@ -258,7 +258,7 @@ public class AwsFlexKitIntegrationSteps(ScenarioContext scenarioContext)
             _integrationValidationResults.Add($"✗ FlexKit dynamic access patterns failed: {ex.Message}");
             throw;
         }
-    
+
         scenarioContext.Set(_integrationValidationResults, "IntegrationValidationResults");
     }
 
@@ -269,7 +269,7 @@ public class AwsFlexKitIntegrationSteps(ScenarioContext scenarioContext)
 
         var actualValue = _integrationConfiguration![key];
         actualValue.Should().Be(expectedValue, $"Configuration key '{key}' should have expected value");
-        
+
         _integrationValidationResults.Add($"✓ Verified {key} = {expectedValue}");
         scenarioContext.Set(_integrationValidationResults, "IntegrationValidationResults");
     }
@@ -284,14 +284,14 @@ public class AwsFlexKitIntegrationSteps(ScenarioContext scenarioContext)
             // Test type conversion capabilities using ToType extension
             var portValue = _integrationFlexConfiguration!["infrastructure-module:database:port"]?.ToType<int>() ?? 0;
             portValue.Should().BeGreaterThan(0, "Port should be converted to integer");
-            
+
             _integrationValidationResults.Add($"✓ Type conversion verified: port = {portValue}");
         }
         catch (Exception ex)
         {
             _integrationValidationResults.Add($"✗ Type conversion failed: {ex.Message}");
         }
-        
+
         scenarioContext.Set(_integrationValidationResults, "IntegrationValidationResults");
     }
 
@@ -306,14 +306,14 @@ public class AwsFlexKitIntegrationSteps(ScenarioContext scenarioContext)
             // Test dynamic access to secrets
             var secretValue = _integrationConfiguration!["infrastructure-module-database-credentials"];
             secretValue.Should().NotBeNullOrEmpty("Secret should be accessible");
-            
+
             _integrationValidationResults.Add("✓ FlexKit dynamic access to secrets verified");
         }
         catch (Exception ex)
         {
             _integrationValidationResults.Add($"✗ FlexKit dynamic access to secrets failed: {ex.Message}");
         }
-        
+
         scenarioContext.Set(_integrationValidationResults, "IntegrationValidationResults");
     }
 
@@ -327,18 +327,18 @@ public class AwsFlexKitIntegrationSteps(ScenarioContext scenarioContext)
             // Test JSON processing capabilities with secrets
             var secretValue = _integrationConfiguration!["infrastructure-module-database-credentials"];
             secretValue.Should().NotBeNullOrEmpty("Secret should contain JSON data");
-            
+
             // Try to parse as JSON to verify structure
             using var document = JsonDocument.Parse(secretValue);
             document.RootElement.ValueKind.Should().Be(JsonValueKind.Object, "Secret should be valid JSON");
-            
+
             _integrationValidationResults.Add("✓ JSON secret processing with FlexKit verified");
         }
         catch (Exception ex)
         {
             _integrationValidationResults.Add($"✗ JSON secret processing with FlexKit failed: {ex.Message}");
         }
-        
+
         scenarioContext.Set(_integrationValidationResults, "IntegrationValidationResults");
     }
 
@@ -354,17 +354,17 @@ public class AwsFlexKitIntegrationSteps(ScenarioContext scenarioContext)
             // Test access across both AWS sources
             var parameterValue = _integrationConfiguration!["infrastructure-module:database:host"];
             var secretValue = _integrationConfiguration["infrastructure-module-database-credentials"];
-            
+
             parameterValue.Should().NotBeNullOrEmpty("Parameter Store value should be accessible");
             secretValue.Should().NotBeNullOrEmpty("Secrets Manager value should be accessible");
-            
+
             _integrationValidationResults.Add("✓ FlexKit access across AWS sources verified");
         }
         catch (Exception ex)
         {
             _integrationValidationResults.Add($"✗ FlexKit access across AWS sources failed: {ex.Message}");
         }
-        
+
         scenarioContext.Set(_integrationValidationResults, "IntegrationValidationResults");
     }
 
@@ -379,16 +379,16 @@ public class AwsFlexKitIntegrationSteps(ScenarioContext scenarioContext)
             var allKeys = _integrationConfiguration!
                 .AsEnumerable()
                 .Count(kvp => kvp.Value != null);
-                
+
             allKeys.Should().BeGreaterThan(0, "Configuration should contain values from multiple sources");
-            
+
             _integrationValidationResults.Add($"✓ Parameter precedence verified with {allKeys} configuration keys");
         }
         catch (Exception ex)
         {
             _integrationValidationResults.Add($"✗ Parameter precedence verification failed: {ex.Message}");
         }
-        
+
         scenarioContext.Set(_integrationValidationResults, "IntegrationValidationResults");
     }
 
@@ -405,21 +405,21 @@ public class AwsFlexKitIntegrationSteps(ScenarioContext scenarioContext)
             var parameterKeys = _integrationConfiguration!
                 .AsEnumerable()
                 .Count(kvp => kvp.Key.StartsWith("infrastructure-module:") && kvp.Value != null);
-                
+
             var secretKeys = _integrationConfiguration
                 .AsEnumerable()
                 .Count(kvp => kvp.Key.Contains("infrastructure-module-") && !kvp.Key.Contains(":") && kvp.Value != null);
-            
+
             parameterKeys.Should().BeGreaterThan(0, "Should have Parameter Store keys");
             secretKeys.Should().BeGreaterThan(0, "Should have Secrets Manager keys");
-            
+
             _integrationValidationResults.Add($"✓ Integrated AWS configuration verified: {parameterKeys} parameters, {secretKeys} secrets");
         }
         catch (Exception ex)
         {
             _integrationValidationResults.Add($"✗ Integrated AWS configuration verification failed: {ex.Message}");
         }
-        
+
         scenarioContext.Set(_integrationValidationResults, "IntegrationValidationResults");
     }
 
@@ -435,16 +435,16 @@ public class AwsFlexKitIntegrationSteps(ScenarioContext scenarioContext)
             var hierarchicalKeys = _integrationConfiguration!
                 .AsEnumerable()
                 .Count(kvp => kvp.Key.Contains(':') && kvp.Value != null);
-                
+
             hierarchicalKeys.Should().BeGreaterThan(0, "Should have hierarchical keys from JSON processing");
-            
+
             _integrationValidationResults.Add($"✓ JSON hierarchical processing verified with {hierarchicalKeys} nested keys");
         }
         catch (Exception ex)
         {
             _integrationValidationResults.Add($"✗ JSON hierarchical processing verification failed: {ex.Message}");
         }
-        
+
         scenarioContext.Set(_integrationValidationResults, "IntegrationValidationResults");
     }
 
@@ -459,14 +459,14 @@ public class AwsFlexKitIntegrationSteps(ScenarioContext scenarioContext)
             // Test FlexKit navigation of JSON-processed data
             var section = _integrationFlexConfiguration!.Configuration.CurrentConfig("infrastructure-module");
             section.Should().NotBeNull("Should be able to navigate to processed JSON sections");
-            
+
             _integrationValidationResults.Add("✓ FlexKit navigation of JSON-processed AWS data verified");
         }
         catch (Exception ex)
         {
             _integrationValidationResults.Add($"✗ FlexKit navigation of JSON-processed AWS data failed: {ex.Message}");
         }
-        
+
         scenarioContext.Set(_integrationValidationResults, "IntegrationValidationResults");
     }
 
@@ -490,14 +490,14 @@ public class AwsFlexKitIntegrationSteps(ScenarioContext scenarioContext)
             // Test that FlexKit capabilities work even with limited configuration
             dynamic dynamicConfig = _integrationFlexConfiguration!;
             dynamicConfig.Should().NotBeNull("Dynamic access should work with limited configuration");
-            
+
             _integrationValidationResults.Add("✓ FlexKit capabilities maintained with limited configuration");
         }
         catch (Exception ex)
         {
             _integrationValidationResults.Add($"✗ FlexKit capabilities failed with limited configuration: {ex.Message}");
         }
-        
+
         scenarioContext.Set(_integrationValidationResults, "IntegrationValidationResults");
     }
 
@@ -506,7 +506,7 @@ public class AwsFlexKitIntegrationSteps(ScenarioContext scenarioContext)
     {
         // If we got this far, configuration building succeeded despite potential missing resources
         _lastIntegrationException.Should().BeNull("Should not have exceptions for missing optional resources");
-        
+
         _integrationValidationResults.Add("✓ Missing AWS resources handled gracefully");
         scenarioContext.Set(_integrationValidationResults, "IntegrationValidationResults");
     }
@@ -521,14 +521,14 @@ public class AwsFlexKitIntegrationSteps(ScenarioContext scenarioContext)
             // Test dynamic property access
             dynamic config = _integrationFlexConfiguration!;
             config.Should().NotBeNull("Dynamic property access should work");
-            
+
             _integrationValidationResults.Add("✓ Dynamic property access verified");
         }
         catch (Exception ex)
         {
             _integrationValidationResults.Add($"✗ Dynamic property access failed: {ex.Message}");
         }
-        
+
         scenarioContext.Set(_integrationValidationResults, "IntegrationValidationResults");
     }
 
@@ -542,18 +542,18 @@ public class AwsFlexKitIntegrationSteps(ScenarioContext scenarioContext)
             // Test complex navigation patterns
             var section = _integrationFlexConfiguration!.Configuration.CurrentConfig("infrastructure-module");
             section.Should().NotBeNull("Section navigation should work");
-            
+
             // Try to navigate to a nested section
             _ = section.Configuration.CurrentConfig("database");
             // Note: subsection might be null if the structure doesn't exist, which is fine
-            
+
             _integrationValidationResults.Add("✓ Complex configuration navigation verified");
         }
         catch (Exception ex)
         {
             _integrationValidationResults.Add($"✗ Complex configuration navigation failed: {ex.Message}");
         }
-        
+
         scenarioContext.Set(_integrationValidationResults, "IntegrationValidationResults");
     }
 
@@ -567,17 +567,17 @@ public class AwsFlexKitIntegrationSteps(ScenarioContext scenarioContext)
             // Test type safety features using ToType extension
             var intValue = _integrationFlexConfiguration!["infrastructure-module:database:port"]?.ToType<int>() ?? 0;
             var stringValue = _integrationFlexConfiguration["infrastructure-module:database:host"] ?? "";
-            
+
             intValue.Should().BeGreaterThan(0, "Should convert port to integer safely");
             stringValue.Should().NotBeNullOrEmpty("Should retrieve string value safely");
-            
+
             _integrationValidationResults.Add($"✓ FlexKit type safety verified: port={intValue}, host={stringValue}");
         }
         catch (Exception ex)
         {
             _integrationValidationResults.Add($"✗ FlexKit type safety failed: {ex.Message}");
         }
-        
+
         scenarioContext.Set(_integrationValidationResults, "IntegrationValidationResults");
     }
 

@@ -84,16 +84,16 @@ public class FlexConfigurationBuilderYamlExtensionsTests : YamlTestBase
 
         // Assert
         result.Should().BeSameAs(builder);
-        
+
         // Build to verify the source was added correctly
         var yamlContent = "test: value";
         var tempFile = CreateTempYamlFile(yamlContent);
-        
+
         // Test with a real file to verify the source works
         var workingBuilder = new FlexConfigurationBuilder();
         workingBuilder.AddYamlFile(tempFile, optional: true);
         var config = workingBuilder.Build();
-        
+
         config["test"].Should().Be("value");
     }
 
@@ -297,11 +297,11 @@ public class FlexConfigurationBuilderYamlExtensionsTests : YamlTestBase
         // that the source was added by building and checking behavior
         var yamlContent = "test: success";
         var tempFile = CreateTempYamlFile(yamlContent);
-        
+
         var testBuilder = new FlexConfigurationBuilder();
         testBuilder.AddYamlFile(tempFile, false);
         var config = testBuilder.Build();
-        
+
         config["test"].Should().Be("success");
     }
 

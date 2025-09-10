@@ -35,100 +35,100 @@ static class Program
         await TestDifferentFormatters(host);
         await TestErrorHandling(host);
         await TestPerformanceOptimization(host);
-        
+
         Console.WriteLine("\n=== All test cases completed successfully! ===");
     }
 
     static async Task TestZeroConfigurationSetup(IHost host)
     {
         Console.WriteLine("🚀 === ZERO CONFIGURATION SETUP ===");
-        
+
         // Services with interfaces get automatic logging
         var orderService = host.Services.GetService<IOrderService>();
         orderService?.ProcessOrder("ORDER-001");
         _ = orderService?.GetOrderStatus("ORDER-001");
-        
+
         Console.WriteLine("✅ Zero configuration setup completed\n");
     }
 
     static async Task TestAttributeBasedLogging(IHost host)
     {
         Console.WriteLine("📋 === ATTRIBUTE-BASED LOGGING ===");
-        
+
         // Test different attribute combinations
         var paymentService = host.Services.GetService<IPaymentService>();
         paymentService?.ProcessPayment(new PaymentRequest { Amount = 100.50m, Currency = "USD" });
-        
+
         var notificationService = host.Services.GetService<INotificationService>();
         notificationService?.SendEmail("user@example.com", "Test Subject", "Test Body");
         notificationService?.SendSms("123-456-7890", "Test SMS");
         notificationService?.ValidateEmailFormat("user@example.com"); // Won't be logged (no [LogInput] attribute and not virtual)
-        
+
         Console.WriteLine("✅ Attribute-based logging completed\n");
     }
 
     static async Task TestConfigurationBasedLogging(IHost host)
     {
         Console.WriteLine("⚙️ === CONFIGURATION-BASED LOGGING ===");
-        
+
         // These services are configured via appsettings.json patterns
         var userService = host.Services.GetService<IUserService>();
         _ = userService?.CreateUser("john_doe", "john@example.com", "123-456-7890");
-        
+
         Console.WriteLine("✅ Configuration-based logging completed\n");
     }
 
     static async Task TestManualLogging(IHost host)
     {
         Console.WriteLine("🔧 === MANUAL LOGGING ===");
-        
+
         var complexService = host.Services.GetService<IComplexService>()!;
-        await complexService.ProcessComplexWorkflowAsync(new WorkflowRequest 
-        { 
-            Id = "WF-001", 
+        await complexService.ProcessComplexWorkflowAsync(new WorkflowRequest
+        {
+            Id = "WF-001",
             Type = "Payment",
-            Amount = 1500.75m 
+            Amount = 1500.75m
         });
-        
+
         Console.WriteLine("✅ Manual logging completed\n");
     }
 
     static async Task TestDataMasking(IHost host)
     {
         Console.WriteLine("🔒 === DATA MASKING ===");
-        
+
         var authService = host.Services.GetService<IAuthenticationService>();
         authService?.ValidateUser("admin", "secret123", "corporate");
-        
+
         var configService = host.Services.GetService<IConfigurationService>();
-        configService?.LoadConfig(new SecretConfiguration 
-        { 
+        configService?.LoadConfig(new SecretConfiguration
+        {
             DatabasePassword = "super_secret_password",
             EncryptionKey = "encryption_key_123",
             ApiSecret = "api_secret_xyz"
         });
-        
+
         Console.WriteLine("✅ Data masking completed\n");
     }
 
     static async Task TestDifferentFormatters(IHost host)
     {
         Console.WriteLine("🎨 === DIFFERENT FORMATTERS ===");
-        
+
         var formattingService = host.Services.GetService<IFormattingService>();
         formattingService?.ProcessWithJsonFormatter("test data");
         formattingService?.ProcessWithCustomTemplate("template data");
         formattingService?.ProcessWithHybridFormatter("hybrid data");
-        
+
         Console.WriteLine("✅ Different formatters completed\n");
     }
 
     static async Task TestErrorHandling(IHost host)
     {
         Console.WriteLine("⚠️ === ERROR HANDLING ===");
-        
+
         var errorService = host.Services.GetService<IErrorService>();
-        
+
         try
         {
             errorService?.ProcessWithSuccess("valid data");
@@ -137,7 +137,7 @@ static class Program
         {
             Console.WriteLine($"Unexpected error: {ex.Message}");
         }
-        
+
         try
         {
             errorService?.ProcessWithException("invalid");
@@ -146,25 +146,25 @@ static class Program
         {
             Console.WriteLine("Expected exception caught and logged");
         }
-        
+
         Console.WriteLine("✅ Error handling completed\n");
     }
 
     static async Task TestPerformanceOptimization(IHost host)
     {
         Console.WriteLine("⚡ === PERFORMANCE OPTIMIZATION ===");
-        
+
         var perfService = host.Services.GetService<IPerformanceService>();
-        
+
         // Business-critical method - logged
         perfService?.ProcessBusinessCriticalData("important data");
-        
+
         // High-frequency utility method - not logged for performance
         for (int i = 0; i < 1000; i++)
         {
             perfService?.GenerateCacheKey(i);
         }
-        
+
         Console.WriteLine("✅ Performance optimization completed\n");
     }
 }
@@ -263,7 +263,7 @@ public class ComplexService(IFlexKitLogger logger) : IComplexService
     public async Task<ProcessingResult> ProcessComplexWorkflowAsync(WorkflowRequest request)
     {
         using var activity = logger.StartActivity("ProcessComplexWorkflow");
-        
+
         var startEntry = LogEntry.CreateStart(nameof(ProcessComplexWorkflowAsync), GetType().FullName!)
             .WithInput(new { RequestId = request.Id, WorkflowType = request.Type, request.Amount })
             .WithFormatter(FormatterType.Json)

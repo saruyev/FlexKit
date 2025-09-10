@@ -58,13 +58,13 @@ public class RegisterConfigBenchmarks
             ["Database:CommandTimeout"] = "60",
             ["Database:MaxRetryCount"] = "5",
             ["Database:EnableLogging"] = "true",
-            
+
             // API configuration
             ["Api:BaseUrl"] = "https://api.example.com",
             ["Api:ApiKey"] = "abc123def456ghi789",
             ["Api:Timeout"] = "8000",
             ["Api:EnableCompression"] = "false",
-            
+
             // App configuration (root level)
             ["Name"] = "FlexKit Performance Test App",
             ["Version"] = "1.0.0",
@@ -81,11 +81,11 @@ public class RegisterConfigBenchmarks
     private void SetupFlexKitContainer()
     {
         var containerBuilder = new ContainerBuilder();
-        
+
         containerBuilder.AddFlexConfig(config => config
-            .AddSource(new Microsoft.Extensions.Configuration.Memory.MemoryConfigurationSource 
-            { 
-                InitialData = _configData 
+            .AddSource(new Microsoft.Extensions.Configuration.Memory.MemoryConfigurationSource
+            {
+                InitialData = _configData
             }))
             .RegisterConfig<DatabaseConfig>("Database")
             .RegisterConfig<ApiConfig>("Api")
@@ -97,13 +97,13 @@ public class RegisterConfigBenchmarks
     private void SetupOptionsContainer()
     {
         var services = new ServiceCollection();
-        
+
         var configBuilder = new ConfigurationBuilder();
         configBuilder.AddInMemoryCollection(_configData);
         var configuration = configBuilder.Build();
-        
+
         services.AddSingleton<IConfiguration>(configuration);
-        
+
         // Use the configuration binding extension methods
         services.AddOptions<DatabaseConfig>()
             .Bind(configuration.GetSection("Database"));
@@ -111,7 +111,7 @@ public class RegisterConfigBenchmarks
             .Bind(configuration.GetSection("Api"));
         services.AddOptions<AppConfig>()
             .Bind(configuration);
-        
+
         _optionsContainer = services.BuildServiceProvider();
     }
 
@@ -171,7 +171,7 @@ public class RegisterConfigBenchmarks
         var dbOptions = _optionsContainer.GetRequiredService<IOptions<DatabaseConfig>>();
         var apiOptions = _optionsContainer.GetRequiredService<IOptions<ApiConfig>>();
         var appOptions = _optionsContainer.GetRequiredService<IOptions<AppConfig>>();
-        
+
         return new
         {
             DatabaseConnection = dbOptions.Value.ConnectionString,
@@ -189,7 +189,7 @@ public class RegisterConfigBenchmarks
         var dbConfig = _flexKitContainer.Resolve<DatabaseConfig>();
         var apiConfig = _flexKitContainer.Resolve<ApiConfig>();
         var appConfig = _flexKitContainer.Resolve<AppConfig>();
-        
+
         return new
         {
             DatabaseConnection = dbConfig.ConnectionString,
@@ -222,7 +222,7 @@ public class RegisterConfigBenchmarks
     {
         var appOptions = _optionsContainer.GetRequiredService<IOptions<AppConfig>>();
         var app = appOptions.Value;
-        
+
         return new
         {
             DatabaseConnection = app.Database.ConnectionString,
@@ -237,7 +237,7 @@ public class RegisterConfigBenchmarks
     public object FlexKitRegisterConfigNestedPropertyAccess()
     {
         var appConfig = _flexKitContainer.Resolve<AppConfig>();
-        
+
         return new
         {
             DatabaseConnection = appConfig.Database.ConnectionString,
@@ -254,13 +254,13 @@ public class RegisterConfigBenchmarks
     public IServiceProvider CreateStandardIOptionsContainer()
     {
         var services = new ServiceCollection();
-        
+
         var configBuilder = new ConfigurationBuilder();
         configBuilder.AddInMemoryCollection(_configData);
         var configuration = configBuilder.Build();
-        
+
         services.AddSingleton<IConfiguration>(configuration);
-        
+
         // Use the configuration binding extension methods
         services.AddOptions<DatabaseConfig>()
             .Bind(configuration.GetSection("Database"));
@@ -268,7 +268,7 @@ public class RegisterConfigBenchmarks
             .Bind(configuration.GetSection("Api"));
         services.AddOptions<AppConfig>()
             .Bind(configuration);
-        
+
         return services.BuildServiceProvider();
     }
 
@@ -276,11 +276,11 @@ public class RegisterConfigBenchmarks
     public IContainer CreateFlexKitRegisterConfigContainer()
     {
         var containerBuilder = new ContainerBuilder();
-        
+
         containerBuilder.AddFlexConfig(config => config
-            .AddSource(new Microsoft.Extensions.Configuration.Memory.MemoryConfigurationSource 
-            { 
-                InitialData = _configData 
+            .AddSource(new Microsoft.Extensions.Configuration.Memory.MemoryConfigurationSource
+            {
+                InitialData = _configData
             }))
             .RegisterConfig<DatabaseConfig>("Database")
             .RegisterConfig<ApiConfig>("Api")
@@ -295,14 +295,14 @@ public class RegisterConfigBenchmarks
     public object StandardIOptionsRepeatedAccess()
     {
         var results = new List<string>();
-        
+
         // Simulate accessing configuration multiple times (typical in services)
         for (int i = 0; i < 10; i++)
         {
             var dbOptions = _optionsContainer.GetRequiredService<IOptions<DatabaseConfig>>();
             results.Add(dbOptions.Value.ConnectionString);
         }
-        
+
         return results;
     }
 
@@ -310,14 +310,14 @@ public class RegisterConfigBenchmarks
     public object FlexKitRegisterConfigRepeatedAccess()
     {
         var results = new List<string>();
-        
+
         // Simulate accessing configuration multiple times (typical in services)
         for (int i = 0; i < 10; i++)
         {
             var dbConfig = _flexKitContainer.Resolve<DatabaseConfig>();
             results.Add(dbConfig.ConnectionString);
         }
-        
+
         return results;
     }
 
@@ -328,10 +328,10 @@ public class RegisterConfigBenchmarks
     {
         var dbOptions = _optionsContainer.GetRequiredService<IOptions<DatabaseConfig>>();
         var apiOptions = _optionsContainer.GetRequiredService<IOptions<ApiConfig>>();
-        
+
         var db = dbOptions.Value;
         var api = apiOptions.Value;
-        
+
         return new
         {
             db.CommandTimeout,  // int conversion
@@ -347,7 +347,7 @@ public class RegisterConfigBenchmarks
     {
         var dbConfig = _flexKitContainer.Resolve<DatabaseConfig>();
         var apiConfig = _flexKitContainer.Resolve<ApiConfig>();
-        
+
         return new
         {
             dbConfig.CommandTimeout,  // int conversion

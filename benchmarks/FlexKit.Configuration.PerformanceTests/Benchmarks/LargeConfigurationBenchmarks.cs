@@ -25,12 +25,12 @@ public class LargeConfigurationBenchmarks
     {
         // Load the large configuration JSON file
         _largeConfigJson = LoadLargeConfigJson();
-        
+
         // Setup standard configuration
         var configBuilder = new ConfigurationBuilder();
         configBuilder.AddJsonStream(new MemoryStream(System.Text.Encoding.UTF8.GetBytes(_largeConfigJson)));
         _standardConfig = configBuilder.Build();
-        
+
         // Setup FlexConfiguration
         _flexConfig = new FlexConfiguration(_standardConfig);
     }
@@ -39,13 +39,13 @@ public class LargeConfigurationBenchmarks
     {
         // Load the actual large-config.json file with 580+ keys
         var configPath = Path.Combine("TestData", "large-config.json");
-        
+
         if (!File.Exists(configPath))
         {
             throw new FileNotFoundException($"Large configuration file not found at: {configPath}. " +
                 "Please ensure large-config.json is copied to the TestData folder.");
         }
-        
+
         return File.ReadAllText(configPath);
     }
 
@@ -202,7 +202,7 @@ public class LargeConfigurationBenchmarks
     public object FlexConfigDynamicMultipleAccess()
     {
         dynamic config = _flexConfig;
-        
+
         var app = config.Application;
         var database = config.Database;
         var primary = database?.Configuration.CurrentConfig("Primary");
@@ -215,7 +215,7 @@ public class LargeConfigurationBenchmarks
         var regional = config.Regional;
         var features = config.Features;
         var analytics = features?.Configuration.CurrentConfig("Analytics");
-        
+
         return new
         {
             AppName = (string?)app?.Configuration["Name"],
@@ -238,7 +238,7 @@ public class LargeConfigurationBenchmarks
     {
         var databaseSection = _standardConfig.GetSection("Database");
         var primarySection = databaseSection.GetSection("Primary");
-        
+
         return new
         {
             ConnectionString = primarySection["ConnectionString"],
@@ -253,7 +253,7 @@ public class LargeConfigurationBenchmarks
     {
         var databaseSection = _flexConfig.Configuration.CurrentConfig("Database");
         var primarySection = databaseSection?.Configuration.CurrentConfig("Primary");
-        
+
         return new
         {
             ConnectionString = primarySection?.Configuration["ConnectionString"],
@@ -272,12 +272,12 @@ public class LargeConfigurationBenchmarks
             .GetChildren()
             .Select(c => c.Value)
             .ToArray();
-            
+
         var supportedCurrencies = _standardConfig.GetSection("ExternalServices:PaymentProcessor:Primary:SupportedCurrencies")
             .GetChildren()
             .Select(c => c.Value)
             .ToArray();
-            
+
         return new
         {
             WhitelistedIpCount = whitelistedIps.Length,
@@ -294,12 +294,12 @@ public class LargeConfigurationBenchmarks
             .GetChildren()
             .Select(c => c.Value)
             .ToArray();
-            
+
         var supportedCurrencies = _flexConfig.Configuration.GetSection("ExternalServices:PaymentProcessor:Primary:SupportedCurrencies")
             .GetChildren()
             .Select(c => c.Value)
             .ToArray();
-            
+
         return new
         {
             WhitelistedIpCount = whitelistedIps.Length,
@@ -326,7 +326,7 @@ public class LargeConfigurationBenchmarks
     private int CountAllConfigurationKeys(IConfiguration configuration)
     {
         int count = 0;
-        
+
         foreach (var section in configuration.GetChildren())
         {
             if (section.Value != null)
@@ -335,7 +335,7 @@ public class LargeConfigurationBenchmarks
             }
             count += CountAllConfigurationKeys(section);
         }
-        
+
         return count;
     }
 
@@ -345,7 +345,7 @@ public class LargeConfigurationBenchmarks
     public object StandardConfigComplexNavigation()
     {
         var results = new List<object>();
-        
+
         // Navigate through different sections of the large config
         var regions = _standardConfig.GetSection("Regional:Regions").GetChildren();
         foreach (var region in regions)
@@ -361,7 +361,7 @@ public class LargeConfigurationBenchmarks
                 });
             }
         }
-        
+
         return results;
     }
 
@@ -369,7 +369,7 @@ public class LargeConfigurationBenchmarks
     public object FlexConfigComplexNavigation()
     {
         var results = new List<object>();
-        
+
         // Navigate through different sections using FlexConfig
         var regions = _flexConfig.Configuration.GetSection("Regional:Regions").GetChildren();
         foreach (var region in regions)
@@ -385,7 +385,7 @@ public class LargeConfigurationBenchmarks
                 });
             }
         }
-        
+
         return results;
     }
 }

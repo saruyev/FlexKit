@@ -23,7 +23,7 @@ public static class ScenarioExtensions
         var originalValue = Environment.GetEnvironmentVariable(variableName);
         var key = $"{InfrastructureModulePrefix}_env_{variableName}";
         scenarioContext.Set(originalValue, key);
-        
+
         // Register for cleanup
         scenarioContext.RegisterForCleanup(new EnvironmentVariableRestorer(variableName, originalValue));
     }
@@ -79,7 +79,7 @@ public static class ScenarioExtensions
     {
         var tempFileName = $"{InfrastructureModulePrefix}_{Guid.NewGuid():N}_{fileName}";
         var relativePath = Path.Combine("TestData", "temp", tempFileName);
-        
+
         // Ensure the directory exists
         var fullPath = Path.GetFullPath(relativePath);
         var directory = Path.GetDirectoryName(fullPath);
@@ -87,10 +87,10 @@ public static class ScenarioExtensions
         {
             Directory.CreateDirectory(directory);
         }
-        
+
         // Register for cleanup
         scenarioContext.RegisterForCleanup(new TempFileCleanup(fullPath));
-        
+
         return relativePath;
     }
 
@@ -115,15 +115,15 @@ public static class ScenarioExtensions
     {
         var filePath = scenarioContext.GetInfrastructureModuleTestDataPath(configFileName);
         var fullPath = Path.GetFullPath(filePath);
-        
+
         if (!File.Exists(fullPath))
         {
             throw new FileNotFoundException($"Infrastructure module test configuration file not found: {filePath}");
         }
-        
+
         var jsonContent = File.ReadAllText(fullPath);
         var config = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(jsonContent);
-        
+
         return config ?? new Dictionary<string, object>();
     }
 }

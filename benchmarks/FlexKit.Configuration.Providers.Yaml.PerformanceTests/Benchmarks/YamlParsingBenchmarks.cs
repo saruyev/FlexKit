@@ -269,11 +269,11 @@ public class YamlParsingBenchmarks
         var builder = new ConfigurationBuilder();
         using var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(_simpleYamlContent));
         builder.Add(new YamlConfigurationSource { Path = "memory://simple.yaml" });
-        
+
         // Simulate loading from content
         var source = new YamlConfigurationSource();
         _ = new YamlConfigurationProvider(source);
-        
+
         // Use direct content parsing for memory-based testing
         return ParseYamlContent(_simpleYamlContent);
     }
@@ -336,7 +336,7 @@ public class YamlParsingBenchmarks
         try
         {
             File.WriteAllText(tempFile, _simpleYamlContent);
-            
+
             var builder = new ConfigurationBuilder();
             builder.Add(new YamlConfigurationSource { Path = tempFile });
             return builder.Build();
@@ -378,7 +378,7 @@ public class YamlParsingBenchmarks
         try
         {
             File.WriteAllText(tempFile, yamlContent);
-            
+
             var builder = new ConfigurationBuilder();
             builder.Add(new YamlConfigurationSource { Path = tempFile });
             return builder.Build();

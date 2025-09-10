@@ -72,7 +72,7 @@ public class FlexConfigurationBuilderTests : UnitTestBase
         // Arrange
         var builder = Resolve<FlexConfigurationBuilder>();
         var testData = ConfigurationTestDataBuilder.CreateConfigurationDictionary();
-        
+
         builder.AddSource(new MemoryConfigurationSource
         {
             InitialData = testData!
@@ -97,7 +97,7 @@ public class FlexConfigurationBuilderTests : UnitTestBase
         // Arrange
         var builder = Resolve<FlexConfigurationBuilder>();
         builder.AddSource(new MemoryConfigurationSource());
-        
+
         builder.Build(); // First call
 
         // Act & Assert
@@ -124,12 +124,12 @@ public class FlexConfigurationBuilderTests : UnitTestBase
 
         // Assert
         result.Should().BeSameAs(builder);
-        
+
         // Verify the builder can still build
         var flexConfig = result.Build();
         flexConfig.Should().NotBeNull();
     }
-    
+
     [Fact]
     public void AddEnvironmentVariables_ReturnsFluentInterface()
     {
@@ -142,7 +142,7 @@ public class FlexConfigurationBuilderTests : UnitTestBase
         // Assert
         result.Should().BeSameAs(builder);
     }
-    
+
     [Fact]
     public void AddEnvironmentVariables_WithChaining_MaintainsFluentInterface()
     {
@@ -157,19 +157,19 @@ public class FlexConfigurationBuilderTests : UnitTestBase
 
         // Assert
         result.Should().BeSameAs(builder);
-    
+
         // Verify the builder can still build
         var flexConfig = result.Build();
         flexConfig.Should().NotBeNull();
     }
-    
+
     [Fact]
     public void AddSource_AfterBuild_ThrowsInvalidOperationException()
     {
         // Arrange
         var builder = Resolve<FlexConfigurationBuilder>();
         var testData = ConfigurationTestDataBuilder.CreateConfigurationDictionary();
-    
+
         builder.AddSource(new MemoryConfigurationSource { InitialData = testData! });
         builder.Build(); // Set _isBuilt to true
 
@@ -178,14 +178,14 @@ public class FlexConfigurationBuilderTests : UnitTestBase
         action.Should().Throw<InvalidOperationException>()
             .WithMessage("Cannot add sources after Build() has been called");
     }
-    
+
     [Fact]
     public void AddJsonFile_AfterBuild_ThrowsInvalidOperationException()
     {
         // Arrange
         var builder = Resolve<FlexConfigurationBuilder>();
         var testData = ConfigurationTestDataBuilder.CreateConfigurationDictionary();
-    
+
         builder.AddSource(new MemoryConfigurationSource { InitialData = testData! });
         builder.Build(); // Set _isBuilt to true
 
@@ -194,14 +194,14 @@ public class FlexConfigurationBuilderTests : UnitTestBase
         action.Should().Throw<InvalidOperationException>()
             .WithMessage("Cannot add sources after Build() has been called");
     }
-    
+
     [Fact]
     public void AddDotEnvFile_AfterBuild_ThrowsInvalidOperationException()
     {
         // Arrange
         var builder = Resolve<FlexConfigurationBuilder>();
         var testData = ConfigurationTestDataBuilder.CreateConfigurationDictionary();
-    
+
         builder.AddSource(new MemoryConfigurationSource { InitialData = testData! });
         builder.Build(); // Set _isBuilt to true
 
@@ -210,14 +210,14 @@ public class FlexConfigurationBuilderTests : UnitTestBase
         action.Should().Throw<InvalidOperationException>()
             .WithMessage("Cannot add sources after Build() has been called");
     }
-    
+
     [Fact]
     public void AddEnvironmentVariables_AfterBuild_ThrowsInvalidOperationException()
     {
         // Arrange
         var builder = Resolve<FlexConfigurationBuilder>();
         var testData = ConfigurationTestDataBuilder.CreateConfigurationDictionary();
-    
+
         builder.AddSource(new MemoryConfigurationSource { InitialData = testData! });
         builder.Build(); // Set _isBuilt to true
 
@@ -226,9 +226,9 @@ public class FlexConfigurationBuilderTests : UnitTestBase
         action.Should().Throw<InvalidOperationException>()
             .WithMessage("Cannot add sources after Build() has been called");
     }
-    
+
     #region UseExistingConfiguration Tests
-    
+
     [Fact]
     public void UseExistingConfiguration_WithValidConfiguration_AddsConfigurationAsMemorySource()
     {
@@ -240,7 +240,7 @@ public class FlexConfigurationBuilderTests : UnitTestBase
             ["Database:ConnectionString"] = "Server=localhost;Database=Test;",
             ["Api:Key"] = "existing-api-key"
         };
-        
+
         var existingConfig = new ConfigurationBuilder()
             .AddInMemoryCollection(existingConfigData)
             .Build();
@@ -250,7 +250,7 @@ public class FlexConfigurationBuilderTests : UnitTestBase
 
         // Assert
         result.Should().BeSameAs(builder);
-        
+
         // Verify the configuration can be built and contains the existing data
         var flexConfig = builder.Build();
         flexConfig.Should().NotBeNull();
@@ -258,7 +258,7 @@ public class FlexConfigurationBuilderTests : UnitTestBase
         flexConfig["Database:ConnectionString"].Should().Be("Server=localhost;Database=Test;");
         flexConfig["Api:Key"].Should().Be("existing-api-key");
     }
-    
+
     [Fact]
     public void UseExistingConfiguration_WithNullConfiguration_ThrowsArgumentNullException()
     {
@@ -271,7 +271,7 @@ public class FlexConfigurationBuilderTests : UnitTestBase
         action.Should().Throw<ArgumentNullException>()
             .WithParameterName("configuration");
     }
-    
+
     [Fact]
     public void UseExistingConfiguration_AfterBuild_ThrowsInvalidOperationException()
     {
@@ -280,7 +280,7 @@ public class FlexConfigurationBuilderTests : UnitTestBase
         var testData = ConfigurationTestDataBuilder.CreateConfigurationDictionary();
         builder.AddSource(new MemoryConfigurationSource { InitialData = testData! });
         builder.Build(); // Set _isBuilt to true
-        
+
         var existingConfig = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?> { ["test"] = "value" })
             .Build();
@@ -290,7 +290,7 @@ public class FlexConfigurationBuilderTests : UnitTestBase
         action.Should().Throw<InvalidOperationException>()
             .WithMessage("Cannot add sources after Build() has been called");
     }
-    
+
     [Fact]
     public void UseExistingConfiguration_WithEmptyConfiguration_AddsEmptyMemorySource()
     {
@@ -303,12 +303,12 @@ public class FlexConfigurationBuilderTests : UnitTestBase
 
         // Assert
         result.Should().BeSameAs(builder);
-        
+
         // Verify the configuration can be built (should not throw)
         var flexConfig = builder.Build();
         flexConfig.Should().NotBeNull();
     }
-    
+
     [Fact]
     public void UseExistingConfiguration_WithSubsequentSources_MaintainsPrecedenceOrder()
     {
@@ -319,11 +319,11 @@ public class FlexConfigurationBuilderTests : UnitTestBase
             ["App:Name"] = "ExistingApp",
             ["SharedKey"] = "FromExisting"
         };
-        
+
         var existingConfig = new ConfigurationBuilder()
             .AddInMemoryCollection(existingConfigData)
             .Build();
-        
+
         var higherPriorityData = new Dictionary<string, string?>
         {
             ["App:Version"] = "1.0.0",
@@ -337,20 +337,20 @@ public class FlexConfigurationBuilderTests : UnitTestBase
 
         // Assert
         result.Should().BeSameAs(builder);
-        
+
         var flexConfig = builder.Build();
         flexConfig.Should().NotBeNull();
-        
+
         // Existing configuration values should be present
         flexConfig["App:Name"].Should().Be("ExistingApp");
-        
+
         // Higher priority source should override shared keys
         flexConfig["SharedKey"].Should().Be("FromHigherPriority");
-        
+
         // Higher priority source values should be present
         flexConfig["App:Version"].Should().Be("1.0.0");
     }
-    
+
     [Fact]
     public void UseExistingConfiguration_WithComplexHierarchicalData_PreservesStructure()
     {
@@ -367,7 +367,7 @@ public class FlexConfigurationBuilderTests : UnitTestBase
             ["Features:EnableCaching"] = "true",
             ["Features:CacheExpiration"] = "3600"
         };
-        
+
         var existingConfig = new ConfigurationBuilder()
             .AddInMemoryCollection(complexConfigData)
             .Build();
@@ -377,10 +377,10 @@ public class FlexConfigurationBuilderTests : UnitTestBase
 
         // Assert
         result.Should().BeSameAs(builder);
-        
+
         var flexConfig = builder.Build();
         flexConfig.Should().NotBeNull();
-        
+
         // Verify all hierarchical data is preserved
         flexConfig["Database:Primary:ConnectionString"].Should().Be("Server=primary;Database=Main;");
         flexConfig["Database:Primary:Timeout"].Should().Be("30");
@@ -391,7 +391,7 @@ public class FlexConfigurationBuilderTests : UnitTestBase
         flexConfig["Features:EnableCaching"].Should().Be("true");
         flexConfig["Features:CacheExpiration"].Should().Be("3600");
     }
-    
+
     [Fact]
     public void UseExistingConfiguration_WithNullValues_PreservesNullValues()
     {
@@ -404,7 +404,7 @@ public class FlexConfigurationBuilderTests : UnitTestBase
             ["EmptyKey"] = "",
             ["WhitespaceKey"] = "   "
         };
-        
+
         var existingConfig = new ConfigurationBuilder()
             .AddInMemoryCollection(configDataWithNulls)
             .Build();
@@ -414,17 +414,17 @@ public class FlexConfigurationBuilderTests : UnitTestBase
 
         // Assert
         result.Should().BeSameAs(builder);
-        
+
         var flexConfig = builder.Build();
         flexConfig.Should().NotBeNull();
-        
+
         // Verify all values are preserved, including nulls and empty strings
         flexConfig["ValidKey"].Should().Be("ValidValue");
         flexConfig["NullKey"].Should().BeNull();
         flexConfig["EmptyKey"].Should().Be("");
         flexConfig["WhitespaceKey"].Should().Be("   ");
     }
-    
+
     [Fact]
     public void UseExistingConfiguration_ChainedWithOtherMethods_MaintainsFluentInterface()
     {
@@ -445,14 +445,14 @@ public class FlexConfigurationBuilderTests : UnitTestBase
 
         // Assert
         result.Should().BeSameAs(builder);
-        
+
         // Verify the builder can still build with all sources
         var flexConfig = result.Build();
         flexConfig.Should().NotBeNull();
-        
+
         // Verify the existing configuration is present
         flexConfig["Existing:Value"].Should().Be("test");
     }
-    
+
     #endregion
 }

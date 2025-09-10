@@ -35,6 +35,11 @@ public sealed class BuildContext
     /// </summary>
     public required ILoggingBuilder LoggingBuilder { get; init; }
 
+    /// <summary>
+    /// Represents the core configuration settings required for constructing and managing logging targets
+    /// and behavior within the logging framework. This property is essential for defining the parameters
+    /// and options that influence the setup and customization of logging pipelines.
+    /// </summary>
     public required LoggingConfig Config { get; init; }
 
     /// <summary>

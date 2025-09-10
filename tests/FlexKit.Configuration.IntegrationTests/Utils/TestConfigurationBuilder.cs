@@ -17,7 +17,7 @@ namespace FlexKit.Configuration.IntegrationTests.Utils;
 public class TestConfigurationBuilder(ScenarioContext? scenarioContext = null) : BaseTestConfigurationBuilder<TestConfigurationBuilder>(scenarioContext)
 {
     public TestConfigurationBuilder() : this(null) { }
-    
+
     /// <summary>
     /// Adds an existing .env file as a configuration source.
     /// </summary>
@@ -33,7 +33,7 @@ public class TestConfigurationBuilder(ScenarioContext? scenarioContext = null) :
         });
         return this;
     }
-    
+
     /// <summary>
     /// Creates a temporary .env file with the provided content and adds it as a configuration source.
     /// </summary>
@@ -46,7 +46,7 @@ public class TestConfigurationBuilder(ScenarioContext? scenarioContext = null) :
         AddDotEnvFile(tempFile, optional);
         return this;
     }
-    
+
     /// <summary>
     /// Creates a temporary .env file from key-value pairs and adds it as a configuration source.
     /// </summary>
@@ -55,11 +55,11 @@ public class TestConfigurationBuilder(ScenarioContext? scenarioContext = null) :
     /// <returns>This builder for method chaining</returns>
     public TestConfigurationBuilder AddTempEnvFile(Dictionary<string, string> envData, bool optional = true)
     {
-        var envContent = string.Join(Environment.NewLine, 
+        var envContent = string.Join(Environment.NewLine,
             envData.Select(kvp => $"{kvp.Key}={kvp.Value}"));
         return AddTempEnvFile(envContent, optional);
     }
-    
+
     /// <summary>
     /// Builds a FlexConfiguration instance.
     /// </summary>
@@ -78,7 +78,7 @@ public class TestConfigurationBuilder(ScenarioContext? scenarioContext = null) :
     public IFlexConfig BuildFlexConfig(Action<FlexConfigurationBuilder> configureBuilder)
     {
         ApplyEnvironmentVariables();
-        
+
         var flexBuilder = new FlexConfigurationBuilder();
 
         // Add in-memory data
@@ -105,7 +105,7 @@ public class TestConfigurationBuilder(ScenarioContext? scenarioContext = null) :
 
         return flexBuilder.Build();
     }
-    
+
     /// <summary>
     /// Creates a FlexConfiguration with test defaults.
     /// </summary>

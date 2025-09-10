@@ -19,11 +19,11 @@ public class ComplexParameterBenchmarks : FlexKitBenchmarkBase
     {
         base.Setup();
         _extendedLogBothService = FlexKitServices.GetService<IExtendedLogBothService>()!;
-        
+
         _simpleData = new SimpleData("test", 42);
-        _complexData = new ComplexTestData("complex", 100) 
-        { 
-            Properties = new() { {"key1", "value1"}, {"key2", 123} } 
+        _complexData = new ComplexTestData("complex", 100)
+        {
+            Properties = new() { { "key1", "value1" }, { "key2", 123 } }
         };
         _veryComplexData = new VeryComplexData
         {

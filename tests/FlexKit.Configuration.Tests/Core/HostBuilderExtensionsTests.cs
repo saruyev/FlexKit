@@ -494,7 +494,7 @@ public class HostBuilderExtensionsTests : UnitTestBase
     }
 
     #region Tests for Dual-Parameter Overloads
-    
+
     [Fact]
     public void AddFlexConfig_WithDualAction_ConfigureServicesCallback_AddsAutofac()
     {
@@ -818,7 +818,7 @@ public class HostBuilderExtensionsTests : UnitTestBase
 
         SetupMockHostBuilderForContainer(mockHostBuilder,
             capturedAction => capturedConfigureContainer = capturedAction);
-        
+
         var appSettingsPath = Path.Combine(Directory.GetCurrentDirectory(), "appsettings.json");
 
         try
@@ -857,7 +857,7 @@ public class HostBuilderExtensionsTests : UnitTestBase
         var mockContext = new HostBuilderContext(new Dictionary<object, object>())
         {
             Configuration = existingConfiguration,
-            HostingEnvironment = new HostingEnvironment(){EnvironmentName = "Testing"}
+            HostingEnvironment = new HostingEnvironment() { EnvironmentName = "Testing" }
         };
 
         SetupMockHostBuilderForContainer(mockHostBuilder,

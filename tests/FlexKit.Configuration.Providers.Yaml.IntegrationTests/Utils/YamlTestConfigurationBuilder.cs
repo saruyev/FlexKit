@@ -21,7 +21,7 @@ namespace FlexKit.Configuration.Providers.Yaml.IntegrationTests.Utils;
 /// <param name="scenarioContext">Optional scenario context for automatic cleanup</param>
 public class YamlTestConfigurationBuilder(ScenarioContext? scenarioContext = null) : BaseTestConfigurationBuilder<YamlTestConfigurationBuilder>(scenarioContext)
 {
-    public YamlTestConfigurationBuilder() : this(null){}
+    public YamlTestConfigurationBuilder() : this(null) { }
 
     /// <summary>
     /// Adds an existing YAML file as a configuration source.
@@ -36,7 +36,7 @@ public class YamlTestConfigurationBuilder(ScenarioContext? scenarioContext = nul
             Path = path,
             Optional = optional
         };
-        
+
         return AddSource(yamlSource);
     }
 
@@ -92,7 +92,7 @@ public class YamlTestConfigurationBuilder(ScenarioContext? scenarioContext = nul
         foreach (var section in sections)
         {
             yaml.AppendLine($"{section}:");
-            
+
             var sectionKeys = data.Keys
                 .Where(k => k.StartsWith($"{section}:") && !processedKeys.Contains(k))
                 .OrderBy(k => k)
@@ -119,12 +119,12 @@ public class YamlTestConfigurationBuilder(ScenarioContext? scenarioContext = nul
     {
         var remainingPath = key.Substring(section.Length + 1);
         var pathParts = remainingPath.Split(':');
-        
+
         var indent = 2;
         for (int i = 0; i < pathParts.Length; i++)
         {
             var indentStr = new string(' ', indent);
-            
+
             if (i == pathParts.Length - 1)
             {
                 // Last part - add the value
@@ -148,13 +148,13 @@ public class YamlTestConfigurationBuilder(ScenarioContext? scenarioContext = nul
     {
         if (value == null) return "null";
         if (string.IsNullOrEmpty(value)) return "\"\"";
-        
+
         // Quote strings that contain special characters or could be misinterpreted
         if (NeedsQuoting(value))
         {
             return $"\"{value.Replace("\"", "\\\"")}\"";
         }
-        
+
         return value;
     }
 
@@ -166,16 +166,16 @@ public class YamlTestConfigurationBuilder(ScenarioContext? scenarioContext = nul
     private static bool NeedsQuoting(string value)
     {
         if (string.IsNullOrEmpty(value)) return true;
-        
+
         // Check for characters that require quoting
-        return value.Contains(' ') || 
-               value.Contains(':') || 
-               value.Contains('#') || 
-               value.Contains('[') || 
-               value.Contains(']') || 
-               value.Contains('{') || 
-               value.Contains('}') || 
-               value.StartsWith('"') || 
+        return value.Contains(' ') ||
+               value.Contains(':') ||
+               value.Contains('#') ||
+               value.Contains('[') ||
+               value.Contains(']') ||
+               value.Contains('{') ||
+               value.Contains('}') ||
+               value.StartsWith('"') ||
                value.StartsWith('\'') ||
                value.StartsWith('*') ||
                value.StartsWith('&') ||
@@ -192,7 +192,7 @@ public class YamlTestConfigurationBuilder(ScenarioContext? scenarioContext = nul
         var lowerValue = value.ToLowerInvariant();
         return lowerValue is "true" or "false" or "null" or "yes" or "no" or "on" or "off";
     }
-    
+
     /// <summary>
     /// Helper method to access dynamic properties safely using reflection.
     /// </summary>
@@ -224,15 +224,15 @@ public class YamlTestConfigurationBuilder(ScenarioContext? scenarioContext = nul
                 {
                     return section.GetFlexConfiguration();
                 }
-            
+
                 // If it's a leaf value, return the string value
                 return section.Value;
             }
-        
+
             // If not found as a section, try direct indexer access
             return flexConfig[propertyName];
         }
-    
+
         // If we get here, we're not dealing with FlexConfig anymore
         // This shouldn't happen in normal FlexConfig navigation
         return null;
