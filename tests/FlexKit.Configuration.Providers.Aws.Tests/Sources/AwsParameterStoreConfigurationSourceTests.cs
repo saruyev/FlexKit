@@ -3,6 +3,7 @@
 // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 // </copyright>
 
+using System.Reflection;
 using Amazon.Extensions.NETCore.Setup;
 using Amazon.Runtime;
 using FlexKit.Configuration.Providers.Aws.Sources;
@@ -12,6 +13,8 @@ using NSubstitute;
 using Xunit;
 // ReSharper disable ClassTooBig
 // ReSharper disable NullableWarningSuppressionIsUsed
+// ReSharper disable MethodTooLong
+#pragma warning disable CS0618 // Type or member is obsolete
 
 namespace FlexKit.Configuration.Providers.Aws.Tests.Sources;
 
@@ -237,25 +240,127 @@ public class AwsParameterStoreConfigurationSourceTests
             .Should().Throw<ArgumentNullException>()
             .WithParameterName("builder");
     }
+    
+    private static readonly Lock AwsTestLock = new();
 
     [Fact]
     public void Build_WithInvalidAwsCredentials_ThrowsInvalidOperationException()
     {
-        // Arrange
-        var source = new AwsParameterStoreConfigurationSource
+        // Ensure only one AWS-related test runs at a time
+        lock (AwsTestLock)
         {
-            Path = "/test/",
-            AwsOptions = new AWSOptions
+            // Store original state
+            var originalEnv = new Dictionary<string, string>
             {
-                Region = Amazon.RegionEndpoint.GetBySystemName("invalid-region")
-            }
-        };
-        var builder = Substitute.For<IConfigurationBuilder>();
+                ["AWS_ACCESS_KEY_ID"] = Environment.GetEnvironmentVariable("AWS_ACCESS_KEY_ID")!,
+                ["AWS_SECRET_ACCESS_KEY"] = Environment.GetEnvironmentVariable("AWS_SECRET_ACCESS_KEY")!,
+                ["AWS_SESSION_TOKEN"] = Environment.GetEnvironmentVariable("AWS_SESSION_TOKEN")!,
+                ["AWS_PROFILE"] = Environment.GetEnvironmentVariable("AWS_PROFILE")!,
+                ["AWS_SHARED_CREDENTIALS_FILE"] = Environment.GetEnvironmentVariable("AWS_SHARED_CREDENTIALS_FILE")!,
+                ["AWS_CONFIG_FILE"] = Environment.GetEnvironmentVariable("AWS_CONFIG_FILE")!
+            };
 
-        // Act & Assert
-        source.Invoking(s => s.Build(builder))
-            .Should().Throw<InvalidOperationException>()
-            .WithMessage("Failed to create AWS Systems Manager client*");
+            var homeDir = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+            var credFile = Path.Combine(homeDir, ".aws", "credentials");
+            var configFile = Path.Combine(homeDir, ".aws", "config");
+            var credBackup = credFile + $".backup-{Guid.NewGuid()}";
+            var configBackup = configFile + $".backup-{Guid.NewGuid()}";
+            bool credMoved = false, configMoved = false;
+
+            try
+            {
+                // 1. Clear environment
+                foreach (var key in originalEnv.Keys)
+                {
+                    Environment.SetEnvironmentVariable(key, null);
+                }
+
+                Environment.SetEnvironmentVariable("AWS_SHARED_CREDENTIALS_FILE", "/nonexistent/credentials");
+                Environment.SetEnvironmentVariable("AWS_CONFIG_FILE", "/nonexistent/config");
+
+                // 2. Move credential files
+                if (File.Exists(credFile))
+                {
+                    File.Move(credFile, credBackup);
+                    credMoved = true;
+                }
+
+                if (File.Exists(configFile))
+                {
+                    File.Move(configFile, configBackup);
+                    configMoved = true;
+                }
+
+                // 3. Force the SDK to re-evaluate credentials
+                FallbackCredentialsFactory.Reset();
+
+                // Clear the cached credentials using reflection
+                var fallbackType = typeof(FallbackCredentialsFactory);
+                var cachedCredsField =
+                    fallbackType.GetField("cachedCredentials", BindingFlags.Static | BindingFlags.NonPublic);
+                cachedCredsField?.SetValue(null, null);
+
+                // Clear any ClientFactory cache
+                var clientFactoryType = typeof(AWSOptions).Assembly
+                    .GetType("Amazon.Extensions.NETCore.Setup.ClientFactory");
+                if (clientFactoryType != null)
+                {
+                    var fields = clientFactoryType.GetFields(BindingFlags.Static | BindingFlags.NonPublic);
+                    foreach (var field in fields)
+                    {
+                        if (field.Name.Contains("cache", StringComparison.OrdinalIgnoreCase))
+                        {
+                            try
+                            {
+                                field.SetValue(null, null);
+                            }
+                            catch
+                            {
+                                // ignored
+                            }
+                        }
+                    }
+                }
+
+                // 4. Arrange
+                var source = new AwsParameterStoreConfigurationSource
+                {
+                    Path = "/test/",
+                    AwsOptions = new AWSOptions
+                    {
+                        Region = Amazon.RegionEndpoint.USEast1, // Use valid region
+                        Profile = "nonexistent-profile"
+                    }
+                };
+                var builder = Substitute.For<IConfigurationBuilder>();
+
+                // Act & Assert
+                source.Invoking(s => s.Build(builder))
+                    .Should().Throw<InvalidOperationException>()
+                    .WithMessage("Failed to create AWS Systems Manager client*");
+            }
+            finally
+            {
+                // Restore everything
+                foreach (var kvp in originalEnv)
+                {
+                    Environment.SetEnvironmentVariable(kvp.Key, kvp.Value);
+                }
+
+                if (credMoved && File.Exists(credBackup))
+                {
+                    File.Move(credBackup, credFile);
+                }
+
+                if (configMoved && File.Exists(configBackup))
+                {
+                    File.Move(configBackup, configFile);
+                }
+
+                // Reset the factory to restore normal operation
+                FallbackCredentialsFactory.Reset();
+            }
+        }
     }
 
     [Fact]
@@ -279,7 +384,7 @@ public class AwsParameterStoreConfigurationSourceTests
 
         // Use reflection to access the private _source field to verify it's the same instance
         var sourceField = typeof(AwsParameterStoreConfigurationProvider)
-            .GetField("_source", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            .GetField("_source", BindingFlags.NonPublic | BindingFlags.Instance);
 
         sourceField.Should().NotBeNull();
         var providerSource = sourceField.GetValue(provider);

@@ -10,6 +10,7 @@ using Xunit;
 // ReSharper disable ClassTooBig
 // ReSharper disable ComplexConditionExpression
 // ReSharper disable NullableWarningSuppressionIsUsed
+#pragma warning disable CS0618 // Type or member is obsolete
 
 namespace FlexKit.Configuration.Providers.Aws.Tests.Sources;
 
@@ -528,22 +529,125 @@ public class AwsSecretsManagerConfigurationProviderTests : IDisposable
 
         providerWithoutReload.Dispose();
     }
+    
+    private static readonly Lock AwsTestLock = new();
 
     [Fact]
     public void Constructor_WithAwsClientCreationFailure_ThrowsInvalidOperationException()
     {
-        // Arrange
-        var source = new AwsSecretsManagerConfigurationSource
+        // Ensure only one AWS-related test runs at a time
+        lock (AwsTestLock)
         {
-            SecretNames = ["test-secret"],
-            AwsOptions = null // This will trigger the fallback to new AWSOptions() which will fail credential resolution
-        };
+            // Store original state
+            var originalEnv = new Dictionary<string, string>
+            {
+                ["AWS_ACCESS_KEY_ID"] = Environment.GetEnvironmentVariable("AWS_ACCESS_KEY_ID")!,
+                ["AWS_SECRET_ACCESS_KEY"] = Environment.GetEnvironmentVariable("AWS_SECRET_ACCESS_KEY")!,
+                ["AWS_SESSION_TOKEN"] = Environment.GetEnvironmentVariable("AWS_SESSION_TOKEN")!,
+                ["AWS_PROFILE"] = Environment.GetEnvironmentVariable("AWS_PROFILE")!,
+                ["AWS_SHARED_CREDENTIALS_FILE"] = Environment.GetEnvironmentVariable("AWS_SHARED_CREDENTIALS_FILE")!,
+                ["AWS_CONFIG_FILE"] = Environment.GetEnvironmentVariable("AWS_CONFIG_FILE")!
+            };
 
-        // Act & Assert
-        var action = () => new AwsSecretsManagerConfigurationProvider(source);
-        action.Should().Throw<InvalidOperationException>()
-            .WithMessage("Failed to create AWS Secrets Manager client. Ensure AWS credentials are properly configured.")
-            .WithInnerException<Amazon.Runtime.AmazonClientException>();
+            var homeDir = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+            var credFile = Path.Combine(homeDir, ".aws", "credentials");
+            var configFile = Path.Combine(homeDir, ".aws", "config");
+            var credBackup = credFile + $".backup-{Guid.NewGuid()}";
+            var configBackup = configFile + $".backup-{Guid.NewGuid()}";
+            bool credMoved = false, configMoved = false;
+
+            try
+            {
+                // 1. Clear environment
+                foreach (var key in originalEnv.Keys)
+                {
+                    Environment.SetEnvironmentVariable(key, null);
+                }
+
+                Environment.SetEnvironmentVariable("AWS_SHARED_CREDENTIALS_FILE", "/nonexistent/credentials");
+                Environment.SetEnvironmentVariable("AWS_CONFIG_FILE", "/nonexistent/config");
+
+                // 2. Move credential files
+                if (File.Exists(credFile))
+                {
+                    File.Move(credFile, credBackup);
+                    credMoved = true;
+                }
+
+                if (File.Exists(configFile))
+                {
+                    File.Move(configFile, configBackup);
+                    configMoved = true;
+                }
+
+                // 3. Force the SDK to re-evaluate credentials
+                Amazon.Runtime.FallbackCredentialsFactory.Reset();
+
+                // Clear the cached credentials using reflection
+                var fallbackType = typeof(Amazon.Runtime.FallbackCredentialsFactory);
+                var cachedCredsField =
+                    fallbackType.GetField("cachedCredentials", BindingFlags.Static | BindingFlags.NonPublic);
+                cachedCredsField?.SetValue(null, null);
+
+                // Clear any ClientFactory cache
+                var clientFactoryType = typeof(Amazon.Extensions.NETCore.Setup.AWSOptions).Assembly
+                    .GetType("Amazon.Extensions.NETCore.Setup.ClientFactory");
+                if (clientFactoryType != null)
+                {
+                    var fields = clientFactoryType.GetFields(BindingFlags.Static | BindingFlags.NonPublic);
+                    foreach (var field in fields)
+                    {
+                        if (field.Name.Contains("cache", StringComparison.OrdinalIgnoreCase))
+                        {
+                            try
+                            {
+                                field.SetValue(null, null);
+                            }
+                            catch
+                            {
+                                // ignored
+                            }
+                        }
+                    }
+                }
+
+                // 4. Arrange
+                var source = new AwsSecretsManagerConfigurationSource
+                {
+                    SecretNames = ["test-secret"],
+                    AwsOptions =
+                        null // This will trigger the fallback to new AWSOptions() which will fail credential resolution
+                };
+
+                // Act & Assert
+                var action = () => new AwsSecretsManagerConfigurationProvider(source);
+                action.Should().Throw<InvalidOperationException>()
+                    .WithMessage(
+                        "Failed to create AWS Secrets Manager client. Ensure AWS credentials are properly configured.")
+                    .WithInnerException<Amazon.Runtime.AmazonClientException>();
+            }
+            finally
+            {
+                // Restore everything
+                foreach (var kvp in originalEnv)
+                {
+                    Environment.SetEnvironmentVariable(kvp.Key, kvp.Value);
+                }
+
+                if (credMoved && File.Exists(credBackup))
+                {
+                    File.Move(credBackup, credFile);
+                }
+
+                if (configMoved && File.Exists(configBackup))
+                {
+                    File.Move(configBackup, configFile);
+                }
+
+                // Reset the factory to restore normal operation
+                Amazon.Runtime.FallbackCredentialsFactory.Reset();
+            }
+        }
     }
 
     [Fact]
