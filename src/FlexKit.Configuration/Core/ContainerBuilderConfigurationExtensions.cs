@@ -6,6 +6,7 @@
 using Autofac;
 using JetBrains.Annotations;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace FlexKit.Configuration.Core;
 
@@ -340,5 +341,54 @@ public static class ContainerBuilderConfigurationExtensions
         }
 
         return builder;
+    }
+
+    /// <summary>
+    /// Configures a strongly typed configuration object for dependency injection,
+    /// binding it to the configuration root.
+    /// </summary>
+    /// <typeparam name="T">The configuration class type to bind. Must have a parameterless constructor.</typeparam>
+    /// <param name="services">The service collection to register the configuration object with.</param>
+    /// <returns>The same service collection instance for method chaining.</returns>
+    [UsedImplicitly]
+    public static IServiceCollection ConfigureFlexKit<T>(
+        this IServiceCollection services)
+        where T : class, new()
+    {
+        ArgumentNullException.ThrowIfNull(services);
+
+        services.AddSingleton<T>(serviceProvider =>
+        {
+            var configuration = serviceProvider.GetRequiredService<IConfiguration>();
+            return configuration.Get<T>() ?? new T();
+        });
+
+        return services;
+    }
+
+    /// <summary>
+    /// Configures a strongly typed configuration object for dependency injection,
+    /// binding it to the configuration section specified by the provided section path.
+    /// </summary>
+    /// <typeparam name="T">The configuration class type to bind. Must have a parameterless constructor.</typeparam>
+    /// <param name="services">The service collection to register the configuration object with.</param>
+    /// <param name="sectionPath">The path of the configuration section to bind the object to.</param>
+    /// <returns>The same service collection instance for method chaining.</returns>
+    [UsedImplicitly]
+    public static IServiceCollection ConfigureFlexKit<T>(
+        this IServiceCollection services,
+        string sectionPath)
+        where T : class, new()
+    {
+        ArgumentNullException.ThrowIfNull(services);
+        ArgumentException.ThrowIfNullOrWhiteSpace(sectionPath);
+
+        services.AddSingleton<T>(serviceProvider =>
+        {
+            var configuration = serviceProvider.GetRequiredService<IConfiguration>();
+            return configuration.GetSection(sectionPath).Get<T>() ?? new T();
+        });
+
+        return services;
     }
 }

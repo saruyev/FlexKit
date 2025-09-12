@@ -14,6 +14,7 @@ using Xunit;
 
 namespace FlexKit.Configuration.Providers.Aws.Tests.Sources;
 
+[Collection("AwsCredentialTests")]
 public class AwsSecretsManagerConfigurationProviderTests : IDisposable
 {
     private readonly IAmazonSecretsManager _mockSecretsClient;

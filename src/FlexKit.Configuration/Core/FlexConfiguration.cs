@@ -295,6 +295,17 @@ public sealed class FlexConfiguration(IConfiguration root) : DynamicObject, IFle
     public IFlexConfig? this[int index] => _root.CurrentConfig(index.ToString(CultureInfo.InvariantCulture));
 
     /// <summary>
+    /// Retrieves a subsection of the configuration hierarchy based on the specified key.
+    /// This method is used to navigate deeper into the configuration structure.
+    /// </summary>
+    /// <param name="key">The key identifying the configuration subsection to retrieve.</param>
+    /// <returns>
+    /// The configuration subsection corresponding to the provided key if found;
+    /// otherwise, null if the key is empty or not found.
+    /// </returns>
+    public IFlexConfig? GetSection(string key) => !string.IsNullOrEmpty(key.Trim()) ? _root.CurrentConfig(key) : null;
+
+    /// <summary>
     /// Attempts to convert the configuration value to the specified type.
     /// This method is called by the .NET dynamic runtime when explicit type conversion
     /// is requested on a dynamic FlexConfiguration object.

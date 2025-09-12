@@ -26,6 +26,7 @@ namespace FlexKit.Configuration.Providers.Aws.Tests.Sources;
 ///   &lt;InternalsVisibleTo Include="FlexKit.Configuration.Providers.Aws.Tests" /&gt;
 /// &lt;/ItemGroup&gt;
 /// </summary>
+[Collection("AwsCredentialTests")]
 public class AwsParameterStoreConfigurationProviderTests : IDisposable
 {
     private readonly IAmazonSimpleSystemsManagement _mockSsmClient;

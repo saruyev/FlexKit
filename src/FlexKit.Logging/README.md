@@ -536,6 +536,173 @@ var host = Host.CreateDefaultBuilder(args)
 4. **Environment-Specific**: Use different configurations per environment
 5. **Performance Tuning**: Use `[NoLog]` for high-frequency, non-business-critical methods
 
+## Log Suppression Configuration
+
+FlexKit.Logging provides powerful log suppression capabilities through the `SuppressedLogLevel` and `SuppressedCategories` properties in the `LoggingConfig` class. These settings allow you to filter out unwanted log entries from specific categories or below certain log levels, helping to reduce noise and improve performance.
+
+### How It Works
+
+The log suppression is implemented in the `AddFiltersForProvider` method (MelProviderFactory.cs:344-347), where filters are applied to each logging provider to suppress logs from specified categories at or below the configured log level.
+
+### Configuration Properties
+
+#### SuppressedLogLevel
+Controls the minimum log level for suppression. Any log entries at or below this level from suppressed categories will be filtered out.
+
+- **Type**: `Microsoft.Extensions.Logging.LogLevel`
+- **Default**: `LogLevel.None` (no suppression by log level)
+- **Available Values**: `Trace`, `Debug`, `Information`, `Warning`, `Error`, `Critical`, `None`
+
+#### SuppressedCategories
+Specifies which logging categories should be suppressed. Categories are typically namespace prefixes or logger names.
+
+- **Type**: `List<string>`
+- **Default**: `["Microsoft", "System", "FlexKit"]`
+- **Purpose**: Prevents noisy framework logs from cluttering your application logs
+
+### Configuration Examples
+
+#### Example 1: Basic Suppression (appsettings.json)
+```json
+{
+  "FlexKit": {
+    "Logging": {
+      "SuppressedLogLevel": "Information",
+      "SuppressedCategories": [
+        "Microsoft",
+        "System", 
+        "FlexKit",
+        "Autofac"
+      ]
+    }
+  }
+}
+```
+
+This configuration suppresses all logs at `Information` level and below from Microsoft, System, FlexKit, and Autofac components.
+
+#### Example 2: Development Environment - Minimal Suppression
+```json
+{
+  "FlexKit": {
+    "Logging": {
+      "SuppressedLogLevel": "Debug",
+      "SuppressedCategories": [
+        "Microsoft.Hosting",
+        "Microsoft.AspNetCore.Hosting",
+        "System.Net.Http"
+      ]
+    }
+  }
+}
+```
+
+In development, you might want to see most logs but suppress only the noisiest categories while allowing Debug level and above.
+
+#### Example 3: Production Environment - Aggressive Suppression
+```json
+{
+  "FlexKit": {
+    "Logging": {
+      "SuppressedLogLevel": "Warning",
+      "SuppressedCategories": [
+        "Microsoft",
+        "System",
+        "FlexKit",
+        "Autofac",
+        "Microsoft.EntityFrameworkCore",
+        "Microsoft.AspNetCore",
+        "Microsoft.Extensions"
+      ]
+    }
+  }
+}
+```
+
+For production, suppress all logs at `Warning` level and below from common framework categories to focus on application-specific logs and errors.
+
+#### Example 4: Programmatic Configuration
+```csharp
+public void ConfigureServices(IServiceCollection services)
+{
+    services.Configure<LoggingConfig>(config =>
+    {
+        config.SuppressedLogLevel = LogLevel.Information;
+        config.SuppressedCategories = new List<string>
+        {
+            "Microsoft",
+            "System",
+            "FlexKit",
+            "MyApp.Diagnostics"  // Suppress your own diagnostic categories
+        };
+    });
+}
+```
+
+#### Example 5: Environment-Specific Configuration
+```json
+{
+  "FlexKit": {
+    "Logging": {
+      "SuppressedLogLevel": "Debug",
+      "SuppressedCategories": [
+        "Microsoft.Hosting.Lifetime",
+        "Microsoft.AspNetCore.Routing",
+        "Microsoft.AspNetCore.StaticFiles"
+      ]
+    }
+  },
+  
+  "Production": {
+    "FlexKit": {
+      "Logging": {
+        "SuppressedLogLevel": "Warning", 
+        "SuppressedCategories": [
+          "Microsoft",
+          "System",
+          "FlexKit"
+        ]
+      }
+    }
+  }
+}
+```
+
+### Best Practices
+
+1. **Start Conservative**: Begin with minimal suppression and add categories as needed
+2. **Environment-Specific**: Use different suppression levels for different environments
+3. **Monitor Impact**: Ensure you're not suppressing important error logs
+4. **Category Precision**: Use specific category names rather than broad wildcards when possible
+5. **Log Level Alignment**: Align `SuppressedLogLevel` with your monitoring needs
+
+### Common Categories to Suppress
+
+```json
+{
+  "SuppressedCategories": [
+    "Microsoft.Hosting.Lifetime",           // Application startup/shutdown
+    "Microsoft.AspNetCore.Hosting.Diagnostics", // Request diagnostics
+    "Microsoft.AspNetCore.Routing",         // Route matching
+    "Microsoft.AspNetCore.StaticFiles",     // Static file serving
+    "Microsoft.EntityFrameworkCore.Database.Command", // EF Core SQL
+    "Microsoft.EntityFrameworkCore.Infrastructure",   // EF Core internals
+    "System.Net.Http.HttpClient",           // HTTP client requests
+    "Autofac.Core.Registration",            // DI container registration
+    "FlexKit.Logging"                       // FlexKit's own logging
+  ]
+}
+```
+
+### Performance Impact
+
+Log suppression is applied at the provider level, meaning suppressed logs are filtered out early in the logging pipeline, providing:
+
+- **Reduced Memory Usage**: Fewer log objects created and processed
+- **Improved Performance**: Less string formatting and I/O operations  
+- **Cleaner Logs**: Focus on application-specific logging events
+- **Lower Storage Costs**: Reduced log volume in production systems
+
 ## Formatting & Templates
 
 FlexKit.Logging provides five powerful formatters and a comprehensive template system for customizing log output. All template variables from the `LogEntry` class are available for use in templates.
@@ -593,7 +760,7 @@ public string ProcessPayment(decimal amount) => $"Payment: {amount}";
 
 **Output Example:**
 ```
-Method PaymentService.ProcessPayment(100.50) → Payment: 100.50 | Duration: 450ms
+Method ProcessPayment completed in 2.57ms | Input: [{"name":"request","type":"PaymentRequest","value":{"Amount":100.50,"Currency":"USD"}}] | Output: {"Success":true,"TransactionId":"TXN-638931378344882730"}
 ```
 
 ### 2. Json Formatter
@@ -625,7 +792,30 @@ public PaymentResult ProcessPayment(PaymentData data) => new() { Success = true 
 
 **Output Example:**
 ```json
-{"method_name": "ProcessPayment", "execution_time_ms": 450, "success": true, "input_parameters": {"amount": 100.50}, "output_value": {"Success": true}}
+{
+  "id": "44c51c1f-6850-4453-b79a-62aca9a1d102",
+  "method_name": "ProcessPayment",
+  "type_name": "FlexKitLoggingConsoleApp.IPaymentService",
+  "exception_type": null,
+  "stack_trace": null,
+  "exception_message": null,
+  "activity_id": null,
+  "thread_id": 1,
+  "input_parameters": [
+    {
+      "name": "request",
+      "type": "PaymentRequest",
+      "value": {"amount": 100.50, "currency": "USD"}
+    }
+  ],
+  "output_value": {
+    "success": true,
+    "transaction_id": "TXN-638931378087797390"
+  },
+  "timestamp": "2025-09-10T21:50:08.7773179+00:00",
+  "execution_time_ms": 2.87,
+  "duration_seconds": 0.003
+}
 ```
 
 ### 3. CustomTemplate Formatter
@@ -695,7 +885,7 @@ public PaymentResult ProcessPayment(PaymentData data) => new() { Success = true 
 
 **Output Example:**
 ```
-Payment processing: ProcessPayment | META: {"duration": 450, "thread_id": 12, "success": true}
+Method ProcessWithHybridFormatter completed | META: {"MethodName":"ProcessWithHybridFormatter","TypeName":"FlexKitLoggingConsoleApp.IFormattingService","Success":true,"ThreadId":6,"Timestamp":"2025-09-10T21:50:09.1021073+00:00","Id":"98e31580-15a7-4eb7-9e5b-ece7a51e56c4","ActivityId":null,"Duration":0.16,"DurationSeconds":0,"InputParameters":[{"name":"data","type":"String","value":"hybrid data"}],"OutputValue":"Hybrid processed: hybrid data"}
 ```
 
 ### 5. SuccessError Formatter
@@ -728,12 +918,12 @@ public PaymentResult ProcessPayment(PaymentData data)
 
 **Success Output:**
 ```
-💰 PAYMENT: ProcessPayment completed in 450ms → {"Success": true}
+✅ Method ProcessPayment completed successfully in 2.77ms | Input: [{"name":"request","type":"PaymentRequest","value":{"Amount":100.50,"Currency":"USD"}}] | Output: {"Success":true,"TransactionId":"TXN-638931378575379730"}
 ```
 
 **Error Output:**
 ```
-💥 PAYMENT FAILED: ProcessPayment | ArgumentException: Invalid amount
+❌ Method ProcessWithException failed: ArgumentException - Invalid data provided (after 0.48ms) | Input: [{"name":"data","type":"String","value":"invalid"}]
 ```
 
 ### Manual Logging with Formatters
@@ -1318,6 +1508,153 @@ FlexKit determines mask replacement text through this hierarchy:
   "MaskPropertyPatterns": ["Email", "PhoneNumber", "SocialSecurityNumber", "TaxId"]
 }
 ```
+
+### Real-World Console Application Examples
+
+The following examples show actual output from a FlexKit.Logging console application demonstrating various formatting, masking, and configuration scenarios.
+
+#### Complete Application Output with Json Formatter
+
+Here's the actual output when running with `DefaultFormatter: "Json"`:
+
+**Automatic Interception (Zero Configuration):**
+```json
+{
+  "id": "763e5e02-7611-4e75-ad4f-3dffc77ed4bb",
+  "method_name": "ProcessOrder",
+  "type_name": "FlexKitLoggingConsoleApp.IOrderService",
+  "exception_type": null,
+  "activity_id": null,
+  "thread_id": 1,
+  "input_parameters": [
+    {"name": "orderId", "type": "String", "value": "ORDER-001"}
+  ],
+  "output_value": null,
+  "timestamp": "2025-09-10T21:50:08.7149954+00:00",
+  "execution_time_ms": 52.9,
+  "duration_seconds": 0.053
+}
+```
+
+**Data Masking in Action:**
+```json
+{
+  "id": "b029a62c-af2b-49fe-9683-65a848b701e0",
+  "method_name": "CreateUser",
+  "type_name": "FlexKitLoggingConsoleApp.IUserService",
+  "input_parameters": [
+    {"name": "username", "type": "String", "value": "john_doe"},
+    {"name": "email", "type": "String", "value": "[PII_REMOVED]"},
+    {"name": "phoneNumber", "type": "String", "value": "[PII_REMOVED]"}
+  ],
+  "timestamp": "2025-09-10T21:50:08.7852494+00:00",
+  "execution_time_ms": 0.35
+}
+```
+
+**Exception Handling:**
+```json
+{
+  "id": "2fbdfdca-5baa-4ebf-804d-e8e6427af3f2",
+  "method_name": "ProcessWithException",
+  "type_name": "FlexKitLoggingConsoleApp.IErrorService",
+  "exception_type": "ArgumentException",
+  "exception_message": "Invalid data provided",
+  "stack_trace": "   at FlexKitLoggingConsoleApp.ErrorService.ProcessWithException(String data) in /Users/michaels/RiderProjects/FlexKit/samples/FlexKitLoggingConsoleApp/Program.cs:line 397",
+  "input_parameters": [
+    {"name": "data", "type": "String", "value": "invalid"}
+  ],
+  "timestamp": "2025-09-10T21:50:09.1042037+00:00",
+  "execution_time_ms": 0.4
+}
+```
+
+#### Formatter Comparison with Same Method
+
+**StandardStructured Formatter:**
+```
+Method ProcessPayment completed in 2.57ms | Input: [{"name":"request","type":"PaymentRequest","value":{"Amount":100.50,"Currency":"USD"}}] | Output: {"Success":true,"TransactionId":"TXN-638931378344882730"}
+```
+
+**SuccessError Formatter:**
+```
+✅ Method ProcessPayment completed successfully in 2.77ms | Input: [{"name":"request","type":"PaymentRequest","value":{"Amount":100.50,"Currency":"USD"}}] | Output: {"Success":true,"TransactionId":"TXN-638931378575379730"}
+```
+
+**CustomTemplate Formatter (Default Template):**
+```
+Method FlexKitLoggingConsoleApp.IPaymentService.ProcessPayment executed with success: True
+```
+
+**Hybrid Formatter:**
+```
+Method ProcessPayment completed | META: {"MethodName":"ProcessPayment","TypeName":"FlexKitLoggingConsoleApp.IPaymentService","Success":true,"ThreadId":1,"Duration":3.5,"InputParameters":[{"name":"request","type":"PaymentRequest","value":{"amount":100.50,"currency":"USD"}}],"OutputValue":{"success":true,"transaction_id":"TXN-638931377516927600"}}
+```
+
+#### Manual Logging with Distributed Tracing
+
+**Complex Workflow with Activity Tracking:**
+```json
+{
+  "id": "c46cbbee-b4e8-4aa7-a9dc-e601c738e15a",
+  "method_name": "ProcessComplexWorkflowAsync",
+  "type_name": "FlexKitLoggingConsoleApp.ComplexService",
+  "activity_id": "00-f8e0c06f191131755766ed7b68f9b302-1cc730ed54613eb6-00",
+  "thread_id": 1,
+  "input_parameters": {
+    "request_id": "WF-001",
+    "workflow_type": "Payment",
+    "amount": 1500.75
+  },
+  "output_value": {
+    "success": true,
+    "processed_at": "2025-09-10T21:50:57.853239Z"
+  },
+  "timestamp": "2025-09-10T21:50:57.5502203+00:00",
+  "execution_time_ms": 303.06,
+  "duration_seconds": 0.303
+}
+```
+
+#### Performance Optimization Examples
+
+**Business Critical Method (Logged):**
+```
+✅ Method ProcessBusinessCriticalData completed successfully in 0.2ms | Input: [{"name":"data","type":"String","value":"important data"}]
+```
+
+**High-Frequency Utility Method (NoLog Attribute):**
+```csharp
+[NoLog] // This method generates no log output despite being called 1000 times
+public string GenerateCacheKey(int id) => $"cache:key:{id}";
+```
+
+#### Configuration-Based Masking Results
+
+**Authentication Service with [Mask] Attribute:**
+```json
+{
+  "method_name": "ValidateUser",
+  "input_parameters": [
+    {"name": "username", "type": "String", "value": "admin"},
+    {"name": "password", "type": "String", "value": "***MASKED***"},
+    {"name": "domain", "type": "String", "value": "corporate"}
+  ],
+  "output_value": true
+}
+```
+
+**Type-Level Masking:**
+```json
+{
+  "method_name": "LoadConfig",
+  "input_parameters": [
+    {"name": "config", "type": "SecretConfiguration", "value": "***MASKED***"}
+  ]
+}
+```
+
+These examples demonstrate FlexKit.Logging's comprehensive capabilities in real-world scenarios, showing how different formatters, masking strategies, and configuration options work together to provide production-ready logging with minimal setup.
 
 ## Targeting System
 
@@ -2628,13 +2965,12 @@ FlexKit automatically detects and integrates with standard MEL providers:
 ```csharp
 // Standard .NET hosting setup
 var builder = Host.CreateDefaultBuilder(args)
-    .ConfigureLogging(logging =>
-    {
-        logging.ClearProviders();
-        logging.AddConsole();
-        logging.AddDebug();
-        logging.AddEventSourceLogger();
-    })
+    //.ConfigureLogging(logging => // No additional configuration require
+    //{
+    //    logging.AddConsole();
+    //    logging.AddDebug();
+    //    logging.AddEventSourceLogger();
+    //})
     .AddFlexConfig();  // Automatically uses configured MEL providers
 
 var host = builder.Build();
@@ -2644,7 +2980,9 @@ var host = builder.Build();
 - **Console** - `ILogger` output to console window
 - **Debug** - Output to debug window in development
 - **EventSource** - ETW (Event Tracing for Windows) integration
-- **Custom** - Any other MEL providers registered
+- **EventLog** - logs to EventLog
+- **Azure Application Insights** - logs to Azure Application Insights
+- **Azure WebApp Diagnostics** - logs either to Azure File Logger or to Azure Blob Storage
 
 ### MEL Configuration Integration
 

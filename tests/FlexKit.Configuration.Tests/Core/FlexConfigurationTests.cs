@@ -390,4 +390,114 @@ public class FlexConfigurationTests : UnitTestBase
         // Assert
         result.Should().BeNull();
     }
+
+    [Theory]
+    [AutoData]
+    public void GetSection_WithValidKey_ReturnsFlexConfig(string key)
+    {
+        // Arrange
+        var mockSection = CreateMock<IConfigurationSection>();
+        mockSection.Key.Returns(key);
+
+        _mockConfiguration.GetChildren().Returns([mockSection]);
+
+        // Act
+        var result = _flexConfiguration.GetSection(key);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Configuration.Should().BeSameAs(mockSection);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void GetSection_WithNullOrEmptyKey_ReturnsNull(string? key)
+    {
+        // Act
+        var result = _flexConfiguration.GetSection(key!);
+
+        // Assert
+        result.Should().BeNull();
+    }
+
+    [Theory]
+    [AutoData]
+    public void GetSection_WithNonExistentKey_ReturnsNull(string nonExistentKey)
+    {
+        // Arrange
+        _mockConfiguration.GetChildren().Returns([]);
+
+        // Act
+        var result = _flexConfiguration.GetSection(nonExistentKey);
+
+        // Assert
+        result.Should().BeNull();
+    }
+
+    [Theory]
+    [AutoData]
+    public void GetSection_WithCaseInsensitiveKey_ReturnsFlexConfig(string key)
+    {
+        // Arrange
+        var mockSection = CreateMock<IConfigurationSection>();
+        mockSection.Key.Returns(key.ToUpper());
+
+        _mockConfiguration.GetChildren().Returns([mockSection]);
+
+        // Act
+        var result = _flexConfiguration.GetSection(key.ToLower());
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Configuration.Should().BeSameAs(mockSection);
+    }
+
+    [Fact]
+    public void GetSection_WithValidKey_EnablesChainedAccess()
+    {
+        // Arrange
+        var parentKey = "Parent";
+        var childKey = "Child";
+
+        var mockChildSection = CreateMock<IConfigurationSection>();
+        mockChildSection.Key.Returns(childKey);
+
+        var mockParentSection = CreateMock<IConfigurationSection>();
+        mockParentSection.Key.Returns(parentKey);
+        mockParentSection.GetChildren().Returns([mockChildSection]);
+
+        _mockConfiguration.GetChildren().Returns([mockParentSection]);
+
+        // Act
+        var parentSection = _flexConfiguration.GetSection(parentKey);
+        var childSection = parentSection?.GetSection(childKey);
+
+        // Assert
+        parentSection.Should().NotBeNull();
+        childSection.Should().NotBeNull();
+        childSection.Configuration.Should().BeSameAs(mockChildSection);
+    }
+
+    [Fact]
+    public void GetSection_WithRealisticConfigurationData_WorksCorrectly()
+    {
+        // Arrange
+        var configData = ConfigurationTestDataBuilder.CreateConfigurationDictionary();
+        var databaseKey = "Database";
+
+        var mockDatabaseSection = CreateMock<IConfigurationSection>();
+        mockDatabaseSection.Key.Returns(databaseKey);
+        mockDatabaseSection["CommandTimeout"].Returns(configData["Database:CommandTimeout"]);
+
+        _mockConfiguration.GetChildren().Returns([mockDatabaseSection]);
+
+        // Act
+        var databaseSection = _flexConfiguration.GetSection(databaseKey);
+
+        // Assert
+        databaseSection.Should().NotBeNull();
+        databaseSection.Configuration.Should().BeSameAs(mockDatabaseSection);
+        databaseSection["CommandTimeout"].Should().Be(configData["Database:CommandTimeout"]);
+    }
 }
