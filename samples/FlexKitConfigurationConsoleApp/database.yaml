@@ -1,0 +1,415 @@
+# FlexKit Configuration - Database Configuration
+# This file demonstrates YAML for comprehensive database configuration
+
+# Main Database Connection Configuration
+Database:
+  # Primary connection string (override with environment variables in production)
+  ConnectionString: "Server=yaml-db.demo.com;Database=FlexKitYamlDemo;Integrated Security=true;TrustServerCertificate=true;"
+  
+  # Connection behavior settings
+  Connection:
+    CommandTimeout: 60        # seconds
+    ConnectionTimeout: 30     # seconds
+    MaxRetries: 5
+    RetryDelayMs: 2000       # milliseconds between retries
+    
+    # Connection pooling
+    Pooling:
+      Enabled: true
+      MinPoolSize: 5
+      MaxPoolSize: 100
+      ConnectionLifetime: 300  # seconds
+      ConnectionIdleTimeout: 60 # seconds
+      
+  # Database providers configuration
+  Providers:
+    # Primary production database
+    Primary:
+      Name: "Primary Production Database"
+      Host: "primary-db.yaml-demo.com"
+      Port: 5432
+      Database: "flexkit_production"
+      Username: "app_user"
+      Schema: "public"
+      
+      # SSL configuration
+      Ssl:
+        Mode: "Require"
+        CertificateFile: "/certs/client.crt"
+        KeyFile: "/certs/client.key"
+        CaFile: "/certs/ca.crt"
+        
+      # Performance settings
+      Performance:
+        MaxConnections: 200
+        StatementTimeout: 30000    # milliseconds
+        IdleInTransactionTimeout: 60000 # milliseconds
+        
+      # Backup and maintenance
+      Backup:
+        Enabled: true
+        Schedule: "0 2 * * *"      # Daily at 2 AM
+        RetentionDays: 30
+        CompressionLevel: 6
+        
+    # Read replica for reporting and analytics
+    ReadReplica:
+      Name: "Read Replica Database"
+      Host: "replica-db.yaml-demo.com"
+      Port: 5432
+      Database: "flexkit_production"
+      Username: "readonly_user"
+      ReadOnly: true
+      
+      # Replica-specific settings
+      ReplicationLag:
+        MaxAcceptableLagSeconds: 10
+        MonitoringEnabled: true
+        AlertThreshold: 30        # seconds
+        
+      # Load balancing for read operations
+      LoadBalancing:
+        Enabled: true
+        Weight: 1.0
+        HealthCheckQuery: "SELECT 1"
+        HealthCheckInterval: 30   # seconds
+        
+    # Analytics data warehouse
+    Analytics:
+      Name: "Analytics Data Warehouse"
+      Host: "analytics-db.yaml-demo.com"
+      Port: 5432
+      Database: "flexkit_analytics"
+      Username: "analytics_user"
+      
+      # Data warehouse specific settings
+      DataWarehouse:
+        BatchSize: 10000
+        CompressionEnabled: true
+        PartitioningEnabled: true
+        ColumnStore: true
+        
+      # ETL configuration
+      ETL:
+        Enabled: true
+        Schedule: "0 1 * * *"     # Daily at 1 AM
+        SourceTables:
+          - "users"
+          - "orders"
+          - "products"
+          - "user_sessions"
+          
+    # Testing database
+    Testing:
+      Name: "Test Database"
+      Host: "test-db.yaml-demo.com"
+      Port: 5432
+      Database: "flexkit_test"
+      Username: "test_user"
+      
+      # Test-specific settings
+      Testing:
+        AutoReset: true
+        SeedDataEnabled: true
+        TransactionRollback: true
+        IsolationLevel: "ReadUncommitted"
+
+# Database Migration Configuration
+Migrations:
+  Enabled: true
+  
+  # Migration execution settings
+  Execution:
+    AutoMigrate: false           # Set to true for development only
+    BackupBeforeMigration: true
+    TransactionPerMigration: true
+    ContinueOnError: false
+    
+  # Migration sources
+  Sources:
+    - Path: "Database/Migrations"
+      Pattern: "*.sql"
+      Ordering: "Timestamp"
+      
+  # Schema versioning
+  Versioning:
+    Table: "__MigrationHistory"
+    Schema: "dbo"
+    TrackExecutionTime: true
+    TrackChecksum: true
+
+# Database Monitoring and Health Checks
+Monitoring:
+  # Health check configuration
+  HealthChecks:
+    Enabled: true
+    Interval: 30                # seconds
+    Timeout: 10                 # seconds
+    
+    # Health check queries
+    Queries:
+      Basic: "SELECT 1"
+      Performance: "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public'"
+      Storage: >
+        SELECT 
+          pg_size_pretty(pg_database_size(current_database())) as db_size,
+          pg_size_pretty(pg_total_relation_size('users')) as users_table_size
+        
+    # Alert thresholds
+    Alerts:
+      ResponseTimeMs: 1000      # Alert if queries take longer than 1 second
+      ConnectionCount: 80       # Alert if connection usage > 80%
+      DiskUsagePercent: 90      # Alert if disk usage > 90%
+      ReplicationLagSeconds: 60 # Alert if replication lag > 1 minute
+      
+  # Performance monitoring
+  Performance:
+    Enabled: true
+    
+    # Query performance tracking
+    QueryTracking:
+      Enabled: true
+      SlowQueryThresholdMs: 1000
+      LogSlowQueries: true
+      MaxTrackedQueries: 1000
+      
+    # Index monitoring
+    IndexMonitoring:
+      Enabled: true
+      UnusedIndexThresholdDays: 30
+      MissingIndexDetection: true
+      IndexFragmentationThreshold: 30 # percent
+      
+    # Lock monitoring
+    LockMonitoring:
+      Enabled: true
+      DeadlockDetection: true
+      LongRunningQueryThresholdMinutes: 5
+      BlockingQueryAlert: true
+
+# Database Security Configuration
+Security:
+  # Encryption settings
+  Encryption:
+    EncryptionAtRest: true
+    EncryptionInTransit: true
+    KeyRotationDays: 90
+    
+    # Transparent Data Encryption (TDE)
+    TDE:
+      Enabled: true
+      Algorithm: "AES-256"
+      KeyProvider: "Azure Key Vault"  # or "AWS KMS", "HashiCorp Vault"
+      
+  # Access control
+  AccessControl:
+    # Role-based access control
+    RBAC:
+      Enabled: true
+      DefaultRole: "db_reader"
+      
+      # Predefined roles
+      Roles:
+        db_admin:
+          Permissions: ["ALL"]
+          Tables: ["*"]
+          
+        db_writer:
+          Permissions: ["SELECT", "INSERT", "UPDATE", "DELETE"]
+          Tables: ["users", "orders", "products", "audit_logs"]
+          
+        db_reader:
+          Permissions: ["SELECT"]
+          Tables: ["users", "products", "orders"]
+          ExcludedTables: ["sensitive_data", "audit_logs"]
+          
+        db_analyst:
+          Permissions: ["SELECT"]
+          Tables: ["*"]
+          Views: ["*"]
+          Functions: ["reporting.*"]
+    
+    # Connection security
+    Connection:
+      RequireSSL: true
+      AllowedHosts:
+        - "10.0.0.0/8"      # Internal network
+        - "172.16.0.0/12"   # Private subnet
+        - "192.168.0.0/16"  # Local network
+        
+      # IP whitelist for administrative access
+      AdminWhitelist:
+        - "203.0.113.0/24"  # Office network
+        - "198.51.100.0/24" # VPN network
+        
+  # Audit logging
+  Audit:
+    Enabled: true
+    
+    # What to audit
+    Events:
+      - "LOGIN"
+      - "LOGOUT"
+      - "DDL_CHANGES"      # Data Definition Language changes
+      - "PRIVILEGE_CHANGES"
+      - "DATA_EXPORT"
+      - "FAILED_LOGINS"
+      
+    # Audit storage
+    Storage:
+      Table: "audit_log"
+      Schema: "security"
+      RetentionDays: 365
+      CompressionEnabled: true
+      
+    # Sensitive data tracking
+    SensitiveDataTracking:
+      Enabled: true
+      Tables:
+        - "users"          # Track access to user data
+        - "payment_info"   # Track payment information access
+        - "personal_data"  # Track personal data access
+
+# Database Optimization and Tuning
+Optimization:
+  # Query optimization
+  QueryOptimization:
+    # Automatic statistics updates
+    AutoStats: true
+    StatsUpdateThresholdPercent: 20
+    
+    # Query plan caching
+    PlanCache:
+      Enabled: true
+      MaxSizeMB: 512
+      EvictionPolicy: "LRU"
+      
+    # Parallel query execution
+    Parallelism:
+      MaxDegreeOfParallelism: 4
+      CostThresholdForParallelism: 5
+      
+  # Index optimization
+  IndexOptimization:
+    AutoIndexMaintenance: true
+    
+    # Index rebuild/reorganize thresholds
+    Maintenance:
+      ReorganizeFragmentationThreshold: 10  # percent
+      RebuildFragmentationThreshold: 30     # percent
+      MaintenanceWindow:
+        Start: "02:00"
+        End: "04:00"
+        DaysOfWeek: ["Sunday"]
+        
+  # Memory optimization
+  Memory:
+    # Buffer pool configuration
+    BufferPool:
+      MaxSizeMB: 4096       # 4GB
+      TargetPagesPercent: 85
+      
+    # Query memory grants
+    QueryMemory:
+      MaxServerMemoryMB: 8192
+      MinMemoryPerQueryMB: 1024
+      
+  # Storage optimization
+  Storage:
+    # Data file configuration
+    DataFiles:
+      InitialSizeMB: 1024
+      GrowthMB: 256
+      MaxSizeMB: 51200      # 50GB
+      
+    # Transaction log configuration
+    LogFiles:
+      InitialSizeMB: 512
+      GrowthMB: 128
+      MaxSizeMB: 10240      # 10GB
+      
+    # Tempdb configuration
+    TempDB:
+      NumberOfFiles: 4      # Match CPU cores
+      InitialSizeMB: 1024
+      GrowthMB: 256
+
+# Backup and Recovery Configuration
+BackupRecovery:
+  # Backup strategy
+  Backup:
+    # Full backups
+    Full:
+      Enabled: true
+      Schedule: "0 1 * * 0"     # Weekly on Sunday at 1 AM
+      RetentionWeeks: 12
+      Compression: true
+      Encryption: true
+      
+    # Differential backups
+    Differential:
+      Enabled: true
+      Schedule: "0 1 * * 1-6"   # Daily except Sunday at 1 AM
+      RetentionDays: 30
+      Compression: true
+      
+    # Transaction log backups
+    TransactionLog:
+      Enabled: true
+      Schedule: "*/15 * * * *"  # Every 15 minutes
+      RetentionHours: 48
+      
+    # Backup verification
+    Verification:
+      Enabled: true
+      VerifyAfterBackup: true
+      RestoreVerification: true
+      RestoreVerificationSchedule: "0 3 * * 0"  # Weekly
+      
+  # Recovery settings
+  Recovery:
+    # Recovery model
+    Model: "FULL"             # SIMPLE, FULL, or BULK_LOGGED
+    
+    # Point-in-time recovery
+    PointInTime:
+      Enabled: true
+      MaxRecoveryTimeMinutes: 15
+      
+    # Disaster recovery
+    DisasterRecovery:
+      # Geographic backup location
+      GeoReplication:
+        Enabled: true
+        Region: "us-west-2"
+        SyncFrequencyMinutes: 30
+        
+      # Recovery time and point objectives
+      RTO: 4                  # Recovery Time Objective (hours)
+      RPO: 15                 # Recovery Point Objective (minutes)
+
+# Development and Testing Database Configuration
+Development:
+  # Development-specific settings
+  Settings:
+    EnableQueryLogging: true
+    ShowSqlInExceptions: true
+    EnableSensitiveDataLogging: false  # Never enable in production
+    
+  # Test data management
+  TestData:
+    AutoSeed: true
+    SeedDataPath: "Database/SeedData"
+    RefreshOnStartup: false
+    
+    # Anonymization for development
+    Anonymization:
+      Enabled: true
+      AnonymizePersonalData: true
+      PreserveReferentialIntegrity: true
+      
+  # Database reset and cleanup
+  Cleanup:
+    AutoCleanup: true
+    CleanupSchedule: "0 2 * * *"    # Daily at 2 AM
+    RetainDataDays: 7
