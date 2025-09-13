@@ -9,6 +9,7 @@ using FlexKit.Logging.Log4Net.Core;
 using JetBrains.Annotations;
 using log4net.Core;
 using log4net.Repository;
+using Microsoft.Extensions.Logging;
 using Module = Autofac.Module;
 
 namespace FlexKit.Logging.Log4Net.Detection;
@@ -46,7 +47,7 @@ namespace FlexKit.Logging.Log4Net.Detection;
 /// </para>
 /// </remarks>
 [UsedImplicitly]
-public class Log4NetLoggingModule : Module
+internal sealed class Log4NetLoggingModule : Module
 {
     /// <summary>
     /// Configures the container with Log4Net-based logging services.
@@ -56,6 +57,7 @@ public class Log4NetLoggingModule : Module
     protected override void Load(ContainerBuilder builder)
     {
         RegisterLog4NetComponents(builder);
+        RegisterLoggerFactory(builder);
         RegisterBackgroundLogging(builder);
     }
 
@@ -95,6 +97,43 @@ public class Log4NetLoggingModule : Module
         builder.RegisterType<Log4NetLogWriter>()
             .As<ILogEntryProcessor>()
             .SingleInstance();
+    }
+
+    /// <summary>
+    /// Registers the ILoggerFactory that bridges ASP.NET Core logging to Log4Net.
+    /// This ensures all framework logs (Microsoft.AspNetCore.*, etc.) are routed to Log4Net.
+    /// </summary>
+    /// <param name="builder">The Autofac container builder used to register the logger factory.</param>
+    private static void RegisterLoggerFactory(ContainerBuilder builder)
+    {
+        builder.Register(c =>
+            {
+                var loggingConfig = c.Resolve<LoggingConfig>();
+                var repository = c.Resolve<ILoggerRepository>();
+
+                // Create a logger factory that bridges MEL to Log4Net
+                var factory = LoggerFactory.Create(loggingBuilder =>
+                {
+                    // Clear any default providers
+                    loggingBuilder.ClearProviders();
+                    loggingBuilder.SetMinimumLevel(LogLevel.Trace);
+
+                    // Add the Log4Net provider that bridges to our configured Log4Net
+                    loggingBuilder.AddProvider(new Log4NetLoggerProvider(repository, loggingConfig));
+                });
+
+                // Ensure proper cleanup
+                AppDomain.CurrentDomain.ProcessExit += (_, _) => factory.Dispose();
+
+                return factory;
+            })
+            .As<ILoggerFactory>()
+            .SingleInstance();
+
+        // Register generic ILogger<T> for dependency injection
+        builder.RegisterGeneric(typeof(Logger<>))
+            .As(typeof(ILogger<>))
+            .InstancePerDependency();
     }
 
     /// <summary>

@@ -42,7 +42,7 @@ public class ParameterStoreJsonProcessingSteps(ScenarioContext scenarioContext)
         var fullPath = Path.Combine("TestData", testDataPath);
         _parametersJsonBuilder!.AddParameterStoreFromTestData(fullPath, optional: false, jsonProcessor: true);
         _jsonProcessingEnabled = true;
-        
+
         scenarioContext.Set(_parametersJsonBuilder, "ParametersJsonBuilder");
     }
 
@@ -54,7 +54,7 @@ public class ParameterStoreJsonProcessingSteps(ScenarioContext scenarioContext)
         var fullPath = Path.Combine("TestData", testDataPath);
         _parametersJsonBuilder!.AddParameterStoreFromTestData(fullPath, optional: true, jsonProcessor: true);
         _jsonProcessingEnabled = true;
-        
+
         scenarioContext.Set(_parametersJsonBuilder, "ParametersJsonBuilder");
     }
 
@@ -64,7 +64,7 @@ public class ParameterStoreJsonProcessingSteps(ScenarioContext scenarioContext)
         _parametersJsonBuilder.Should().NotBeNull("Parameters json builder should be established");
 
         var fullPath = Path.Combine("TestData", testDataPath);
-        
+
         // Add some configuration data with a mix of valid and invalid JSON
         var configData = new Dictionary<string, string?>
         {
@@ -73,11 +73,11 @@ public class ParameterStoreJsonProcessingSteps(ScenarioContext scenarioContext)
             ["infrastructure-module:invalid:json"] = "{invalid json structure",
             ["infrastructure-module:valid:setting"] = "normal-value"
         };
-        
+
         _parametersJsonBuilder!.AddInMemoryCollection(configData);
         _parametersJsonBuilder.AddParameterStoreFromTestData(fullPath, optional: true, jsonProcessor: true);
         _jsonProcessingEnabled = true;
-        
+
         scenarioContext.Set(_parametersJsonBuilder, "ParametersJsonBuilder");
     }
 
@@ -101,7 +101,7 @@ public class ParameterStoreJsonProcessingSteps(ScenarioContext scenarioContext)
                 .Take(15) // Log more keys for debugging JSON processing
                 .Select(kvp => $"{kvp.Key} = {kvp.Value}")
                 .ToList();
-            
+
             foreach (var debugKey in allKeys)
             {
                 System.Diagnostics.Debug.WriteLine($"Config loaded: {debugKey}");
@@ -135,7 +135,7 @@ public class ParameterStoreJsonProcessingSteps(ScenarioContext scenarioContext)
         {
             _lastParametersJsonException = ex;
             scenarioContext.Set(ex, "ParametersJsonException");
-            
+
             // In error tolerance mode, we don't fail - we capture the exception
             System.Diagnostics.Debug.WriteLine($"Exception captured with error tolerance: {ex.Message}");
         }
@@ -148,21 +148,21 @@ public class ParameterStoreJsonProcessingSteps(ScenarioContext scenarioContext)
 
         // Test dynamic access to JSON-processed configuration values
         dynamic config = _parametersJsonFlexConfiguration!;
-        
+
         try
         {
             // Test accessing nested database configuration
             var dbHost = config.infrastructure_module.app.config.database.host;
             _parametersJsonValidationResults.Add($"Dynamic access to database.host: {dbHost}");
-            
+
             // Test accessing boolean values
             var sslEnabled = config.infrastructure_module.app.config.database.ssl;
             _parametersJsonValidationResults.Add($"Dynamic access to database.ssl: {sslEnabled}");
-            
+
             // Test accessing cache configuration
             var cacheType = config.infrastructure_module.app.config.cache.type;
             _parametersJsonValidationResults.Add($"Dynamic access to cache.type: {cacheType}");
-            
+
             scenarioContext.Set(_parametersJsonValidationResults, "ParametersJsonValidationResults");
         }
         catch (Exception ex)
@@ -183,7 +183,7 @@ public class ParameterStoreJsonProcessingSteps(ScenarioContext scenarioContext)
 
         var actualValue = _parametersJsonConfiguration![configKey];
         actualValue.Should().Be(expectedValue, $"Configuration key '{configKey}' should have value '{expectedValue}'");
-        
+
         _parametersJsonValidationResults.Add($"✓ {configKey} = {actualValue}");
     }
 
@@ -196,7 +196,7 @@ public class ParameterStoreJsonProcessingSteps(ScenarioContext scenarioContext)
         }
 
         _parametersJsonConfiguration.Should().NotBeNull("Parameters json configuration should be built successfully");
-        
+
         if (_parametersJsonFlexConfiguration != null)
         {
             _parametersJsonFlexConfiguration.Should().NotBeNull("Parameters json FlexConfiguration should be built successfully");
@@ -211,7 +211,7 @@ public class ParameterStoreJsonProcessingSteps(ScenarioContext scenarioContext)
         dynamic config = _parametersJsonFlexConfiguration!;
 
         string current = AwsTestConfigurationBuilder.GetDynamicProperty(config, configPath);
-        
+
         current.Should().NotBeNull($"Dynamic access to '{configPath}' should return a value");
         _parametersJsonValidationResults.Add($"✓ Dynamic access to {configPath} succeeded");
     }
@@ -220,17 +220,17 @@ public class ParameterStoreJsonProcessingSteps(ScenarioContext scenarioContext)
     public void ThenTheParametersJsonModuleConfigurationShouldHaveJsonProcessingEnabled()
     {
         _jsonProcessingEnabled.Should().BeTrue("JSON processing should be enabled");
-        
+
         // Verify that JSON processing actually occurred by checking for flattened keys
         _parametersJsonConfiguration.Should().NotBeNull("Configuration should be built");
-        
+
         var flattenedKeys = _parametersJsonConfiguration!.AsEnumerable()
             .Where(kvp => kvp.Key.Contains(':') && kvp.Key.Split(':').Length > 3)
             .Take(5)
             .ToList();
-            
+
         flattenedKeys.Should().NotBeEmpty("Should have flattened configuration keys from JSON processing");
-        
+
         foreach (var key in flattenedKeys)
         {
             _parametersJsonValidationResults.Add($"✓ JSON flattened key: {key.Key}");
@@ -241,15 +241,15 @@ public class ParameterStoreJsonProcessingSteps(ScenarioContext scenarioContext)
     public void ThenTheParametersJsonModuleConfigurationShouldContainProcessedJsonData()
     {
         _parametersJsonConfiguration.Should().NotBeNull("Configuration should be built");
-        
+
         // Look for evidence of JSON processing - hierarchical keys that would only exist if JSON was processed
         var jsonProcessedKeys = _parametersJsonConfiguration!.AsEnumerable()
-            .Where(kvp => kvp.Key.Contains("infrastructure-module:app:config") || 
+            .Where(kvp => kvp.Key.Contains("infrastructure-module:app:config") ||
                          kvp.Key.Contains("infrastructure-module:services:config"))
             .ToList();
-            
+
         jsonProcessedKeys.Should().NotBeEmpty("Should contain keys that indicate JSON processing occurred");
-        
+
         foreach (var key in jsonProcessedKeys.Take(10))
         {
             _parametersJsonValidationResults.Add($"✓ JSON processed key: {key.Key} = {key.Value}");
@@ -261,14 +261,14 @@ public class ParameterStoreJsonProcessingSteps(ScenarioContext scenarioContext)
     {
         // In error tolerance mode, configuration should still be built even with some invalid JSON
         _parametersJsonConfiguration.Should().NotBeNull("Configuration should be built despite JSON errors");
-        
+
         // Should contain valid configuration data
         var validKeys = _parametersJsonConfiguration!.AsEnumerable()
             .Where(kvp => kvp.Value != null && !kvp.Key.Contains("invalid"))
             .ToList();
-            
+
         validKeys.Should().NotBeEmpty("Should contain valid configuration data despite JSON errors");
-        
+
         _parametersJsonValidationResults.Add($"✓ Gracefully handled errors, {validKeys.Count} valid keys loaded");
     }
 

@@ -123,8 +123,12 @@ public static class ConfigurationExtensions
     /// any properties named "FlexConfiguration" of type IFlexConfig in registered services.
     /// </para>
     /// </remarks>
-    /// <exception cref="ArgumentNullException">Thrown when <paramref name="builder"/> or <paramref name="configure"/> is null.</exception>
-    /// <exception cref="InvalidOperationException">Thrown when configuration building fails due to invalid sources or settings.</exception>
+    /// <exception cref="ArgumentNullException">
+    /// Thrown when <paramref name="builder"/> or <paramref name="configure"/> is null.
+    /// </exception>
+    /// <exception cref="InvalidOperationException">
+    /// Thrown when configuration building fails due to invalid sources or settings.
+    /// </exception>
     /// <example>
     /// <code>
     /// // Basic setup with JSON and environment variables

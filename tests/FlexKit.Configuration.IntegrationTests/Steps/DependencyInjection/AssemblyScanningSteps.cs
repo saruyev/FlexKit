@@ -99,7 +99,7 @@ public class AssemblyScanningSteps(ScenarioContext scenarioContext)
         _testContainerBuilder = TestContainerBuilder.Create(scenarioContext);
         _containerBuilder = new ContainerBuilder();
         _configurationBuilder = TestConfigurationBuilder.Create(scenarioContext);
-        
+
         scenarioContext.Set(_testContainerBuilder, "TestContainerBuilder");
         scenarioContext.Set(_containerBuilder, "ContainerBuilder");
         scenarioContext.Set(_configurationBuilder, "ConfigurationBuilder");
@@ -113,7 +113,7 @@ public class AssemblyScanningSteps(ScenarioContext scenarioContext)
     public void WhenIScanAssembliesInCurrentApplicationDomain()
     {
         _containerBuilder.Should().NotBeNull("Container builder should be initialized");
-        
+
         try
         {
             // Create a minimal configuration to satisfy dependencies
@@ -124,17 +124,17 @@ public class AssemblyScanningSteps(ScenarioContext scenarioContext)
                     ["Application:Mapping:Prefix"] = "FlexKit.Configuration.Core"
                 })
                 .Build();
-                
+
             _containerBuilder!.RegisterInstance(minimalConfig)
                 .As<IConfiguration>()
                 .SingleInstance();
-                
+
             // Use AssemblyExtensions with configuration to exclude test assemblies
             _containerBuilder.RegisterAssembliesFromBaseDirectory([], minimalConfig);
-            
+
             // Store scanned assemblies for verification
             var currentAssemblies = AppDomain.CurrentDomain.GetAssemblies();
-            ScannedAssemblies.AddRange(currentAssemblies.Where(a => 
+            ScannedAssemblies.AddRange(currentAssemblies.Where(a =>
                 a.GetName().Name?.Contains("FlexKit.Configuration.Core") == true));
         }
         catch (Exception ex)
@@ -147,15 +147,15 @@ public class AssemblyScanningSteps(ScenarioContext scenarioContext)
     public void WhenIConfigureAssemblyScanningWithPrefix(string prefix)
     {
         _configurationBuilder.Should().NotBeNull("Configuration builder should be initialized");
-        
+
         // Use a very specific prefix that excludes test assemblies
         var safePrefix = prefix == "FlexKit" ? "FlexKit.Configuration.NonExistent" : prefix;
         _assemblyScanningConfig["Application:Mapping:Prefix"] = safePrefix;
-        
+
         _configuration = _configurationBuilder!
             .AddInMemoryCollection(_assemblyScanningConfig)
             .Build();
-            
+
         scenarioContext.Set(_configuration, "ScanningConfiguration");
     }
 
@@ -164,14 +164,14 @@ public class AssemblyScanningSteps(ScenarioContext scenarioContext)
     {
         _containerBuilder.Should().NotBeNull("Container builder should be initialized");
         _configuration.Should().NotBeNull("Scanning configuration should be set");
-        
+
         try
         {
             // Register IConfiguration first to prevent dependency resolution issues
             _containerBuilder!.RegisterInstance(_configuration!)
                 .As<IConfiguration>()
                 .SingleInstance();
-                
+
             // Instead of using actual assembly scanning (which finds test modules),
             // simulate the assembly scanning behavior by manually registering our test module
             _containerBuilder.RegisterModule(new TestScanningModule());
@@ -186,24 +186,24 @@ public class AssemblyScanningSteps(ScenarioContext scenarioContext)
     public void WhenIConfigureAssemblyScanningWithSpecificNames(Table table)
     {
         _configurationBuilder.Should().NotBeNull("Configuration builder should be initialized");
-        
+
         var index = 0;
         foreach (var row in table.Rows)
         {
             var assemblyName = row["AssemblyName"];
             // Ensure we don't include test assemblies - use a non-existent assembly name
-            var safeAssemblyName = assemblyName.Contains("FlexKit.Configuration") && !assemblyName.Contains("NonExistent") 
-                ? "FlexKit.Configuration.NonExistent" 
+            var safeAssemblyName = assemblyName.Contains("FlexKit.Configuration") && !assemblyName.Contains("NonExistent")
+                ? "FlexKit.Configuration.NonExistent"
                 : assemblyName;
             _assemblyScanningConfig[$"Application:Mapping:Names:{index}"] = safeAssemblyName;
             _filteredAssemblyNames.Add(safeAssemblyName);
             index++;
         }
-        
+
         _configuration = _configurationBuilder!
             .AddInMemoryCollection(_assemblyScanningConfig)
             .Build();
-            
+
         scenarioContext.Set(_configuration, "ScanningConfiguration");
     }
 
@@ -217,7 +217,7 @@ public class AssemblyScanningSteps(ScenarioContext scenarioContext)
     public void WhenIScanAssembliesWithoutSpecificConfiguration()
     {
         _containerBuilder.Should().NotBeNull("Container builder should be initialized");
-        
+
         try
         {
             // Create a minimal configuration
@@ -225,7 +225,7 @@ public class AssemblyScanningSteps(ScenarioContext scenarioContext)
             _containerBuilder!.RegisterInstance(minimalConfig)
                 .As<IConfiguration>()
                 .SingleInstance();
-                
+
             // Simulate assembly scanning behavior without actual scanning
             _containerBuilder.RegisterModule(new TestScanningModule());
         }
@@ -247,7 +247,7 @@ public class AssemblyScanningSteps(ScenarioContext scenarioContext)
     {
         _containerBuilder.Should().NotBeNull("Container builder should be initialized");
         _customScanningModule.Should().NotBeNull("Custom scanning module should be created");
-        
+
         // Manually register the custom module to simulate discovery
         _containerBuilder!.RegisterModule(_customScanningModule!);
     }
@@ -262,14 +262,14 @@ public class AssemblyScanningSteps(ScenarioContext scenarioContext)
     public void WhenIConfigureAssemblyScanningThroughJsonConfig(string jsonConfig)
     {
         _configurationBuilder.Should().NotBeNull("Configuration builder should be initialized");
-        
+
         try
         {
             var configData = ParseJsonToConfigurationData(jsonConfig);
             _configuration = _configurationBuilder!
                 .AddInMemoryCollection(configData)
                 .Build();
-                
+
             scenarioContext.Set(_configuration, "ScanningConfiguration");
         }
         catch (Exception ex)
@@ -288,7 +288,7 @@ public class AssemblyScanningSteps(ScenarioContext scenarioContext)
     public void WhenIConfigureFlexConfigWithAssemblyScanning()
     {
         _containerBuilder.Should().NotBeNull("Container builder should be initialized");
-        
+
         try
         {
             // Create basic configuration for FlexConfig
@@ -298,18 +298,18 @@ public class AssemblyScanningSteps(ScenarioContext scenarioContext)
                 ["Database:Host"] = "localhost",
                 ["Features:EnableScanning"] = "true"
             };
-            
+
             _configuration = _configurationBuilder!
                 .AddInMemoryCollection(flexConfigData)
                 .Build();
-                
+
             _flexConfiguration = _configuration.GetFlexConfiguration();
-            
+
             // Register both IConfiguration and FlexConfig in container
             _containerBuilder!.RegisterInstance(_configuration)
                 .As<IConfiguration>()
                 .SingleInstance();
-                
+
             _containerBuilder.RegisterInstance(_flexConfiguration)
                 .As<IFlexConfig>()
                 .As<dynamic>()
@@ -331,7 +331,7 @@ public class AssemblyScanningSteps(ScenarioContext scenarioContext)
     public void WhenIScanAssembliesWithSomeInvalidAssembliesPresent()
     {
         _containerBuilder.Should().NotBeNull("Container builder should be initialized");
-        
+
         try
         {
             // Create a minimal configuration
@@ -339,7 +339,7 @@ public class AssemblyScanningSteps(ScenarioContext scenarioContext)
             _containerBuilder!.RegisterInstance(minimalConfig)
                 .As<IConfiguration>()
                 .SingleInstance();
-                
+
             // Simulate assembly scanning with error handling
             _containerBuilder.RegisterModule(new TestScanningModule());
         }
@@ -353,9 +353,9 @@ public class AssemblyScanningSteps(ScenarioContext scenarioContext)
     public void WhenIScanMultipleAssembliesInBulk()
     {
         _containerBuilder.Should().NotBeNull("Container builder should be initialized");
-        
+
         _performanceStopwatch.Start();
-        
+
         try
         {
             // Create a minimal configuration
@@ -363,7 +363,7 @@ public class AssemblyScanningSteps(ScenarioContext scenarioContext)
             _containerBuilder!.RegisterInstance(minimalConfig)
                 .As<IConfiguration>()
                 .SingleInstance();
-                
+
             // Simulate bulk assembly scanning
             _containerBuilder.RegisterModule(new TestScanningModule());
             ScannedAssemblies.Add(System.Reflection.Assembly.GetExecutingAssembly());
@@ -383,7 +383,7 @@ public class AssemblyScanningSteps(ScenarioContext scenarioContext)
     public void WhenIMeasureAssemblyDiscoveryPerformance()
     {
         // Performance measurement is already captured in the previous step
-        _performanceStopwatch.ElapsedMilliseconds.Should().BeGreaterThanOrEqualTo(0, 
+        _performanceStopwatch.ElapsedMilliseconds.Should().BeGreaterThanOrEqualTo(0,
             "Performance measurement should be captured");
     }
 
@@ -391,7 +391,7 @@ public class AssemblyScanningSteps(ScenarioContext scenarioContext)
     public void WhenIScanAssembliesFromDependencyContext()
     {
         _containerBuilder.Should().NotBeNull("Container builder should be initialized");
-        
+
         try
         {
             // Create a minimal configuration
@@ -399,7 +399,7 @@ public class AssemblyScanningSteps(ScenarioContext scenarioContext)
             _containerBuilder!.RegisterInstance(minimalConfig)
                 .As<IConfiguration>()
                 .SingleInstance();
-                
+
             // Simulate dependency context scanning without actual assembly scanning
             _containerBuilder.RegisterModule(new TestScanningModule());
         }
@@ -465,7 +465,7 @@ public class AssemblyScanningSteps(ScenarioContext scenarioContext)
     public void WhenIBuildTheContainerWithPerformanceMonitoring()
     {
         var buildStopwatch = Stopwatch.StartNew();
-        
+
         try
         {
             WhenIBuildTheContainerWithModules();
@@ -486,7 +486,7 @@ public class AssemblyScanningSteps(ScenarioContext scenarioContext)
     private void WhenIBuildTheContainerWithModules()
     {
         _containerBuilder.Should().NotBeNull("Container builder should be initialized");
-        
+
         try
         {
             _container = _containerBuilder!.Build();
@@ -515,7 +515,7 @@ public class AssemblyScanningSteps(ScenarioContext scenarioContext)
     public void ThenScannedModulesShouldBeRegisteredInTheContainer()
     {
         _container.Should().NotBeNull("Container should be built");
-        
+
         // Verify that the container has registrations
         var containerRegistrations = _container!.ComponentRegistry.Registrations;
         containerRegistrations.Should().NotBeEmpty("Container should have registrations from scanned modules");
@@ -525,7 +525,7 @@ public class AssemblyScanningSteps(ScenarioContext scenarioContext)
     public void ThenTheContainerShouldContainServicesFromDiscoveredModules()
     {
         _container.Should().NotBeNull("Container should be built");
-        
+
         // This is a general verification that services exist
         var containerRegistrations = _container!.ComponentRegistry.Registrations;
         containerRegistrations.Should().NotBeEmpty("Container should contain discovered services");
@@ -535,10 +535,10 @@ public class AssemblyScanningSteps(ScenarioContext scenarioContext)
     public void ThenOnlyAssembliesMatchingThePrefixShouldBeScanned()
     {
         _configuration.Should().NotBeNull("Scanning configuration should be set");
-        
+
         var prefix = _configuration!["Application:Mapping:Prefix"];
         prefix.Should().NotBeNullOrEmpty("Prefix should be configured");
-        
+
         // Verify configuration-based filtering logic
         var configuredPrefix = _assemblyScanningConfig["Application:Mapping:Prefix"];
         configuredPrefix.Should().NotBeNullOrEmpty("Prefix should be in configuration");
@@ -554,7 +554,7 @@ public class AssemblyScanningSteps(ScenarioContext scenarioContext)
     public void ThenOnlySpecifiedAssembliesShouldBeScanned()
     {
         _filteredAssemblyNames.Should().NotBeEmpty("Specific assembly names should be configured");
-        
+
         // Verify that name-based filtering configuration is applied
         foreach (var assemblyName in _filteredAssemblyNames)
         {
@@ -579,7 +579,7 @@ public class AssemblyScanningSteps(ScenarioContext scenarioContext)
     public void ThenFlexKitAssembliesShouldBeIncludedByDefault()
     {
         _container.Should().NotBeNull("Container should be built with FlexKit assemblies");
-        
+
         // Verify that FlexKit-related registrations exist
         var containerRegistrations = _container!.ComponentRegistry.Registrations;
         containerRegistrations.Should().NotBeEmpty("FlexKit assemblies should contribute registrations");
@@ -590,7 +590,7 @@ public class AssemblyScanningSteps(ScenarioContext scenarioContext)
     {
         _container.Should().NotBeNull("Container should be built");
         _customScanningModule.Should().NotBeNull("Custom scanning module should exist");
-        
+
         // Try to resolve the test service from the custom module
         var isRegistered = _container!.IsRegistered<ITestScanningService>();
         isRegistered.Should().BeTrue("Custom module services should be registered");
@@ -600,7 +600,7 @@ public class AssemblyScanningSteps(ScenarioContext scenarioContext)
     public void ThenServicesFromTheCustomModuleShouldBeRegistered()
     {
         _container.Should().NotBeNull("Container should be built");
-        
+
         if (_container!.IsRegistered<ITestScanningService>())
         {
             var testService = _container.Resolve<ITestScanningService>();
@@ -613,7 +613,7 @@ public class AssemblyScanningSteps(ScenarioContext scenarioContext)
     public void ThenAssemblyFilteringShouldRespectJsonConfiguration()
     {
         _configuration.Should().NotBeNull("JSON configuration should be applied");
-        
+
         // Verify that JSON configuration was parsed correctly
         var prefix = _configuration!["Application:Mapping:Prefix"];
         if (!string.IsNullOrEmpty(prefix))
@@ -626,7 +626,7 @@ public class AssemblyScanningSteps(ScenarioContext scenarioContext)
     public void ThenOnlyAssembliesWithPrefixShouldBeScanned(string prefix)
     {
         _configuration.Should().NotBeNull("Configuration should be set");
-        
+
         var configuredPrefix = _configuration!["Application:Mapping:Prefix"];
         configuredPrefix.Should().Be(prefix, "Configured prefix should match expected value");
     }
@@ -635,12 +635,12 @@ public class AssemblyScanningSteps(ScenarioContext scenarioContext)
     public void ThenFlexConfigShouldBeAvailableFromScanningResults()
     {
         _container.Should().NotBeNull("Container should be built");
-        
+
         if (_container!.IsRegistered<IFlexConfig>())
         {
             var flexConfig = _container.Resolve<IFlexConfig>();
             flexConfig.Should().NotBeNull("FlexConfig should be resolvable");
-            
+
             // Test that we can access a known configuration value
             var appName = flexConfig["Application:Name"];
             appName.Should().Be("Assembly Scanning Test", "FlexConfig should provide access to configuration values");
@@ -656,7 +656,7 @@ public class AssemblyScanningSteps(ScenarioContext scenarioContext)
     public void ThenDynamicConfigurationShouldWorkWithScannedModules()
     {
         _container.Should().NotBeNull("Container should be built");
-        
+
         // Check if a dynamic configuration is registered and resolve it safely
         if (_container!.IsRegistered<dynamic>())
         {
@@ -666,7 +666,7 @@ public class AssemblyScanningSteps(ScenarioContext scenarioContext)
                 // Don't try to access properties on the dynamic object since it might be null
                 // verify that the resolution doesn't throw an exception
                 // The fact that we can resolve it means dynamic registration is working
-                
+
                 // Use a simple assertion that doesn't involve dynamic binding
                 Assert.True(true, "Dynamic configuration resolution completed successfully");
             }
@@ -695,7 +695,7 @@ public class AssemblyScanningSteps(ScenarioContext scenarioContext)
     public void ThenValidAssembliesShouldStillBeProcessed()
     {
         _container.Should().NotBeNull("Container should be built with valid assemblies");
-        
+
         var containerRegistrations = _container!.ComponentRegistry.Registrations;
         containerRegistrations.Should().NotBeEmpty("Valid assemblies should contribute registrations");
     }
@@ -716,7 +716,7 @@ public class AssemblyScanningSteps(ScenarioContext scenarioContext)
     public void ThenAssemblyScanningShouldCompleteWithinReasonableTime()
     {
         _performanceMetrics.Should().NotBeEmpty("Performance metrics should be captured");
-        
+
         var scanningMetric = _performanceMetrics.FirstOrDefault(m => m.Contains("Assembly scanning"));
         if (scanningMetric != null)
         {
@@ -755,7 +755,7 @@ public class AssemblyScanningSteps(ScenarioContext scenarioContext)
     public void ThenCompileTimeDependenciesShouldBeScanned()
     {
         _container.Should().NotBeNull("Container should be built with dependency context scanning");
-        
+
         // Verify that dependency context scanning was effective
         var containerRegistrations = _container!.ComponentRegistry.Registrations;
         containerRegistrations.Should().NotBeEmpty("Dependency context should contribute registrations");
@@ -772,11 +772,11 @@ public class AssemblyScanningSteps(ScenarioContext scenarioContext)
     public void ThenAllDiscoveredModulesShouldBeRegisteredProperly()
     {
         _container.Should().NotBeNull("Container should be built");
-        
+
         var containerRegistrations = _container!.ComponentRegistry.Registrations;
         var registrations = containerRegistrations as IComponentRegistration[] ?? containerRegistrations.ToArray();
         registrations.Should().NotBeEmpty("All discovered modules should be registered");
-        
+
         // Verify that registrations are valid
         foreach (var registration in registrations.Take(5)) // Check the first few registrations
         {

@@ -25,7 +25,7 @@ public class LocalStackContainerHelper : IDisposable
     private const string LocalStackImage = "localstack/localstack:latest";
     private const string HealthEndpoint = "/_localstack/health";
     private const string InfrastructureModulePrefix = "infrastructure_module";
-    
+
     private readonly ILogger<LocalStackContainerHelper> _logger;
     private IContainer? _container;
     private INetwork? _network;
@@ -35,7 +35,7 @@ public class LocalStackContainerHelper : IDisposable
     /// Gets the LocalStack container endpoint URL.
     /// </summary>
     public string EndpointUrl => $"http://localhost:{GetMappedPort()}";
-    
+
     /// <summary>
     /// Gets whether the LocalStack container is currently running.
     /// </summary>
@@ -50,7 +50,7 @@ public class LocalStackContainerHelper : IDisposable
     {
         var scenarioContext1 = scenarioContext;
         _logger = logger ?? CreateDefaultLogger();
-        
+
         // Register for cleanup if scenario context is available - cast to IDisposable
         if (scenarioContext1 != null)
         {
@@ -119,7 +119,7 @@ public class LocalStackContainerHelper : IDisposable
 
             _logger.LogInformation($"{InfrastructureModulePrefix}: Starting LocalStack container...");
             await _container.StartAsync(cancellationToken);
-            
+
             _logger.LogInformation($"{InfrastructureModulePrefix}: LocalStack container is running at {EndpointUrl}");
         }
         catch (Exception ex)
@@ -176,7 +176,7 @@ public class LocalStackContainerHelper : IDisposable
     public AWSOptions CreateAwsOptions(RegionEndpoint? region = null)
     {
         EnsureRunning();
-        
+
         var awsOptions = new AWSOptions
         {
             Credentials = new AnonymousAWSCredentials(),
@@ -184,7 +184,7 @@ public class LocalStackContainerHelper : IDisposable
         };
 
         _logger.LogInformation($"{InfrastructureModulePrefix}: Created AWS options for LocalStack with anonymous credentials and region {awsOptions.Region.SystemName}");
-        
+
         // Service endpoint configuration will be handled per-client
         return awsOptions;
     }
@@ -197,12 +197,12 @@ public class LocalStackContainerHelper : IDisposable
     public IAmazonSimpleSystemsManagement CreateParameterStoreClient(RegionEndpoint? region = null)
     {
         EnsureRunning();
-        
+
         var targetRegion = region ?? RegionEndpoint.USEast1;
         var credentials = new AnonymousAWSCredentials();
-        
+
         _logger.LogInformation($"{InfrastructureModulePrefix}: Creating Parameter Store client for LocalStack at {EndpointUrl}");
-        
+
         // Try an explicit configuration approach
         var config = new AmazonSimpleSystemsManagementConfig
         {
@@ -212,16 +212,16 @@ public class LocalStackContainerHelper : IDisposable
             MaxErrorRetry = 0, // Disable retries for faster failure
             Timeout = TimeSpan.FromSeconds(30)
         };
-        
+
         _logger.LogInformation($"{InfrastructureModulePrefix}: Config ServiceURL set to: {config.ServiceURL}");
         _logger.LogInformation($"{InfrastructureModulePrefix}: Config UseHttp set to: {config.UseHttp}");
         _logger.LogInformation($"{InfrastructureModulePrefix}: Config Region set to: {config.RegionEndpoint?.SystemName}");
-        
+
         var client = new AmazonSimpleSystemsManagementClient(credentials, config);
-        
+
         // Verify the configuration after client creation
         _logger.LogInformation($"{InfrastructureModulePrefix}: Final client ServiceURL: {client.Config.ServiceURL}");
-        
+
         return client;
     }
 
@@ -233,12 +233,12 @@ public class LocalStackContainerHelper : IDisposable
     public IAmazonSecretsManager CreateSecretsManagerClient(RegionEndpoint? region = null)
     {
         EnsureRunning();
-        
+
         var targetRegion = region ?? RegionEndpoint.USEast1;
         var credentials = new AnonymousAWSCredentials();
-        
+
         _logger.LogInformation($"{InfrastructureModulePrefix}: Creating Secrets Manager client for LocalStack at {EndpointUrl}");
-        
+
         // Try an explicit configuration approach
         var config = new AmazonSecretsManagerConfig
         {
@@ -248,14 +248,14 @@ public class LocalStackContainerHelper : IDisposable
             MaxErrorRetry = 0, // Disable retries for faster failure
             Timeout = TimeSpan.FromSeconds(30)
         };
-        
+
         _logger.LogInformation($"{InfrastructureModulePrefix}: Config ServiceURL set to: {config.ServiceURL}");
-        
+
         var client = new AmazonSecretsManagerClient(credentials, config);
-        
+
         // Verify the configuration after client creation
         _logger.LogInformation($"{InfrastructureModulePrefix}: Final client ServiceURL: {client.Config.ServiceURL}");
-        
+
         return client;
     }
 

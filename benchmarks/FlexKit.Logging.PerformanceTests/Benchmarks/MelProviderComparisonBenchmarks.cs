@@ -22,14 +22,14 @@ public class MelProviderComparisonBenchmarks
     {
         // Pure MEL setup
         var nativeHost = Host.CreateDefaultBuilder()
-            .ConfigureServices(services => 
+            .ConfigureServices(services =>
             {
                 services.AddLogging(builder => builder.AddConsole());
             })
             .Build();
         _nativeMelServices = nativeHost.Services;
         _nativeMelLogger = _nativeMelServices.GetService<ILogger<MelProviderComparisonBenchmarks>>()!;
-        
+
 
         // FlexKit + MEL setup (no external providers, falls back to MEL)
         var flexKitHost = Host.CreateDefaultBuilder()
@@ -40,7 +40,7 @@ public class MelProviderComparisonBenchmarks
         _flexKitAsyncService = _flexKitMelServices.GetService<IAsyncLogBothService>()!;
         _complexTestData = new ComplexTestData("test complex", 42)
         {
-            Properties = new() { {"key1", "value1"}, {"key2", 123} }
+            Properties = new() { { "key1", "value1" }, { "key2", 123 } }
         };
     }
 
@@ -74,7 +74,7 @@ public class MelProviderComparisonBenchmarks
     [Benchmark]
     public void Native_MEL_Exception_Scenario()
     {
-        try 
+        try
         {
             throw new InvalidOperationException("Test exception");
         }
@@ -84,7 +84,7 @@ public class MelProviderComparisonBenchmarks
         }
     }
 
-// FlexKit comparisons
+    // FlexKit comparisons
     [Benchmark]
     public string FlexKit_MEL_Auto_Simple()
     {
@@ -97,7 +97,7 @@ public class MelProviderComparisonBenchmarks
         return _flexKitService.ProcessComplexData(_complexTestData);
     }
 
-    [Benchmark]  
+    [Benchmark]
     public async Task<string> FlexKit_MEL_Auto_Async()
     {
         return await _flexKitAsyncService.ProcessDataAsync("test");

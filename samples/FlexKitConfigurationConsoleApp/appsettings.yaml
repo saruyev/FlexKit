@@ -1,0 +1,394 @@
+# FlexKit Configuration Console App - Main YAML Configuration
+# This file demonstrates comprehensive YAML configuration features
+
+# Application metadata with nested structures
+Application:
+  Name: "FlexKit Configuration Console App (YAML)"
+  Version: "2.0.0"
+  Environment: "Production"
+  
+  # Assembly mapping for FlexKit
+  Mapping:
+    Prefix: "FlexKitConfigurationConsoleApp"
+    Names:
+      - "FlexKit"
+      - "FlexKitConfigurationConsoleApp"
+
+  # Multi-line string demonstration
+  Description: |
+    This is a comprehensive demonstration of FlexKit.Configuration
+    with YAML file support. YAML provides excellent readability
+    and supports comments, multi-line strings, and complex structures.
+    
+    Features covered:
+    - Hierarchical configuration
+    - Arrays and collections  
+    - Multi-line strings
+    - Comments and documentation
+    - Type-safe configuration binding
+
+  # Features and toggles
+  Features:
+    EnableYamlSupport: true
+    EnableDynamicAccess: true
+    EnableStronglyTypedConfig: true
+    MaxConcurrentOperations: 1000
+    
+    # Complex nested feature configuration
+    AdvancedFeatures:
+      Caching:
+        Enabled: true
+        DefaultTtlMinutes: 30
+        MaxEntries: 10000
+        EvictionPolicy: "LRU"
+      
+      Monitoring:
+        Enabled: true
+        MetricsInterval: 60  # seconds
+        HealthCheckEndpoint: "/health"
+        DetailedLogging: false
+
+# Database configuration with multiple providers
+Database:
+  # Primary connection
+  ConnectionString: "Server=yaml-server;Database=FlexKitDemo_Yaml;Integrated Security=true;"
+  CommandTimeout: 45
+  MaxRetries: 5
+  ConnectionPoolSize: 20
+  
+  # Connection providers with hierarchical structure
+  Providers:
+    Primary:
+      Name: "Primary Database"
+      Host: "db-primary.yaml-demo.com"
+      Port: 5432
+      Database: "flexkit_primary"
+      Username: "yaml_user"
+      # Note: In real applications, use environment variables for sensitive data
+      SslMode: "Required"
+      ConnectionTimeout: 30
+      
+    Secondary:
+      Name: "Secondary Database"  
+      Host: "db-secondary.yaml-demo.com"
+      Port: 5433
+      Database: "flexkit_secondary"
+      Username: "yaml_readonly"
+      SslMode: "Preferred"
+      ConnectionTimeout: 15
+      ReadOnly: true
+    
+    Analytics:
+      Name: "Analytics Warehouse"
+      Host: "analytics.yaml-demo.com"
+      Port: 5432
+      Database: "flexkit_analytics"
+      Username: "analytics_user"
+      SslMode: "Required"
+      MaxConnections: 5
+
+# External API configurations
+ExternalApis:
+  PaymentGateway:
+    Name: "Payment Processing API"
+    BaseUrl: "https://payments.yaml-demo.com/api/v2"
+    Timeout: 30000  # milliseconds
+    RetryCount: 3
+    RetryDelayMs: 1000
+    
+    # API key configuration (use environment variables in production)
+    Authentication:
+      Type: "Bearer"
+      TokenEndpoint: "https://auth.yaml-demo.com/token"
+      ClientId: "yaml-demo-client"
+      Scope: "payments:read payments:write"
+    
+    # Rate limiting configuration
+    RateLimit:
+      RequestsPerMinute: 1000
+      BurstLimit: 50
+      
+    # Circuit breaker settings
+    CircuitBreaker:
+      FailureThreshold: 5
+      RecoveryTimeoutMs: 30000
+      MonitoringPeriodMs: 60000
+  
+  NotificationService:
+    Name: "Notification Service API"
+    BaseUrl: "https://notifications.yaml-demo.com/v1"
+    Timeout: 15000
+    RetryCount: 2
+    
+    # Webhook configuration
+    Webhooks:
+      Enabled: true
+      BaseUrl: "https://myapp.yaml-demo.com/webhooks"
+      Secret: "webhook-secret-key"  # Use environment variables in production
+      
+    # Channel-specific configuration
+    Channels:
+      Email:
+        Provider: "SendGrid"
+        DefaultFromAddress: "noreply@yaml-demo.com"
+        DefaultFromName: "FlexKit Demo App"
+        
+      SMS:
+        Provider: "Twilio"
+        DefaultFromNumber: "+1-555-YAML-00"
+        
+      Push:
+        Provider: "Firebase"
+        BatchSize: 1000
+
+# Server configuration as YAML array
+Servers:
+  - Name: "YAML Web Server 1"
+    Host: "web1.yaml-demo.com"
+    Port: 8080
+    IsActive: true
+    Environment: "Production"
+    Tags: ["web", "primary", "yaml"]
+    Resources:
+      Cpu: "4 cores"
+      Memory: "8GB"
+      Storage: "100GB SSD"
+    
+  - Name: "YAML Web Server 2"
+    Host: "web2.yaml-demo.com" 
+    Port: 8081
+    IsActive: true
+    Environment: "Production"
+    Tags: ["web", "secondary", "yaml"]
+    Resources:
+      Cpu: "4 cores"
+      Memory: "8GB"
+      Storage: "100GB SSD"
+    
+  - Name: "YAML API Server"
+    Host: "api.yaml-demo.com"
+    Port: 8090
+    IsActive: true
+    Environment: "Production"
+    Tags: ["api", "yaml", "high-performance"]
+    Resources:
+      Cpu: "8 cores"
+      Memory: "16GB"
+      Storage: "200GB NVMe"
+    
+  - Name: "YAML Development Server"
+    Host: "dev.yaml-demo.com"
+    Port: 3000
+    IsActive: false  # Disabled in production
+    Environment: "Development"
+    Tags: ["development", "testing"]
+    Resources:
+      Cpu: "2 cores"
+      Memory: "4GB" 
+      Storage: "50GB SSD"
+
+# Logging configuration with detailed YAML structure
+Logging:
+  # Global log level configuration
+  LogLevel:
+    Default: "Information"
+    Microsoft: "Warning"
+    "Microsoft.Hosting.Lifetime": "Information"
+    "FlexKit": "Debug"
+    "FlexKitConfigurationConsoleApp": "Debug"
+  
+  # Console logging configuration
+  Console:
+    Enabled: true
+    IncludeScopes: true
+    TimestampFormat: "yyyy-MM-dd HH:mm:ss"
+    
+  # File logging configuration  
+  File:
+    Enabled: true
+    Path: "logs/flexkit-yaml.log"
+    MaxSizeBytes: 52428800  # 50MB
+    MaxFiles: 10
+    RollingInterval: "Day"
+    RetainedFileCountLimit: 30
+    
+    # Log formatting
+    Format:
+      IncludeTimestamp: true
+      IncludeLevel: true
+      IncludeCategory: true
+      IncludeThreadId: false
+      
+  # Structured logging configuration
+  Structured:
+    Enabled: true
+    IncludeEventId: true
+    IncludeScopes: true
+    
+    # Custom properties to include
+    Properties:
+      - "ApplicationName"
+      - "Environment"
+      - "Version"
+      - "MachineName"
+
+# Service-specific configuration sections
+ServiceConfiguration:
+  # Email service with detailed YAML structure
+  EmailService:
+    Provider: "YAML Email Provider"
+    SmtpHost: "smtp.yaml-demo.com"
+    SmtpPort: 587
+    EnableSsl: true
+    EnableAuthentication: true
+    FromAddress: "noreply@yaml-demo.com"
+    FromName: "FlexKit YAML Demo"
+    
+    # Template configuration
+    Templates:
+      Welcome:
+        Subject: "Welcome to FlexKit YAML Demo!"
+        BodyTemplate: "templates/welcome.html"
+        
+      PasswordReset:
+        Subject: "Password Reset Request"
+        BodyTemplate: "templates/password-reset.html"
+        ExpirationMinutes: 60
+        
+    # Retry and delivery settings
+    Delivery:
+      MaxRetries: 3
+      RetryDelayMs: 5000
+      BatchSize: 100
+      MaxConcurrentSends: 10
+  
+  # Cache service configuration
+  CacheService:
+    Provider: "Redis"
+    ConnectionString: "redis.yaml-demo.com:6379"
+    Database: 0
+    
+    # Default TTL settings
+    DefaultTtl:
+      Short: "00:05:00"    # 5 minutes
+      Medium: "00:30:00"   # 30 minutes  
+      Long: "01:00:00"     # 1 hour
+      Extended: "24:00:00" # 24 hours
+    
+    # Key prefixes for different cache types
+    KeyPrefixes:
+      UserSessions: "session:"
+      ApiResponses: "api:"
+      DatabaseQueries: "db:"
+      StaticContent: "static:"
+    
+    # Performance tuning
+    Performance:
+      MaxConnections: 50
+      ConnectTimeout: 5000
+      CommandTimeout: 5000
+      KeyspaceNotifications: true
+
+# Performance and monitoring configuration
+Monitoring:
+  # Metrics collection
+  Metrics:
+    Enabled: true
+    CollectionInterval: 30  # seconds
+    RetentionPeriod: "7.00:00:00"  # 7 days
+    
+    # Counter metrics
+    Counters:
+      - "http_requests_total"
+      - "database_queries_total"  
+      - "cache_hits_total"
+      - "cache_misses_total"
+      - "email_sends_total"
+    
+    # Gauge metrics  
+    Gauges:
+      - "active_connections"
+      - "memory_usage_bytes"
+      - "cpu_usage_percent"
+      - "queue_length"
+    
+    # Histogram metrics
+    Histograms:
+      - "http_request_duration"
+      - "database_query_duration"
+      - "email_send_duration"
+  
+  # Health checks
+  HealthChecks:
+    Enabled: true
+    CheckInterval: 60  # seconds
+    
+    # Individual health check endpoints
+    Checks:
+      Database:
+        Enabled: true
+        Timeout: 10000
+        Query: "SELECT 1"
+        
+      Redis:
+        Enabled: true
+        Timeout: 5000
+        PingCommand: "PING"
+        
+      ExternalApis:
+        Enabled: true
+        Timeout: 15000
+        Endpoints:
+          - "https://payments.yaml-demo.com/health"
+          - "https://notifications.yaml-demo.com/health"
+
+# Security configuration
+Security:
+  # CORS configuration
+  Cors:
+    Enabled: true
+    AllowedOrigins:
+      - "https://yaml-demo.com"
+      - "https://www.yaml-demo.com" 
+      - "https://admin.yaml-demo.com"
+    AllowedMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+    AllowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"]
+    AllowCredentials: true
+    MaxAge: 86400  # 24 hours
+  
+  # JWT configuration
+  Jwt:
+    Issuer: "https://auth.yaml-demo.com"
+    Audience: "flexkit-yaml-demo"
+    ExpirationMinutes: 60
+    RefreshExpirationDays: 30
+    Algorithm: "HS256"
+    # Note: Use environment variables for secrets in production
+    
+  # Rate limiting
+  RateLimit:
+    Enabled: true
+    RequestsPerMinute: 100
+    BurstLimit: 20
+    
+    # IP whitelist for unlimited access
+    Whitelist:
+      - "127.0.0.1"
+      - "::1"
+      - "192.168.1.0/24"
+
+# Development and debugging settings  
+Development:
+  EnableSwagger: true
+  EnableDetailedErrors: true
+  EnableCors: true
+  EnableSeedData: true
+  
+  # Hot reload settings
+  HotReload:
+    Enabled: true
+    WatchedExtensions: [".cs", ".yaml", ".json"]
+    IgnorePatterns: ["bin/", "obj/", ".git/"]
+
+# This demonstrates YAML's ability to handle complex, nested structures
+# with excellent readability and comprehensive commenting capabilities

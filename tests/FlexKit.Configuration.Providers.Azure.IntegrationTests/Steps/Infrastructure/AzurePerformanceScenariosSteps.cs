@@ -45,10 +45,10 @@ public class AzurePerformanceScenariosSteps(ScenarioContext scenarioContext)
         var keyVaultEmulator = scenarioContext.GetKeyVaultEmulator();
         var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
         _memoryBaseline = GC.GetTotalMemory(true);
-        
+
         scenarioContext.Set(keyVaultEmulator, "KeyVaultEmulator");
         scenarioContext.Set(appConfigEmulator, "AppConfigEmulator");
-        
+
         _perfValidationResults.Add($"✓ Performance controller environment established with emulators for prefix '{scenarioPrefix}'");
     }
 
@@ -57,13 +57,13 @@ public class AzurePerformanceScenariosSteps(ScenarioContext scenarioContext)
     {
         var keyVaultEmulator = scenarioContext.GetKeyVaultEmulator();
         var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
-        
+
         keyVaultEmulator.Should().NotBeNull("Key Vault emulator should be established");
 
         var fullPath = Path.Combine("TestData", testDataPath);
         var createTask = keyVaultEmulator!.CreateTestDataAsync(fullPath, scenarioPrefix);
         createTask.Wait(TimeSpan.FromMinutes(1));
-        
+
         // Add additional secrets to simulate a large Key Vault with a scenario prefix
         var largeBatchTasks = new List<Task>();
         for (int i = 0; i < 50; i++)
@@ -71,10 +71,10 @@ public class AzurePerformanceScenariosSteps(ScenarioContext scenarioContext)
             largeBatchTasks.Add(keyVaultEmulator.SetSecretAsync($"perf--test--secret--{i:D3}", $"large-secret-value-{i}", scenarioPrefix));
             largeBatchTasks.Add(keyVaultEmulator.SetSecretAsync($"config--batch--{i:D3}--setting", $"batch-config-{i}", scenarioPrefix));
         }
-        
+
         Task.WaitAll([.. largeBatchTasks], TimeSpan.FromMinutes(2));
         _largeKeyVaultConfigured = true;
-        
+
         _perfValidationResults.Add($"✓ Large Key Vault configuration added with 100+ secrets for prefix '{scenarioPrefix}'");
     }
 
@@ -83,13 +83,13 @@ public class AzurePerformanceScenariosSteps(ScenarioContext scenarioContext)
     {
         var appConfigEmulator = scenarioContext.GetAppConfigEmulator();
         var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
-        
+
         appConfigEmulator.Should().NotBeNull("App Configuration emulator should be established");
 
         var fullPath = Path.Combine("TestData", testDataPath);
         var createTask = appConfigEmulator!.CreateTestDataAsync(fullPath, scenarioPrefix);
         createTask.Wait(TimeSpan.FromMinutes(1));
-        
+
         // Add extensive configuration settings for performance testing with scenario prefix
         var extensiveBatchTasks = new List<Task>();
         for (int i = 0; i < 100; i++)
@@ -97,10 +97,10 @@ public class AzurePerformanceScenariosSteps(ScenarioContext scenarioContext)
             extensiveBatchTasks.Add(appConfigEmulator.SetConfigurationAsync($"{scenarioPrefix}:app:perf:setting:{i:D3}", $"extensive-value-{i}"));
             extensiveBatchTasks.Add(appConfigEmulator.SetConfigurationAsync($"{scenarioPrefix}:feature:flags:flag{i:D3}", (i % 2 == 0).ToString()));
         }
-        
+
         Task.WaitAll([.. extensiveBatchTasks], TimeSpan.FromMinutes(2));
         _extensiveAppConfigConfigured = true;
-        
+
         _perfValidationResults.Add($"✓ Extensive App Configuration added with 200+ settings for prefix '{scenarioPrefix}'");
     }
 
@@ -110,17 +110,17 @@ public class AzurePerformanceScenariosSteps(ScenarioContext scenarioContext)
         var appConfigEmulator = scenarioContext.GetAppConfigEmulator();
         var keyVaultEmulator = scenarioContext.GetKeyVaultEmulator();
         var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
-        
+
         keyVaultEmulator.Should().NotBeNull("Key Vault emulator should be established");
         appConfigEmulator.Should().NotBeNull("App Configuration emulator should be established");
 
         var fullPath = Path.Combine("TestData", testDataPath);
-        
+
         // Load test data into both emulators with the scenario prefix
         var keyVaultTask = keyVaultEmulator!.CreateTestDataAsync(fullPath, scenarioPrefix);
         var appConfigTask = appConfigEmulator!.CreateTestDataAsync(fullPath, scenarioPrefix);
         Task.WaitAll([keyVaultTask, appConfigTask], TimeSpan.FromMinutes(1));
-        
+
         // Add specific concurrent access test data with a scenario prefix
         var concurrentTestTasks = new List<Task>
         {
@@ -129,10 +129,10 @@ public class AzurePerformanceScenariosSteps(ScenarioContext scenarioContext)
             appConfigEmulator.SetConfigurationAsync($"{scenarioPrefix}:test:config", "test-value"),
             appConfigEmulator.SetConfigurationAsync($"{scenarioPrefix}:test:concurrent:access", "true")
         };
-        
+
         Task.WaitAll([.. concurrentTestTasks], TimeSpan.FromSeconds(30));
         _concurrentAccessEnabled = true;
-        
+
         _perfValidationResults.Add($"✓ Concurrent access configuration setup added to emulators for prefix '{scenarioPrefix}'");
     }
 
@@ -142,19 +142,19 @@ public class AzurePerformanceScenariosSteps(ScenarioContext scenarioContext)
         var appConfigEmulator = scenarioContext.GetAppConfigEmulator();
         var keyVaultEmulator = scenarioContext.GetKeyVaultEmulator();
         var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
-        
+
         keyVaultEmulator.Should().NotBeNull("Key Vault emulator should be established");
         appConfigEmulator.Should().NotBeNull("App Configuration emulator should be established");
 
         var fullPath = Path.Combine("TestData", testDataPath);
-        
+
         // Load test data for memory monitoring with a scenario prefix
         var keyVaultTask = keyVaultEmulator!.CreateTestDataAsync(fullPath, scenarioPrefix);
         var appConfigTask = appConfigEmulator!.CreateTestDataAsync(fullPath, scenarioPrefix);
         Task.WaitAll([keyVaultTask, appConfigTask], TimeSpan.FromMinutes(1));
-        
+
         _memoryTrackingEnabled = true;
-        
+
         _perfValidationResults.Add($"✓ Memory monitoring configuration setup added to emulators for prefix '{scenarioPrefix}'");
     }
 
@@ -166,7 +166,7 @@ public class AzurePerformanceScenariosSteps(ScenarioContext scenarioContext)
     public void WhenIConfigureAzurePerformanceControllerWithPerformanceMonitoring()
     {
         var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
-        
+
         _performanceMonitoringEnabled = true;
         _loadStopwatch.Reset();
         _perfValidationResults.Add($"✓ Performance monitoring enabled for prefix '{scenarioPrefix}'");
@@ -176,7 +176,7 @@ public class AzurePerformanceScenariosSteps(ScenarioContext scenarioContext)
     public void WhenIConfigureAzurePerformanceControllerWithConcurrentAccessTesting()
     {
         var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
-        
+
         _concurrentAccessEnabled = true;
         _perfValidationResults.Add($"✓ Concurrent access testing enabled for prefix '{scenarioPrefix}'");
     }
@@ -185,7 +185,7 @@ public class AzurePerformanceScenariosSteps(ScenarioContext scenarioContext)
     public void WhenIConfigureAzurePerformanceControllerWithMemoryTracking()
     {
         var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
-        
+
         _memoryTrackingEnabled = true;
         _memoryBaseline = GC.GetTotalMemory(true);
         _perfValidationResults.Add($"✓ Memory tracking enabled for prefix '{scenarioPrefix}'");
@@ -195,7 +195,7 @@ public class AzurePerformanceScenariosSteps(ScenarioContext scenarioContext)
     public void WhenIConfigureAzurePerformanceControllerByBuildingTheConfiguration()
     {
         var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
-        
+
         try
         {
             var keyVaultEmulator = scenarioContext.GetKeyVaultEmulator();
@@ -254,10 +254,10 @@ public class AzurePerformanceScenariosSteps(ScenarioContext scenarioContext)
                 var currentMemory = GC.GetTotalMemory(false);
                 _perfValidationResults.Add($"✓ Initial memory usage: {(currentMemory - _memoryBaseline) / 1024 / 1024}MB for prefix '{scenarioPrefix}'");
             }
-        
+
             scenarioContext.Set(_perfConfiguration, "PerfConfiguration");
             scenarioContext.Set(_perfFlexConfiguration, "PerfFlexConfiguration");
-        
+
             _perfValidationResults.Add($"✓ Performance configuration built successfully with emulators for prefix '{scenarioPrefix}'");
         }
         catch (Exception ex)
@@ -271,7 +271,7 @@ public class AzurePerformanceScenariosSteps(ScenarioContext scenarioContext)
     public async Task WhenIConfigureAzurePerformanceControllerByBuildingTheConfigurationWithConcurrency()
     {
         var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
-        
+
         try
         {
             var keyVaultEmulator = scenarioContext.GetKeyVaultEmulator();
@@ -279,7 +279,7 @@ public class AzurePerformanceScenariosSteps(ScenarioContext scenarioContext)
 
             var concurrencyLevel = _concurrentAccessEnabled ? 10 : 1;
             var tasks = new List<Task<(IConfiguration config, IFlexConfig flexConfig)>>();
-        
+
             // Create multiple concurrent configuration builds with scenario prefix filtering
             for (var i = 0; i < concurrencyLevel; i++)
             {
@@ -321,14 +321,14 @@ public class AzurePerformanceScenariosSteps(ScenarioContext scenarioContext)
             }
 
             await Task.WhenAll(tasks);
-        
+
             var lastResult = tasks.Last().GetAwaiter().GetResult();
             _perfConfiguration = lastResult.config;
             _perfFlexConfiguration = lastResult.flexConfig;
-        
+
             scenarioContext.Set(_perfConfiguration, "PerfConfiguration");
             scenarioContext.Set(_perfFlexConfiguration, "PerfFlexConfiguration");
-        
+
             _perfValidationResults.Add($"✓ Concurrent configuration build completed successfully with {concurrencyLevel} threads for prefix '{scenarioPrefix}'");
         }
         catch (Exception ex)
@@ -346,8 +346,8 @@ public class AzurePerformanceScenariosSteps(ScenarioContext scenarioContext)
     public void ThenTheAzurePerformanceControllerShouldCompleteKeyVaultLoadingWithinPerformanceLimits()
     {
         var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
-        
-        _loadStopwatch.ElapsedMilliseconds.Should().BeLessThan(10000, 
+
+        _loadStopwatch.ElapsedMilliseconds.Should().BeLessThan(10000,
             "Key Vault loading should complete within 10 seconds (emulator may be slower than real Azure)");
         _perfValidationResults.Add($"✓ Key Vault load time: {_loadStopwatch.ElapsedMilliseconds}ms for prefix '{scenarioPrefix}'");
     }
@@ -356,18 +356,18 @@ public class AzurePerformanceScenariosSteps(ScenarioContext scenarioContext)
     public void ThenTheAzurePerformanceControllerShouldDemonstrateEfficientSecretRetrieval()
     {
         var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
-        
+
         _perfFlexConfiguration.Should().NotBeNull();
-        
+
         var sw = Stopwatch.StartNew();
-        
+
         // Test retrieving a known secret that should exist with a scenario prefix
         var testValue = _perfFlexConfiguration![$"{scenarioPrefix}:test:secret"]?.ToType<string>();
-        
+
         sw.Stop();
 
         // Be more lenient with emulator performance vs. real Azure
-        sw.ElapsedMilliseconds.Should().BeLessThan(1000, 
+        sw.ElapsedMilliseconds.Should().BeLessThan(1000,
             "Individual secret retrieval should be reasonably fast");
         _perfValidationResults.Add($"✓ Secret retrieval time: {sw.ElapsedMilliseconds}ms (value: {testValue ?? "null"}) for prefix '{scenarioPrefix}'");
     }
@@ -376,18 +376,18 @@ public class AzurePerformanceScenariosSteps(ScenarioContext scenarioContext)
     public void ThenTheAzurePerformanceControllerShouldReportKeyVaultPerformanceMetrics()
     {
         var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
-        
+
         _perfValidationResults.Should().NotBeEmpty("Performance metrics should be collected");
-        _perfValidationResults.Should().Contain(x => x.Contains("load time"), 
+        _perfValidationResults.Should().Contain(x => x.Contains("load time"),
             "Load time metrics should be recorded");
-        
+
         // Additional performance metrics for Key Vault with scenario prefix filtering
         if (_largeKeyVaultConfigured && _perfConfiguration != null)
         {
             var keyVaultKeys = _perfConfiguration
                 .AsEnumerable()
                 .Count(kvp => kvp.Key.StartsWith($"{scenarioPrefix}:") && (kvp.Key.Contains("perf") || kvp.Key.Contains("config")));
-            
+
             _perfValidationResults.Add($"✓ Key Vault secrets loaded: {keyVaultKeys} for prefix '{scenarioPrefix}'");
         }
     }
@@ -396,8 +396,8 @@ public class AzurePerformanceScenariosSteps(ScenarioContext scenarioContext)
     public void ThenTheAzurePerformanceControllerShouldCompleteAppConfigurationLoadingWithinPerformanceLimits()
     {
         var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
-        
-        _loadStopwatch.ElapsedMilliseconds.Should().BeLessThan(10000, 
+
+        _loadStopwatch.ElapsedMilliseconds.Should().BeLessThan(10000,
             "App Configuration loading should complete within 10 seconds (emulator may be slower than real Azure)");
         _perfValidationResults.Add($"✓ App Configuration load time: {_loadStopwatch.ElapsedMilliseconds}ms for prefix '{scenarioPrefix}'");
     }
@@ -406,18 +406,18 @@ public class AzurePerformanceScenariosSteps(ScenarioContext scenarioContext)
     public void ThenTheAzurePerformanceControllerShouldDemonstrateEfficientConfigurationRetrieval()
     {
         var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
-        
+
         _perfFlexConfiguration.Should().NotBeNull();
-        
+
         var sw = Stopwatch.StartNew();
-        
+
         // Test retrieving a known configuration that should exist with a scenario prefix
         var testValue = _perfFlexConfiguration![$"{scenarioPrefix}:test:config"]?.ToType<string>();
-        
+
         sw.Stop();
 
         // Be more lenient with emulator performance vs. real Azure
-        sw.ElapsedMilliseconds.Should().BeLessThan(1000, 
+        sw.ElapsedMilliseconds.Should().BeLessThan(1000,
             "Individual configuration retrieval should be reasonably fast");
         _perfValidationResults.Add($"✓ Configuration retrieval time: {sw.ElapsedMilliseconds}ms (value: {testValue ?? "null"}) for prefix '{scenarioPrefix}'");
     }
@@ -426,18 +426,18 @@ public class AzurePerformanceScenariosSteps(ScenarioContext scenarioContext)
     public void ThenTheAzurePerformanceControllerShouldReportAppConfigurationPerformanceMetrics()
     {
         var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
-        
+
         _perfValidationResults.Should().NotBeEmpty("Performance metrics should be collected");
-        _perfValidationResults.Should().Contain(x => x.Contains("retrieval time"), 
+        _perfValidationResults.Should().Contain(x => x.Contains("retrieval time"),
             "Retrieval time metrics should be recorded");
-        
+
         // Additional performance metrics for App Configuration with scenario prefix filtering
         if (_extensiveAppConfigConfigured && _perfConfiguration != null)
         {
             var appConfigKeys = _perfConfiguration
                 .AsEnumerable()
                 .Count(kvp => kvp.Key.StartsWith($"{scenarioPrefix}:") && (kvp.Key.Contains("app:perf") || kvp.Key.Contains("feature")));
-            
+
             _perfValidationResults.Add($"✓ App Configuration settings loaded: {appConfigKeys} for prefix '{scenarioPrefix}'");
         }
     }
@@ -446,7 +446,7 @@ public class AzurePerformanceScenariosSteps(ScenarioContext scenarioContext)
     public void ThenTheAzurePerformanceControllerShouldHandleConcurrentAccessSafely()
     {
         var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
-        
+
         _perfConfiguration.Should().NotBeNull();
         _perfFlexConfiguration.Should().NotBeNull();
         _perfValidationResults.Add($"✓ Configuration supports concurrent access with emulators for prefix '{scenarioPrefix}'");
@@ -456,9 +456,9 @@ public class AzurePerformanceScenariosSteps(ScenarioContext scenarioContext)
     public void ThenTheAzurePerformanceControllerShouldDemonstrateThreadSafeConfigurationAccess()
     {
         var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
-        
+
         _perfFlexConfiguration.Should().NotBeNull();
-    
+
         var sw = Stopwatch.StartNew();
         var tasks = Enumerable.Range(0, 50).Select(_ => Task.Run(() => // Reduced from 100 to 50 for emulator performance
         {
@@ -478,10 +478,10 @@ public class AzurePerformanceScenariosSteps(ScenarioContext scenarioContext)
         // ReSharper disable once CoVariantArrayConversion
         Task.WaitAll(tasks);
         sw.Stop();
-    
+
         var successfulTasks = tasks.Count(t => t.Result);
         successfulTasks.Should().BeGreaterThan(0, "At least some concurrent configuration access should succeed");
-        
+
         _perfValidationResults.Add($"✓ Thread-safe configuration access verified: {successfulTasks}/{tasks.Length} successful, {sw.ElapsedMilliseconds}ms total for prefix '{scenarioPrefix}'");
     }
 
@@ -489,11 +489,11 @@ public class AzurePerformanceScenariosSteps(ScenarioContext scenarioContext)
     public void ThenTheAzurePerformanceControllerShouldReportConcurrencyPerformanceMetrics()
     {
         var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
-        
+
         _perfValidationResults.Should().NotBeEmpty("Concurrency metrics should be collected");
-        _perfValidationResults.Should().Contain(x => x.Contains("concurrent"), 
+        _perfValidationResults.Should().Contain(x => x.Contains("concurrent"),
             "Concurrent access metrics should be recorded");
-        
+
         if (_concurrentAccessEnabled)
         {
             _perfValidationResults.Add($"✓ Concurrency performance testing completed with emulators for prefix '{scenarioPrefix}'");
@@ -504,12 +504,12 @@ public class AzurePerformanceScenariosSteps(ScenarioContext scenarioContext)
     public void ThenTheAzurePerformanceControllerShouldMaintainAcceptableMemoryUsage()
     {
         var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
-        
+
         var currentMemory = GC.GetTotalMemory(false);
         var memoryDelta = currentMemory - _memoryBaseline;
-        
+
         // Be more lenient with emulator memory usage vs. real Azure
-        memoryDelta.Should().BeLessThan(100 * 1024 * 1024, 
+        memoryDelta.Should().BeLessThan(100 * 1024 * 1024,
             "Memory usage increase should be less than 100MB (emulators may use more memory)");
         _perfValidationResults.Add($"✓ Memory usage delta: {memoryDelta / 1024 / 1024}MB for prefix '{scenarioPrefix}'");
     }
@@ -518,20 +518,20 @@ public class AzurePerformanceScenariosSteps(ScenarioContext scenarioContext)
     public void ThenTheAzurePerformanceControllerShouldDemonstrateEfficientResourceUtilization()
     {
         var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
-        
+
         // Force garbage collection and measure memory
         GC.Collect();
         GC.WaitForPendingFinalizers();
         GC.Collect();
-        
+
         var currentMemory = GC.GetTotalMemory(true);
         var memoryDelta = currentMemory - _memoryBaseline;
-        
+
         // Be more lenient with emulator memory usage after cleanup
-        memoryDelta.Should().BeLessThan(50 * 1024 * 1024, 
+        memoryDelta.Should().BeLessThan(50 * 1024 * 1024,
             "Memory usage after cleanup should be less than 50MB (emulators may retain more memory)");
         _perfValidationResults.Add($"✓ Post-cleanup memory delta: {memoryDelta / 1024 / 1024}MB for prefix '{scenarioPrefix}'");
-        
+
         // Additional resource utilization metrics with scenario prefix filtering
         if (_largeKeyVaultConfigured || _extensiveAppConfigConfigured)
         {
@@ -545,17 +545,17 @@ public class AzurePerformanceScenariosSteps(ScenarioContext scenarioContext)
     public void ThenTheAzurePerformanceControllerShouldReportMemoryUsageMetrics()
     {
         var scenarioPrefix = scenarioContext.Get<string>("ScenarioPrefix");
-        
+
         _perfValidationResults.Should().NotBeEmpty("Memory metrics should be collected");
-        _perfValidationResults.Should().Contain(x => x.Contains("memory"), 
+        _perfValidationResults.Should().Contain(x => x.Contains("memory"),
             "Memory usage metrics should be recorded");
-        
+
         // Provide a comprehensive memory metrics summary
         var currentMemory = GC.GetTotalMemory(false);
         var gen0Collections = GC.CollectionCount(0);
         var gen1Collections = GC.CollectionCount(1);
         var gen2Collections = GC.CollectionCount(2);
-        
+
         _perfValidationResults.Add($"✓ Memory metrics summary: Current={currentMemory / 1024 / 1024}MB, GC(0/1/2)=({gen0Collections}/{gen1Collections}/{gen2Collections}) for prefix '{scenarioPrefix}'");
     }
 

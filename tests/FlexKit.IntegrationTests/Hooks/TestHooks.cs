@@ -20,12 +20,12 @@ public class TestHooks
         {
             // Initialize test configuration
             InitializeTestConfiguration();
-            
+
             // Initialize logging with configuration
             InitializeLogging();
-            
+
             _logger?.LogInformation("=== Starting Integration Test Run ===");
-            _logger?.LogInformation("Test Environment: {Environment}", 
+            _logger?.LogInformation("Test Environment: {Environment}",
                 Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Unknown");
             _logger?.LogInformation("Machine Name: {MachineName}", Environment.MachineName);
             _logger?.LogInformation("Test Run Started at: {StartTime:yyyy-MM-dd HH:mm:ss}", DateTime.Now);
@@ -66,7 +66,7 @@ public class TestHooks
         {
             var featureInfo = featureContext.FeatureInfo;
             _logger?.LogInformation("--- Starting Feature: {FeatureName} ---", featureInfo.Title);
-            
+
             if (!string.IsNullOrEmpty(featureInfo.Description))
             {
                 _logger?.LogDebug("Feature Description: {Description}", featureInfo.Description);
@@ -88,8 +88,8 @@ public class TestHooks
         {
             var featureInfo = featureContext.FeatureInfo;
             var duration = DateTime.Now - featureContext.Get<DateTime>("FeatureStartTime");
-            
-            _logger?.LogInformation("--- Completed Feature: {FeatureName} (Duration: {Duration:mm\\:ss}) ---", 
+
+            _logger?.LogInformation("--- Completed Feature: {FeatureName} (Duration: {Duration:mm\\:ss}) ---",
                 featureInfo.Title, duration);
         }
         catch (Exception ex)
@@ -105,7 +105,7 @@ public class TestHooks
         {
             var scenarioInfo = scenarioContext.ScenarioInfo;
             _logger?.LogInformation("▶ Starting Scenario: {ScenarioName}", scenarioInfo.Title);
-            
+
             // Log scenario tags if any
             if (scenarioInfo.Tags.Length > 0)
             {
@@ -143,7 +143,7 @@ public class TestHooks
                 _ => "❔"
             };
 
-            _logger?.LogInformation("{StatusIcon} Completed Scenario: {ScenarioName} - {Status} (Duration: {Duration:mm\\:ss\\.fff})", 
+            _logger?.LogInformation("{StatusIcon} Completed Scenario: {ScenarioName} - {Status} (Duration: {Duration:mm\\:ss\\.fff})",
                 statusIcon, scenarioInfo.Title, status, duration);
 
             // Log scenario error if failed
@@ -176,7 +176,7 @@ public class TestHooks
     private static void InitializeLogging()
     {
         var logLevel = GetLogLevelFromConfiguration();
-        
+
         _loggerFactory = LoggerFactory.Create(builder =>
         {
             builder
@@ -206,7 +206,7 @@ public class TestHooks
     private static LogLevel GetLogLevelFromConfiguration()
     {
         var logLevelString = _testConfiguration?["Logging:LogLevel:Default"] ?? "Information";
-        
+
         return logLevelString.ToUpperInvariant() switch
         {
             "TRACE" => LogLevel.Trace,

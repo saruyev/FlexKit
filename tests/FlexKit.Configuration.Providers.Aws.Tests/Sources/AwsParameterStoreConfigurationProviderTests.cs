@@ -1,4 +1,5 @@
 ﻿using System.Reflection;
+using Amazon.Runtime;
 using Amazon.SimpleSystemsManagement;
 using Amazon.SimpleSystemsManagement.Model;
 using FlexKit.Configuration.Providers.Aws.Sources;
@@ -11,6 +12,8 @@ using Xunit;
 // ReSharper disable ClassTooBig
 // ReSharper disable ComplexConditionExpression
 // ReSharper disable NullableWarningSuppressionIsUsed
+// ReSharper disable MethodTooLong
+#pragma warning disable CS0618 // Type or member is obsolete
 
 namespace FlexKit.Configuration.Providers.Aws.Tests.Sources;
 
@@ -23,6 +26,7 @@ namespace FlexKit.Configuration.Providers.Aws.Tests.Sources;
 ///   &lt;InternalsVisibleTo Include="FlexKit.Configuration.Providers.Aws.Tests" /&gt;
 /// &lt;/ItemGroup&gt;
 /// </summary>
+[Collection("AwsCredentialTests")]
 public class AwsParameterStoreConfigurationProviderTests : IDisposable
 {
     private readonly IAmazonSimpleSystemsManagement _mockSsmClient;
@@ -38,7 +42,7 @@ public class AwsParameterStoreConfigurationProviderTests : IDisposable
             Optional = true,
             AwsOptions = new Amazon.Extensions.NETCore.Setup.AWSOptions
             {
-                Credentials = new Amazon.Runtime.AnonymousAWSCredentials(),
+                Credentials = new AnonymousAWSCredentials(),
                 Region = Amazon.RegionEndpoint.USEast1
             }
         };
@@ -76,24 +80,124 @@ public class AwsParameterStoreConfigurationProviderTests : IDisposable
         // Assert
         provider.Should().NotBeNull();
     }
+    
+    private static readonly Lock AwsTestLock = new();
 
     [Fact]
     public void Constructor_WithInvalidAwsCredentials_ThrowsInvalidOperationException()
     {
-        // Arrange
-        var invalidSource = new AwsParameterStoreConfigurationSource
+        // Ensure only one AWS-related test runs at a time
+        lock (AwsTestLock)
         {
-            Path = "/test/",
-            AwsOptions = new Amazon.Extensions.NETCore.Setup.AWSOptions
+            // Store original state
+            var originalEnv = new Dictionary<string, string>
             {
-                Region = Amazon.RegionEndpoint.GetBySystemName("invalid-region")
-            }
-        };
+                ["AWS_ACCESS_KEY_ID"] = Environment.GetEnvironmentVariable("AWS_ACCESS_KEY_ID")!,
+                ["AWS_SECRET_ACCESS_KEY"] = Environment.GetEnvironmentVariable("AWS_SECRET_ACCESS_KEY")!,
+                ["AWS_SESSION_TOKEN"] = Environment.GetEnvironmentVariable("AWS_SESSION_TOKEN")!,
+                ["AWS_PROFILE"] = Environment.GetEnvironmentVariable("AWS_PROFILE")!,
+                ["AWS_SHARED_CREDENTIALS_FILE"] = Environment.GetEnvironmentVariable("AWS_SHARED_CREDENTIALS_FILE")!,
+                ["AWS_CONFIG_FILE"] = Environment.GetEnvironmentVariable("AWS_CONFIG_FILE")!
+            };
 
-        // Act & Assert
-        var action = () => new AwsParameterStoreConfigurationProvider(invalidSource);
-        action.Should().Throw<InvalidOperationException>()
-            .WithMessage("Failed to create AWS Systems Manager client*");
+            var homeDir = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+            var credFile = Path.Combine(homeDir, ".aws", "credentials");
+            var configFile = Path.Combine(homeDir, ".aws", "config");
+            var credBackup = credFile + $".backup-{Guid.NewGuid()}";
+            var configBackup = configFile + $".backup-{Guid.NewGuid()}";
+            bool credMoved = false, configMoved = false;
+
+            try
+            {
+                // 1. Clear environment
+                foreach (var key in originalEnv.Keys)
+                {
+                    Environment.SetEnvironmentVariable(key, null);
+                }
+
+                Environment.SetEnvironmentVariable("AWS_SHARED_CREDENTIALS_FILE", "/nonexistent/credentials");
+                Environment.SetEnvironmentVariable("AWS_CONFIG_FILE", "/nonexistent/config");
+
+                // 2. Move credential files
+                if (File.Exists(credFile))
+                {
+                    File.Move(credFile, credBackup);
+                    credMoved = true;
+                }
+
+                if (File.Exists(configFile))
+                {
+                    File.Move(configFile, configBackup);
+                    configMoved = true;
+                }
+                
+                FallbackCredentialsFactory.Reset();
+
+                // Also clear the cached credentials using reflection
+                var fallbackType = typeof(FallbackCredentialsFactory);
+                var cachedCredsField =
+                    fallbackType.GetField("cachedCredentials", BindingFlags.Static | BindingFlags.NonPublic);
+                cachedCredsField?.SetValue(null, null);
+
+                // Clear any ClientFactory cache if it exists
+                var clientFactoryType = typeof(Amazon.Extensions.NETCore.Setup.AWSOptions).Assembly
+                    .GetType("Amazon.Extensions.NETCore.Setup.ClientFactory");
+                if (clientFactoryType != null)
+                {
+                    var fields = clientFactoryType.GetFields(BindingFlags.Static | BindingFlags.NonPublic);
+                    foreach (var field in fields)
+                    {
+                        if (field.Name.Contains("cache", StringComparison.OrdinalIgnoreCase))
+                        {
+                            try
+                            {
+                                field.SetValue(null, null);
+                            }
+                            catch
+                            {
+                                // ignored
+                            }
+                        }
+                    }
+                }
+
+                // 4. Create the source
+                var invalidSource = new AwsParameterStoreConfigurationSource
+                {
+                    Path = "/test/",
+                    AwsOptions = new Amazon.Extensions.NETCore.Setup.AWSOptions
+                    {
+                        Region = Amazon.RegionEndpoint.USEast1,
+                        Profile = "nonexistent-profile"
+                    }
+                };
+
+                // Act & Assert
+                var action = () => new AwsParameterStoreConfigurationProvider(invalidSource);
+                action.Should().Throw<InvalidOperationException>()
+                    .WithMessage("Failed to create AWS Systems Manager client*");
+            }
+            finally
+            {
+                // Restore everything
+                foreach (var kvp in originalEnv)
+                {
+                    Environment.SetEnvironmentVariable(kvp.Key, kvp.Value);
+                }
+
+                if (credMoved && File.Exists(credBackup))
+                {
+                    File.Move(credBackup, credFile);
+                }
+
+                if (configMoved && File.Exists(configBackup))
+                {
+                    File.Move(configBackup, configFile);
+                }
+
+                FallbackCredentialsFactory.Reset();
+            }
+        }
     }
 
     #endregion
@@ -468,7 +572,7 @@ public class AwsParameterStoreConfigurationProviderTests : IDisposable
             ReloadAfter = TimeSpan.FromMilliseconds(100), // Short interval for testing
             AwsOptions = new Amazon.Extensions.NETCore.Setup.AWSOptions
             {
-                Credentials = new Amazon.Runtime.AnonymousAWSCredentials(),
+                Credentials = new AnonymousAWSCredentials(),
                 Region = Amazon.RegionEndpoint.USEast1
             }
         };
@@ -690,7 +794,7 @@ public class AwsParameterStoreConfigurationProviderTests : IDisposable
             ReloadAfter = TimeSpan.FromMinutes(5),
             AwsOptions = new Amazon.Extensions.NETCore.Setup.AWSOptions
             {
-                Credentials = new Amazon.Runtime.AnonymousAWSCredentials(),
+                Credentials = new AnonymousAWSCredentials(),
                 Region = Amazon.RegionEndpoint.USEast1
             }
         };

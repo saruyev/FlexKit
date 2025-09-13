@@ -11,7 +11,8 @@ namespace FlexKit.Logging.ZLogger.Processors;
 /// <remarks>
 /// This class implements the <see cref="IAsyncLogProcessor"/> interface to process and
 /// format log entries, outputting them to the debug console using "Debug.WriteLine".
-/// Additionally, it ensures the log entry objects are returned to the pool by calling <see cref="IZLoggerEntry.Return"/>.
+/// Additionally, it ensures the log entry objects are returned to the pool by calling
+/// <see cref="IZLoggerEntry.Return"/>.
 /// </remarks>
 [UsedImplicitly]
 public class DebugOutput : IAsyncLogProcessor

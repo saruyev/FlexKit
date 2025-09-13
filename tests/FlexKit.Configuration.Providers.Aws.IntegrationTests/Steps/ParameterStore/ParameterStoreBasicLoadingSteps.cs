@@ -37,7 +37,7 @@ public class ParameterStoreBasicLoadingSteps(ScenarioContext scenarioContext)
 
         var fullPath = Path.Combine("TestData", testDataPath);
         _parametersBasicBuilder!.AddParameterStoreFromTestData(fullPath, optional: false, jsonProcessor: false);
-        
+
         scenarioContext.Set(_parametersBasicBuilder, "ParametersBasicBuilder");
     }
 
@@ -48,7 +48,7 @@ public class ParameterStoreBasicLoadingSteps(ScenarioContext scenarioContext)
 
         var fullPath = Path.Combine("TestData", testDataPath);
         _parametersBasicBuilder!.AddParameterStoreFromTestData(fullPath, optional: false, jsonProcessor: true);
-        
+
         scenarioContext.Set(_parametersBasicBuilder, "ParametersBasicBuilder");
     }
 
@@ -59,7 +59,7 @@ public class ParameterStoreBasicLoadingSteps(ScenarioContext scenarioContext)
 
         var fullPath = Path.Combine("TestData", testDataPath);
         _parametersBasicBuilder!.AddParameterStoreFromTestData(fullPath, optional: false, jsonProcessor: false);
-        
+
         scenarioContext.Set(_parametersBasicBuilder, "ParametersBasicBuilder");
     }
 
@@ -70,7 +70,7 @@ public class ParameterStoreBasicLoadingSteps(ScenarioContext scenarioContext)
 
         var fullPath = Path.Combine("TestData", testDataPath);
         _parametersBasicBuilder!.AddParameterStoreFromTestData(fullPath, optional: true, jsonProcessor: false);
-        
+
         scenarioContext.Set(_parametersBasicBuilder, "ParametersBasicBuilder");
     }
 
@@ -81,7 +81,7 @@ public class ParameterStoreBasicLoadingSteps(ScenarioContext scenarioContext)
 
         var fullPath = Path.Combine("TestData", testDataPath);
         _parametersBasicBuilder!.AddParameterStoreFromTestData(fullPath, optional: false, jsonProcessor: false);
-        
+
         scenarioContext.Set(_parametersBasicBuilder, "ParametersBasicBuilder");
     }
 
@@ -106,7 +106,7 @@ public class ParameterStoreBasicLoadingSteps(ScenarioContext scenarioContext)
                 .Take(10) // Log the first 10 keys for debugging
                 .Select(kvp => $"{kvp.Key} = {kvp.Value}")
                 .ToList();
-            
+
             foreach (var debugKey in allKeys)
             {
                 System.Diagnostics.Debug.WriteLine($"Config loaded: {debugKey}");
@@ -129,7 +129,7 @@ public class ParameterStoreBasicLoadingSteps(ScenarioContext scenarioContext)
 
         // Test dynamic access to configuration values
         dynamic config = _parametersBasicFlexConfiguration!;
-        
+
         try
         {
             // Verify dynamic access works by accessing a known configuration value
@@ -192,16 +192,16 @@ public class ParameterStoreBasicLoadingSteps(ScenarioContext scenarioContext)
 
         // First, verify that we can access the configuration as dynamic
         dynamic config = _parametersBasicFlexConfiguration!;
-        
+
         var dynamicValue = AwsTestConfigurationBuilder.GetDynamicProperty(config, propertyPath);
         string stringValue = dynamicValue?.ToString() ?? string.Empty;
         stringValue.Should().NotBeNull($"Dynamic property '{propertyPath}' should be accessible and have a value");
-        
+
         // Also verify that the value matches what we expect from the configuration
         var configKey = propertyPath.Replace('.', ':');
         var configValue = _parametersBasicConfiguration![configKey];
         configValue.Should().NotBeNull($"Configuration value for key '{configKey}' should exist");
-        
+
         stringValue.Should().Be(configValue, $"Dynamic access value should match direct configuration access for '{propertyPath}'");
     }
 

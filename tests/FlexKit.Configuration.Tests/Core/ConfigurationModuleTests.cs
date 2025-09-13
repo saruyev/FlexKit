@@ -56,7 +56,7 @@ public class ConfigurationModuleTests : UnitTestBase
         // Act & Assert - Should not throw
         using var container = containerBuilder.Build();
         var service = container.Resolve<TestServiceWithoutFlexConfigProperty>();
-        
+
         service.Should().NotBeNull();
         service.SomeOtherProperty.Should().BeNull();
     }
@@ -106,7 +106,7 @@ public class ConfigurationModuleTests : UnitTestBase
         // Act & Assert - Should not throw even when IFlexConfig is not available
         using var container = containerBuilder.Build();
         var service = container.Resolve<TestServiceWithFlexConfigProperty>();
-        
+
         service.Should().NotBeNull();
         service.FlexConfiguration.Should().BeNull(); // Cannot inject what's not registered
     }
@@ -171,7 +171,7 @@ public class ConfigurationModuleTests : UnitTestBase
         // Assert
         service1.FlexConfiguration.Should().NotBeNull();
         service1.FlexConfiguration.Should().BeSameAs(_mockFlexConfig);
-        
+
         service2.FlexConfiguration.Should().NotBeNull();
         service2.FlexConfiguration.Should().BeSameAs(_mockFlexConfig);
     }
@@ -182,10 +182,10 @@ public class ConfigurationModuleTests : UnitTestBase
         // Arrange
         var testData = ConfigurationTestDataBuilder.CreateConfigurationDictionary();
         var containerBuilder = new ContainerBuilder();
-        
+
         containerBuilder.AddFlexConfig(config => config
             .AddSource(new MemoryConfigurationSource { InitialData = testData! }));
-        
+
         containerBuilder.RegisterType<ServiceWithDependencyAndFlexConfig>().AsSelf();
         containerBuilder.RegisterType<TestServiceWithFlexConfigProperty>().AsSelf();
 
@@ -196,11 +196,11 @@ public class ConfigurationModuleTests : UnitTestBase
         // Assert
         service.FlexConfiguration.Should().NotBeNull();
         service.FlexConfiguration.Should().BeOfType<FlexConfiguration>();
-        
+
         service.Dependency.Should().NotBeNull();
         service.Dependency.FlexConfiguration.Should().NotBeNull();
         service.Dependency.FlexConfiguration.Should().BeOfType<FlexConfiguration>();
-        
+
         // Both services should have the same IFlexConfig instance
         service.FlexConfiguration.Should().BeSameAs(service.Dependency.FlexConfiguration);
     }
@@ -211,10 +211,10 @@ public class ConfigurationModuleTests : UnitTestBase
         // Arrange
         var testData = ConfigurationTestDataBuilder.CreateConfigurationDictionary();
         var containerBuilder = new ContainerBuilder();
-        
+
         containerBuilder.AddFlexConfig(config => config
             .AddSource(new MemoryConfigurationSource { InitialData = testData! }));
-        
+
         containerBuilder.RegisterType<TestServiceWithFlexConfigProperty>().AsSelf();
 
         // Act
@@ -238,7 +238,7 @@ public class ConfigurationModuleTests : UnitTestBase
         // Act & Assert - Should build without issues (no infinite loops or errors)
         using var container = containerBuilder.Build();
         var flexConfig = container.Resolve<IFlexConfig>();
-        
+
         flexConfig.Should().BeSameAs(_mockFlexConfig);
     }
 
@@ -265,7 +265,7 @@ public class ConfigurationModuleTests : UnitTestBase
         // Arrange - Use instance registration (not ReflectionActivator)
         var containerBuilder = new ContainerBuilder();
         containerBuilder.RegisterInstance(_mockFlexConfig).As<IFlexConfig>();
-        
+
         var serviceInstance = new TestServiceWithFlexConfigProperty();
         containerBuilder.RegisterInstance(serviceInstance).AsSelf();
         containerBuilder.RegisterModule<ConfigurationModule>();
@@ -314,15 +314,15 @@ public class ConfigurationModuleTests : UnitTestBase
         // Assert
         service.Config.Should().BeNull(); // Property is not named "FlexConfiguration"
     }
-    
+
     [Fact]
     public void InjectFlexConfigurationProperties_WithNullInstance_ReturnsEarly()
     {
         // Arrange
         var moduleType = typeof(ConfigurationModule);
-        var method = moduleType.GetMethod("InjectFlexConfigurationProperties", 
+        var method = moduleType.GetMethod("InjectFlexConfigurationProperties",
             BindingFlags.NonPublic | BindingFlags.Static);
-    
+
         var mockContext = CreateMock<ResolveRequestContext>();
         mockContext.Instance.Returns((object?)null);
 

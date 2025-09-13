@@ -15,19 +15,73 @@ namespace FlexKit.Logging.Core;
 /// <param name="logQueue">The background log queue for processing log entries.</param>
 /// <param name="logger">Logger for the interceptor itself.</param>
 /// <param name="logEntryProcessor">The log entry processor to use for processing log entries.</param>
-[SuppressMessage("Performance", "CA1848:Use the LoggerMessage delegates")]
+[SuppressMessage("Performance", "CA1848:Use the LoggerMessage delegates",
+    Justification = "Used only for warnings and exceptions, no real performance impact")]
 public sealed class BackgroundLoggingService(
     IBackgroundLog logQueue,
     ILogger<BackgroundLoggingService> logger,
     ILogEntryProcessor logEntryProcessor) : BackgroundService
 {
+    /// <summary>
+    /// Represents the queue for background log processing in the <see cref="BackgroundLoggingService"/>.
+    /// Used to store and dequeue log entries asynchronously for batch processing.
+    /// </summary>
+    /// <remarks>
+    /// The queue is used for decoupling log entry creation and processing, ensuring minimal impact
+    /// on the main application's performance. It serves as the intermediary storage for log entries before
+    /// they are serialized and processed by the log entry processor.
+    /// </remarks>
     private readonly IBackgroundLog _logQueue =
         logQueue ?? throw new ArgumentNullException(nameof(logQueue));
+
+    /// <summary>
+    /// Provides logging capabilities for the <see cref="BackgroundLoggingService"/>.
+    /// Used to log messages, warnings, and errors related to the behavior and lifecycle of
+    /// the background logging service.
+    /// </summary>
+    /// <remarks>
+    /// This field is essential for monitoring the background service's execution,
+    /// diagnostics, and error handling. It enables detailed logging for debugging
+    /// and operational analysis throughout the service's lifecycle.
+    /// </remarks>
     private readonly ILogger<BackgroundLoggingService> _logger =
         logger ?? throw new ArgumentNullException(nameof(logger));
+
+    /// <summary>
+    /// Represents the log entry processor used by the <see cref="BackgroundLoggingService"/> to handle
+    /// the processing of individual log entries.
+    /// </summary>
+    /// <remarks>
+    /// Responsible for executing the main logic for processing log entries, including applying
+    /// serialization, filtering, or other custom processing logic defined by the
+    /// <see cref="ILogEntryProcessor"/> implementation.
+    /// </remarks>
     private readonly ILogEntryProcessor _logEntryProcessor =
         logEntryProcessor ?? throw new ArgumentNullException(nameof(logEntryProcessor));
+
+    /// <summary>
+    /// A semaphore used to ensure exclusive access to critical sections of the logging process
+    /// in the <see cref="BackgroundLoggingService"/>.
+    /// Prevents concurrent processing of queued log entries, maintaining thread safety.
+    /// </summary>
+    /// <remarks>
+    /// This lock helps coordinate asynchronous operations, ensuring only one task at a time
+    /// can execute the critical logic for processing log entries. It is particularly useful
+    /// in scenarios where multiple threads or tasks might attempt to access the same resource
+    /// simultaneously, avoiding race conditions and inconsistencies.
+    /// </remarks>
     private readonly SemaphoreSlim _processingLock = new(1, 1);
+
+    /// <summary>
+    /// Indicates whether the <see cref="BackgroundLoggingService"/> instance has been disposed.
+    /// Used to prevent further processing or resource usage after the service is marked for disposal.
+    /// </summary>
+    /// <remarks>
+    /// This flag is set to <c>true</c> when the <see cref="Dispose"/> method is called, ensuring that
+    /// no further operations are attempted on disposed resources and ongoing tasks are either completed
+    /// or gracefully terminated. It helps in managing the lifecycle of the service and avoiding resource
+    /// leaks or unintended behaviors.
+    /// </remarks>
     private volatile bool _disposed;
 
     /// <summary>

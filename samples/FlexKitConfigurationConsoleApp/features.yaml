@@ -1,0 +1,378 @@
+# FlexKit Configuration - Feature Flags and Configuration
+# This file demonstrates YAML for feature flag management and feature-specific configuration
+
+# Feature Flags - Boolean toggles for application features
+FeatureFlags:
+  # Core application features
+  EnableNewDashboard: true
+  EnableUserProfiles: true
+  EnableNotifications: false
+  EnableAnalytics: true
+  EnableAdvancedSearch: true
+  
+  # Performance and caching features
+  EnableRedisCache: true
+  EnableResponseCompression: true
+  EnableContentDeliveryNetwork: false
+  EnableLazyLoading: true
+  
+  # Security features
+  EnableTwoFactorAuth: true
+  EnablePasswordPolicy: true
+  EnableAuditLogging: true
+  EnableSecurityHeaders: true
+  
+  # Experimental features (typically disabled in production)
+  Experimental:
+    EnableBetaUI: false
+    EnableMachineLearning: false
+    EnableRealTimeUpdates: true
+    EnableAdvancedReporting: false
+
+# Feature Configuration - Detailed settings for each feature
+Features:
+  # Dashboard configuration
+  Dashboard:
+    RefreshIntervalSeconds: 30
+    MaxWidgets: 12
+    DefaultLayout: "grid"
+    EnableCustomization: true
+    
+    # Widget-specific settings
+    Widgets:
+      Charts:
+        DefaultType: "line"
+        MaxDataPoints: 1000
+        EnableInteractivity: true
+        
+      Tables:
+        DefaultPageSize: 25
+        MaxPageSize: 100
+        EnableSorting: true
+        EnableFiltering: true
+        
+      Metrics:
+        UpdateFrequency: 15  # seconds
+        DisplayFormat: "compact"
+        ShowTrends: true
+  
+  # User profile feature configuration
+  UserProfiles:
+    EnableProfilePictures: true
+    MaxProfilePictureSize: 5242880  # 5MB
+    AllowedPictureFormats: ["jpg", "jpeg", "png", "gif"]
+    
+    # Profile fields configuration
+    RequiredFields:
+      - "firstName"
+      - "lastName" 
+      - "email"
+      
+    OptionalFields:
+      - "phone"
+      - "company"
+      - "jobTitle"
+      - "bio"
+      - "socialMedia"
+    
+    # Privacy settings
+    Privacy:
+      DefaultVisibility: "private"
+      AllowPublicProfiles: true
+      EnableSearchOptOut: true
+  
+  # Notification system configuration
+  Notifications:
+    # Delivery channels
+    Channels:
+      Email:
+        Enabled: true
+        BatchSize: 100
+        RetryCount: 3
+        Templates:
+          - "welcome"
+          - "passwordReset"
+          - "securityAlert"
+          
+      SMS:
+        Enabled: false  # Disabled by feature flag
+        Provider: "Twilio"
+        BatchSize: 50
+        
+      Push:
+        Enabled: true
+        Provider: "Firebase"
+        BatchSize: 1000
+        EnableBadgeCount: true
+        
+      InApp:
+        Enabled: true
+        MaxDisplayCount: 5
+        AutoDismissSeconds: 10
+    
+    # Notification preferences
+    DefaultPreferences:
+      EmailNotifications: true
+      SmsNotifications: false
+      PushNotifications: true
+      InAppNotifications: true
+      
+    # Frequency limits to prevent spam
+    FrequencyLimits:
+      MaxEmailsPerDay: 10
+      MaxSmsPerDay: 3
+      MaxPushPerHour: 20
+      CooldownMinutes: 15
+  
+  # Analytics and tracking
+  Analytics:
+    # Data collection settings
+    DataCollection:
+      EnableUserTracking: true
+      EnablePerformanceTracking: true
+      EnableErrorTracking: true
+      EnableFeatureUsageTracking: true
+      
+    # Data retention policies
+    Retention:
+      UserEvents: "90 days"
+      PerformanceMetrics: "30 days"  
+      ErrorLogs: "180 days"
+      FeatureUsage: "365 days"
+    
+    # Privacy settings
+    Privacy:
+      AnonymizeUserData: true
+      EnableOptOut: true
+      EnableDataExport: true
+      EnableDataDeletion: true
+      
+    # Reporting configuration
+    Reports:
+      AutoGeneration:
+        Enabled: true
+        Schedule: "weekly"
+        Recipients: ["admin@yaml-demo.com", "analytics@yaml-demo.com"]
+        
+      CustomReports:
+        Enabled: true
+        MaxReports: 25
+        RetentionDays: 90
+  
+  # Search functionality
+  Search:
+    # Search engine configuration
+    Engine:
+      Provider: "Elasticsearch"
+      IndexPrefix: "flexkit_"
+      MaxResults: 1000
+      DefaultPageSize: 20
+      
+    # Indexing settings
+    Indexing:
+      AutoIndex: true
+      BatchSize: 500
+      UpdateFrequency: "5 minutes"
+      
+      # What to index
+      Content:
+        - "users"
+        - "documents"
+        - "products"
+        - "articles"
+        
+    # Search features
+    SearchFeatures:
+      EnableAutoComplete: true
+      EnableSpellCheck: true
+      EnableFaceting: true
+      EnableHighlighting: true
+      EnableSuggestions: true
+      
+      # Advanced search options
+      Advanced:
+        EnableBooleanSearch: true
+        EnableWildcards: true
+        EnableProximitySearch: true
+        EnableDateRanges: true
+    
+    # Performance tuning
+    Performance:
+      CacheResults: true
+      CacheTtlMinutes: 15
+      MaxConcurrentQueries: 50
+      TimeoutMs: 5000
+
+# A/B Testing Configuration
+ABTesting:
+  Enabled: true
+  
+  # Active experiments
+  Experiments:
+    NewCheckoutFlow:
+      Enabled: true
+      TrafficSplit: 0.5  # 50% of users
+      StartDate: "2024-01-15"
+      EndDate: "2024-02-15"
+      
+      # Variants
+      Control:
+        Name: "Original Checkout"
+        Weight: 0.5
+        
+      Treatment:
+        Name: "Simplified Checkout"
+        Weight: 0.5
+        Configuration:
+          SkipShippingPage: true
+          EnableOneClickPurchase: true
+          
+    DashboardLayout:
+      Enabled: false
+      TrafficSplit: 0.25  # 25% of users
+      StartDate: "2024-02-01"
+      EndDate: "2024-03-01"
+      
+      Control:
+        Name: "Grid Layout"
+        Weight: 0.6
+        
+      Treatment:
+        Name: "List Layout"
+        Weight: 0.4
+        Configuration:
+          DefaultView: "list"
+          EnableCompactMode: true
+
+# Performance Feature Configuration
+Performance:
+  # Caching strategies
+  Caching:
+    Strategies:
+      # Memory caching
+      Memory:
+        Enabled: true
+        MaxSizeBytes: 268435456  # 256MB
+        DefaultTtlMinutes: 30
+        
+        # Cache policies
+        Policies:
+          UserSessions: 60      # minutes
+          StaticContent: 1440   # 24 hours
+          DatabaseQueries: 15   # minutes
+          ApiResponses: 5       # minutes
+      
+      # Distributed caching
+      Distributed:
+        Enabled: true
+        Provider: "Redis"
+        DefaultTtlMinutes: 120
+        
+        # Key patterns
+        KeyPatterns:
+          UserData: "user:{userId}:{dataType}"
+          GlobalData: "global:{dataType}"
+          TempData: "temp:{sessionId}:{key}"
+  
+  # Response optimization
+  Optimization:
+    EnableGzipCompression: true
+    EnableBrotliCompression: true
+    
+    # Static file optimization
+    StaticFiles:
+      EnableCaching: true
+      CacheDuration: "365.00:00:00"  # 1 year
+      EnableEtag: true
+      EnableLastModified: true
+      
+    # Database optimization
+    Database:
+      EnableConnectionPooling: true
+      MaxPoolSize: 100
+      EnableQueryCaching: true
+      SlowQueryThresholdMs: 1000
+
+# Integration Feature Configuration
+Integrations:
+  # Third-party service integrations
+  ThirdPartyServices:
+    # Payment processing
+    Payments:
+      Stripe:
+        Enabled: true
+        PublishableKey: "pk_test_yaml_demo"  # Use environment variables in production
+        WebhookEndpoint: "/webhooks/stripe"
+        
+      PayPal:
+        Enabled: false
+        Environment: "sandbox"
+        WebhookEndpoint: "/webhooks/paypal"
+    
+    # Email services
+    Email:
+      SendGrid:
+        Enabled: true
+        ApiEndpoint: "https://api.sendgrid.com/v3"
+        WebhookEndpoint: "/webhooks/sendgrid"
+        
+      Mailgun:
+        Enabled: false
+        Region: "us"
+        WebhookEndpoint: "/webhooks/mailgun"
+    
+    # Social media
+    Social:
+      GoogleAuth:
+        Enabled: true
+        Scopes: ["email", "profile"]
+        
+      FacebookAuth:
+        Enabled: false
+        Scopes: ["email", "public_profile"]
+        
+      TwitterAuth:
+        Enabled: false
+        ApiVersion: "2"
+
+# Environment-specific feature overrides
+# These can be overridden by environment-specific YAML files
+EnvironmentOverrides:
+  Development:
+    EnableDebugFeatures: true
+    EnableTestData: true
+    DisableExternalIntegrations: true
+    
+  Staging:
+    EnableDebugFeatures: false
+    EnableTestData: true
+    EnablePerformanceProfiling: true
+    
+  Production:
+    EnableDebugFeatures: false
+    EnableTestData: false
+    EnablePerformanceOptimizations: true
+    EnableMonitoring: true
+
+# Feature usage tracking and metrics
+FeatureMetrics:
+  # Track feature usage
+  TrackUsage: true
+  
+  # Metrics to collect
+  Metrics:
+    - "feature_flag_checks"
+    - "feature_usage_duration"
+    - "feature_error_rates"
+    - "feature_performance_impact"
+    
+  # Retention period for feature metrics
+  RetentionDays: 90
+  
+  # Feature health monitoring
+  HealthMonitoring:
+    Enabled: true
+    AlertThresholds:
+      ErrorRate: 0.05      # 5%
+      ResponseTime: 2000   # 2 seconds
+      UsageDropPercent: 50 # 50% drop in usage

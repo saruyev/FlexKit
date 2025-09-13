@@ -12,45 +12,16 @@ namespace FlexKit.Logging.Detection;
 /// Provides extension methods for working with logging targets and configuring
 /// Microsoft.Extensions.Logging components.
 /// </summary>
-public static class MelExtensions
+internal static class MelExtensions
 {
-    internal const string ConsoleType = "Microsoft.Extensions.Logging.ConsoleLoggerExtensions, Microsoft.Extensions.Logging.Console";
-    internal const string DebugType = "Microsoft.Extensions.Logging.DebugLoggerFactoryExtensions, Microsoft.Extensions.Logging.Debug";
-    internal const string DebugProviderType = "Microsoft.Extensions.Logging.Debug.DebugLoggerProvider, Microsoft.Extensions.Logging.Debug";
-    internal const string ConsoleProviderType = "Microsoft.Extensions.Logging.Console.ConsoleLoggerProvider, Microsoft.Extensions.Logging.Console";
-    internal const string EventSourceType = "Microsoft.Extensions.Logging.EventSourceLoggerFactoryExtensions, Microsoft.Extensions.Logging.EventSource";
-    internal const string EventSourceProviderType = "Microsoft.Extensions.Logging.EventSource.EventSourceLoggerProvider, Microsoft.Extensions.Logging.EventSource";
-    internal const string EventLogType = "Microsoft.Extensions.Logging.EventLoggerFactoryExtensions, Microsoft.Extensions.Logging.EventLog";
-    internal const string EventLogSettingsType = "Microsoft.Extensions.Logging.EventLog.EventLogSettings, Microsoft.Extensions.Logging.EventLog";
-    internal const string EventLogProviderType = "Microsoft.Extensions.Logging.EventLog.EventLogLoggerProvider, Microsoft.Extensions.Logging.EventLog";
-    internal const string TelemetryConfigurationType = "Microsoft.ApplicationInsights.Extensibility.TelemetryConfiguration, Microsoft.ApplicationInsights";
-    internal const string ApplicationInsightsType = "Microsoft.Extensions.Logging.ApplicationInsightsLoggingBuilderExtensions, Microsoft.Extensions.Logging.ApplicationInsights";
-    internal const string ApplicationInsightsOptionsType = "Microsoft.Extensions.Logging.ApplicationInsights.ApplicationInsightsLoggerOptions, Microsoft.Extensions.Logging.ApplicationInsights";
-    internal const string ApplicationInsightsProviderType = "Microsoft.Extensions.Logging.ApplicationInsights.ApplicationInsightsLoggerProvider, Microsoft.Extensions.Logging.ApplicationInsights";
-    internal const string AzureAppServicesType = "Microsoft.Extensions.Logging.AzureAppServicesLoggerFactoryExtensions, Microsoft.Extensions.Logging.AzureAppServices";
-    internal const string AzureAppServicesProviderType = "Microsoft.Extensions.Logging.AzureAppServices.Internal.AzureAppServicesLoggerProvider, Microsoft.Extensions.Logging.AzureAppServices";
-    internal const string AzureBlobOptionsType = "Microsoft.Extensions.Logging.AzureAppServices.AzureBlobLoggerOptions, Microsoft.Extensions.Logging.AzureAppServices";
-    internal const string AzureFileOptionsType = "Microsoft.Extensions.Logging.AzureAppServices.AzureFileLoggerOptions, Microsoft.Extensions.Logging.AzureAppServices";
-    private const string SimpleConsoleOptionsType = "Microsoft.Extensions.Logging.Console.SimpleConsoleFormatterOptions, Microsoft.Extensions.Logging.Console";
-    private const string ConsoleOptionsType = "Microsoft.Extensions.Logging.Console.ConsoleFormatterOptions, Microsoft.Extensions.Logging.Console";
-    private const string JsonConsoleOptionsType = "Microsoft.Extensions.Logging.Console.JsonConsoleFormatterOptions, Microsoft.Extensions.Logging.Console";
-
-    /// <summary>
-    /// Specifies the fully qualified type name and assembly for the
-    /// filter logging builder extension class. This constant is used
-    /// to dynamically load the `FilterLoggingBuilderExtensions`
-    /// type from the `Microsoft.Extensions.Logging` library.
-    /// </summary>
-    public const string FilterType = "Microsoft.Extensions.Logging.FilterLoggingBuilderExtensions, Microsoft.Extensions.Logging";
-
     /// <summary>
     /// Retrieves the type and method name of the formatter options configuration for the specified logging target.
     /// </summary>
     /// <param name="target">The logging target containing the formatter type information.</param>
     /// <returns>
-    /// A tuple where the first item is the formatter options type and the second item is the method name for configuring
-    /// the formatter. If the formatter type is unrecognized, the first item of the tuple will be null and the method name
-    /// will default to "AddSimpleConsole".
+    /// A tuple where the first item is the formatter options type and the second item is the method name
+    /// for configuring the formatter. If the formatter type is unrecognized, the first item of the tuple
+    /// will be null and the method name will default to "AddSimpleConsole".
     /// </returns>
     internal static (Type?, string) GetFormatterOptionsType(this LoggingTarget target)
     {
@@ -66,9 +37,9 @@ public static class MelExtensions
 
         return (methodName switch
         {
-            "AddSimpleConsole" => Type.GetType(SimpleConsoleOptionsType),
-            "AddSystemdConsole" => Type.GetType(ConsoleOptionsType),
-            "AddJsonConsole" => Type.GetType(JsonConsoleOptionsType),
+            "AddSimpleConsole" => Type.GetType(MelNames.SimpleConsoleOptionsType),
+            "AddSystemdConsole" => Type.GetType(MelNames.ConsoleOptionsType),
+            "AddJsonConsole" => Type.GetType(MelNames.JsonConsoleOptionsType),
             _ => null,
         }, methodName);
     }
@@ -159,7 +130,8 @@ public static class MelExtensions
         // Create a closure that captures the target
         var configureMethod = typeof(MelExtensions)
             .GetMethod(nameof(ConfigureOptions), BindingFlags.NonPublic | BindingFlags.Static)
-            ?.MakeGenericMethod(optionsType) ?? throw new InvalidOperationException("ConfigureOptions method not found");
+            ?.MakeGenericMethod(optionsType) ??
+                              throw new InvalidOperationException("ConfigureOptions method not found");
 
         // Create the action using a lambda that captures the target
         var parameter = Expression.Parameter(optionsType, "options");

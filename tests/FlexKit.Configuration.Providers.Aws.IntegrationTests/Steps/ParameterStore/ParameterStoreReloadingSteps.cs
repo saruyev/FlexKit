@@ -43,10 +43,10 @@ public class ParameterStoreReloadingSteps(ScenarioContext scenarioContext)
 
         var fullPath = Path.Combine("TestData", testDataPath);
         _parametersReloadBuilder!.AddParameterStoreFromTestData(fullPath, optional: false, jsonProcessor: false);
-        
+
         _autoReloadingEnabled = true;
         _configuredReloadInterval = TimeSpan.FromMinutes(5);
-        
+
         scenarioContext.Set(_parametersReloadBuilder, "ParametersReloadBuilder");
     }
 
@@ -57,12 +57,12 @@ public class ParameterStoreReloadingSteps(ScenarioContext scenarioContext)
 
         var fullPath = Path.Combine("TestData", testDataPath);
         var reloadInterval = TimeSpan.FromSeconds(seconds);
-        
+
         _parametersReloadBuilder!.AddParameterStoreFromTestData(fullPath, optional: false, jsonProcessor: false);
-        
+
         _autoReloadingEnabled = true;
         _configuredReloadInterval = reloadInterval;
-        
+
         scenarioContext.Set(_parametersReloadBuilder, "ParametersReloadBuilder");
     }
 
@@ -72,13 +72,13 @@ public class ParameterStoreReloadingSteps(ScenarioContext scenarioContext)
         _parametersReloadBuilder.Should().NotBeNull("Parameters reload builder should be established");
 
         var fullPath = Path.Combine("TestData", testDataPath);
-        
+
         _parametersReloadBuilder!.AddParameterStoreFromTestData(fullPath, optional: false, jsonProcessor: true);
-        
+
         _autoReloadingEnabled = true;
         _jsonProcessingEnabled = true;
         _configuredReloadInterval = TimeSpan.FromMinutes(2);
-        
+
         scenarioContext.Set(_parametersReloadBuilder, "ParametersReloadBuilder");
     }
 
@@ -88,12 +88,12 @@ public class ParameterStoreReloadingSteps(ScenarioContext scenarioContext)
         _parametersReloadBuilder.Should().NotBeNull("Parameters reload builder should be established");
 
         var fullPath = Path.Combine("TestData", testDataPath);
-        
+
         _parametersReloadBuilder!.AddParameterStoreFromTestData(fullPath, optional: true, jsonProcessor: false);
-        
+
         _autoReloadingEnabled = true;
         _configuredReloadInterval = TimeSpan.FromMinutes(1);
-        
+
         scenarioContext.Set(_parametersReloadBuilder, "ParametersReloadBuilder");
     }
 
@@ -103,13 +103,13 @@ public class ParameterStoreReloadingSteps(ScenarioContext scenarioContext)
         _parametersReloadBuilder.Should().NotBeNull("Parameters reload builder should be established");
 
         var fullPath = Path.Combine("TestData", testDataPath);
-        
+
         _parametersReloadBuilder!.AddParameterStoreFromTestData(fullPath, optional: true, jsonProcessor: false);
-        
+
         _autoReloadingEnabled = true;
         _errorToleranceEnabled = true;
         _configuredReloadInterval = TimeSpan.FromSeconds(30);
-        
+
         scenarioContext.Set(_parametersReloadBuilder, "ParametersReloadBuilder");
     }
 
@@ -119,13 +119,13 @@ public class ParameterStoreReloadingSteps(ScenarioContext scenarioContext)
         _parametersReloadBuilder.Should().NotBeNull("Parameters reload builder should be established");
 
         var fullPath = Path.Combine("TestData", testDataPath);
-        
+
         _parametersReloadBuilder!.AddParameterStoreFromTestData(fullPath, optional: false, jsonProcessor: false);
-        
+
         _autoReloadingEnabled = true;
         _performanceOptimizationEnabled = true;
         _configuredReloadInterval = TimeSpan.FromMinutes(15);
-        
+
         scenarioContext.Set(_parametersReloadBuilder, "ParametersReloadBuilder");
     }
 
@@ -135,12 +135,12 @@ public class ParameterStoreReloadingSteps(ScenarioContext scenarioContext)
         _parametersReloadBuilder.Should().NotBeNull("Parameters reload builder should be established");
 
         var fullPath = Path.Combine("TestData", testDataPath);
-        
+
         _parametersReloadBuilder!.AddParameterStoreFromTestData(fullPath, optional: false, jsonProcessor: false);
-        
+
         _autoReloadingEnabled = true;
         _configuredReloadInterval = TimeSpan.FromSeconds(10);
-        
+
         scenarioContext.Set(_parametersReloadBuilder, "ParametersReloadBuilder");
     }
 
@@ -175,7 +175,7 @@ public class ParameterStoreReloadingSteps(ScenarioContext scenarioContext)
 
         // Test dynamic access to configuration values
         dynamic config = _parametersReloadFlexConfiguration!;
-        
+
         try
         {
             // Test accessing infrastructure module configuration
@@ -184,7 +184,7 @@ public class ParameterStoreReloadingSteps(ScenarioContext scenarioContext)
             {
                 _parametersReloadValidationResults.Add($"Dynamic access successful: infrastructure-module.database.host = {dynamicResult}");
             }
-            
+
             // Test accessing database configuration if available
             var dbPortResult = AwsTestConfigurationBuilder.GetDynamicProperty(config, "infrastructure-module.database.port");
             if (dbPortResult != null)
@@ -230,12 +230,12 @@ public class ParameterStoreReloadingSteps(ScenarioContext scenarioContext)
     {
         _jsonProcessingEnabled.Should().BeTrue("JSON processing should be enabled");
         _parametersReloadConfiguration.Should().NotBeNull("Configuration should be available for JSON parameter verification");
-        
+
         // Verify that complex JSON parameters are flattened correctly
         var complexConfigKeys = _parametersReloadConfiguration!.AsEnumerable()
             .Where(kvp => kvp.Key.Contains("app:config") || kvp.Key.Contains("database"))
             .ToList();
-            
+
         complexConfigKeys.Should().NotBeEmpty("JSON parameters should be flattened into configuration keys");
     }
 
@@ -251,7 +251,7 @@ public class ParameterStoreReloadingSteps(ScenarioContext scenarioContext)
     {
         _errorToleranceEnabled.Should().BeTrue("Error tolerance should be enabled");
         _parametersReloadConfiguration.Should().NotBeNull("Configuration should be built despite potential reload errors");
-        
+
         // Check if error handling was configured
         _configuredReloadInterval.Should().NotBeNull("Reload interval should be configured for error testing");
     }
@@ -260,7 +260,7 @@ public class ParameterStoreReloadingSteps(ScenarioContext scenarioContext)
     public void ThenTheParametersReloadControllerShouldOptimizeReloadPerformance()
     {
         _performanceOptimizationEnabled.Should().BeTrue("Performance optimization should be enabled");
-        _configuredReloadInterval.Should().BeGreaterThan(TimeSpan.FromMinutes(10), 
+        _configuredReloadInterval.Should().BeGreaterThan(TimeSpan.FromMinutes(10),
             "Performance optimized reload interval should be longer than 10 minutes");
     }
 
@@ -276,9 +276,9 @@ public class ParameterStoreReloadingSteps(ScenarioContext scenarioContext)
     {
         _configuredReloadInterval.Should().NotBeNull("Reload interval should be configured");
         _autoReloadingEnabled.Should().BeTrue("Auto reloading should be enabled");
-        
+
         // Note: Timer validation is limited in the test environment, but we can verify configuration
-        _configuredReloadInterval.Should().Be(TimeSpan.FromSeconds(10), 
+        _configuredReloadInterval.Should().Be(TimeSpan.FromSeconds(10),
             "Timer should be configured with the specified 10-second interval");
     }
 
@@ -286,7 +286,7 @@ public class ParameterStoreReloadingSteps(ScenarioContext scenarioContext)
     public void ThenTheParametersReloadControllerShouldSupportProperDisposal()
     {
         _parametersReloadConfiguration.Should().NotBeNull("Configuration should be built for disposal testing");
-        
+
         // Note: In integration tests using in-memory configuration, we verify that 
         // the configuration infrastructure supports disposal patterns even though
         // we're not testing real AWS provider disposal here

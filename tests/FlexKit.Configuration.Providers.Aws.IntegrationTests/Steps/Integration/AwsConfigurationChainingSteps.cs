@@ -48,11 +48,11 @@ public class AwsConfigurationChainingSteps(ScenarioContext scenarioContext)
 
         var fullPath = Path.Combine("TestData", testDataPath);
         _chainingControllerBuilder!.AddParameterStoreFromTestData(fullPath, optional: false, jsonProcessor: false);
-        
+
         _parameterStoreAdded = true;
         _addedSources.Add("ParameterStore");
         _sourceTrackingData["ParameterStore"] = "Added without JSON processing";
-        
+
         scenarioContext.Set(_chainingControllerBuilder, "ChainingControllerBuilder");
     }
 
@@ -63,11 +63,11 @@ public class AwsConfigurationChainingSteps(ScenarioContext scenarioContext)
 
         var fullPath = Path.Combine("TestData", testDataPath);
         _chainingControllerBuilder!.AddSecretsManagerFromTestData(fullPath, optional: false, jsonProcessor: false);
-        
+
         _secretsManagerAdded = true;
         _addedSources.Add("SecretsManager");
         _sourceTrackingData["SecretsManager"] = "Added without JSON processing";
-        
+
         scenarioContext.Set(_chainingControllerBuilder, "ChainingControllerBuilder");
     }
 
@@ -78,12 +78,12 @@ public class AwsConfigurationChainingSteps(ScenarioContext scenarioContext)
 
         var fullPath = Path.Combine("TestData", testDataPath);
         _chainingControllerBuilder!.AddParameterStoreFromTestData(fullPath, optional: false, jsonProcessor: true);
-        
+
         _parameterStoreAdded = true;
         _jsonProcessingEnabled = true;
         _addedSources.Add("ParameterStore-JSON");
         _sourceTrackingData["ParameterStore"] = "Added with JSON processing";
-        
+
         scenarioContext.Set(_chainingControllerBuilder, "ChainingControllerBuilder");
     }
 
@@ -94,12 +94,12 @@ public class AwsConfigurationChainingSteps(ScenarioContext scenarioContext)
 
         var fullPath = Path.Combine("TestData", testDataPath);
         _chainingControllerBuilder!.AddSecretsManagerFromTestData(fullPath, optional: false, jsonProcessor: true);
-        
+
         _secretsManagerAdded = true;
         _jsonProcessingEnabled = true;
         _addedSources.Add("SecretsManager-JSON");
         _sourceTrackingData["SecretsManager"] = "Added with JSON processing";
-        
+
         scenarioContext.Set(_chainingControllerBuilder, "ChainingControllerBuilder");
     }
 
@@ -110,11 +110,11 @@ public class AwsConfigurationChainingSteps(ScenarioContext scenarioContext)
 
         var fullPath = Path.Combine("TestData", testDataPath);
         _chainingControllerBuilder!.AddParameterStoreFromTestData(fullPath, optional: false, jsonProcessor: false);
-        
+
         _parameterStoreAdded = true;
         _addedSources.Add("ParameterStore-First");
         _sourceTrackingData["ParameterStore-Precedence"] = "Added first for precedence testing";
-        
+
         scenarioContext.Set(_chainingControllerBuilder, "ChainingControllerBuilder");
     }
 
@@ -125,11 +125,11 @@ public class AwsConfigurationChainingSteps(ScenarioContext scenarioContext)
 
         var fullPath = Path.Combine("TestData", testDataPath);
         _chainingControllerBuilder!.AddSecretsManagerFromTestData(fullPath, optional: false, jsonProcessor: false);
-        
+
         _secretsManagerAdded = true;
         _addedSources.Add("SecretsManager-Second");
         _sourceTrackingData["SecretsManager-Precedence"] = "Added second for precedence testing";
-        
+
         scenarioContext.Set(_chainingControllerBuilder, "ChainingControllerBuilder");
     }
 
@@ -140,11 +140,11 @@ public class AwsConfigurationChainingSteps(ScenarioContext scenarioContext)
 
         var fullPath = Path.Combine("TestData", testDataPath);
         _chainingControllerBuilder!.AddParameterStoreFromTestData(fullPath, optional: false, jsonProcessor: false);
-        
+
         _parameterStoreAdded = true;
         _addedSources.Add("ParameterStore-Required");
         _sourceTrackingData["ParameterStore-Required"] = "Added as required source";
-        
+
         scenarioContext.Set(_chainingControllerBuilder, "ChainingControllerBuilder");
     }
 
@@ -155,11 +155,11 @@ public class AwsConfigurationChainingSteps(ScenarioContext scenarioContext)
 
         var fullPath = Path.Combine("TestData", testDataPath);
         _chainingControllerBuilder!.AddSecretsManagerFromTestData(fullPath, optional: true, jsonProcessor: false);
-        
+
         _secretsManagerAdded = true;
         _addedSources.Add("SecretsManager-Optional");
         _sourceTrackingData["SecretsManager-Optional"] = "Added as optional source";
-        
+
         scenarioContext.Set(_chainingControllerBuilder, "ChainingControllerBuilder");
     }
 
@@ -169,18 +169,18 @@ public class AwsConfigurationChainingSteps(ScenarioContext scenarioContext)
         _chainingControllerBuilder.Should().NotBeNull("Chaining controller builder should be established");
 
         var fullPath = Path.Combine("TestData", testDataPath);
-        
+
         // Add both Parameter Store and Secrets Manager with JSON processing
         _chainingControllerBuilder!.AddParameterStoreFromTestData(fullPath, optional: false, jsonProcessor: true);
         _chainingControllerBuilder!.AddSecretsManagerFromTestData(fullPath, optional: false, jsonProcessor: true);
-        
+
         _parameterStoreAdded = true;
         _secretsManagerAdded = true;
         _jsonProcessingEnabled = true;
         _addedSources.Add("ParameterStore-Full");
         _addedSources.Add("SecretsManager-Full");
         _sourceTrackingData["Full-Integration"] = "Both sources added with full JSON processing";
-        
+
         scenarioContext.Set(_chainingControllerBuilder, "ChainingControllerBuilder");
     }
 
@@ -191,12 +191,12 @@ public class AwsConfigurationChainingSteps(ScenarioContext scenarioContext)
 
         var fullPath = Path.Combine("TestData", testDataPath);
         _chainingControllerBuilder!.AddParameterStoreFromTestData(fullPath, optional: false, jsonProcessor: false);
-        
+
         _parameterStoreAdded = true;
         _performanceMonitoringEnabled = true;
         _addedSources.Add("ParameterStore-Optimized");
         _sourceTrackingData["ParameterStore-Performance"] = "Added for performance testing";
-        
+
         scenarioContext.Set(_chainingControllerBuilder, "ChainingControllerBuilder");
     }
 
@@ -207,12 +207,12 @@ public class AwsConfigurationChainingSteps(ScenarioContext scenarioContext)
 
         var fullPath = Path.Combine("TestData", testDataPath);
         _chainingControllerBuilder!.AddSecretsManagerFromTestData(fullPath, optional: false, jsonProcessor: false);
-        
+
         _secretsManagerAdded = true;
         _performanceMonitoringEnabled = true;
         _addedSources.Add("SecretsManager-Optimized");
         _sourceTrackingData["SecretsManager-Performance"] = "Added for performance testing";
-        
+
         scenarioContext.Set(_chainingControllerBuilder, "ChainingControllerBuilder");
     }
 
@@ -501,11 +501,11 @@ public class AwsConfigurationChainingSteps(ScenarioContext scenarioContext)
     public void ThenTheChainingControllerShouldHandleOptionalSourcesGracefully()
     {
         _chainingControllerConfiguration.Should().NotBeNull("Configuration should be built even with optional sources");
-        
+
         // Verify that the configuration contains the tracking data for optional source handling
         var optionalSourceHandling = _sourceTrackingData.ContainsKey("SecretsManager-Optional");
         optionalSourceHandling.Should().BeTrue("Optional Secrets Manager source should be tracked");
-        
+
         _chainingControllerValidationResults.Add("Optional sources handled gracefully without causing failures");
         scenarioContext.Set(_chainingControllerValidationResults, "ChainingControllerValidationResults");
     }
@@ -536,9 +536,9 @@ public class AwsConfigurationChainingSteps(ScenarioContext scenarioContext)
         // Verify that dynamic access worked for multiple sources
         var successfulAccesses = _chainingControllerValidationResults
             .Count(result => result.Contains("Successfully accessed"));
-        
+
         successfulAccesses.Should().BeGreaterThan(0, "Dynamic access should work across multiple AWS sources");
-        
+
         _chainingControllerValidationResults.Add("Dynamic access verified across all chained AWS sources");
         scenarioContext.Set(_chainingControllerValidationResults, "ChainingControllerValidationResults");
     }
@@ -547,20 +547,20 @@ public class AwsConfigurationChainingSteps(ScenarioContext scenarioContext)
     public void ThenTheChainingControllerShouldDemonstrateFlexKitIntegrationWithChainedSources()
     {
         _chainingControllerFlexConfiguration.Should().NotBeNull("FlexKit integration should be available");
-        
+
         // Test FlexKit-specific functionality with chained configuration
         try
         {
             var dynamicConfig = _chainingControllerFlexConfiguration;
             dynamicConfig.Should().NotBeNull("FlexKit dynamic configuration should be accessible");
-            
+
             _chainingControllerValidationResults.Add("FlexKit integration successfully demonstrated with chained AWS sources");
         }
         catch (Exception ex)
         {
             _chainingControllerValidationResults.Add($"FlexKit integration error: {ex.Message}");
         }
-        
+
         scenarioContext.Set(_chainingControllerValidationResults, "ChainingControllerValidationResults");
     }
 
@@ -568,7 +568,7 @@ public class AwsConfigurationChainingSteps(ScenarioContext scenarioContext)
     public void ThenTheChainingControllerConfigurationShouldSupportComplexPropertyNavigation()
     {
         _chainingControllerFlexConfiguration.Should().NotBeNull("FlexConfig should support complex navigation");
-        
+
         try
         {
             // Test complex property navigation patterns
@@ -600,7 +600,7 @@ public class AwsConfigurationChainingSteps(ScenarioContext scenarioContext)
         {
             _chainingControllerValidationResults.Add($"Complex navigation error: {ex.Message}");
         }
-        
+
         scenarioContext.Set(_chainingControllerValidationResults, "ChainingControllerValidationResults");
     }
 
@@ -609,7 +609,7 @@ public class AwsConfigurationChainingSteps(ScenarioContext scenarioContext)
     {
         _performanceStopwatch.IsRunning.Should().BeFalse("Performance stopwatch should be stopped");
         _performanceStopwatch.ElapsedMilliseconds.Should().BeLessThan(5000, "Configuration building should complete within reasonable time");
-        
+
         _chainingControllerValidationResults.Add($"Configuration built efficiently in {_performanceStopwatch.ElapsedMilliseconds}ms");
         scenarioContext.Set(_chainingControllerValidationResults, "ChainingControllerValidationResults");
     }
@@ -619,11 +619,11 @@ public class AwsConfigurationChainingSteps(ScenarioContext scenarioContext)
     {
         _addedSources.Should().HaveCountGreaterThan(1, "Multiple AWS sources should be configured");
         _performanceStopwatch.ElapsedMilliseconds.Should().BeLessThan(10000, "Multiple sources should not cause significant overhead");
-        
+
         var overheadAnalysis = $"Loaded {_addedSources.Count} AWS sources in {_performanceStopwatch.ElapsedMilliseconds}ms";
         _chainingControllerValidationResults.Add(overheadAnalysis);
         _chainingControllerValidationResults.Add("Multiple AWS sources handled without significant performance overhead");
-        
+
         scenarioContext.Set(_chainingControllerValidationResults, "ChainingControllerValidationResults");
     }
 
@@ -632,7 +632,7 @@ public class AwsConfigurationChainingSteps(ScenarioContext scenarioContext)
     {
         _performanceMonitoringEnabled.Should().BeTrue("Performance monitoring should be enabled for this test");
         _performanceStopwatch.ElapsedMilliseconds.Should().BeLessThan(3000, "Configuration loading should complete within acceptable time limits");
-        
+
         var performanceSummary = new[]
         {
             $"Total loading time: {_performanceStopwatch.ElapsedMilliseconds}ms",
@@ -640,7 +640,7 @@ public class AwsConfigurationChainingSteps(ScenarioContext scenarioContext)
             $"JSON processing: {(_jsonProcessingEnabled ? "Enabled" : "Disabled")}",
             "Performance benchmarks met successfully"
         };
-        
+
         _chainingControllerValidationResults.AddRange(performanceSummary);
         scenarioContext.Set(_chainingControllerValidationResults, "ChainingControllerValidationResults");
     }

@@ -43,7 +43,7 @@ public class EnvironmentVariableSteps(ScenarioContext scenarioContext)
     public void WhenISetupEnvironmentVariables(Table table)
     {
         _envConfigurationBuilder.Should().NotBeNull("Environment configuration builder should be prepared");
-        
+
         foreach (var row in table.Rows)
         {
             var name = row["Name"];
@@ -56,7 +56,7 @@ public class EnvironmentVariableSteps(ScenarioContext scenarioContext)
     public void WhenISetupAdditionalEnvironmentVariables(Table table)
     {
         _envConfigurationBuilder.Should().NotBeNull("Environment configuration builder should be prepared");
-        
+
         foreach (var row in table.Rows)
         {
             var name = row["Name"];
@@ -69,7 +69,7 @@ public class EnvironmentVariableSteps(ScenarioContext scenarioContext)
     public void WhenISetupBaseConfigurationData(Table table)
     {
         _envConfigurationBuilder.Should().NotBeNull("Environment configuration builder should be prepared");
-        
+
         foreach (var row in table.Rows)
         {
             var key = row["Key"];
@@ -86,10 +86,10 @@ public class EnvironmentVariableSteps(ScenarioContext scenarioContext)
     public void WhenIRegisterEnvironmentVariablesAsConfigurationSource()
     {
         _envConfigurationBuilder.Should().NotBeNull("Environment configuration builder should be prepared");
-        
+
         // Apply environment variables to the test builder
         _envConfigurationBuilder!.WithEnvironmentVariables(_environmentVariables);
-        
+
         // Add environment variables source
         _envConfigurationBuilder.AddEnvironmentVariables();
     }
@@ -98,10 +98,10 @@ public class EnvironmentVariableSteps(ScenarioContext scenarioContext)
     public void WhenIRegisterEnvironmentVariablesWithPrefixAsConfigurationSource(string prefix)
     {
         _envConfigurationBuilder.Should().NotBeNull("Environment configuration builder should be prepared");
-        
+
         // Apply environment variables to the test builder
         _envConfigurationBuilder!.WithEnvironmentVariables(_environmentVariables);
-        
+
         // Add environment variables source with prefix
         _envConfigurationBuilder.AddEnvironmentVariables(prefix);
     }
@@ -110,10 +110,10 @@ public class EnvironmentVariableSteps(ScenarioContext scenarioContext)
     public void WhenIRegisterAdditionalEnvironmentVariablesAsConfigurationSource()
     {
         _envConfigurationBuilder.Should().NotBeNull("Environment configuration builder should be prepared");
-        
+
         // Apply additional environment variables to the test builder
         _envConfigurationBuilder!.WithEnvironmentVariables(_additionalEnvironmentVariables);
-        
+
         // Add environment variables source
         _envConfigurationBuilder.AddEnvironmentVariables();
     }
@@ -122,7 +122,7 @@ public class EnvironmentVariableSteps(ScenarioContext scenarioContext)
     public void WhenIRegisterBaseConfigurationAsSource()
     {
         _envConfigurationBuilder.Should().NotBeNull("Environment configuration builder should be prepared");
-        
+
         if (_baseConfigurationData.Count > 0)
         {
             _envConfigurationBuilder!.AddInMemoryCollection(_baseConfigurationData);
@@ -133,10 +133,10 @@ public class EnvironmentVariableSteps(ScenarioContext scenarioContext)
     public void WhenIRegisterDotEnvFileAsConfigurationSource(string filePath)
     {
         _envConfigurationBuilder.Should().NotBeNull("Environment configuration builder should be prepared");
-        
+
         // Use the same pattern as JsonConfigurationSteps for consistency
         var normalizedPath = filePath.Replace('/', Path.DirectorySeparatorChar);
-        
+
         if (!File.Exists(normalizedPath))
         {
             throw new FileNotFoundException($"Test data file not found: {normalizedPath}");
@@ -153,7 +153,7 @@ public class EnvironmentVariableSteps(ScenarioContext scenarioContext)
     public void WhenIBuildTheEnvironmentConfiguration()
     {
         _envConfigurationBuilder.Should().NotBeNull("Environment configuration builder should be prepared");
-        
+
         try
         {
             _envConfiguration = _envConfigurationBuilder!.Build();
@@ -171,7 +171,7 @@ public class EnvironmentVariableSteps(ScenarioContext scenarioContext)
     public void WhenICreateFlexConfigFromEnvironmentConfiguration()
     {
         _envConfiguration.Should().NotBeNull("Environment configuration should be built");
-        
+
         try
         {
             _envFlexConfiguration = _envConfiguration!.GetFlexConfiguration();
@@ -198,7 +198,7 @@ public class EnvironmentVariableSteps(ScenarioContext scenarioContext)
     public void ThenTheEnvironmentConfigurationShouldContainWithValue(string key, string expectedValue)
     {
         _envConfiguration.Should().NotBeNull("Environment configuration should be loaded");
-        
+
         var actualValue = _envConfiguration![key];
         actualValue.Should().Be(expectedValue, $"Environment configuration key '{key}' should have the expected value");
     }
@@ -207,7 +207,7 @@ public class EnvironmentVariableSteps(ScenarioContext scenarioContext)
     public void ThenTheEnvironmentConfigurationShouldNotContain(string key)
     {
         _envConfiguration.Should().NotBeNull("Environment configuration should be loaded");
-        
+
         var actualValue = _envConfiguration![key];
         actualValue.Should().BeNull($"Environment configuration should not contain key '{key}'");
     }
@@ -223,7 +223,7 @@ public class EnvironmentVariableSteps(ScenarioContext scenarioContext)
     public void ThenFlexConfigShouldContainWithValue(string key, string expectedValue)
     {
         _envFlexConfiguration.Should().NotBeNull("FlexConfig should be loaded");
-        
+
         var actualValue = _envFlexConfiguration![key];
         actualValue.Should().Be(expectedValue, $"FlexConfig key '{key}' should have the expected value");
     }

@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
 using FlexKit.Logging.Configuration;
 using FlexKit.Logging.Core;
@@ -22,11 +23,20 @@ namespace FlexKit.Logging.NLog.Core;
 /// <param name="formatterFactory">Message formatter factory.</param>
 /// <param name="nlogLogger">Configured NLog logger instance.</param>
 [UsedImplicitly]
-public sealed class NLogLogWriter(
+internal sealed class NLogLogWriter(
     LoggingConfig loggingConfig,
     IMessageFormatterFactory formatterFactory,
     ILogger nlogLogger) : ILogEntryProcessor
 {
+    /// <summary>
+    /// A thread-safe cache that stores instances of NLog loggers, keyed by type name.
+    /// </summary>
+    /// <remarks>
+    /// Ensures efficient retrieval and reuse of NLog logger instances for specific type names,
+    /// avoiding the overhead of repeatedly creating new logger instances.
+    /// </remarks>
+    private readonly ConcurrentDictionary<string, ILogger> _loggerCache = new();
+
     /// <inheritdoc />
     public LoggingConfig Config { get; } = loggingConfig ?? throw new ArgumentNullException(nameof(loggingConfig));
 
@@ -123,13 +133,15 @@ public sealed class NLogLogWriter(
         LogLevel level,
         string typeName)
     {
-        if (!nlogLogger.IsEnabled(level))
+        var logger = GetLoggerForType(typeName);
+
+        if (!logger.IsEnabled(level))
         {
             return;
         }
 
         // Create log event info for structured logging
-        var logEventInfo = new LogEventInfo(level, nlogLogger.Name, message.Template)
+        var logEventInfo = new LogEventInfo(level, logger.Name, message.Template)
         {
             Exception = null,
             Properties = { ["Target"] = typeName },
@@ -137,7 +149,7 @@ public sealed class NLogLogWriter(
         };
 
         // Log the event
-        nlogLogger.Log(logEventInfo);
+        logger.Log(logEventInfo);
     }
 
     /// <summary>
@@ -157,4 +169,15 @@ public sealed class NLogLogWriter(
             Microsoft.Extensions.Logging.LogLevel.None => LogLevel.Off,
             _ => LogLevel.Info,
         };
+
+    /// <summary>
+    /// Retrieves an NLog logger instance associated with the specified type name.
+    /// Uses a cache mechanism to store and reuse logger instances for optimized performance.
+    /// </summary>
+    /// <param name="typeName">The name of the type for which the logger instance is requested.</param>
+    /// <returns>
+    /// An <see cref="ILogger"/> instance associated with the given type name.
+    /// </returns>
+    private ILogger GetLoggerForType(string typeName) =>
+        _loggerCache.GetOrAdd(typeName, LogManager.GetLogger);
 }

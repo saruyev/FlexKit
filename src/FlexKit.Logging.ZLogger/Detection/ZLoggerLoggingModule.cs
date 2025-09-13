@@ -43,7 +43,7 @@ namespace FlexKit.Logging.ZLogger.Detection;
 /// </para>
 /// </remarks>
 [UsedImplicitly]
-public class ZLoggerLoggingModule : Module
+internal sealed class ZLoggerLoggingModule : Module
 {
     /// <summary>
     /// Configures the container with ZLogger-based logging services.

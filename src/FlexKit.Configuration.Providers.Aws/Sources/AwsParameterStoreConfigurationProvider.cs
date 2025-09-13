@@ -90,11 +90,27 @@ namespace FlexKit.Configuration.Providers.Aws.Sources;
 /// containerBuilder.RegisterConfig&lt;DatabaseConfig&gt;("myapp:database");
 /// </code>
 /// </example>
-public sealed class AwsParameterStoreConfigurationProvider : ConfigurationProvider, IDisposable
+internal sealed class AwsParameterStoreConfigurationProvider : ConfigurationProvider, IDisposable
 {
+    /// <summary>
+    /// Represents the configuration source for AWS Parameter Store.
+    /// </summary>
     private readonly AwsParameterStoreConfigurationSource _source;
+
+    /// <summary>
+    /// Represents the AWS Simple Systems Management (SSM) client instance used
+    /// for interacting with AWS Parameter Store to retrieve and manage configuration data.
+    /// </summary>
     private readonly IAmazonSimpleSystemsManagement _ssmClient;
+
+    /// <summary>
+    /// Represents the timer responsible for scheduling automatic reloads of the AWS Parameter Store configurations.
+    /// </summary>
     private readonly Timer? _reloadTimer;
+
+    /// <summary>
+    /// Indicates whether the object has been disposed to prevent redundant disposal actions.
+    /// </summary>
     private bool _disposed;
 
     /// <summary>
@@ -106,7 +122,9 @@ public sealed class AwsParameterStoreConfigurationProvider : ConfigurationProvid
     /// including the path prefix, AWS options, and processing settings.
     /// </param>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="source"/> is null.</exception>
-    /// <exception cref="InvalidOperationException">Thrown when AWS credentials cannot be resolved or SSM client creation fails.</exception>
+    /// <exception cref="InvalidOperationException">
+    /// Thrown when AWS credentials cannot be resolved or SSM client creation fails.
+    /// </exception>
     /// <remarks>
     /// The constructor creates an AWS SimpleSystemsManagement client using the credentials and region
     /// specified in the source options, or falls back to the default AWS credential resolution chain.
@@ -131,14 +149,16 @@ public sealed class AwsParameterStoreConfigurationProvider : ConfigurationProvid
         }
 
         // Set up automatic reloading if configured
-        if (_source.ReloadAfter.HasValue)
+        if (!_source.ReloadAfter.HasValue)
         {
-            _reloadTimer = new Timer(
-                callback: _ => LoadAsync().ConfigureAwait(false),
-                state: null,
-                dueTime: _source.ReloadAfter.Value,
-                period: _source.ReloadAfter.Value);
+            return;
         }
+
+        _reloadTimer = new Timer(
+            callback: _ => LoadAsync().ConfigureAwait(false),
+            state: null,
+            dueTime: _source.ReloadAfter.Value,
+            period: _source.ReloadAfter.Value);
     }
 
     /// <summary>
@@ -170,8 +190,12 @@ public sealed class AwsParameterStoreConfigurationProvider : ConfigurationProvid
     /// Required sources will throw exceptions on failure.
     /// </para>
     /// </remarks>
-    /// <exception cref="InvalidOperationException">Thrown when Parameter Store access fails and the source is not optional.</exception>
-    /// <exception cref="UnauthorizedAccessException">Thrown when the configured credentials lack necessary permissions.</exception>
+    /// <exception cref="InvalidOperationException">
+    /// Thrown when Parameter Store access fails and the source is not optional.
+    /// </exception>
+    /// <exception cref="UnauthorizedAccessException">
+    /// Thrown when the configured credentials lack necessary permissions.
+    /// </exception>
     public override void Load()
     {
         try
@@ -268,7 +292,8 @@ public sealed class AwsParameterStoreConfigurationProvider : ConfigurationProvid
         var configKey = parameterName;
 
         // Remove the path prefix if it matches
-        if (!string.IsNullOrEmpty(_source.Path) && configKey.StartsWith(_source.Path, StringComparison.OrdinalIgnoreCase))
+        if (!string.IsNullOrEmpty(_source.Path) &&
+            configKey.StartsWith(_source.Path, StringComparison.OrdinalIgnoreCase))
         {
             configKey = configKey[_source.Path.Length..];
         }
@@ -384,7 +409,8 @@ public sealed class AwsParameterStoreConfigurationProvider : ConfigurationProvid
 
     /// <summary>
     /// Determines whether a configuration key should be processed as JSON based on the provider configuration.
-    /// Checks against JsonProcessorPaths if specified, otherwise applies to all parameters when JsonProcessor is enabled.
+    /// Checks against JsonProcessorPaths if specified, otherwise applies to all parameters when JsonProcessor
+    /// is enabled.
     /// </summary>
     /// <param name="configKey">The configuration key to check.</param>
     /// <returns>True if the parameter should be processed as JSON, false otherwise.</returns>
@@ -404,7 +430,9 @@ public sealed class AwsParameterStoreConfigurationProvider : ConfigurationProvid
     /// Releases the unmanaged resources used by the provider and optionally releases the managed resources.
     /// Disposes of the AWS SSM client and stops the reload timer if configured.
     /// </summary>
-    /// <param name="disposing">True to release both managed and unmanaged resources; false to release only unmanaged resources.</param>
+    /// <param name="disposing">
+    /// True to release both managed and unmanaged resources; false to release only unmanaged resources.
+    /// </param>
     [SuppressMessage("ReSharper", "FlagArgument", Justification =
         "Flag argument is used to indicate whether to dispose managed resources." +
         "No SRP violation as this is a standard pattern for IDisposable implementations.")]
@@ -425,7 +453,8 @@ public sealed class AwsParameterStoreConfigurationProvider : ConfigurationProvid
     }
 
     /// <summary>
-    /// Releases all resources used by the current instance of the <see cref="AwsParameterStoreConfigurationProvider"/> class.
+    /// Releases all resources used by the current instance of the
+    /// <see cref="AwsParameterStoreConfigurationProvider"/> class.
     /// </summary>
     public void Dispose() => Dispose(disposing: true);
 }

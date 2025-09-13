@@ -24,7 +24,7 @@ public class AwsSecretsManagerBenchmarks
 {
     private const int LocalStackPort = 4566;
     private const string LocalStackImage = "localstack/localstack:latest";
-    
+
     private string _testSecretName = null!;
     private string _testSecretValue = null!;
     private AWSOptions _localstackOptions = null!;
@@ -45,7 +45,7 @@ public class AwsSecretsManagerBenchmarks
         // Setup localstack connection options
         var mappedPort = _container!.GetMappedPublicPort(LocalStackPort);
         var endpointUrl = $"http://localhost:{mappedPort}";
-        
+
         _localstackOptions = new AWSOptions
         {
             Credentials = new AnonymousAWSCredentials(),
@@ -61,7 +61,7 @@ public class AwsSecretsManagerBenchmarks
             MaxErrorRetry = 0,
             Timeout = TimeSpan.FromSeconds(30)
         };
-        
+
         _secretsManagerClient = new AmazonSecretsManagerClient(new AnonymousAWSCredentials(), config);
 
         // Health check - ensure the localstack is running and accessible
@@ -69,7 +69,7 @@ public class AwsSecretsManagerBenchmarks
 
         // Setup test secret in a localstack
         await SetupTestSecret();
-        
+
         // Update AWS options with the correct endpoint for the benchmarks
         _localstackOptions.DefaultClientConfig.ServiceURL = endpointUrl;
         _localstackOptions.DefaultClientConfig.UseHttp = true;
@@ -91,7 +91,7 @@ public class AwsSecretsManagerBenchmarks
             .Build();
 
         await _container.StartAsync();
-        
+
         // Wait a bit for services to be ready
         await Task.Delay(2000);
     }
@@ -385,7 +385,7 @@ public class AwsSecretsManagerBenchmarks
         finally
         {
             _secretsManagerClient.Dispose();
-            
+
             // Stop and dispose container
             if (_container != null)
             {

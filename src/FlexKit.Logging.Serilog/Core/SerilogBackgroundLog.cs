@@ -12,9 +12,31 @@ namespace FlexKit.Logging.Serilog.Core;
 /// Initializes a new instance of SerilogBackgroundLog.
 /// </remarks>
 /// <param name="processor">The log entry processor that writes to Serilog.</param>
-public sealed class SerilogBackgroundLog(ILogEntryProcessor processor) : IBackgroundLog, IDisposable
+internal sealed class SerilogBackgroundLog(ILogEntryProcessor processor) : IBackgroundLog, IDisposable
 {
+    /// <summary>
+    /// Represents the log entry processor used to process and write log entries to the configured destination.
+    /// This field is an instance of <see cref="ILogEntryProcessor"/> responsible for handling the formatting
+    /// and processing of log entries.
+    /// </summary>
+    /// <remarks>
+    /// It is initialized in the constructor and is used throughout the lifecycle of
+    /// <see cref="SerilogBackgroundLog"/>.
+    /// The processor plays a critical role in enabling Serilog's optimized batching and background processing
+    /// by directly processing log entries as they are received.
+    /// </remarks>
     private readonly ILogEntryProcessor _processor = processor ?? throw new ArgumentNullException(nameof(processor));
+
+    /// <summary>
+    /// Indicates whether the current instance of <see cref="SerilogBackgroundLog"/> has been disposed.
+    /// This field ensures proper resource cleanup and prevents further operations on a disposed instance.
+    /// </summary>
+    /// <remarks>
+    /// Used to track the disposed state of the object. Set to <see langword="true"/> during the call
+    /// to <see cref="Dispose"/>. Any operations attempted on a disposed instance, such as logging or enqueuing
+    /// log entries, will be rejected. The field is marked as <see langword="volatile"/> to ensure thread-safe
+    /// access in scenarios involving concurrent operations.
+    /// </remarks>
     private volatile bool _disposed;
 
     /// <inheritdoc />

@@ -114,7 +114,7 @@ public class DotEnvFileSteps(ScenarioContext scenarioContext)
     {
         _dotEnvConfigurationBuilder.Should().NotBeNull(".env configuration builder should be established");
         _dynamicDotEnvContent.Should().NotBeEmpty("Dynamic .env content should be specified");
-        
+
         foreach (var dotEnvContent in _dynamicDotEnvContent)
         {
             _dotEnvConfigurationBuilder!.AddTempEnvFile(dotEnvContent, optional: false);
@@ -126,7 +126,7 @@ public class DotEnvFileSteps(ScenarioContext scenarioContext)
     {
         _dotEnvConfigurationBuilder.Should().NotBeNull(".env configuration builder should be established");
         _baseDotEnvContent.Should().NotBeEmpty("Base .env content should be specified");
-        
+
         foreach (var dotEnvContent in _baseDotEnvContent)
         {
             _dotEnvConfigurationBuilder!.AddTempEnvFile(dotEnvContent, optional: false);
@@ -138,7 +138,7 @@ public class DotEnvFileSteps(ScenarioContext scenarioContext)
     {
         _dotEnvConfigurationBuilder.Should().NotBeNull(".env configuration builder should be established");
         _overrideDotEnvContent.Should().NotBeEmpty("Override .env content should be specified");
-        
+
         foreach (var dotEnvContent in _overrideDotEnvContent)
         {
             _dotEnvConfigurationBuilder!.AddTempEnvFile(dotEnvContent, optional: false);
@@ -149,10 +149,10 @@ public class DotEnvFileSteps(ScenarioContext scenarioContext)
     public void WhenILoadDotEnvFileIntoConfiguration(string filePath)
     {
         _dotEnvConfigurationBuilder.Should().NotBeNull(".env configuration builder should be established");
-        
+
         // Use the same pattern as JsonConfigurationSteps for consistency
         var normalizedPath = filePath.Replace('/', Path.DirectorySeparatorChar);
-        
+
         if (!File.Exists(normalizedPath))
         {
             throw new FileNotFoundException($"Test data file not found: {normalizedPath}");
@@ -166,10 +166,10 @@ public class DotEnvFileSteps(ScenarioContext scenarioContext)
     public void WhenILoadNonExistentDotEnvFileAsOptional(string filePath)
     {
         _dotEnvConfigurationBuilder.Should().NotBeNull(".env configuration builder should be established");
-        
+
         // Use the same simple path normalization as JsonConfigurationSteps
         var normalizedPath = filePath.Replace('/', Path.DirectorySeparatorChar);
-        
+
         // Don't validate the existence for optional files - just add to the builder
         _dotEnvConfigurationBuilder!.AddDotEnvFile(normalizedPath, optional: true);
     }
@@ -178,10 +178,10 @@ public class DotEnvFileSteps(ScenarioContext scenarioContext)
     public void WhenILoadNonExistentDotEnvFileAsRequired(string filePath)
     {
         _dotEnvConfigurationBuilder.Should().NotBeNull(".env configuration builder should be established");
-        
+
         // Use the same simple path normalization as JsonConfigurationSteps
         var normalizedPath = filePath.Replace('/', Path.DirectorySeparatorChar);
-        
+
         // Add as required file - will fail during build if not found
         _dotEnvConfigurationBuilder!.AddDotEnvFile(normalizedPath, optional: false);
     }
@@ -195,7 +195,7 @@ public class DotEnvFileSteps(ScenarioContext scenarioContext)
     public void WhenIBuildTheDotEnvFileConfiguration()
     {
         _dotEnvConfigurationBuilder.Should().NotBeNull(".env configuration builder should be established");
-        
+
         try
         {
             _dotEnvConfiguration = _dotEnvConfigurationBuilder!.Build();
@@ -220,7 +220,7 @@ public class DotEnvFileSteps(ScenarioContext scenarioContext)
     public void WhenIGenerateFlexConfigFromDotEnvConfiguration()
     {
         _dotEnvConfiguration.Should().NotBeNull(".env configuration should be built");
-        
+
         try
         {
             _dotEnvFlexConfiguration = _dotEnvConfiguration!.GetFlexConfiguration();
@@ -261,7 +261,7 @@ public class DotEnvFileSteps(ScenarioContext scenarioContext)
     public void ThenTheDotEnvConfigurationIncludesHavingValue(string key, string expectedValue)
     {
         _dotEnvConfiguration.Should().NotBeNull(".env configuration should be loaded");
-        
+
         var actualValue = _dotEnvConfiguration![key];
         actualValue.Should().Be(expectedValue, $".env configuration key '{key}' should have the expected value");
     }
@@ -270,7 +270,7 @@ public class DotEnvFileSteps(ScenarioContext scenarioContext)
     public void ThenTheDotEnvConfigurationExcludes(string key)
     {
         _dotEnvConfiguration.Should().NotBeNull(".env configuration should be loaded");
-        
+
         var actualValue = _dotEnvConfiguration![key];
         actualValue.Should().BeNull($".env configuration should not contain key '{key}'");
     }
@@ -286,7 +286,7 @@ public class DotEnvFileSteps(ScenarioContext scenarioContext)
     public void ThenFlexConfigIncludesHavingValue(string key, string expectedValue)
     {
         _dotEnvFlexConfiguration.Should().NotBeNull("FlexConfig should be loaded");
-        
+
         var actualValue = _dotEnvFlexConfiguration![key];
         actualValue.Should().Be(expectedValue, $"FlexConfig key '{key}' should have the expected value");
     }

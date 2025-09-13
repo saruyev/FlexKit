@@ -1,0 +1,353 @@
+# FlexKit Configuration - Development Environment Service Overrides
+# This file demonstrates environment-specific YAML configuration overrides
+
+# Development-specific application settings
+Application:
+  Name: "FlexKit Configuration Console App (Development YAML)"
+  Environment: "Development"
+  
+  # Development features
+  DeveloperFeatures:
+    EnableHotReload: true
+    EnableDetailedLogging: true
+    EnableSwagger: true
+    EnableCors: true
+    ShowExceptionDetails: true
+    EnableTestEndpoints: true
+
+# Development database configuration
+Database:
+  # Override connection string for development
+  ConnectionString: "Server=localhost;Database=FlexKitDemo_DevYaml;Integrated Security=true;TrustServerCertificate=true;"
+  CommandTimeout: 120  # Longer timeout for development/debugging
+  
+  # Development-specific providers
+  Providers:
+    Primary:
+      Name: "Development Database"
+      Host: "localhost"
+      Port: 5432
+      Database: "flexkit_dev_yaml"
+      Username: "dev_user"
+      
+      # Relaxed security for development
+      Ssl:
+        Mode: "Disable"  # No SSL required in development
+        
+      # Development performance settings
+      Performance:
+        MaxConnections: 20  # Lower for development
+        StatementTimeout: 60000
+        
+    # Local test database
+    Testing:
+      Name: "Local Test Database"
+      Host: "localhost"
+      Port: 5433
+      Database: "flexkit_test_yaml"
+      Username: "test_user"
+      
+      Testing:
+        AutoReset: true
+        SeedDataEnabled: true
+        TransactionRollback: true
+        
+# Development external API configuration
+ExternalApis:
+  PaymentGateway:
+    Name: "Payment Gateway (Development)"
+    BaseUrl: "https://api.sandbox.stripe.com"  # Sandbox environment
+    Timeout: 60000  # Longer timeout for debugging
+    
+    # Development authentication
+    Authentication:
+      Type: "Bearer"
+      TokenEndpoint: "https://auth.sandbox.stripe.com/token"
+      ClientId: "dev-stripe-client-id"
+      
+    # Relaxed rate limiting for development
+    RateLimit:
+      RequestsPerMinute: 10000  # Much higher for development
+      BurstLimit: 500
+      
+    # Development circuit breaker (more forgiving)
+    CircuitBreaker:
+      FailureThreshold: 10      # Higher threshold
+      RecoveryTimeoutMs: 10000  # Faster recovery
+      
+  NotificationService:
+    Name: "Notification Service (Development)"
+    BaseUrl: "https://notifications.sandbox.demo.com/v1"
+    
+    # Development webhooks
+    Webhooks:
+      Enabled: true
+      BaseUrl: "https://dev.ngrok.io/webhooks"  # Local development tunnel
+      Secret: "dev-webhook-secret"
+      
+    # Development notification channels
+    Channels:
+      Email:
+        Provider: "MailHog"  # Local email testing
+        DefaultFromAddress: "dev@localhost"
+        
+      SMS:
+        Provider: "MockSMS"  # Mock SMS for development
+        
+      Push:
+        Provider: "MockPush"  # Mock push notifications
+
+# Development server configuration
+Servers:
+  - Name: "Local Development Server"
+    Host: "localhost"
+    Port: 5000
+    IsActive: true
+    Environment: "Development"
+    Tags: ["local", "development", "yaml"]
+    
+    # Development resources
+    Resources:
+      Cpu: "2 cores"
+      Memory: "4GB"
+      Storage: "20GB SSD"
+      
+  - Name: "Docker Development Server"
+    Host: "dev-container"
+    Port: 8080
+    IsActive: false  # Disabled by default
+    Environment: "Development"
+    Tags: ["docker", "container", "yaml"]
+
+# Development logging configuration
+Logging:
+  # More verbose logging in development
+  LogLevel:
+    Default: "Debug"      # More detailed logging
+    Microsoft: "Information"
+    "Microsoft.Hosting.Lifetime": "Information"
+    "FlexKit": "Trace"    # Most detailed for FlexKit components
+    "FlexKitConfigurationConsoleApp": "Trace"
+    
+    # Entity Framework logging for development
+    "Microsoft.EntityFrameworkCore": "Information"
+    "Microsoft.EntityFrameworkCore.Database.Command": "Information"
+    
+  # Development console logging
+  Console:
+    Enabled: true
+    IncludeScopes: true
+    IncludeLogLevel: true
+    IncludeCategory: true
+    TimestampFormat: "yyyy-MM-dd HH:mm:ss.fff"
+    
+  # Development file logging
+  File:
+    Enabled: true
+    Path: "logs/flexkit-dev-yaml.log"
+    MaxSizeBytes: 104857600  # 100MB for development
+    MaxFiles: 5
+    RollingInterval: "Hour"  # Hourly for development
+    
+    # Development log format
+    Format:
+      IncludeTimestamp: true
+      IncludeLevel: true
+      IncludeCategory: true
+      IncludeThreadId: true    # Helpful for debugging
+      IncludeScopes: true      # Include scope information
+      
+  # Development structured logging
+  Structured:
+    Enabled: true
+    IncludeEventId: true
+    IncludeScopes: true
+    IncludeExceptionDetails: true  # Full exception details in development
+
+# Development service configuration
+ServiceConfiguration:
+  # Development email service
+  EmailService:
+    Provider: "MailHog Development SMTP"
+    SmtpHost: "localhost"
+    SmtpPort: 1025        # MailHog default SMTP port
+    EnableSsl: false      # No SSL for local MailHog
+    EnableAuthentication: false
+    FromAddress: "dev@flexkit-yaml.localhost"
+    FromName: "FlexKit Development (YAML)"
+    
+    # Development templates (faster loading)
+    Templates:
+      Welcome:
+        Subject: "[DEV] Welcome to FlexKit YAML Demo!"
+        BodyTemplate: "templates/dev-welcome.html"
+        
+      PasswordReset:
+        Subject: "[DEV] Password Reset Request"
+        BodyTemplate: "templates/dev-password-reset.html"
+        ExpirationMinutes: 120  # Longer expiration for development
+        
+    # Development delivery (immediate for testing)
+    Delivery:
+      MaxRetries: 1         # Less retries in development
+      RetryDelayMs: 1000    # Faster retry
+      BatchSize: 10         # Smaller batches
+      MaxConcurrentSends: 2
+      
+  # Development cache service
+  CacheService:
+    Provider: "Memory"      # Use in-memory cache for development
+    ConnectionString: ""    # Not needed for memory cache
+    
+    # Shorter TTLs for development (easier testing)
+    DefaultTtl:
+      Short: "00:01:00"     # 1 minute
+      Medium: "00:05:00"    # 5 minutes
+      Long: "00:15:00"      # 15 minutes
+      Extended: "01:00:00"  # 1 hour
+      
+    # Development cache performance (lower limits)
+    Performance:
+      MaxConnections: 10
+      ConnectTimeout: 2000
+      CommandTimeout: 2000
+
+# Development monitoring configuration
+Monitoring:
+  # Development metrics (reduced collection)
+  Metrics:
+    Enabled: true
+    CollectionInterval: 10    # More frequent for development
+    RetentionPeriod: "1.00:00:00"  # 1 day retention
+    
+    # Development counters
+    Counters:
+      - "http_requests_total"
+      - "database_queries_total"
+      - "cache_operations_total"
+      - "email_sends_total"
+      - "dev_test_counter"    # Development-specific counter
+      
+  # Development health checks (more frequent)
+  HealthChecks:
+    Enabled: true
+    CheckInterval: 15         # Every 15 seconds
+    
+    Checks:
+      Database:
+        Enabled: true
+        Timeout: 5000         # Shorter timeout for development
+        Query: "SELECT 1"
+        
+      MemoryCache:           # Memory cache health check for development
+        Enabled: true
+        Timeout: 1000
+        
+      MailHog:               # Local email server health check
+        Enabled: true
+        Timeout: 2000
+        Endpoint: "http://localhost:8025/api/v2/messages"
+
+# Development security configuration (relaxed for development)
+Security:
+  # Development CORS (more permissive)
+  Cors:
+    Enabled: true
+    AllowedOrigins:
+      - "http://localhost:3000"      # React development server
+      - "http://localhost:4200"      # Angular development server
+      - "http://localhost:5173"      # Vite development server
+      - "https://localhost:*"        # Any HTTPS localhost port
+      - "http://127.0.0.1:*"        # Any local IP port
+    AllowedMethods: ["*"]           # All methods allowed in development
+    AllowedHeaders: ["*"]           # All headers allowed in development
+    AllowCredentials: true
+    MaxAge: 86400
+    
+  # Development JWT (longer expiration, less secure)
+  Jwt:
+    Issuer: "https://dev.auth.yaml-demo.com"
+    Audience: "flexkit-yaml-dev"
+    ExpirationMinutes: 480          # 8 hours for development convenience
+    RefreshExpirationDays: 90       # Longer refresh for development
+    Algorithm: "HS256"
+    
+  # Development rate limiting (very permissive)
+  RateLimit:
+    Enabled: false                  # Disabled for development convenience
+    RequestsPerMinute: 10000
+    BurstLimit: 1000
+    
+    # No IP restrictions in development
+    Whitelist:
+      - "0.0.0.0/0"                # Allow all IPs in development
+
+# Development-specific features
+Development:
+  # All development features enabled
+  EnableSwagger: true
+  EnableDetailedErrors: true
+  EnableCors: true
+  EnableSeedData: true
+  EnableTestData: true
+  EnableMockServices: true
+  
+  # Development hot reload
+  HotReload:
+    Enabled: true
+    WatchedExtensions: [".cs", ".yaml", ".json", ".html", ".js", ".css"]
+    IgnorePatterns: ["bin/", "obj/", ".git/", "node_modules/"]
+    RestartDelayMs: 1000
+    
+  # Development debugging
+  Debugging:
+    EnableSqlLogging: true
+    EnableHttpRequestLogging: true
+    EnablePerformanceProfiling: true
+    EnableMemoryDumps: false
+    
+    # Breakpoint-friendly timeouts
+    ExtendedTimeouts:
+      HttpClient: 300000            # 5 minutes
+      Database: 300000              # 5 minutes
+      Cache: 60000                  # 1 minute
+      
+  # Development test data
+  TestData:
+    AutoGenerate: true
+    UserCount: 100
+    OrderCount: 500
+    ProductCount: 50
+    GenerateImages: false           # Skip image generation for performance
+    
+  # Development API documentation
+  ApiDocumentation:
+    EnableSwagger: true
+    IncludeXmlComments: true
+    IncludeExampleValues: true
+    EnableTryItOut: true
+    SwaggerEndpoint: "/swagger"
+    
+    # API versioning for development
+    Versioning:
+      Enabled: true
+      DefaultVersion: "1.0"
+      SupportedVersions: ["1.0", "2.0-preview"]
+
+# Development environment variables override
+EnvironmentOverrides:
+  # Additional development environment variables
+  Variables:
+    ASPNETCORE_ENVIRONMENT: "Development"
+    ASPNETCORE_URLS: "https://localhost:5001;http://localhost:5000"
+    DOTNET_USE_POLLING_FILE_WATCHER: "true"
+    DOTNET_WATCH_RESTART_ON_RUDE_EDIT: "true"
+    
+  # Development-specific configuration paths
+  ConfigurationPaths:
+    - "appsettings.yaml"
+    - "appsettings.Development.yaml"
+    - "features.yaml"
+    - "database.yaml"
+    - "services.Development.yaml"
+    - ".env.development"

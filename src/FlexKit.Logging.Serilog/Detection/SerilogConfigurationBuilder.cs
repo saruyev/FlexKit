@@ -10,9 +10,20 @@ namespace FlexKit.Logging.Serilog.Detection;
 /// Builds Serilog LoggerConfiguration from FlexKit LoggingConfig by dynamically
 /// detecting available sinks and enrichers and configuring them using reflection.
 /// </summary>
-public class SerilogConfigurationBuilder
+internal sealed class SerilogConfigurationBuilder
 {
+    /// <summary>
+    /// A dictionary that holds information about available Serilog sink components.
+    /// Each entry maps the sink type name to the corresponding <see cref="SerilogComponentDetector.ComponentInfo"/>
+    /// containing details of the sink's configuration method and its parameters.
+    /// </summary>
     private readonly Dictionary<string, SerilogComponentDetector.ComponentInfo> _availableSinks;
+
+    /// <summary>
+    /// A dictionary that stores information about available Serilog enricher components.
+    /// Each entry maps the enricher type name to the corresponding <see cref="SerilogComponentDetector.ComponentInfo"/>
+    /// containing details of the enricher's configuration method and its parameters.
+    /// </summary>
     private readonly Dictionary<string, SerilogComponentDetector.ComponentInfo> _availableEnrichers;
 
     /// <summary>
@@ -130,13 +141,9 @@ public class SerilogConfigurationBuilder
 
         try
         {
-            config.WriteTo.Logger(lc =>
-            {
-                lc.Filter.ByIncludingOnly(e =>
-                    e.Properties.ContainsKey("Target") &&
-                    e.Properties["Target"].ToString().Contains(target.Type));
-                InvokeSinkMethod(sinkInfo, target, lc);
-            });
+            ConfigureFlexKitSink(target, config, sinkInfo);
+            ConfigureMelBridgeSink(target, config, sinkInfo);
+
             return true;
         }
         catch (Exception)
@@ -144,6 +151,46 @@ public class SerilogConfigurationBuilder
             return false;
         }
     }
+
+    /// <summary>
+    /// Configures the FlexKit sink for the given logging target by using the specified LoggerConfiguration
+    /// and detected sink information.
+    /// </summary>
+    /// <param name="target">The logging target containing configuration details for the sink.</param>
+    /// <param name="config">The LoggerConfiguration instance to apply the sink configuration to.</param>
+    /// <param name="sinkInfo">
+    /// Detection information for the specific sink, including configuration method and parameters.
+    /// </param>
+    private static void ConfigureFlexKitSink(
+        LoggingTarget target,
+        LoggerConfiguration config,
+        SerilogComponentDetector.ComponentInfo sinkInfo) =>
+        config.WriteTo.Logger(lc =>
+        {
+            lc.Filter.ByIncludingOnly(e =>
+                e.Properties.ContainsKey("Target") &&
+                e.Properties["Target"].ToString().Contains(target.Type));
+
+            InvokeSinkMethod(sinkInfo, target, lc);
+        });
+
+    /// <summary>
+    /// Configures a sink for MEL bridge logs (framework logs from ASP.NET Core, etc.).
+    /// These logs don't have the Target property, so we route them to all sinks.
+    /// </summary>
+    /// <param name="target">The FlexKit target configuration.</param>
+    /// <param name="loggerConfig">The LoggerConfiguration to configure.</param>
+    /// <param name="sinkInfo">Information about the detected sink.</param>
+    private static void ConfigureMelBridgeSink(
+        LoggingTarget target,
+        LoggerConfiguration loggerConfig,
+        SerilogComponentDetector.ComponentInfo sinkInfo) =>
+        loggerConfig.WriteTo.Logger(lc =>
+        {
+            // Only accept events that DON'T have the Target property (MEL bridge logs)
+            lc.Filter.ByIncludingOnly(e => !e.Properties.ContainsKey("Target"));
+            InvokeSinkMethod(sinkInfo, target, lc);
+        });
 
     /// <summary>
     /// Invokes a method of a detected Serilog sink using reflection with the provided target
@@ -206,7 +253,8 @@ public class SerilogConfigurationBuilder
     }
 
     /// <summary>
-    /// Finds a matching configuration section for the specified parameter name within a given collection of properties.
+    /// Finds a matching configuration section for the specified parameter name within a given
+    /// collection of properties.
     /// </summary>
     /// <param name="properties">
     /// A dictionary containing property names and their corresponding configuration sections.
@@ -247,19 +295,18 @@ public class SerilogConfigurationBuilder
                     targetType,
                     CultureInfo.InvariantCulture);
             }
-            else if (targetType.IsEnum)
+
+            if (targetType.IsEnum)
             {
                 // Handle enum conversion from string (case-insensitive)
                 return Enum.Parse(targetType, configSection.Value, ignoreCase: true);
             }
-            else
-            {
-                // Handle primitive type conversion
-                return Convert.ChangeType(
-                    configSection.Value,
-                    targetType,
-                    CultureInfo.InvariantCulture);
-            }
+
+            // Handle primitive type conversion
+            return Convert.ChangeType(
+                configSection.Value,
+                targetType,
+                CultureInfo.InvariantCulture);
         }
         catch (Exception)
         {

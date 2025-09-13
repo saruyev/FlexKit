@@ -44,11 +44,11 @@ public abstract class YamlTestBase : IDisposable
     {
         var tempFile = Path.GetTempFileName();
         var yamlFile = Path.ChangeExtension(tempFile, extension);
-        
+
         // Delete the original temp file and create the YAML one
         File.Delete(tempFile);
         File.WriteAllText(yamlFile, yamlContent);
-        
+
         _tempFiles.Add(yamlFile);
         return yamlFile;
     }
@@ -63,10 +63,10 @@ public abstract class YamlTestBase : IDisposable
     {
         var tempFile = Path.GetTempFileName();
         var yamlFile = Path.ChangeExtension(tempFile, extension);
-        
+
         // Delete the temp file so it doesn't exist
         File.Delete(tempFile);
-        
+
         _tempFiles.Add(yamlFile); // Track for a cleanup attempt
         return yamlFile;
     }

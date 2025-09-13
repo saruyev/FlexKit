@@ -11,13 +11,13 @@ namespace FlexKit.Logging.Serilog.Detection;
 /// Auto-detects available Serilog sinks and enrichers by scanning loaded assemblies for
 /// LoggerSinkConfiguration and LoggerEnrichmentConfiguration extension methods.
 /// </summary>
-public static class SerilogComponentDetector
+internal static class SerilogComponentDetector
 {
     /// <summary>
     /// Information about a detected Serilog component (sink or enricher) including its configuration
     /// method and parameters.
     /// </summary>
-    public class ComponentInfo
+    internal sealed class ComponentInfo
     {
         /// <summary>
         /// Gets the MethodInfo representing the detected Serilog component's configuration method.
@@ -94,7 +94,8 @@ public static class SerilogComponentDetector
             {
                 // Log warning but continue - one bad assembly shouldn't break everything
                 Debug.WriteLine(
-                    $"Warning: Failed to scan assembly {assembly.FullName} for Serilog {componentType.ToString().ToLowerInvariant()}s: {ex.Message}");
+                    $"Warning: Failed to scan assembly {assembly.FullName} for Serilog " +
+                    $"{componentType.ToString().ToLowerInvariant()}s: {ex.Message}");
             }
         }
 

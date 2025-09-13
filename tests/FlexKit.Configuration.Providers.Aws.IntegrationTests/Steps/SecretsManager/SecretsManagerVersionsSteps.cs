@@ -45,7 +45,7 @@ public class SecretsManagerVersionsSteps(ScenarioContext scenarioContext)
         var fullPath = Path.Combine("TestData", testDataPath);
         _secretsVersionsBuilder!.AddSecretsManagerFromTestDataWithVersionStage(fullPath, "AWSCURRENT", optional: false, jsonProcessor: false);
         _currentVersionStage = "AWSCURRENT";
-        
+
         scenarioContext.Set(_secretsVersionsBuilder, "SecretsVersionsBuilder");
         scenarioContext.Set("AWSCURRENT", "CurrentVersionStage");
     }
@@ -58,10 +58,10 @@ public class SecretsManagerVersionsSteps(ScenarioContext scenarioContext)
         var fullPath = Path.Combine("TestData", testDataPath);
         _secretsVersionsBuilder!.AddSecretsManagerFromTestDataWithVersionStage(fullPath, "AWSPENDING", optional: false, jsonProcessor: false);
         _currentVersionStage = "AWSPENDING";
-        
+
         // Simulate pending version values (different from current)
         _versionStageValues["AWSPENDING"] = "{\"host\":\"pending-db.example.com\",\"port\":5432,\"username\":\"pendinguser\",\"password\":\"pendingpass123\"}";
-        
+
         scenarioContext.Set(_secretsVersionsBuilder, "SecretsVersionsBuilder");
         scenarioContext.Set("AWSPENDING", "PendingVersionStage");
     }
@@ -74,10 +74,10 @@ public class SecretsManagerVersionsSteps(ScenarioContext scenarioContext)
         var fullPath = Path.Combine("TestData", testDataPath);
         _secretsVersionsBuilder!.AddSecretsManagerFromTestDataWithVersionStage(fullPath, "AWSPREVIOUS", optional: false, jsonProcessor: false);
         _currentVersionStage = "AWSPREVIOUS";
-        
+
         // Simulate previous version values (different from current)
         _versionStageValues["AWSPREVIOUS"] = "{\"host\":\"previous-db.example.com\",\"port\":5432,\"username\":\"previoususer\",\"password\":\"previouspass123\"}";
-        
+
         scenarioContext.Set(_secretsVersionsBuilder, "SecretsVersionsBuilder");
         scenarioContext.Set("AWSPREVIOUS", "PreviousVersionStage");
     }
@@ -90,10 +90,10 @@ public class SecretsManagerVersionsSteps(ScenarioContext scenarioContext)
         var fullPath = Path.Combine("TestData", testDataPath);
         _secretsVersionsBuilder!.AddSecretsManagerFromTestDataWithVersionStage(fullPath, customStage, optional: false, jsonProcessor: false);
         _currentVersionStage = customStage;
-        
+
         // Simulate custom version stage values
         _versionStageValues[customStage] = "{\"host\":\"staging-db.example.com\",\"port\":5432,\"username\":\"staginguser\",\"password\":\"stagingpass123\"}";
-        
+
         scenarioContext.Set(_secretsVersionsBuilder, "SecretsVersionsBuilder");
         scenarioContext.Set(customStage, "CustomVersionStage");
     }
@@ -107,7 +107,7 @@ public class SecretsManagerVersionsSteps(ScenarioContext scenarioContext)
         _secretsVersionsBuilder!.AddSecretsManagerFromTestDataWithVersionStage(fullPath, "AWSCURRENT", optional: false, jsonProcessor: true);
         _currentVersionStage = "AWSCURRENT";
         _jsonProcessingEnabled = true;
-        
+
         scenarioContext.Set(_secretsVersionsBuilder, "SecretsVersionsBuilder");
         scenarioContext.Set("json_processing_enabled", "JsonProcessingEnabled");
     }
@@ -120,7 +120,7 @@ public class SecretsManagerVersionsSteps(ScenarioContext scenarioContext)
         var fullPath = Path.Combine("TestData", testDataPath);
         _secretsVersionsBuilder!.AddSecretsManagerFromTestDataWithVersionStage(fullPath, "MISSING_STAGE", optional: true, jsonProcessor: false);
         _currentVersionStage = "MISSING_STAGE";
-        
+
         scenarioContext.Set(_secretsVersionsBuilder, "SecretsVersionsBuilder");
         scenarioContext.Set("optional_missing_stage", "OptionalMissingStage");
     }
@@ -134,7 +134,7 @@ public class SecretsManagerVersionsSteps(ScenarioContext scenarioContext)
         // Just store the configuration, don't throw yet
         _secretsVersionsBuilder!.AddSecretsManagerFromTestData(fullPath, optional: false, jsonProcessor: false);
         _currentVersionStage = "MISSING_STAGE";
-    
+
         scenarioContext.Set(_secretsVersionsBuilder, "SecretsVersionsBuilder");
         scenarioContext.Set("required_missing_stage", "RequiredMissingStage");
     }
@@ -145,15 +145,15 @@ public class SecretsManagerVersionsSteps(ScenarioContext scenarioContext)
         _secretsVersionsBuilder.Should().NotBeNull("Secrets versions builder should be established");
 
         var fullPath = Path.Combine("TestData", testDataPath);
-        
+
         // Add multiple sources with different version stages
         _secretsVersionsBuilder!.AddSecretsManagerFromTestDataWithVersionStage(fullPath, "AWSCURRENT", optional: false, jsonProcessor: false);
         _secretsVersionsBuilder!.AddSecretsManagerFromTestDataWithVersionStage(fullPath, "AWSPENDING", optional: false, jsonProcessor: false);
-        
+
         // Set up different values for different stages
         _versionStageValues["AWSCURRENT"] = "{\"host\":\"current-db.example.com\",\"port\":5432,\"username\":\"currentuser\",\"password\":\"currentpass123\"}";
         _versionStageValues["AWSPENDING"] = "{\"host\":\"pending-db.example.com\",\"port\":5432,\"username\":\"pendinguser\",\"password\":\"pendingpass123\"}";
-        
+
         scenarioContext.Set(_secretsVersionsBuilder, "SecretsVersionsBuilder");
         scenarioContext.Set("mixed_versions", "MixedVersionStages");
     }
@@ -174,7 +174,7 @@ public class SecretsManagerVersionsSteps(ScenarioContext scenarioContext)
             {
                 throw new InvalidOperationException($"Required version stage '{_currentVersionStage}' not found for secrets in AWS Secrets Manager.");
             }
-        
+
             _secretsVersionsFlexConfiguration = _secretsVersionsBuilder!.BuildFlexConfig();
             _secretsVersionsConfiguration = _secretsVersionsFlexConfiguration.Configuration;
 
@@ -195,13 +195,13 @@ public class SecretsManagerVersionsSteps(ScenarioContext scenarioContext)
 
         // Test dynamic access to configuration values with version awareness
         dynamic config = _secretsVersionsFlexConfiguration!;
-        
+
         try
         {
             // Verify dynamic access works by accessing a known configuration value
             string dynamicValue = AwsTestConfigurationBuilder.GetDynamicProperty(config, "infrastructure-module-database-credentials");
             dynamicValue.Should().NotBeNull($"Dynamic access to versioned secret should return a value from stage '{_currentVersionStage}'");
-            
+
             // Store for later verification
             scenarioContext.Set(dynamicValue, "DynamicVersionedValue");
         }
@@ -214,7 +214,7 @@ public class SecretsManagerVersionsSteps(ScenarioContext scenarioContext)
     #endregion
 
     #region Then Steps - Assertions
-    
+
     [Then(@"the secrets versions module configuration should contain ""(.*)"" with JSON value containing ""(.*)""")]
     public void ThenTheSecretsVersionsModuleConfigurationShouldContainWithJSONValueContaining(string configKey, string expectedContent)
     {
@@ -241,7 +241,7 @@ public class SecretsManagerVersionsSteps(ScenarioContext scenarioContext)
 
         var actualValue = _secretsVersionsConfiguration![configKey];
         actualValue.Should().NotBeNull($"Configuration key '{configKey}' should have a value from AWSPENDING stage");
-        
+
         if (_versionStageValues.TryGetValue("AWSPENDING", out var expectedValue))
         {
             actualValue.Should().Be(expectedValue, $"Configuration key '{configKey}' should have pending version value");
@@ -259,7 +259,7 @@ public class SecretsManagerVersionsSteps(ScenarioContext scenarioContext)
 
         var actualValue = _secretsVersionsConfiguration![configKey];
         actualValue.Should().NotBeNull($"Configuration key '{configKey}' should have a value from AWSPREVIOUS stage");
-        
+
         if (_versionStageValues.TryGetValue("AWSPREVIOUS", out var expectedValue))
         {
             actualValue.Should().Be(expectedValue, $"Configuration key '{configKey}' should have previous version value");
@@ -277,7 +277,7 @@ public class SecretsManagerVersionsSteps(ScenarioContext scenarioContext)
 
         var actualValue = _secretsVersionsConfiguration![configKey];
         actualValue.Should().NotBeNull($"Configuration key '{configKey}' should have a value from custom version stage '{_currentVersionStage}'");
-        
+
         if (_versionStageValues.TryGetValue(_currentVersionStage!, out var expectedValue))
         {
             actualValue.Should().Be(expectedValue, $"Configuration key '{configKey}' should have custom version value");
@@ -305,13 +305,13 @@ public class SecretsManagerVersionsSteps(ScenarioContext scenarioContext)
     {
         _jsonProcessingEnabled.Should().BeTrue("JSON processing should be enabled for this scenario");
         _secretsVersionsConfiguration.Should().NotBeNull("Configuration should be available for JSON processing validation");
-        
+
         // Verify that JSON processing worked by checking for flattened keys
         var hasJsonKeys = _secretsVersionsConfiguration!.AsEnumerable()
             .Any(kvp => kvp.Key.Contains(':') && kvp.Key.Contains("host"));
-        
+
         hasJsonKeys.Should().BeTrue("JSON processing should create flattened configuration keys for versioned secrets");
-        
+
         _secretsVersionsValidationResults.Add($"JSON processing validated for version stage: {_currentVersionStage}");
     }
 
@@ -322,14 +322,14 @@ public class SecretsManagerVersionsSteps(ScenarioContext scenarioContext)
 
         // First, verify that we can access the configuration as dynamic
         dynamic config = _secretsVersionsFlexConfiguration!;
-        
+
         var dynamicValue = AwsTestConfigurationBuilder.GetDynamicProperty(config, propertyPath);
         string stringValue = dynamicValue?.ToString() ?? string.Empty;
         stringValue.Should().NotBeNull($"Dynamic property '{propertyPath}' should be accessible for version stage '{_currentVersionStage}' and have a value");
-        
+
         // Store for cross-verification
         scenarioContext.Set(stringValue, "VersionedDynamicValue");
-        
+
         _secretsVersionsValidationResults.Add($"Dynamic access validated for '{propertyPath}' in version stage: {_currentVersionStage}");
     }
 
@@ -338,12 +338,12 @@ public class SecretsManagerVersionsSteps(ScenarioContext scenarioContext)
     {
         _secretsVersionsFlexConfiguration.Should().NotBeNull("FlexConfiguration should support version-aware access");
         _currentVersionStage.Should().NotBeNull("Version stage should be tracked");
-        
+
         // Verify that the configuration reflects the requested version stage
         if (scenarioContext.TryGetValue("VersionedDynamicValue", out string? dynamicValue))
         {
             dynamicValue.Should().NotBeNull("Version-aware configuration should provide accessible values");
-            
+
             // Version-specific validation
             switch (_currentVersionStage)
             {
@@ -363,7 +363,7 @@ public class SecretsManagerVersionsSteps(ScenarioContext scenarioContext)
                     break;
             }
         }
-        
+
         _secretsVersionsValidationResults.Add($"Version-aware access validated for stage: {_currentVersionStage}");
     }
 
@@ -372,7 +372,7 @@ public class SecretsManagerVersionsSteps(ScenarioContext scenarioContext)
     {
         _lastSecretsVersionsException.Should().BeNull("No exceptions should be thrown for missing optional version stages");
         _secretsVersionsConfiguration.Should().NotBeNull("Configuration should be built successfully despite missing optional version stages");
-        
+
         // Verify that the configuration is still usable
         var configurationIsUsable = false;
         try
@@ -384,7 +384,7 @@ public class SecretsManagerVersionsSteps(ScenarioContext scenarioContext)
         {
             // Expected if configuration is not usable
         }
-        
+
         configurationIsUsable.Should().BeTrue("Configuration should remain usable despite missing optional version stages");
     }
 
@@ -407,11 +407,11 @@ public class SecretsManagerVersionsSteps(ScenarioContext scenarioContext)
     public void ThenTheSecretsVersionsModuleConfigurationShouldContainSecretsFromCurrentVersion()
     {
         _secretsVersionsConfiguration.Should().NotBeNull("Configuration should contain secrets from current version");
-        
+
         // Check for configuration keys that would come from the AWSCURRENT stage
         var hasCurrentVersionSecrets = _secretsVersionsConfiguration!.AsEnumerable()
             .Any(kvp => kvp.Key.Contains("infrastructure-module-database-credentials") && kvp.Value != null);
-        
+
         hasCurrentVersionSecrets.Should().BeTrue("Configuration should contain secrets from AWSCURRENT version stage");
     }
 
@@ -419,12 +419,12 @@ public class SecretsManagerVersionsSteps(ScenarioContext scenarioContext)
     public void ThenTheSecretsVersionsModuleConfigurationShouldContainSecretsFromPendingVersion()
     {
         _secretsVersionsConfiguration.Should().NotBeNull("Configuration should contain secrets from pending version");
-        
+
         // In a mixed version scenario, we would have different configuration sources
         // For test purposes, verify that configuration was loaded successfully
         var configurationHasValues = _secretsVersionsConfiguration!.AsEnumerable()
             .Any(kvp => kvp.Value != null);
-        
+
         configurationHasValues.Should().BeTrue("Configuration should contain values from multiple version stages including pending");
     }
 

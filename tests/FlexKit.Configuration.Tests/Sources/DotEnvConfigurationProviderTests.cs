@@ -682,7 +682,7 @@ DEBUG_MODE=true
         configuration["API_KEY"].Should().Be("test-api-key-123");
         configuration["DEBUG_MODE"].Should().Be("true");
     }
-    
+
     [Fact]
     public void Load_WithQuotedEscapeSequences_ProcessesAfterQuoteRemoval()
     {

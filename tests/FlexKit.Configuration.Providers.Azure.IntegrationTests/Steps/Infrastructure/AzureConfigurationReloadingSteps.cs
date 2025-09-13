@@ -36,9 +36,9 @@ public class AzureConfigurationReloadingSteps(ScenarioContext scenarioContext)
     private bool _errorRecoveryEnabled;
     private readonly Dictionary<string, string> _originalConfigValues = new();
     private readonly Dictionary<string, string> _updatedConfigValues = new();
-    private readonly ILogger<AzureConfigurationReloadingSteps> _logger = 
+    private readonly ILogger<AzureConfigurationReloadingSteps> _logger =
         LoggerFactory.Create(builder => builder.AddConsole()).CreateLogger<AzureConfigurationReloadingSteps>();
-    
+
     #region Given Steps - Setup
 
     [Given(@"I have established a reloading controller environment")]
@@ -46,10 +46,10 @@ public class AzureConfigurationReloadingSteps(ScenarioContext scenarioContext)
     {
         var appConfigEmulator = scenarioContext.GetAppConfigEmulator();
         var keyVaultEmulator = scenarioContext.GetKeyVaultEmulator();
-        
+
         scenarioContext.Set(keyVaultEmulator, "KeyVaultEmulator");
         scenarioContext.Set(appConfigEmulator, "AppConfigEmulator");
-        
+
         _logger.LogInformation("Reloading controller environment established with emulators");
     }
 
@@ -63,11 +63,11 @@ public class AzureConfigurationReloadingSteps(ScenarioContext scenarioContext)
         var fullPath = Path.Combine("TestData", testDataPath);
         var createTask = keyVaultEmulator!.CreateTestDataAsync(fullPath, scenarioPrefix);
         createTask.Wait(TimeSpan.FromMinutes(1));
-        
+
         _keyVaultConfigured = true;
         _autoReloadingEnabled = true;
         _configuredReloadInterval = TimeSpan.FromMinutes(5);
-        
+
         _logger.LogInformation($"Key Vault auto-reload configured from {testDataPath} using emulator with prefix '{scenarioPrefix}'");
     }
 
@@ -81,11 +81,11 @@ public class AzureConfigurationReloadingSteps(ScenarioContext scenarioContext)
         var fullPath = Path.Combine("TestData", testDataPath);
         var createTask = appConfigEmulator!.CreateTestDataAsync(fullPath, scenarioPrefix);
         createTask.Wait(TimeSpan.FromMinutes(1));
-        
+
         _appConfigurationConfigured = true;
         _autoReloadingEnabled = true;
         _configuredReloadInterval = TimeSpan.FromMinutes(5);
-        
+
         _logger.LogInformation($"App Configuration auto-reload configured from {testDataPath} using emulator with prefix '{scenarioPrefix}'");
     }
 
@@ -99,18 +99,18 @@ public class AzureConfigurationReloadingSteps(ScenarioContext scenarioContext)
         appConfigEmulator.Should().NotBeNull("App Configuration emulator should be established");
 
         var fullPath = Path.Combine("TestData", testDataPath);
-        
+
         // Load test data into both emulators for error-prone testing
         var keyVaultTask = keyVaultEmulator!.CreateTestDataAsync(fullPath, scenarioPrefix);
         var appConfigTask = appConfigEmulator!.CreateTestDataAsync(fullPath, scenarioPrefix);
         Task.WaitAll([keyVaultTask, appConfigTask], TimeSpan.FromMinutes(1));
-        
+
         _keyVaultConfigured = true;
         _appConfigurationConfigured = true;
         _errorRecoveryEnabled = true;
         _autoReloadingEnabled = true;
         _configuredReloadInterval = TimeSpan.FromSeconds(30);
-        
+
         _logger.LogInformation($"Error-prone auto-reload configured from {testDataPath} using emulators with prefix '{scenarioPrefix}'");
     }
 
@@ -181,7 +181,7 @@ public class AzureConfigurationReloadingSteps(ScenarioContext scenarioContext)
 
             scenarioContext.Set(_reloadingConfiguration, "ReloadingConfiguration");
             scenarioContext.Set(_reloadingFlexConfiguration, "ReloadingFlexConfiguration");
-            
+
             _reloadingValidationResults.Add("✓ Reloading controller configuration built successfully with emulators");
             _logger.LogInformation("Reloading controller configuration built successfully using emulators");
         }
@@ -219,7 +219,7 @@ public class AzureConfigurationReloadingSteps(ScenarioContext scenarioContext)
             _updatedConfigValues["database:host"] = "updated-database-host.azure.com";
             _updatedConfigValues["api:key"] = "updated-api-key-12345";
             _updatedConfigValues["cache:timeout"] = "120";
-            
+
             _reloadingValidationResults.Add("✓ Key Vault secrets updated in emulator for reload testing");
             _logger.LogInformation("Updated Key Vault secrets in emulator");
         }
@@ -256,7 +256,7 @@ public class AzureConfigurationReloadingSteps(ScenarioContext scenarioContext)
             _updatedConfigValues[$"{scenarioPrefix}:feature:caching"] = "false";
             _updatedConfigValues[$"{scenarioPrefix}:app:timeout"] = "60";
             _updatedConfigValues[$"{scenarioPrefix}:logging:level"] = "Debug";
-            
+
             _reloadingValidationResults.Add("✓ App Configuration settings updated in emulator for reload testing");
             _logger.LogInformation("Updated App Configuration settings in emulator");
         }
@@ -273,7 +273,7 @@ public class AzureConfigurationReloadingSteps(ScenarioContext scenarioContext)
     {
         WhenIUpdateSecretsInTheKeyVault();
         WhenIUpdateConfigurationInAppConfiguration();
-        
+
         _reloadingValidationResults.Add("✓ Both Key Vault and App Configuration updated in emulators for combined reload testing");
         _logger.LogInformation("Updated both Key Vault and App Configuration emulators for combined testing");
     }
@@ -288,16 +288,16 @@ public class AzureConfigurationReloadingSteps(ScenarioContext scenarioContext)
         {
             // Wait for the reload interval to trigger
             // In real scenarios, this would wait for the actual reload timer to fire
-            var waitTime = _errorRecoveryEnabled ? 
-                TimeSpan.FromSeconds(Math.Min(_configuredReloadInterval!.Value.TotalSeconds, 10)) : 
+            var waitTime = _errorRecoveryEnabled ?
+                TimeSpan.FromSeconds(Math.Min(_configuredReloadInterval!.Value.TotalSeconds, 10)) :
                 TimeSpan.FromSeconds(Math.Min(_configuredReloadInterval!.Value.TotalSeconds, 5));
-            
+
             _logger.LogInformation($"Waiting {waitTime.TotalSeconds} seconds for automatic reload to trigger");
             Thread.Sleep(waitTime);
-            
+
             // Give the reload mechanism a moment to process
             Thread.Sleep(TimeSpan.FromSeconds(1));
-            
+
             _reloadingValidationResults.Add($"✓ Waited for automatic reload trigger ({waitTime.TotalSeconds}s)");
             _logger.LogInformation($"Completed automatic reload trigger wait after {waitTime.TotalSeconds} seconds");
         }
@@ -323,7 +323,7 @@ public class AzureConfigurationReloadingSteps(ScenarioContext scenarioContext)
             var simulatedErrors = new[]
             {
                 "Azure Key Vault: Rate limit exceeded",
-                "App Configuration: Network timeout", 
+                "App Configuration: Network timeout",
                 "Azure Service: Temporary unavailable"
             };
 
@@ -332,7 +332,7 @@ public class AzureConfigurationReloadingSteps(ScenarioContext scenarioContext)
                 _logger.LogWarning($"Simulating reload error: {error}");
                 _reloadingValidationResults.Add($"⚠ Simulated error: {error}");
             }
-            
+
             // Simulate temporary emulator unavailability
             if (keyVaultEmulator != null)
             {
@@ -340,12 +340,12 @@ public class AzureConfigurationReloadingSteps(ScenarioContext scenarioContext)
                 // configure the emulator to return errors
                 _logger.LogWarning("Simulating Key Vault emulator errors");
             }
-            
+
             if (appConfigEmulator != null)
             {
                 _logger.LogWarning("Simulating App Configuration emulator errors");
             }
-            
+
             _reloadingValidationResults.Add("✓ Azure service reload errors simulated for error recovery testing");
         }
         catch (Exception ex)
@@ -367,7 +367,7 @@ public class AzureConfigurationReloadingSteps(ScenarioContext scenarioContext)
             var recoveryWaitTime = TimeSpan.FromSeconds(5);
             _logger.LogInformation($"Waiting {recoveryWaitTime.TotalSeconds} seconds for error recovery mechanisms");
             Thread.Sleep(recoveryWaitTime);
-            
+
             _reloadingValidationResults.Add("✓ Error recovery mechanisms activation wait completed");
             _logger.LogInformation("Completed error recovery mechanism activation wait");
         }
@@ -393,7 +393,7 @@ public class AzureConfigurationReloadingSteps(ScenarioContext scenarioContext)
         // Verify that the reload mechanism is properly configured
         _autoReloadingEnabled.Should().BeTrue("Auto reloading should be enabled");
         _configuredReloadInterval.Should().NotBeNull("Reload interval should be configured");
-        
+
         // Check if updated values are now accessible (they may or may not be depending on timing)
         try
         {
@@ -401,7 +401,7 @@ public class AzureConfigurationReloadingSteps(ScenarioContext scenarioContext)
             {
                 var currentValue = _reloadingFlexConfiguration![expectedUpdate.Key];
                 _logger.LogDebug($"Key Vault key '{expectedUpdate.Key}': current='{currentValue}', expected='{expectedUpdate.Value}'");
-                
+
                 // In integration tests, we verify the configuration system can handle the changes
                 // The actual reload behavior depends on timing and the emulator's change detection
             }
@@ -410,7 +410,7 @@ public class AzureConfigurationReloadingSteps(ScenarioContext scenarioContext)
         {
             _logger.LogWarning(ex, "Could not verify all Key Vault changes, but reload mechanism is configured");
         }
-        
+
         _reloadingValidationResults.Add("✓ Key Vault change detection verified");
         _logger.LogInformation("Verified Key Vault change detection capability");
     }
@@ -425,18 +425,18 @@ public class AzureConfigurationReloadingSteps(ScenarioContext scenarioContext)
         {
             // Test that configuration can be accessed dynamically
             dynamic _ = _reloadingFlexConfiguration!;
-            
+
             // Verify the configuration structure exists for the keys we updated
             var testKeys = new[] { "database:host", "api:key", "cache:timeout" };
             var updatedKeysFound = 0;
-            
+
             foreach (var key in testKeys)
             {
                 var value = _reloadingFlexConfiguration![key];
                 if (!string.IsNullOrEmpty(value))
                 {
                     updatedKeysFound++;
-                    
+
                     // Check if the value matches our expected update
                     if (_updatedConfigValues.TryGetValue(key, out var expectedValue) && value == expectedValue)
                     {
@@ -448,7 +448,7 @@ public class AzureConfigurationReloadingSteps(ScenarioContext scenarioContext)
                     }
                 }
             }
-            
+
             _reloadingValidationResults.Add($"✓ Configuration structure supports updated secret values ({updatedKeysFound}/{testKeys.Length} keys accessible)");
         }
         catch (Exception ex)
@@ -468,16 +468,16 @@ public class AzureConfigurationReloadingSteps(ScenarioContext scenarioContext)
             // Verify that the IConfiguration supports change notifications
             var configurationRoot = _reloadingConfiguration as IConfigurationRoot;
             configurationRoot.Should().NotBeNull("Configuration should be a ConfigurationRoot");
-            
+
             // Test change token access (used for reload notifications)
             var changeToken = _reloadingConfiguration!.GetReloadToken();
             changeToken.Should().NotBeNull("Configuration should provide change tokens");
-            
+
             // Verify that providers support reloading
             var reloadableProviders = configurationRoot.Providers
                 .Where(p => p.GetType().Name.Contains("Azure"))
                 .ToList();
-            
+
             _reloadingValidationResults.Add($"✓ Change notification capabilities demonstrated with {reloadableProviders.Count} reloadable Azure providers");
             _logger.LogInformation($"Verified change notification capabilities with {reloadableProviders.Count} Azure providers");
         }
@@ -498,7 +498,7 @@ public class AzureConfigurationReloadingSteps(ScenarioContext scenarioContext)
 
         _autoReloadingEnabled.Should().BeTrue("Auto reloading should be enabled");
         _configuredReloadInterval.Should().NotBeNull("Reload interval should be configured");
-        
+
         // Check if updated App Configuration values are accessible
         try
         {
@@ -512,7 +512,7 @@ public class AzureConfigurationReloadingSteps(ScenarioContext scenarioContext)
         {
             _logger.LogWarning(ex, "Could not verify all App Configuration changes, but reload mechanism is configured");
         }
-        
+
         _reloadingValidationResults.Add("✓ App Configuration change detection verified");
         _logger.LogInformation("Verified App Configuration change detection capability");
     }
@@ -528,18 +528,18 @@ public class AzureConfigurationReloadingSteps(ScenarioContext scenarioContext)
         {
             // Test that configuration can be accessed dynamically
             dynamic _ = _reloadingFlexConfiguration!;
-            
+
             // Verify the configuration structure exists for the App Configuration keys we updated
             var testKeys = new[] { $"{scenarioPrefix}:feature:caching", $"{scenarioPrefix}:app:timeout", $"{scenarioPrefix}:logging:level" };
             var updatedKeysFound = 0;
-            
+
             foreach (var key in testKeys)
             {
                 var value = _reloadingFlexConfiguration![key];
                 if (!string.IsNullOrEmpty(value))
                 {
                     updatedKeysFound++;
-                    
+
                     // Check if the value matches our expected update
                     if (_updatedConfigValues.TryGetValue(key, out var expectedValue) && value == expectedValue)
                     {
@@ -551,7 +551,7 @@ public class AzureConfigurationReloadingSteps(ScenarioContext scenarioContext)
                     }
                 }
             }
-            
+
             _reloadingValidationResults.Add($"✓ Configuration structure supports updated App Configuration values ({updatedKeysFound}/{testKeys.Length} keys accessible)");
         }
         catch (Exception ex)
@@ -571,19 +571,19 @@ public class AzureConfigurationReloadingSteps(ScenarioContext scenarioContext)
         {
             // Demonstrate real-time update capability by testing configuration access patterns
             dynamic config = _reloadingFlexConfiguration!;
-            
+
             // Test that FlexConfig maintains its dynamic capabilities during reloads
             var testResult = config != null;
             ((bool)testResult).Should().BeTrue("Dynamic configuration access should work");
-            
+
             // Verify the reload interval is properly configured
             _configuredReloadInterval.Should().NotBeNull("Reload interval should be configured");
             _configuredReloadInterval!.Value.Should().BeGreaterThan(TimeSpan.Zero, "Reload interval should be positive");
-            
+
             // Test that change notifications are working
             var changeToken = _reloadingConfiguration!.GetReloadToken();
             changeToken.Should().NotBeNull("Change token should be available for real-time updates");
-            
+
             _reloadingValidationResults.Add("✓ Real-time configuration updates demonstrated");
             _logger.LogInformation("Demonstrated real-time configuration update capabilities");
         }
@@ -605,9 +605,9 @@ public class AzureConfigurationReloadingSteps(ScenarioContext scenarioContext)
         // Verify that both Key Vault and App Configuration updates are prepared
         _updatedConfigValues.Should().ContainKey("database:host", "Key Vault updates should be prepared");
         _updatedConfigValues.Should().ContainKey($"{scenarioPrefix}:feature:caching", "App Configuration updates should be prepared");
-        
+
         _autoReloadingEnabled.Should().BeTrue("Auto reloading should be enabled");
-        
+
         // Verify both types of configuration sources can be accessed
         try
         {
@@ -618,7 +618,7 @@ public class AzureConfigurationReloadingSteps(ScenarioContext scenarioContext)
             var keyVaultKeysAccessible = vaultKeys.Count(key => !string.IsNullOrEmpty(_reloadingFlexConfiguration![key]));
             var configKeys = appConfigKeys.ToList();
             var appConfigKeysAccessible = configKeys.Count(key => !string.IsNullOrEmpty(_reloadingFlexConfiguration![key]));
-            
+
             _reloadingValidationResults.Add($"✓ Change detection verified for both sources (KV: {keyVaultKeysAccessible}/{vaultKeys.Count()}, AC: {appConfigKeysAccessible}/{configKeys.Count()})");
         }
         catch (Exception ex)
@@ -626,7 +626,7 @@ public class AzureConfigurationReloadingSteps(ScenarioContext scenarioContext)
             _logger.LogWarning(ex, "Could not verify all source changes, but both sources are configured");
             _reloadingValidationResults.Add("✓ Change detection verified for both Key Vault and App Configuration (configuration capability confirmed)");
         }
-        
+
         _logger.LogInformation("Verified change detection for both Azure sources");
     }
 
@@ -643,10 +643,10 @@ public class AzureConfigurationReloadingSteps(ScenarioContext scenarioContext)
             // Test that configuration can handle multiple sources during reload
             var keyVaultKeys = new[] { "database:host", "api:key", "cache:timeout" };
             var appConfigKeys = new[] { $"{scenarioPrefix}:feature:caching", $"{scenarioPrefix}:app:timeout", $"{scenarioPrefix}:logging:level" };
-            
+
             var allKeysAccessible = 0;
             var totalKeys = keyVaultKeys.Length + appConfigKeys.Length;
-            
+
             // Verify all key types are accessible through the combined configuration
             foreach (var key in keyVaultKeys.Concat(appConfigKeys))
             {
@@ -657,7 +657,7 @@ public class AzureConfigurationReloadingSteps(ScenarioContext scenarioContext)
                 }
                 _logger.LogDebug($"Combined configuration key '{key}' accessible: {!string.IsNullOrEmpty(value)}");
             }
-            
+
             _reloadingValidationResults.Add($"✓ Combined source reloading handling verified ({allKeysAccessible}/{totalKeys} keys accessible)");
             _logger.LogInformation($"Verified combined source reloading capabilities ({allKeysAccessible}/{totalKeys} keys accessible)");
         }
@@ -680,15 +680,15 @@ public class AzureConfigurationReloadingSteps(ScenarioContext scenarioContext)
             // Test configuration precedence - later sources override earlier sources
             var configuration = _reloadingFlexConfiguration!.Configuration as IConfigurationRoot;
             configuration.Should().NotBeNull("Configuration should be ConfigurationRoot");
-            
+
             // Verify that configuration providers are ordered correctly
             var providers = configuration.Providers.ToList();
             providers.Should().NotBeEmpty("Configuration should have providers");
-            
+
             // Count Azure-specific providers
             var azureProviders = providers.Where(p => p.GetType().Name.Contains("Azure")).ToList();
             azureProviders.Should().NotBeEmpty("Should have Azure configuration providers");
-            
+
             _reloadingValidationResults.Add($"✓ Configuration precedence maintained with {providers.Count} providers ({azureProviders.Count} Azure providers)");
             _logger.LogInformation($"Verified configuration precedence with {providers.Count} providers ({azureProviders.Count} Azure)");
         }
@@ -711,15 +711,15 @@ public class AzureConfigurationReloadingSteps(ScenarioContext scenarioContext)
             dynamic config = _reloadingFlexConfiguration!;
             var testAccess = config != null;
             ((bool)testAccess).Should().BeTrue("Configuration should remain accessible during error conditions");
-            
+
             // Verify error handling is configured (optional sources should not fail the entire configuration)
             var configuration = _reloadingFlexConfiguration.Configuration as IConfigurationRoot;
             configuration.Should().NotBeNull("Configuration should be ConfigurationRoot for error handling");
-            
+
             // Test that we can still access some configuration values after simulated errors
             var testKeys = new[] { "database:host", "feature:caching", "app:timeout" };
             var accessibleKeys = 0;
-            
+
             foreach (var key in testKeys)
             {
                 try
@@ -735,7 +735,7 @@ public class AzureConfigurationReloadingSteps(ScenarioContext scenarioContext)
                     // Expected during error conditions
                 }
             }
-            
+
             _reloadingValidationResults.Add($"✓ Reload error handling verified as graceful ({accessibleKeys}/{testKeys.Length} keys still accessible)");
             _logger.LogInformation($"Verified graceful reload error handling ({accessibleKeys}/{testKeys.Length} keys accessible)");
         }
@@ -758,15 +758,15 @@ public class AzureConfigurationReloadingSteps(ScenarioContext scenarioContext)
             // This includes testing that optional sources don't break the configuration
             var hasOptionalSources = true; // Our test configuration uses optional sources
             hasOptionalSources.Should().BeTrue("Error recovery requires optional source configuration");
-            
+
             // Test that the configuration is still functional after error simulation
             var configuration = _reloadingFlexConfiguration!.Configuration as IConfigurationRoot;
             configuration.Should().NotBeNull("Configuration should remain functional for error recovery");
-            
+
             // Verify change tokens are still available (needed for retry mechanisms)
             var changeToken = configuration.GetReloadToken();
             changeToken.Should().NotBeNull("Change tokens should be available for error recovery");
-            
+
             _reloadingValidationResults.Add("✓ Error recovery attempt capability verified");
             _logger.LogInformation("Verified error recovery attempt mechanisms");
         }
@@ -790,7 +790,7 @@ public class AzureConfigurationReloadingSteps(ScenarioContext scenarioContext)
             // This simulates maintaining the last known good configuration when reload fails
             var accessibleOriginalValues = 0;
             var totalOriginalValues = _originalConfigValues.Count;
-            
+
             foreach (var originalValue in _originalConfigValues.Take(5)) // Test up to 5 values
             {
                 try
@@ -807,7 +807,7 @@ public class AzureConfigurationReloadingSteps(ScenarioContext scenarioContext)
                     _logger.LogDebug($"Configuration key '{originalValue.Key}' not accessible: {ex.Message}");
                 }
             }
-            
+
             // As long as some configuration is accessible, the last known good state is maintained
             _reloadingValidationResults.Add($"✓ Last known good configuration maintenance verified ({accessibleOriginalValues}/{Math.Min(totalOriginalValues, 5)} values accessible)");
             _logger.LogInformation($"Verified last known good configuration maintenance ({accessibleOriginalValues} values accessible)");
@@ -822,7 +822,7 @@ public class AzureConfigurationReloadingSteps(ScenarioContext scenarioContext)
     #endregion
 
     #region Helper Methods
-    
+
     /// <summary>
     /// Stores original configuration values for comparison during reload testing.
     /// </summary>

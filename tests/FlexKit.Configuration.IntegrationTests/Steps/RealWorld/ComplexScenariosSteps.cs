@@ -19,7 +19,7 @@ public class ComplexScenariosSteps(ScenarioContext scenarioContext)
     private TestConfigurationBuilder? _complexConfigurationBuilder;
     private IConfiguration? _complexConfiguration;
     private IFlexConfig? _complexFlexConfiguration;
-    
+
     private readonly Dictionary<string, string?> _environmentVariables = new();
     private readonly Dictionary<string, string?> _inMemoryOverrides = new();
     private readonly Dictionary<string, string?> _conditionalConfiguration = new();
@@ -28,21 +28,21 @@ public class ComplexScenariosSteps(ScenarioContext scenarioContext)
     private readonly Dictionary<string, string?> _securityMetadata = new();
     private readonly Dictionary<string, string?> _platformPaths = new();
     private readonly Dictionary<string, string?> _securityData = new();
-    
+
     private string _currentEnvironment = "Development";
     private bool _validationEnabled;
     private bool _securityFeaturesEnabled;
     private bool _performanceMonitoringEnabled;
     private Exception? _lastComplexException;
     private bool _complexConfigurationLoaded;
-    
+
     private readonly Stopwatch _performanceStopwatch = new();
     private long _memoryUsageBefore;
     private long _memoryUsageAfter;
-    
+
     private readonly List<string> _configurationErrors = new();
     private readonly List<string> _securityAuditTrail = new();
-    
+
     private readonly List<string> _organizedJsonFiles = new();
     private readonly List<string> _organizedEnvFiles = new();
 
@@ -67,14 +67,14 @@ public class ComplexScenariosSteps(ScenarioContext scenarioContext)
     {
         _complexConfigurationBuilder.Should().NotBeNull();
         var normalizedPath = filePath.Replace('/', Path.DirectorySeparatorChar);
-    
+
         if (!File.Exists(normalizedPath))
         {
             throw new FileNotFoundException($"Base configuration file not found: {normalizedPath}");
         }
 
         _complexConfigurationBuilder!.AddJsonFile(normalizedPath, optional: false, reloadOnChange: false);
-    
+
         // Add any pending conditional configuration AFTER base config to ensure proper precedence
         if (_conditionalConfiguration.Any())
         {
@@ -87,7 +87,7 @@ public class ComplexScenariosSteps(ScenarioContext scenarioContext)
     {
         _complexConfigurationBuilder.Should().NotBeNull();
         var normalizedPath = filePath.Replace('/', Path.DirectorySeparatorChar);
-        
+
         if (File.Exists(normalizedPath))
         {
             _complexConfigurationBuilder!.AddJsonFile(normalizedPath, optional: true, reloadOnChange: false);
@@ -98,13 +98,13 @@ public class ComplexScenariosSteps(ScenarioContext scenarioContext)
     public void WhenIOrganizeEnvironmentVariablesWithSpecificPrecedence(Table table)
     {
         _complexConfigurationBuilder.Should().NotBeNull();
-        
+
         foreach (var row in table.Rows)
         {
             var variable = row["Variable"];
             var value = row["Value"];
             _environmentVariables[variable] = value;
-            
+
             var configKey = variable.Replace("__", ":");
             _complexConfigurationBuilder!.AddKeyValue(configKey, value);
         }
@@ -115,7 +115,7 @@ public class ComplexScenariosSteps(ScenarioContext scenarioContext)
     {
         _complexConfigurationBuilder.Should().NotBeNull();
         var normalizedPath = filePath.Replace('/', Path.DirectorySeparatorChar);
-        
+
         if (File.Exists(normalizedPath))
         {
             _complexConfigurationBuilder!.AddDotEnvFile(normalizedPath, optional: true);
@@ -126,14 +126,14 @@ public class ComplexScenariosSteps(ScenarioContext scenarioContext)
     public void WhenIOrganizeInMemoryFinalOverrides(Table table)
     {
         _complexConfigurationBuilder.Should().NotBeNull();
-    
+
         foreach (var row in table.Rows)
         {
             var key = row["Key"];
             var value = row["Value"];
             _inMemoryOverrides[key] = value;
         }
-    
+
         // Don't add here - will be added in the executed step for proper precedence
     }
 
@@ -141,13 +141,13 @@ public class ComplexScenariosSteps(ScenarioContext scenarioContext)
     public void WhenIOrganizeComprehensiveTestConfigurationStructure(Table table)
     {
         _complexConfigurationBuilder.Should().NotBeNull();
-        
+
         var configData = new Dictionary<string, string?>();
         foreach (var row in table.Rows)
         {
             configData[row["Key"]] = row["Value"];
         }
-        
+
         _complexConfigurationBuilder!.AddInMemoryCollection(configData);
     }
 
@@ -164,14 +164,14 @@ public class ComplexScenariosSteps(ScenarioContext scenarioContext)
         if (_currentEnvironment == environment)
         {
             _complexConfigurationBuilder.Should().NotBeNull();
-        
+
             var conditionalData = new Dictionary<string, string?>();
             foreach (var row in table.Rows)
             {
                 conditionalData[row["Key"]] = row["Value"];
                 _conditionalConfiguration[row["Key"]] = row["Value"];
             }
-        
+
             _complexConfigurationBuilder!.AddInMemoryCollection(conditionalData);
         }
         // Skip entirely if environment doesn't match
@@ -182,7 +182,7 @@ public class ComplexScenariosSteps(ScenarioContext scenarioContext)
     {
         _complexConfigurationBuilder.Should().NotBeNull();
         var normalizedPath = filePath.Replace('/', Path.DirectorySeparatorChar);
-        
+
         if (!File.Exists(normalizedPath))
         {
             throw new FileNotFoundException($"Initial configuration file not found: {normalizedPath}");
@@ -205,18 +205,18 @@ public class ComplexScenariosSteps(ScenarioContext scenarioContext)
     {
         _complexConfigurationBuilder.Should().NotBeNull();
         _validationEnabled = true;
-        
+
         var validationData = new Dictionary<string, string?>();
         foreach (var row in table.Rows)
         {
             var key = row["Key"];
             var value = row["Value"];
             var rule = row["ValidationRule"];
-            
+
             validationData[key] = value;
             _validationRules[key] = rule;
         }
-        
+
         _complexConfigurationBuilder!.AddInMemoryCollection(validationData);
     }
 
@@ -224,18 +224,18 @@ public class ComplexScenariosSteps(ScenarioContext scenarioContext)
     public void WhenIOrganizeConfigurationWithValidationEdgeCases(Table table)
     {
         _complexConfigurationBuilder.Should().NotBeNull();
-        
+
         var edgeCaseData = new Dictionary<string, string?>();
         foreach (var row in table.Rows)
         {
             var key = row["Key"];
             var value = row["Value"];
             var expectedOutcome = row["ExpectedOutcome"];
-            
+
             edgeCaseData[key] = value;
             _validationRules[key] = expectedOutcome;
         }
-        
+
         _complexConfigurationBuilder!.AddInMemoryCollection(edgeCaseData);
     }
 
@@ -244,26 +244,26 @@ public class ComplexScenariosSteps(ScenarioContext scenarioContext)
     {
         _complexConfigurationBuilder.Should().NotBeNull();
         _performanceMonitoringEnabled = true;
-        
+
         var performanceData = new Dictionary<string, string?>();
-        
+
         foreach (var row in table.Rows)
         {
             var configurationType = row["ConfigurationType"];
             var count = int.Parse(row["Count"]);
-            
+
             for (int i = 0; i < count; i++)
             {
                 var key = $"{configurationType}:{i}:Id";
                 var value = $"{configurationType.ToLower()}-{i}";
                 performanceData[key] = value;
-                
+
                 performanceData[$"{configurationType}:{i}:Name"] = $"Item {i}";
                 performanceData[$"{configurationType}:{i}:Enabled"] = (i % 2 == 0).ToString();
                 performanceData[$"{configurationType}:{i}:Priority"] = (i % 10).ToString();
             }
         }
-        
+
         _complexConfigurationBuilder!.AddInMemoryCollection(performanceData);
     }
 
@@ -271,23 +271,23 @@ public class ComplexScenariosSteps(ScenarioContext scenarioContext)
     public void WhenIOrganizeBatchConfigurationDataFromMultipleSources()
     {
         _complexConfigurationBuilder.Should().NotBeNull();
-        
+
         var batchData = new Dictionary<string, string?>();
-        
+
         for (int i = 0; i < 10; i++)
         {
             batchData[$"Database:Pool{i}:ConnectionString"] = $"Server=db{i}.example.com;Database=App{i}";
             batchData[$"Database:Pool{i}:MaxConnections"] = (20 + i * 5).ToString();
             batchData[$"Database:Pool{i}:Timeout"] = (30 + i * 2).ToString();
         }
-        
+
         for (int i = 0; i < 15; i++)
         {
             batchData[$"ExternalServices:Service{i}:BaseUrl"] = $"https://service{i}.api.com";
             batchData[$"ExternalServices:Service{i}:ApiKey"] = $"key-{i}-{Guid.NewGuid():N}";
             batchData[$"ExternalServices:Service{i}:Timeout"] = (5000 + i * 1000).ToString();
         }
-        
+
         _complexConfigurationBuilder!.AddInMemoryCollection(batchData);
     }
 
@@ -295,20 +295,20 @@ public class ComplexScenariosSteps(ScenarioContext scenarioContext)
     public void WhenIOrganizeConfigurationWithPlatformSpecificPaths(Table table)
     {
         _complexConfigurationBuilder.Should().NotBeNull();
-        
+
         var platformData = new Dictionary<string, string?>();
-        
+
         foreach (var row in table.Rows)
         {
             var key = row["Key"];
             var windowsValue = row["WindowsValue"];
             var linuxValue = row["LinuxValue"];
-            
+
             var platformValue = Environment.OSVersion.Platform == PlatformID.Win32NT ? windowsValue : linuxValue;
             platformData[key] = platformValue;
             _platformPaths[key] = platformValue;
         }
-        
+
         _complexConfigurationBuilder!.AddInMemoryCollection(platformData);
     }
 
@@ -316,7 +316,7 @@ public class ComplexScenariosSteps(ScenarioContext scenarioContext)
     public void WhenIOrganizeEnvironmentSpecificPathConfigurations()
     {
         _complexConfigurationBuilder.Should().NotBeNull();
-        
+
         var pathData = new Dictionary<string, string?>
         {
             ["Paths:Application:Root"] = Environment.CurrentDirectory,
@@ -326,7 +326,7 @@ public class ComplexScenariosSteps(ScenarioContext scenarioContext)
             ["Paths:Temp:Directory"] = Path.GetTempPath(),
             ["Paths:User:Home"] = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)
         };
-        
+
         _complexConfigurationBuilder!.AddInMemoryCollection(pathData);
     }
 
@@ -335,22 +335,22 @@ public class ComplexScenariosSteps(ScenarioContext scenarioContext)
     {
         _complexConfigurationBuilder.Should().NotBeNull();
         _securityFeaturesEnabled = true;
-        
+
         var securityData = new Dictionary<string, string?>();
-        
+
         foreach (var row in table.Rows)
         {
             var key = row["Key"];
             var value = row["Value"];
             var securityLevel = row["SecurityLevel"];
-            
+
             securityData[key] = value;
             _securityMetadata[key] = securityLevel;
             _securityData[key] = value;
-            
+
             _securityAuditTrail.Add($"Sensitive configuration organized: {key} (Level: {securityLevel})");
         }
-        
+
         _complexConfigurationBuilder!.AddInMemoryCollection(securityData);
     }
 
@@ -358,18 +358,18 @@ public class ComplexScenariosSteps(ScenarioContext scenarioContext)
     public void WhenIOrganizeSecurityConfigurationMetadata(Table table)
     {
         _complexConfigurationBuilder.Should().NotBeNull();
-        
+
         var securityMetadata = new Dictionary<string, string?>();
-        
+
         foreach (var row in table.Rows)
         {
             var setting = row["SecuritySetting"];
             var value = row["Value"];
             var key = $"Security:Metadata:{setting}";
-            
+
             securityMetadata[key] = value;
         }
-        
+
         _complexConfigurationBuilder!.AddInMemoryCollection(securityMetadata);
     }
 
@@ -388,49 +388,49 @@ public class ComplexScenariosSteps(ScenarioContext scenarioContext)
     {
         // Create a new builder to ensure proper order
         var builder = TestConfigurationBuilder.Create(scenarioContext);
-    
+
         // Add sources in precedence order (lowest to highest)
-    
+
         // 1. Base JSON files (if any were organized)
         foreach (var jsonFile in GetOrganizedJsonFiles())
         {
             builder.AddJsonFile(jsonFile, optional: false, reloadOnChange: false);
         }
-    
+
         // 2. Environment variables
         if (_environmentVariables.Any())
         {
             builder.AddInMemoryCollection(_environmentVariables.ToDictionary(
-                kvp => kvp.Key.Replace("__", ":"), 
+                kvp => kvp.Key.Replace("__", ":"),
                 kvp => kvp.Value));
         }
-    
+
         // 3. .env files (if any)
         foreach (var envFile in GetOrganizedEnvFiles())
         {
             builder.AddDotEnvFile(envFile, optional: true);
         }
-    
+
         // 4. Conditional configuration (the highest precedence among organized)
         if (_conditionalConfiguration.Any())
         {
             builder.AddInMemoryCollection(_conditionalConfiguration);
         }
-    
+
         // 5. In-memory final overrides (the highest precedence)
         if (_inMemoryOverrides.Any())
         {
             builder.AddInMemoryCollection(_inMemoryOverrides);
         }
-    
+
         _performanceStopwatch.Start();
-    
+
         try
         {
             _complexConfiguration = builder.Build();
             _complexFlexConfiguration = _complexConfiguration.GetFlexConfiguration();
             _complexConfigurationLoaded = true;
-        
+
             _performanceStopwatch.Stop();
             _memoryUsageAfter = GC.GetTotalMemory(false);
         }
@@ -446,7 +446,7 @@ public class ComplexScenariosSteps(ScenarioContext scenarioContext)
     public void WhenIExecuteComplexConfigurationAssemblyWithValidation()
     {
         WhenIExecuteComplexConfigurationAssembly();
-        
+
         if (_complexConfigurationLoaded && _validationEnabled)
         {
             ExecuteConfigurationValidation();
@@ -465,13 +465,13 @@ public class ComplexScenariosSteps(ScenarioContext scenarioContext)
     {
         // Create a builder and add platform-specific data
         var builder = TestConfigurationBuilder.Create(scenarioContext);
-    
+
         // Add platform paths that were organized
         if (_platformPaths.Any())
         {
             builder.AddInMemoryCollection(_platformPaths);
         }
-    
+
         // Add environment-specific paths
         var pathData = new Dictionary<string, string?>
         {
@@ -483,15 +483,15 @@ public class ComplexScenariosSteps(ScenarioContext scenarioContext)
             ["Paths:User:Home"] = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)
         };
         builder.AddInMemoryCollection(pathData);
-    
+
         _performanceStopwatch.Start();
-    
+
         try
         {
             _complexConfiguration = builder.Build();
             _complexFlexConfiguration = _complexConfiguration.GetFlexConfiguration();
             _complexConfigurationLoaded = true;
-        
+
             _performanceStopwatch.Stop();
             _memoryUsageAfter = GC.GetTotalMemory(false);
         }
@@ -507,16 +507,16 @@ public class ComplexScenariosSteps(ScenarioContext scenarioContext)
     public void WhenIExecuteComplexConfigurationAssemblyWithSecurityFeatures()
     {
         _securityFeaturesEnabled = true;
-    
+
         // Create a builder and add security data
         var builder = TestConfigurationBuilder.Create(scenarioContext);
-    
+
         // Add security data that was organized
         if (_securityData.Any())
         {
             builder.AddInMemoryCollection(_securityData);
         }
-    
+
         // Add security metadata
         var securityMetadataKeys = _securityMetadata.Keys.Where(k => !string.IsNullOrEmpty(_securityMetadata[k]));
         var metadataKeys = securityMetadataKeys as string[] ?? securityMetadataKeys.ToArray();
@@ -529,15 +529,15 @@ public class ComplexScenariosSteps(ScenarioContext scenarioContext)
             }
             builder.AddInMemoryCollection(metadataConfig);
         }
-    
+
         _performanceStopwatch.Start();
-    
+
         try
         {
             _complexConfiguration = builder.Build();
             _complexFlexConfiguration = _complexConfiguration.GetFlexConfiguration();
             _complexConfigurationLoaded = true;
-        
+
             _performanceStopwatch.Stop();
             _memoryUsageAfter = GC.GetTotalMemory(false);
         }
@@ -553,20 +553,20 @@ public class ComplexScenariosSteps(ScenarioContext scenarioContext)
     public void WhenIExecuteConfigurationHotReloadSimulation()
     {
         _complexConfiguration.Should().NotBeNull();
-        
+
         if (_dynamicUpdates.Any())
         {
             var currentData = _complexConfiguration!.AsEnumerable()
                 .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
-            
+
             foreach (var update in _dynamicUpdates)
             {
                 currentData[update.Key] = update.Value;
             }
-            
+
             var updatedBuilder = TestConfigurationBuilder.Create(scenarioContext);
             updatedBuilder.AddInMemoryCollection(currentData);
-            
+
             _complexConfiguration = updatedBuilder.Build();
             _complexFlexConfiguration = _complexConfiguration.GetFlexConfiguration();
         }
@@ -607,7 +607,7 @@ public class ComplexScenariosSteps(ScenarioContext scenarioContext)
     {
         _complexFlexConfiguration.Should().NotBeNull();
         dynamic config = _complexFlexConfiguration!;
-        
+
         try
         {
             var databaseSection = config.Database;
@@ -627,11 +627,11 @@ public class ComplexScenariosSteps(ScenarioContext scenarioContext)
     public void ThenExternalApiConfigurationsShouldBeProperlyStructured()
     {
         _complexConfiguration.Should().NotBeNull();
-    
+
         var externalEntries = _complexConfiguration!.AsEnumerable()
             .Where(kvp => kvp.Key.StartsWith("External:"))
             .ToList();
-    
+
         foreach (var entry in externalEntries.Take(3))
         {
             if (entry.Value != null)  // Add null check
@@ -645,11 +645,11 @@ public class ComplexScenariosSteps(ScenarioContext scenarioContext)
     public void ThenFeatureFlagConfigurationsShouldBeProperlyConverted()
     {
         _complexConfiguration.Should().NotBeNull();
-        
+
         var featureEntries = _complexConfiguration!.AsEnumerable()
             .Where(kvp => kvp.Key.StartsWith("Features:"))
             .ToList();
-        
+
         foreach (var entry in featureEntries)
         {
             if (entry.Value != null)
@@ -674,17 +674,17 @@ public class ComplexScenariosSteps(ScenarioContext scenarioContext)
     public void ThenSecurityConfigurationsShouldMaintainProperDataTypes()
     {
         _complexConfiguration.Should().NotBeNull();
-        
+
         var securityEntries = _complexConfiguration!.AsEnumerable()
             .Where(kvp => kvp.Key.StartsWith("Security:"))
             .ToList();
-        
+
         foreach (var entry in securityEntries)
         {
             if (entry.Value != null)
             {
                 entry.Value.Should().NotBeEmpty();
-                
+
                 if (entry.Key.Contains("ExpirationHours") || entry.Key.Contains("KeySize"))
                 {
                     int.TryParse(entry.Value, out var numericValue).Should().BeTrue();
@@ -699,9 +699,9 @@ public class ComplexScenariosSteps(ScenarioContext scenarioContext)
     {
         _complexFlexConfiguration.Should().NotBeNull();
         dynamic config = _complexFlexConfiguration!;
-        
+
         var sectionNames = new[] { "Database", "External", "Features", "Security", "Application" };
-        
+
         foreach (var sectionName in sectionNames)
         {
             try
@@ -720,7 +720,7 @@ public class ComplexScenariosSteps(ScenarioContext scenarioContext)
     public void ThenEnvironmentSpecificSettingsShouldBeActive()
     {
         _complexConfiguration.Should().NotBeNull();
-        
+
         foreach (var key in _conditionalConfiguration.Keys)
         {
             var actualValue = _complexConfiguration![key];
@@ -733,7 +733,7 @@ public class ComplexScenariosSteps(ScenarioContext scenarioContext)
     public void ThenTheComplexConfigurationShouldIncorporateDynamicUpdates()
     {
         _complexConfiguration.Should().NotBeNull();
-        
+
         foreach (var update in _dynamicUpdates)
         {
             var actualValue = _complexConfiguration![update.Key];
@@ -753,7 +753,7 @@ public class ComplexScenariosSteps(ScenarioContext scenarioContext)
     public void ThenFlexConfigShouldReflectTheUpdatedConfiguration()
     {
         _complexFlexConfiguration.Should().NotBeNull();
-        
+
         foreach (var update in _dynamicUpdates)
         {
             var actualValue = _complexFlexConfiguration![update.Key];
@@ -765,7 +765,7 @@ public class ComplexScenariosSteps(ScenarioContext scenarioContext)
     public void ThenValidConfigurationValuesShouldBeProperlyStored()
     {
         _complexConfiguration.Should().NotBeNull();
-    
+
         if (_validationEnabled)
         {
             foreach (var rule in _validationRules.Where(r => !r.Value!.Contains("should provide clear error")))
@@ -829,16 +829,16 @@ public class ComplexScenariosSteps(ScenarioContext scenarioContext)
     public void ThenFlexConfigPerformanceShouldMeetEstablishedBenchmarks()
     {
         _complexFlexConfiguration.Should().NotBeNull();
-        
+
         if (_performanceMonitoringEnabled)
         {
             var accessStopwatch = Stopwatch.StartNew();
-            
+
             for (int i = 0; i < 1000; i++)
             {
                 _ = _complexFlexConfiguration!["Database:ConnectionString"];
             }
-            
+
             accessStopwatch.Stop();
             accessStopwatch.ElapsedMilliseconds.Should().BeLessThanOrEqualTo(100);
         }
@@ -848,16 +848,16 @@ public class ComplexScenariosSteps(ScenarioContext scenarioContext)
     public void ThenAllConfigurationSectionsShouldBeAccessibleEfficiently()
     {
         _complexConfiguration.Should().NotBeNull();
-        
+
         var allKeys = _complexConfiguration!.AsEnumerable().ToList();
-        
+
         var accessStopwatch = Stopwatch.StartNew();
-        
+
         foreach (var kvp in allKeys.Take(100))
         {
             _ = _complexConfiguration[kvp.Key];
         }
-        
+
         accessStopwatch.Stop();
         accessStopwatch.ElapsedMilliseconds.Should().BeLessThanOrEqualTo(50);
     }
@@ -866,7 +866,7 @@ public class ComplexScenariosSteps(ScenarioContext scenarioContext)
     public void ThenPlatformAppropriatePathsShouldBeResolvedCorrectly()
     {
         _complexConfiguration.Should().NotBeNull();
-        
+
         foreach (var pathEntry in _platformPaths)
         {
             var actualValue = _complexConfiguration![pathEntry.Key];
@@ -879,7 +879,7 @@ public class ComplexScenariosSteps(ScenarioContext scenarioContext)
     {
         _complexFlexConfiguration.Should().NotBeNull();
         dynamic config = _complexFlexConfiguration!;
-        
+
         try
         {
             _ = config["Application:Name"];
@@ -895,12 +895,12 @@ public class ComplexScenariosSteps(ScenarioContext scenarioContext)
     public void ThenFilePathSeparatorsShouldBeNormalizedProperly()
     {
         _complexConfiguration.Should().NotBeNull();
-        
+
         var pathEntries = _complexConfiguration!.AsEnumerable()
-            .Where(kvp => kvp.Value != null && 
+            .Where(kvp => kvp.Value != null &&
                          (kvp.Key.Contains("Path") || kvp.Value.Contains("/") || kvp.Value.Contains("\\")))
             .ToList();
-        
+
         // Paths should be properly formatted for the current platform
         pathEntries.Should().NotBeNull();
     }
@@ -911,14 +911,14 @@ public class ComplexScenariosSteps(ScenarioContext scenarioContext)
         if (_securityFeaturesEnabled)
         {
             _complexConfiguration.Should().NotBeNull();
-            
+
             var sensitiveKeys = _securityMetadata.Where(kvp => kvp.Value == "Encrypted").Select(kvp => kvp.Key).ToList();
-            
+
             foreach (var sensitiveKey in sensitiveKeys)
             {
                 var value = _complexConfiguration![sensitiveKey];
                 value.Should().NotBeNullOrEmpty();
-                
+
                 _securityAuditTrail.Add($"Sensitive value accessed: {sensitiveKey}");
             }
         }
@@ -931,7 +931,7 @@ public class ComplexScenariosSteps(ScenarioContext scenarioContext)
         {
             _complexFlexConfiguration.Should().NotBeNull();
             dynamic config = _complexFlexConfiguration!;
-            
+
             try
             {
                 var securitySection = config.Security;
@@ -964,7 +964,7 @@ public class ComplexScenariosSteps(ScenarioContext scenarioContext)
         if (_securityFeaturesEnabled)
         {
             _securityAuditTrail.Should().NotBeEmpty();
-            
+
             foreach (var auditEntry in _securityAuditTrail)
             {
                 auditEntry.Should().NotBeNullOrEmpty();
@@ -983,9 +983,9 @@ public class ComplexScenariosSteps(ScenarioContext scenarioContext)
             var key = rule.Key;
             var validationRule = rule.Value;
             var actualValue = _complexConfiguration![key];
-            
+
             var isValid = ValidateConfigurationValue(actualValue, validationRule!);
-            
+
             if (!isValid)
             {
                 var errorMessage = $"Validation failed for {key}: {validationRule}";

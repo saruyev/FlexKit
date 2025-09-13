@@ -18,4 +18,11 @@
       <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="9.0.6" />
     </ItemGroup>
 
+    <ItemGroup>
+      <InternalsVisibleTo Include="FlexKit.Logging.Tests" />
+      <InternalsVisibleTo Include="FlexKit.Logging.IntegrationTests" />
+      <InternalsVisibleTo Include="FlexKit.Logging.Providers.Yaml.IntegrationTests" />
+      <InternalsVisibleTo Include="FlexKit.Logging.PerformanceTests" />
+    </ItemGroup>
+
 </Project>

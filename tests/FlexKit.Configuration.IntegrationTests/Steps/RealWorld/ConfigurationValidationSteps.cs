@@ -25,7 +25,7 @@ public class ConfigurationValidationSteps(ScenarioContext scenarioContext)
     private TestConfigurationBuilder? _validationConfigurationBuilder;
     private IConfiguration? _validationConfiguration;
     private IFlexConfig? _validationFlexConfiguration;
-    
+
     // Validation data storage
     private readonly Dictionary<string, string?> _configurationData = new();
     private readonly Dictionary<string, string> _validationRules = new();
@@ -35,7 +35,7 @@ public class ConfigurationValidationSteps(ScenarioContext scenarioContext)
     private readonly Dictionary<string, string> _expectedTypes = new();
     private readonly Dictionary<string, string?> _environmentVariables = new();
     private readonly List<(string Source, string Path)> _multiSources = new();
-    
+
     // Validation results
     private readonly List<string> _validationErrors = new();
     private bool _validationSucceeded = true;
@@ -53,7 +53,7 @@ public class ConfigurationValidationSteps(ScenarioContext scenarioContext)
     {
         _validationConfigurationBuilder = TestConfigurationBuilder.Create(scenarioContext);
         scenarioContext.Set(_validationConfigurationBuilder, "ValidationConfigurationBuilder");
-        
+
         // Clear any previous validation state
         _configurationData.Clear();
         _validationRules.Clear();
@@ -64,7 +64,7 @@ public class ConfigurationValidationSteps(ScenarioContext scenarioContext)
         _environmentVariables.Clear();
         _multiSources.Clear();
         _validationErrors.Clear();
-        
+
         _validationSucceeded = true;
         _typeValidationSucceeded = true;
         _rangeValidationSucceeded = true;
@@ -82,17 +82,17 @@ public class ConfigurationValidationSteps(ScenarioContext scenarioContext)
     public void WhenIValidationSetupConfigurationWithRequiredValues(Table table)
     {
         _validationConfigurationBuilder.Should().NotBeNull("Validation configuration builder should be established");
-        
+
         foreach (var row in table.Rows)
         {
             var key = row["Key"];
             var value = row["Value"];
             var validationRule = row["ValidationRule"];
-            
+
             _configurationData[key] = value;
             _validationRules[key] = validationRule;
         }
-        
+
         _validationConfigurationBuilder!.AddInMemoryCollection(_configurationData);
     }
 
@@ -100,13 +100,13 @@ public class ConfigurationValidationSteps(ScenarioContext scenarioContext)
     public void WhenIValidationSetupConfigurationWithMissingRequiredValues(Table table)
     {
         _validationConfigurationBuilder.Should().NotBeNull("Validation configuration builder should be established");
-        
+
         foreach (var row in table.Rows)
         {
             var key = row["Key"];
             var value = row["Value"];
             var validationRule = row["ValidationRule"];
-            
+
             // Only add non-empty values to simulate missing required values
             if (!string.IsNullOrEmpty(value))
             {
@@ -114,7 +114,7 @@ public class ConfigurationValidationSteps(ScenarioContext scenarioContext)
             }
             _validationRules[key] = validationRule;
         }
-        
+
         _validationConfigurationBuilder!.AddInMemoryCollection(_configurationData);
     }
 
@@ -122,17 +122,17 @@ public class ConfigurationValidationSteps(ScenarioContext scenarioContext)
     public void WhenIValidationSetupConfigurationWithTypedValues(Table table)
     {
         _validationConfigurationBuilder.Should().NotBeNull("Validation configuration builder should be established");
-        
+
         foreach (var row in table.Rows)
         {
             var key = row["Key"];
             var value = row["Value"];
             var expectedType = row["ExpectedType"];
-            
+
             _configurationData[key] = value;
             _expectedTypes[key] = expectedType;
         }
-        
+
         _validationConfigurationBuilder!.AddInMemoryCollection(_configurationData);
     }
 
@@ -146,18 +146,18 @@ public class ConfigurationValidationSteps(ScenarioContext scenarioContext)
     public void WhenIValidationSetupConfigurationWithRangeValues(Table table)
     {
         _validationConfigurationBuilder.Should().NotBeNull("Validation configuration builder should be established");
-        
+
         foreach (var row in table.Rows)
         {
             var key = row["Key"];
             var value = row["Value"];
             var minValue = row["MinValue"];
             var maxValue = row["MaxValue"];
-            
+
             _configurationData[key] = value;
             _rangeValues[key] = (minValue, maxValue);
         }
-        
+
         _validationConfigurationBuilder!.AddInMemoryCollection(_configurationData);
     }
 
@@ -171,7 +171,7 @@ public class ConfigurationValidationSteps(ScenarioContext scenarioContext)
     public void WhenIValidationSetupConfigurationFromJsonFile(string filePath)
     {
         _validationConfigurationBuilder.Should().NotBeNull("Validation configuration builder should be established");
-        
+
         var normalizedPath = filePath.Replace('/', Path.DirectorySeparatorChar);
         _validationConfigurationBuilder!.AddJsonFile(normalizedPath, optional: false, reloadOnChange: false);
     }
@@ -180,7 +180,7 @@ public class ConfigurationValidationSteps(ScenarioContext scenarioContext)
     public void WhenIValidationSetupConfigurationFromInvalidJsonFile(string filePath)
     {
         _validationConfigurationBuilder.Should().NotBeNull("Validation configuration builder should be established");
-        
+
         var normalizedPath = filePath.Replace('/', Path.DirectorySeparatorChar);
         _validationConfigurationBuilder!.AddJsonFile(normalizedPath, optional: false, reloadOnChange: false);
     }
@@ -189,14 +189,14 @@ public class ConfigurationValidationSteps(ScenarioContext scenarioContext)
     public void WhenIValidationSetupEnvironmentVariablesForValidation(Table table)
     {
         _validationConfigurationBuilder.Should().NotBeNull("Validation configuration builder should be established");
-        
+
         foreach (var row in table.Rows)
         {
             var name = row["Name"];
             var value = row["Value"];
             _environmentVariables[name] = value;
         }
-        
+
         // Use the same pattern as EnvironmentVariableSteps
         _validationConfigurationBuilder!.WithEnvironmentVariables(_environmentVariables);
     }
@@ -205,24 +205,24 @@ public class ConfigurationValidationSteps(ScenarioContext scenarioContext)
     public void WhenIValidationSetupMultiSourceConfigurationWith(Table table)
     {
         _validationConfigurationBuilder.Should().NotBeNull("Validation configuration builder should be established");
-        
+
         foreach (var row in table.Rows)
         {
             var source = row["Source"];
             var path = row["Path"];
             _multiSources.Add((source, path));
-            
+
             switch (source.ToLowerInvariant())
             {
                 case "json":
                     var normalizedPath = path.Replace('/', Path.DirectorySeparatorChar);
                     _validationConfigurationBuilder!.AddJsonFile(normalizedPath, optional: true, reloadOnChange: false);
                     break;
-                    
+
                 case "environment":
                     _validationConfigurationBuilder!.AddEnvironmentVariables();
                     break;
-                    
+
                 case "inmemory":
                     var inMemoryData = new Dictionary<string, string?>
                     {
@@ -327,7 +327,7 @@ public class ConfigurationValidationSteps(ScenarioContext scenarioContext)
         {
             _validationConfiguration = _validationConfigurationBuilder!.Build();
             _validationFlexConfiguration = _validationConfiguration.GetFlexConfiguration();
-            
+
             PerformRequiredValueValidation();
         }
         catch (Exception ex)
@@ -344,7 +344,7 @@ public class ConfigurationValidationSteps(ScenarioContext scenarioContext)
         {
             _validationConfiguration = _validationConfigurationBuilder!.Build();
             _validationFlexConfiguration = _validationConfiguration.GetFlexConfiguration();
-            
+
             PerformTypeValidation();
         }
         catch (Exception ex)
@@ -361,7 +361,7 @@ public class ConfigurationValidationSteps(ScenarioContext scenarioContext)
         {
             _validationConfiguration = _validationConfigurationBuilder!.Build();
             _validationFlexConfiguration = _validationConfiguration.GetFlexConfiguration();
-            
+
             PerformRangeValidation();
         }
         catch (Exception ex)
@@ -378,7 +378,7 @@ public class ConfigurationValidationSteps(ScenarioContext scenarioContext)
         {
             _validationConfiguration = _validationConfigurationBuilder!.Build();
             _validationFlexConfiguration = _validationConfiguration.GetFlexConfiguration();
-            
+
             PerformFileBasedValidation();
         }
         catch (Exception ex)
@@ -395,10 +395,10 @@ public class ConfigurationValidationSteps(ScenarioContext scenarioContext)
         {
             // Add environment variables source BEFORE building, following EnvironmentVariableSteps pattern
             _validationConfigurationBuilder!.AddEnvironmentVariables("VALIDATION_");
-            
+
             _validationConfiguration = _validationConfigurationBuilder!.Build();
             _validationFlexConfiguration = _validationConfiguration.GetFlexConfiguration();
-            
+
             PerformEnvironmentValidation();
         }
         catch (Exception ex)
@@ -415,7 +415,7 @@ public class ConfigurationValidationSteps(ScenarioContext scenarioContext)
         {
             _validationConfiguration = _validationConfigurationBuilder!.Build();
             _validationFlexConfiguration = _validationConfiguration.GetFlexConfiguration();
-            
+
             PerformMultiSourceValidation();
         }
         catch (Exception ex)
@@ -441,7 +441,7 @@ public class ConfigurationValidationSteps(ScenarioContext scenarioContext)
     public void ThenAllRequiredValuesShouldBeValidatedSuccessfully()
     {
         _validationConfiguration.Should().NotBeNull("Validation configuration should be loaded");
-        
+
         foreach (var rule in _validationRules.Where(r => r.Value.Contains("Must be present")))
         {
             var value = _validationConfiguration![rule.Key];
@@ -453,7 +453,7 @@ public class ConfigurationValidationSteps(ScenarioContext scenarioContext)
     public void ThenFlexConfigShouldContainAllRequiredValidatedValues()
     {
         _validationFlexConfiguration.Should().NotBeNull("Validation FlexConfig should be created");
-        
+
         foreach (var rule in _validationRules.Where(r => r.Value.Contains("Must be present")))
         {
             var value = _validationFlexConfiguration![rule.Key];
@@ -472,15 +472,15 @@ public class ConfigurationValidationSteps(ScenarioContext scenarioContext)
     public void ThenAllValuesShouldBeConvertibleToTheirExpectedTypes()
     {
         _validationConfiguration.Should().NotBeNull("Validation configuration should be loaded");
-        
+
         foreach (var typeRule in _expectedTypes)
         {
             var key = typeRule.Key;
             var expectedType = typeRule.Value;
             var value = _validationConfiguration![key];
-            
+
             value.Should().NotBeNull($"Value for {key} should not be null");
-            
+
             var conversionSucceeded = TryConvertValue(value, expectedType);
             conversionSucceeded.Should().BeTrue($"Value '{value}' should be convertible to {expectedType}");
         }
@@ -490,7 +490,7 @@ public class ConfigurationValidationSteps(ScenarioContext scenarioContext)
     public void ThenFlexConfigShouldProvideProperlyTypedAccessToValues()
     {
         _validationFlexConfiguration.Should().NotBeNull("Validation FlexConfig should be created");
-        
+
         // Test that FlexConfig can access typed values without exceptions
         foreach (var typeRule in _expectedTypes.Take(3)) // Limit for performance
         {
@@ -511,17 +511,17 @@ public class ConfigurationValidationSteps(ScenarioContext scenarioContext)
     public void ThenAllValuesShouldBeWithinTheirSpecifiedRanges()
     {
         _validationConfiguration.Should().NotBeNull("Validation configuration should be loaded");
-        
+
         foreach (var rangeRule in _rangeValues)
         {
             var key = rangeRule.Key;
             var (minValue, maxValue) = rangeRule.Value;
             var value = _validationConfiguration![key];
-            
+
             value.Should().NotBeNull($"Value for {key} should not be null");
-            
-            if (double.TryParse(value, out var numericValue) && 
-                double.TryParse(minValue, out var min) && 
+
+            if (double.TryParse(value, out var numericValue) &&
+                double.TryParse(minValue, out var min) &&
                 double.TryParse(maxValue, out var max))
             {
                 numericValue.Should().BeGreaterThanOrEqualTo(min, $"Value {numericValue} should be >= {min}");
@@ -534,7 +534,7 @@ public class ConfigurationValidationSteps(ScenarioContext scenarioContext)
     public void ThenFlexConfigShouldContainValidatedRangeValues()
     {
         _validationFlexConfiguration.Should().NotBeNull("Validation FlexConfig should be created");
-        
+
         foreach (var rangeRule in _rangeValues.Take(3)) // Limit for performance
         {
             var key = rangeRule.Key;
@@ -554,7 +554,7 @@ public class ConfigurationValidationSteps(ScenarioContext scenarioContext)
     public void ThenJsonConfigurationValuesShouldPassValidationRules()
     {
         _validationConfiguration.Should().NotBeNull("Validation configuration should be loaded");
-        
+
         // Verify that JSON configuration was loaded
         var configEntries = _validationConfiguration!.AsEnumerable().ToList();
         configEntries.Should().NotBeEmpty("JSON configuration should contain entries");
@@ -564,7 +564,7 @@ public class ConfigurationValidationSteps(ScenarioContext scenarioContext)
     public void ThenFlexConfigShouldProvideValidatedFileBasedConfiguration()
     {
         _validationFlexConfiguration.Should().NotBeNull("Validation FlexConfig should be created");
-        
+
         // Test that FlexConfig can access file-based configuration
         var configEntries = _validationConfiguration!.AsEnumerable().Take(3);
         foreach (var entry in configEntries)
@@ -588,14 +588,14 @@ public class ConfigurationValidationSteps(ScenarioContext scenarioContext)
     public void ThenEnvironmentValuesShouldPassValidationRules()
     {
         _validationConfiguration.Should().NotBeNull("Validation configuration should be loaded");
-        
+
         // Check that environment variables were loaded correctly
         // With VALIDATION_ prefix; they should be available with the prefix stripped
         foreach (var envVar in _environmentVariables.Take(3))
         {
             var keyWithoutPrefix = envVar.Key.Replace("VALIDATION_", "");
             var value = _validationConfiguration![keyWithoutPrefix];
-            
+
             if (!string.IsNullOrEmpty(value))
             {
                 value.Should().Be(envVar.Value, $"Environment variable {keyWithoutPrefix} should have the expected value");
@@ -607,7 +607,7 @@ public class ConfigurationValidationSteps(ScenarioContext scenarioContext)
     public void ThenFlexConfigShouldContainValidatedEnvironmentValues()
     {
         _validationFlexConfiguration.Should().NotBeNull("Validation FlexConfig should be created");
-        
+
         // Verify that FlexConfig can access environment values
         foreach (var envVar in _environmentVariables.Take(2))
         {
@@ -628,10 +628,10 @@ public class ConfigurationValidationSteps(ScenarioContext scenarioContext)
     public void ThenAllSourcesShouldContributeToValidatedConfiguration()
     {
         _validationConfiguration.Should().NotBeNull("Validation configuration should be loaded");
-        
+
         var configEntries = _validationConfiguration!.AsEnumerable().ToList();
         configEntries.Should().NotBeEmpty("Multi-source configuration should contain entries from all sources");
-        
+
         // Verify we have configuration from multiple sources
         _multiSources.Should().NotBeEmpty("Multiple sources should have been configured");
     }
@@ -640,7 +640,7 @@ public class ConfigurationValidationSteps(ScenarioContext scenarioContext)
     public void ThenFlexConfigShouldProvideComprehensiveValidatedConfiguration()
     {
         _validationFlexConfiguration.Should().NotBeNull("Validation FlexConfig should be created");
-        
+
         // Test accessing configuration from FlexConfig
         var configEntries = _validationConfiguration!.AsEnumerable().Take(5);
         foreach (var entry in configEntries)
@@ -657,7 +657,7 @@ public class ConfigurationValidationSteps(ScenarioContext scenarioContext)
     public void ThenConfigurationPrecedenceShouldBeMaintainedDuringValidation()
     {
         _validationConfiguration.Should().NotBeNull("Validation configuration should be loaded");
-        
+
         // Configuration precedence verification
         var configEntries = _validationConfiguration!.AsEnumerable().ToList();
         configEntries.Should().NotBeEmpty("Configuration should maintain precedence order");
@@ -678,12 +678,12 @@ public class ConfigurationValidationSteps(ScenarioContext scenarioContext)
     public void ThenValidationErrorsShouldIndicateMissingRequiredValues()
     {
         _validationErrors.Should().NotBeEmpty("Validation errors should be present");
-        
-        var missingValueErrors = _validationErrors.Where(error => 
+
+        var missingValueErrors = _validationErrors.Where(error =>
             error.Contains("missing", StringComparison.OrdinalIgnoreCase) ||
             error.Contains("required", StringComparison.OrdinalIgnoreCase) ||
             error.Contains("Must be present", StringComparison.OrdinalIgnoreCase));
-        
+
         missingValueErrors.Should().NotBeEmpty("Validation errors should indicate missing required values");
     }
 
@@ -691,7 +691,7 @@ public class ConfigurationValidationSteps(ScenarioContext scenarioContext)
     public void ThenTheErrorShouldSpecifyWhichConfigurationKeysAreMissing()
     {
         _validationErrors.Should().NotBeEmpty("Validation errors should be present");
-        
+
         foreach (var rule in _validationRules.Where(r => r.Value.Contains("Must be present")))
         {
             var keyInErrors = _validationErrors.Any(error => error.Contains(rule.Key));
@@ -713,12 +713,12 @@ public class ConfigurationValidationSteps(ScenarioContext scenarioContext)
     public void ThenValidationErrorsShouldIndicateTypeConversionFailures()
     {
         _validationErrors.Should().NotBeEmpty("Type validation errors should be present");
-        
-        var typeErrors = _validationErrors.Where(error => 
+
+        var typeErrors = _validationErrors.Where(error =>
             error.Contains("type", StringComparison.OrdinalIgnoreCase) ||
             error.Contains("conversion", StringComparison.OrdinalIgnoreCase) ||
             error.Contains("convert", StringComparison.OrdinalIgnoreCase));
-        
+
         typeErrors.Should().NotBeEmpty("Validation errors should indicate type conversion failures");
     }
 
@@ -726,7 +726,7 @@ public class ConfigurationValidationSteps(ScenarioContext scenarioContext)
     public void ThenTheErrorShouldSpecifyWhichValuesCannotBeConverted()
     {
         _validationErrors.Should().NotBeEmpty("Type validation errors should be present");
-        
+
         // Check that error messages contain specific keys that failed conversion
         foreach (var typeRule in _expectedTypes)
         {
@@ -750,12 +750,12 @@ public class ConfigurationValidationSteps(ScenarioContext scenarioContext)
     public void ThenValidationErrorsShouldIndicateOutOfRangeValues()
     {
         _validationErrors.Should().NotBeEmpty("Range validation errors should be present");
-        
-        var rangeErrors = _validationErrors.Where(error => 
+
+        var rangeErrors = _validationErrors.Where(error =>
             error.Contains("range", StringComparison.OrdinalIgnoreCase) ||
             error.Contains("between", StringComparison.OrdinalIgnoreCase) ||
             error.Contains("out of range", StringComparison.OrdinalIgnoreCase));
-        
+
         rangeErrors.Should().NotBeEmpty("Validation errors should indicate out-of-range values");
     }
 
@@ -763,16 +763,16 @@ public class ConfigurationValidationSteps(ScenarioContext scenarioContext)
     public void ThenTheErrorShouldSpecifyWhichValuesAreOutsideAcceptableRanges()
     {
         _validationErrors.Should().NotBeEmpty("Range validation errors should be present");
-        
+
         foreach (var rangeRule in _rangeValues)
         {
             var key = rangeRule.Key;
             var (minValue, maxValue) = rangeRule.Value;
             var value = _validationConfiguration?[key];
-            
-            if (value != null && 
-                double.TryParse(value, out var numericValue) && 
-                double.TryParse(minValue, out var min) && 
+
+            if (value != null &&
+                double.TryParse(value, out var numericValue) &&
+                double.TryParse(minValue, out var min) &&
                 double.TryParse(maxValue, out var max) &&
                 (numericValue < min || numericValue > max))
             {
@@ -793,13 +793,13 @@ public class ConfigurationValidationSteps(ScenarioContext scenarioContext)
     public void ThenValidationErrorsShouldIndicateConfigurationFileIssues()
     {
         _lastValidationException.Should().NotBeNull("File validation exception should be present");
-        
+
         var exceptionMessage = _lastValidationException!.ToString();
         var isFileError = exceptionMessage.Contains("file", StringComparison.OrdinalIgnoreCase) ||
                          exceptionMessage.Contains("JSON", StringComparison.OrdinalIgnoreCase) ||
                          exceptionMessage.Contains("configuration", StringComparison.OrdinalIgnoreCase) ||
                          exceptionMessage.Contains("parse", StringComparison.OrdinalIgnoreCase);
-        
+
         isFileError.Should().BeTrue("Exception should indicate configuration file issues");
     }
 
@@ -807,7 +807,7 @@ public class ConfigurationValidationSteps(ScenarioContext scenarioContext)
     public void ThenTheSystemShouldHandleInvalidConfigurationAppropriately()
     {
         _lastValidationException.Should().NotBeNull("System should handle invalid configuration with exceptions");
-        
+
         // System should not crash, just fail gracefully
         _fileValidationSucceeded.Should().BeFalse("File validation should fail appropriately");
     }
@@ -843,7 +843,7 @@ public class ConfigurationValidationSteps(ScenarioContext scenarioContext)
             var key = typeRule.Key;
             var rule = typeRule.Value;
             var value = _validationConfiguration?[key];
-            
+
             if (value == null)
             {
                 var errorMessage = $"Type validation failed for {key}: value is null";
@@ -851,7 +851,7 @@ public class ConfigurationValidationSteps(ScenarioContext scenarioContext)
                 _typeValidationSucceeded = false;
                 continue;
             }
-            
+
             var isValid = ValidateTypeRule(value, rule);
             if (!isValid)
             {
@@ -872,7 +872,7 @@ public class ConfigurationValidationSteps(ScenarioContext scenarioContext)
             var key = rangeRule.Key;
             var rule = rangeRule.Value;
             var value = _validationConfiguration?[key];
-            
+
             if (value == null)
             {
                 var errorMessage = $"Range validation failed for {key}: value is null";
@@ -880,7 +880,7 @@ public class ConfigurationValidationSteps(ScenarioContext scenarioContext)
                 _rangeValidationSucceeded = false;
                 continue;
             }
-            
+
             var isValid = ValidateRangeRule(value, rule);
             if (!isValid)
             {
@@ -901,7 +901,7 @@ public class ConfigurationValidationSteps(ScenarioContext scenarioContext)
             var key = rule.Key;
             var validationRule = rule.Value;
             var value = _validationConfiguration?[key];
-            
+
             var isValid = ValidateGenericRule(value, validationRule);
             if (!isValid)
             {
@@ -924,7 +924,7 @@ public class ConfigurationValidationSteps(ScenarioContext scenarioContext)
             var key = rule.Key;
             var validationRule = rule.Value;
             var value = _validationConfiguration?[key];
-            
+
             var isValid = ValidateGenericRule(value, validationRule);
             if (!isValid)
             {
@@ -946,7 +946,7 @@ public class ConfigurationValidationSteps(ScenarioContext scenarioContext)
             var key = rule.Key;
             var validationRule = rule.Value;
             var value = _validationConfiguration?[key];
-            
+
             var isValid = ValidateGenericRule(value, validationRule);
             if (!isValid)
             {
@@ -988,8 +988,8 @@ public class ConfigurationValidationSteps(ScenarioContext scenarioContext)
         if (rule.Contains("Between") && rule.Contains("and"))
         {
             var parts = rule.Replace("Between", "").Split([" and "], StringSplitOptions.RemoveEmptyEntries);
-            if (parts.Length == 2 && 
-                double.TryParse(parts[0].Trim(), out var min) && 
+            if (parts.Length == 2 &&
+                double.TryParse(parts[0].Trim(), out var min) &&
                 double.TryParse(parts[1].Trim(), out var max))
             {
                 return numericValue >= min && numericValue <= max;

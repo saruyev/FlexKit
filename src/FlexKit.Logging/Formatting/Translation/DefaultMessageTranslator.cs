@@ -33,24 +33,52 @@ namespace FlexKit.Logging.Formatting.Translation;
 [UsedImplicitly]
 public partial class DefaultMessageTranslator : IMessageTranslator
 {
+    /// <summary>
+    /// A compiled regular expression for matching Serilog message templates with destructuring or format specifiers.
+    /// </summary>
+    /// <returns>
+    /// A <see cref="Regex"/> instance to match and identify patterns in Serilog message templates.
+    /// </returns>
     [UsedImplicitly]
     [GeneratedRegex(@"\{([^}]+):[^}]+\}")]
     protected static partial Regex SerilogRegex();
 
+    /// <summary>
+    /// A compiled regular expression for matching NLog layout renderers in the format
+    /// of ${property} or other renderers.
+    /// </summary>
+    /// <returns>
+    /// A <see cref="Regex"/> instance to identify and process NLog renderer patterns in log message templates.
+    /// </returns>
     [UsedImplicitly]
     [GeneratedRegex(@"\$\{([^}]+)\}")]
     protected static partial Regex NlogRenderRegex();
 
+    /// <summary>
+    /// A compiled regular expression for matching NLog conditional renderers within message templates.
+    /// </summary>
+    /// <returns>
+    /// A <see cref="Regex"/> instance to identify and process NLog conditional patterns like `${when:...}`.
+    /// </returns>
     [UsedImplicitly]
     [GeneratedRegex(@"\$\{when:[^}]+\}")]
     protected static partial Regex NlogConditionalRegex();
 
+    /// <summary>
+    /// A compiled regular expression for matching NLog variable layout renderers in message templates,
+    /// such as `${var:...}` patterns.
+    /// </summary>
+    /// <returns>
+    /// A <see cref="Regex"/> instance to locate and identify variable renderers in NLog message templates.
+    /// </returns>
     [UsedImplicitly]
     [GeneratedRegex(@"\$\{var:[^}]+\}")]
     protected static partial Regex NlogVariablesRegex();
 
     /// <inheritdoc />
-    public virtual string TranslateTemplate(string? messageTemplate, LoggingConfig? config = null) =>
+    public virtual string TranslateTemplate(
+        string? messageTemplate,
+        LoggingConfig? config = null) =>
         CleanNotSupportedFeatures(messageTemplate ?? string.Empty);
 
     /// <inheritdoc />

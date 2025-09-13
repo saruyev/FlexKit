@@ -15,8 +15,13 @@ namespace FlexKit.Logging.Log4Net.Detection;
 /// Builds Log4Net configuration from FlexKit LoggingConfig by dynamically
 /// detecting available appenders and configuring them using reflection.
 /// </summary>
-public class Log4NetConfigurationBuilder
+internal sealed class Log4NetConfigurationBuilder
 {
+    /// <summary>
+    /// Stores information about the detected Log4Net appenders available for configuring
+    /// logging targets. The keys in the dictionary represent appender names, and the values
+    /// provide detailed metadata about the appenders, including their types and configuration properties.
+    /// </summary>
     private readonly Dictionary<string, Log4NetAppenderDetector.AppenderInfo> _availableAppenders;
 
     /// <summary>
@@ -48,7 +53,7 @@ public class Log4NetConfigurationBuilder
             ConfigureFallbackConsoleAppender(repository);
         }
 
-        repository.Threshold = Level.Debug;
+        repository.Threshold = Level.Trace;
         repository.Configured = true;
 
         return repository;
@@ -176,7 +181,8 @@ public class Log4NetConfigurationBuilder
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Warning: Failed to set property {property.Name} on appender {appender.Name}: {ex.Message}");
+                Debug.WriteLine(
+                    $"Warning: Failed to set property {property.Name} on appender {appender.Name}: {ex.Message}");
             }
         }
     }
@@ -336,7 +342,8 @@ public class Log4NetConfigurationBuilder
     /// <param name="consoleAppenderInfo">
     /// Information about the console appender, including its type and configuration details.
     /// </param>
-    private static void CreateConsoleAppender(ILoggerRepository repository,
+    private static void CreateConsoleAppender(
+        ILoggerRepository repository,
         Log4NetAppenderDetector.AppenderInfo consoleAppenderInfo)
     {
         var hierarchy = (Hierarchy)repository;

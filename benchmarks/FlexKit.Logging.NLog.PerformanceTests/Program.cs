@@ -1,6 +1,5 @@
 ﻿using BenchmarkDotNet.Running;
 using FlexKit.Logging.NLog.PerformanceTests.Benchmarks;
-using FlexKit.Logging.PerformanceTests.Benchmarks;
 
 BenchmarkRunner.Run<NLogAsyncMethodBenchmarks>();
 BenchmarkRunner.Run<NLogComplexParameterBenchmarks>();

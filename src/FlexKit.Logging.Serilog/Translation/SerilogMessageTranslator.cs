@@ -13,8 +13,15 @@ namespace FlexKit.Logging.Serilog.Translation;
 /// with and leveraging features of Serilog. It also ensures that any non-Serilog-specific syntax in a
 /// message template is cleaned to avoid incompatibility or formatting issues.
 /// </remarks>
-public partial class SerilogMessageTranslator : DefaultMessageTranslator
+internal sealed partial class SerilogMessageTranslator : DefaultMessageTranslator
 {
+    /// <summary>
+    /// A compiled regular expression used to match parameter names in log message templates,
+    /// specifically identifying portions enclosed in curly braces.
+    /// </summary>
+    /// <returns>
+    /// A Regex object that matches parameters structured as "{parameterName}" in a message template.
+    /// </returns>
     [GeneratedRegex(@"\{([^}:]+)")]
     private static partial Regex ParameterRegex();
 
@@ -40,7 +47,9 @@ public partial class SerilogMessageTranslator : DefaultMessageTranslator
                 ParameterRegex());
 
     /// <inheritdoc />
-    public override string TranslateTemplate(string? messageTemplate, LoggingConfig? config = null)
+    public override string TranslateTemplate(
+        string? messageTemplate,
+        LoggingConfig? config = null)
     {
         if (string.IsNullOrEmpty(messageTemplate))
         {

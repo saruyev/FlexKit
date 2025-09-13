@@ -10,6 +10,12 @@
     <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="9.0.6" />
   </ItemGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="FlexKit.Configuration.Tests" />
+    <InternalsVisibleTo Include="FlexKit.Configuration.IntegrationTests" />
+    <InternalsVisibleTo Include="FlexKit.Configuration.Providers.Yaml.IntegrationTests" />
+  </ItemGroup>
+
   <PropertyGroup Condition="'$(MSBuildProjectName)' == 'FlexKit.Configuration'">
     <AssemblyTitle>FlexKit Configuration Library</AssemblyTitle>
   </PropertyGroup>

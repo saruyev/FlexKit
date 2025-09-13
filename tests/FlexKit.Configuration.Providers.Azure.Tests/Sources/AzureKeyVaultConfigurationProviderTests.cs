@@ -535,7 +535,7 @@ public class AzureKeyVaultConfigurationProviderTests
 
         provider.Dispose();
     }
-    
+
     [Fact]
     public void Load_WithSecretAccessFailure_RequiredSource_ThrowsInvalidOperationException()
     {
@@ -545,7 +545,7 @@ public class AzureKeyVaultConfigurationProviderTests
         var pageable = AsyncPageable<SecretProperties>.FromPages([
             Page<SecretProperties>.FromValues(secretProperties, null, Substitute.For<Response>())
         ]);
-    
+
         // Don't provide the secret in the dictionary to cause RequestFailedException
         var secrets = new Dictionary<string, KeyVaultSecret>();
 
@@ -555,7 +555,7 @@ public class AzureKeyVaultConfigurationProviderTests
             VaultUri = "https://test-vault.vault.azure.net/",
             Optional = false // When not optional, exceptions bubble up to Load() method
         };
-    
+
         var provider = new AzureKeyVaultConfigurationProvider(source, mockClient);
 
         // Act & Assert
@@ -564,10 +564,10 @@ public class AzureKeyVaultConfigurationProviderTests
             .WithMessage("Failed to load configuration from Azure Key Vault 'https://test-vault.vault.azure.net/'. Ensure the vault exists and you have the necessary permissions.")
             .WithInnerException<InvalidOperationException>()
             .WithMessage("Failed to load secret 'failing-secret' from Key Vault.");
-    
+
         provider.Dispose();
     }
-    
+
     [Fact]
     public void Dispose_WhenAlreadyDisposed_ReturnsEarlyWithoutException()
     {
@@ -575,13 +575,13 @@ public class AzureKeyVaultConfigurationProviderTests
         var source = new AzureKeyVaultConfigurationSource
         {
             VaultUri = "https://test-vault.vault.azure.net/",
-            ReloadAfter = TimeSpan.FromMinutes(1) // Create a timer so there's something to dispose
+            ReloadAfter = TimeSpan.FromMinutes(1) // Create a timer so there's something to dispose of
         };
         var provider = new AzureKeyVaultConfigurationProvider(source);
 
         // Act - First disposal
         provider.Dispose();
-    
+
         // Act - Second disposal should hit the early return path
         provider.Dispose();
 
@@ -620,7 +620,7 @@ public sealed class MockSecretClient(
             var response = Response.FromValue(secret, Substitute.For<Response>());
             return Task.FromResult(response);
         }
-        
+
         throw new RequestFailedException("Secret not found");
     }
 }

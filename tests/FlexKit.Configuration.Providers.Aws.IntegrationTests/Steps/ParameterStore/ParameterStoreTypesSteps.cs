@@ -51,7 +51,7 @@ public class ParameterStoreTypesSteps(ScenarioContext scenarioContext)
 
         var fullPath = Path.Combine("TestData", testDataPath);
         _parametersTypesBuilder!.AddParameterStoreFromTestData(fullPath, optional: false, jsonProcessor: false);
-        
+
         scenarioContext.Set(_parametersTypesBuilder, "ParametersTypesBuilder");
     }
 
@@ -62,7 +62,7 @@ public class ParameterStoreTypesSteps(ScenarioContext scenarioContext)
 
         var fullPath = Path.Combine("TestData", testDataPath);
         _parametersTypesBuilder!.AddParameterStoreFromTestData(fullPath, optional: false, jsonProcessor: false);
-        
+
         scenarioContext.Set(_parametersTypesBuilder, "ParametersTypesBuilder");
     }
 
@@ -73,9 +73,9 @@ public class ParameterStoreTypesSteps(ScenarioContext scenarioContext)
 
         var fullPath = Path.Combine("TestData", testDataPath);
         _parametersTypesBuilder!.AddParameterStoreFromTestData(fullPath, optional: false, jsonProcessor: true);
-        
+
         _jsonProcessingEnabled = true;
-        
+
         scenarioContext.Set(_parametersTypesBuilder, "ParametersTypesBuilder");
     }
 
@@ -86,7 +86,7 @@ public class ParameterStoreTypesSteps(ScenarioContext scenarioContext)
 
         var fullPath = Path.Combine("TestData", testDataPath);
         _parametersTypesBuilder!.AddParameterStoreFromTestData(fullPath, optional: false, jsonProcessor: false);
-        
+
         scenarioContext.Set(_parametersTypesBuilder, "ParametersTypesBuilder");
     }
 
@@ -97,9 +97,9 @@ public class ParameterStoreTypesSteps(ScenarioContext scenarioContext)
 
         var fullPath = Path.Combine("TestData", testDataPath);
         _parametersTypesBuilder!.AddParameterStoreFromTestData(fullPath, optional: false, jsonProcessor: true);
-        
+
         _jsonProcessingEnabled = true;
-        
+
         scenarioContext.Set(_parametersTypesBuilder, "ParametersTypesBuilder");
     }
 
@@ -110,7 +110,7 @@ public class ParameterStoreTypesSteps(ScenarioContext scenarioContext)
 
         var fullPath = Path.Combine("TestData", testDataPath);
         _parametersTypesBuilder!.AddParameterStoreFromTestData(fullPath, optional: true, jsonProcessor: false);
-        
+
         scenarioContext.Set(_parametersTypesBuilder, "ParametersTypesBuilder");
     }
 
@@ -127,7 +127,7 @@ public class ParameterStoreTypesSteps(ScenarioContext scenarioContext)
         {
             _parametersTypesConfiguration = _parametersTypesBuilder!.Build();
             _parametersTypesFlexConfiguration = _parametersTypesBuilder.BuildFlexConfig();
-            
+
             _parametersTypesValidationResults.Add("✓ Configuration built successfully");
         }
         catch (Exception ex)
@@ -172,10 +172,10 @@ public class ParameterStoreTypesSteps(ScenarioContext scenarioContext)
 
         var actualValue = _parametersTypesConfiguration![configKey];
         actualValue.Should().Be(expectedValue, $"Configuration key '{configKey}' should have value '{expectedValue}'");
-        
+
         _parametersTypesValidationResults.Add($"✓ {configKey} = {actualValue}");
     }
-    
+
     [Then(@"the parameters types module configuration should contain ""(.*)"" with value '(.*)'")]
     public void ThenTheParametersTypesModuleConfigurationShouldContainWithValueSingleQuotes(string configKey, string expectedValue)
     {
@@ -186,14 +186,14 @@ public class ParameterStoreTypesSteps(ScenarioContext scenarioContext)
     public void ThenTheParametersTypesModuleShouldHandleStringParametersCorrectly()
     {
         _parametersTypesConfiguration.Should().NotBeNull("Configuration should be built");
-        
+
         // Verify that String parameters are loaded as simple key-value pairs
         var stringParams = _parametersTypesConfiguration!.AsEnumerable()
             .Where(kvp => kvp.Key.Contains("database:host") || kvp.Key.Contains("database:port"))
             .ToList();
-            
+
         stringParams.Should().NotBeEmpty("Should have String parameters loaded");
-        
+
         foreach (var param in stringParams)
         {
             param.Value.Should().NotBeNull($"String parameter '{param.Key}' should have a value");
@@ -205,21 +205,21 @@ public class ParameterStoreTypesSteps(ScenarioContext scenarioContext)
     public void ThenTheParametersTypesModuleShouldHandleStringListParametersCorrectly()
     {
         _parametersTypesConfiguration.Should().NotBeNull("Configuration should be built");
-        
+
         // Verify that StringList parameters are converted to the indexed format
         var stringListParams = _parametersTypesConfiguration!.AsEnumerable()
             .Where(kvp => kvp.Key.Contains("allowed-origins:"))
             .ToList();
-            
+
         stringListParams.Should().NotBeEmpty("Should have StringList parameters loaded");
         stringListParams.Should().HaveCountGreaterThanOrEqualTo(2, "Should have multiple StringList items");
-        
+
         // Verify indexed format (key:0, key:1, etc.)
-        var indexedKeys = stringListParams.Where(kvp => 
+        var indexedKeys = stringListParams.Where(kvp =>
             kvp.Key.EndsWith(":0") || kvp.Key.EndsWith(":1") || kvp.Key.EndsWith(":2")).ToList();
-            
+
         indexedKeys.Should().NotBeEmpty("StringList should be converted to indexed format");
-        
+
         foreach (var param in indexedKeys)
         {
             param.Value.Should().NotBeNull($"StringList item '{param.Key}' should have a value");
@@ -231,24 +231,24 @@ public class ParameterStoreTypesSteps(ScenarioContext scenarioContext)
     public void ThenTheParametersTypesModuleShouldHandleSecureStringParametersCorrectly()
     {
         _parametersTypesConfiguration.Should().NotBeNull("Configuration should be built");
-        
+
         // Verify that SecureString parameters are loaded (decrypted values should be accessible)
         var secureStringParams = _parametersTypesConfiguration!.AsEnumerable()
             .Where(kvp => kvp.Key.Contains("credentials"))
             .ToList();
-            
+
         secureStringParams.Should().NotBeEmpty("Should have SecureString parameters loaded");
-        
+
         foreach (var param in secureStringParams)
         {
             param.Value.Should().NotBeNull($"SecureString parameter '{param.Key}' should have a decrypted value");
-            
+
             // If JSON processing is enabled, verify the value is JSON
             if (_jsonProcessingEnabled && param.Key.EndsWith("credentials"))
             {
                 param.Value.Should().StartWith("{", "SecureString with JSON should contain JSON structure");
             }
-            
+
             _parametersTypesValidationResults.Add($"✓ SecureString parameter handled: {param.Key}");
         }
     }
@@ -258,21 +258,21 @@ public class ParameterStoreTypesSteps(ScenarioContext scenarioContext)
     {
         _parametersTypesConfiguration.Should().NotBeNull("Configuration should be built");
         _jsonProcessingEnabled.Should().BeTrue("JSON processing should be enabled");
-        
+
         // Verify that SecureString parameters with JSON are flattened
         var jsonProcessedParams = _parametersTypesConfiguration!.AsEnumerable()
             .Where(kvp => kvp.Key.Contains("credentials:"))
             .ToList();
-            
+
         jsonProcessedParams.Should().NotBeEmpty("Should have JSON-processed SecureString parameters");
-        
+
         // Should have keys like "infrastructure-module:database:credentials:username"
         var usernameKey = jsonProcessedParams.FirstOrDefault(kvp => kvp.Key.EndsWith(":username"));
         var passwordKey = jsonProcessedParams.FirstOrDefault(kvp => kvp.Key.EndsWith(":password"));
-        
+
         usernameKey.Should().NotBeNull("Should have flattened username from JSON");
         passwordKey.Should().NotBeNull("Should have flattened password from JSON");
-        
+
         _parametersTypesValidationResults.Add("✓ SecureString JSON processing handled correctly");
     }
 
@@ -280,23 +280,23 @@ public class ParameterStoreTypesSteps(ScenarioContext scenarioContext)
     public void ThenTheParametersTypesModuleShouldHandleMixedParameterTypesCorrectly()
     {
         _parametersTypesConfiguration.Should().NotBeNull("Configuration should be built");
-        
+
         // Verify that all different parameter types are present
         var allParams = _parametersTypesConfiguration!.AsEnumerable().ToList();
-        
+
         // Should have String parameters (simple key-value)
-        var stringParams = allParams.Where(kvp => 
+        var stringParams = allParams.Where(kvp =>
             kvp.Key.Contains("database:host") || kvp.Key.Contains("database:port")).ToList();
         stringParams.Should().NotBeEmpty("Should have String parameters");
-        
+
         // Should have StringList parameters (indexed format)
         var stringListParams = allParams.Where(kvp => kvp.Key.Contains("allowed-origins:")).ToList();
         stringListParams.Should().NotBeEmpty("Should have StringList parameters");
-        
+
         // Should have SecureString parameters
         var secureStringParams = allParams.Where(kvp => kvp.Key.Contains("credentials")).ToList();
         secureStringParams.Should().NotBeEmpty("Should have SecureString parameters");
-        
+
         _parametersTypesValidationResults.Add($"✓ Mixed types handled: {stringParams.Count} String, {stringListParams.Count} StringList items, {secureStringParams.Count} SecureString");
     }
 
@@ -305,23 +305,23 @@ public class ParameterStoreTypesSteps(ScenarioContext scenarioContext)
     {
         _parametersTypesConfiguration.Should().NotBeNull("Configuration should be built");
         _jsonProcessingEnabled.Should().BeTrue("JSON processing should be enabled");
-        
+
         var allParams = _parametersTypesConfiguration!.AsEnumerable().ToList();
-        
+
         // String parameters should remain simple (unless they contain JSON)
-        var stringParams = allParams.Where(kvp => 
+        var stringParams = allParams.Where(kvp =>
             kvp.Key.Contains("database:host") || kvp.Key.Contains("database:port")).ToList();
         stringParams.Should().NotBeEmpty("Should have String parameters");
-        
+
         // StringList parameters should be indexed (not affected by JSON processing)
         var stringListParams = allParams.Where(kvp => kvp.Key.Contains("allowed-origins:")).ToList();
         stringListParams.Should().NotBeEmpty("Should have StringList parameters in indexed format");
-        
+
         // SecureString parameters with JSON should be flattened
-        var flattenedSecureParams = allParams.Where(kvp => 
+        var flattenedSecureParams = allParams.Where(kvp =>
             kvp.Key.Contains("credentials:username") || kvp.Key.Contains("credentials:password")).ToList();
         flattenedSecureParams.Should().NotBeEmpty("Should have JSON-flattened SecureString parameters");
-        
+
         _parametersTypesValidationResults.Add("✓ Mixed types with JSON processing handled correctly");
     }
 
@@ -333,7 +333,7 @@ public class ParameterStoreTypesSteps(ScenarioContext scenarioContext)
         dynamic config = _parametersTypesFlexConfiguration!;
 
         string value = AwsTestConfigurationBuilder.GetDynamicProperty(config, configPath);
-        
+
         value.Should().NotBeNull($"Dynamic access to '{configPath}' should return a value");
         _parametersTypesValidationResults.Add($"✓ Dynamic access to {configPath} succeeded: {value}");
     }
@@ -341,12 +341,12 @@ public class ParameterStoreTypesSteps(ScenarioContext scenarioContext)
     [Then(@"the parameters types module should provide dynamic access to different types")]
     public void ThenTheParametersTypesModuleShouldProvideDynamicAccessToDifferentTypes()
     {
-        var dynamicAccessResults = _parametersTypesValidationResults.Where(result => 
+        var dynamicAccessResults = _parametersTypesValidationResults.Where(result =>
             result.Contains("Dynamic access to")).ToList();
-            
+
         dynamicAccessResults.Should().NotBeEmpty("Should have successful dynamic access results");
         dynamicAccessResults.Should().HaveCountGreaterThanOrEqualTo(2, "Should access multiple different parameter types");
-        
+
         _parametersTypesValidationResults.Add("✓ Dynamic access to different parameter types verified");
     }
 
@@ -359,7 +359,7 @@ public class ParameterStoreTypesSteps(ScenarioContext scenarioContext)
         }
 
         _parametersTypesConfiguration.Should().NotBeNull("Parameters types configuration should be built successfully");
-        
+
         if (_parametersTypesFlexConfiguration != null)
         {
             _parametersTypesFlexConfiguration.Should().NotBeNull("Parameters types FlexConfiguration should be built successfully");
@@ -371,7 +371,7 @@ public class ParameterStoreTypesSteps(ScenarioContext scenarioContext)
     {
         // Even with optional configuration, if test data is available, it should be loaded
         _parametersTypesConfiguration.Should().NotBeNull("Configuration should be built even when optional");
-        
+
         var paramCount = _parametersTypesConfiguration!.AsEnumerable().Count();
         _parametersTypesValidationResults.Add($"✓ Optional parameter loading handled gracefully, loaded {paramCount} parameters");
     }

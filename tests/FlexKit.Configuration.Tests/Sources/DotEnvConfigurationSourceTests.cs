@@ -16,7 +16,7 @@ public class DotEnvConfigurationSourceTests : UnitTestBase
     protected override void RegisterFixtureCustomizations()
     {
         // Customize string generation to avoid null values and invalid path characters
-        Fixture.Customize<string>(composer => composer.FromFactory(() => 
+        Fixture.Customize<string>(composer => composer.FromFactory(() =>
             "test-" + Guid.NewGuid().ToString("N")[..8]));
     }
 

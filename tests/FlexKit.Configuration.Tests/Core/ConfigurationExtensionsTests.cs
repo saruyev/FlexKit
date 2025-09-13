@@ -39,10 +39,10 @@ public class ConfigurationExtensionsTests : UnitTestBase
 
         // Build container and verify registrations
         using var container = containerBuilder.Build();
-   
+
         var configuration = container.Resolve<IConfiguration>();
         configuration.Should().NotBeNull();
-   
+
         var flexConfig = container.Resolve<IFlexConfig>();
         flexConfig.Should().NotBeNull();
     }
@@ -84,7 +84,7 @@ public class ConfigurationExtensionsTests : UnitTestBase
         // Assert
         using var container = containerBuilder.Build();
         var flexConfig = container.Resolve<IFlexConfig>();
-        
+
         // Verify configuration data is accessible
         var appName = flexConfig["Application:Name"];
         appName.Should().Be(testData["Application:Name"]);
@@ -107,7 +107,7 @@ public class ConfigurationExtensionsTests : UnitTestBase
         // Assert
         using var container = containerBuilder.Build();
         var service = container.Resolve<TestServiceWithPropertyInjection>();
-        
+
         // Verify property injection occurred
         service.FlexConfiguration.Should().NotBeNull();
         service.FlexConfiguration.Should().BeOfType<FlexConfiguration>();
@@ -328,7 +328,7 @@ public class ConfigurationExtensionsTests : UnitTestBase
 
         using var container = containerBuilder.Build();
         var configuration = container.Resolve<IConfiguration>();
-        
+
         var flexConfigFromExtension = configuration.GetFlexConfiguration();
         var databaseSection = configuration.CurrentConfig("Database");
         var connectionStringsSection = configuration.CurrentConfig("ConnectionStrings");

@@ -48,7 +48,7 @@ public class ContainerHooks
     {
         return scenarioContext.TryGetValue("KeyVaultEmulator", out KeyVaultEmulatorContainer _);
     }
-    
+
     [BeforeScenario]
     public void BeforeScenario(ScenarioContext scenarioContext)
     {
@@ -92,14 +92,14 @@ public class ContainerHooks
 
                 _appConfigEmulator = new AppConfigurationEmulatorContainer();
                 startTasks.Add(StartContainerWithTimeout(
-                    _appConfigEmulator.StartAsync(), 
-                    "AppConfig", 
+                    _appConfigEmulator.StartAsync(),
+                    "AppConfig",
                     TimeSpan.FromMinutes(2)));
 
                 _keyVaultEmulator = new KeyVaultEmulatorContainer();
                 startTasks.Add(StartContainerWithTimeout(
-                    _keyVaultEmulator.StartAsync(), 
-                    "KeyVault", 
+                    _keyVaultEmulator.StartAsync(),
+                    "KeyVault",
                     TimeSpan.FromMinutes(2)));
 
                 // Start all containers in parallel
@@ -117,7 +117,7 @@ public class ContainerHooks
             {
                 Console.WriteLine($"Container startup failed on attempt {attempt + 1}: {ex.Message}");
                 await CleanupFailedContainers();
-                
+
                 if (attempt == maxRetries - 1)
                 {
                     throw new InvalidOperationException(
@@ -154,13 +154,13 @@ public class ContainerHooks
     private static async Task CleanupFailedContainers()
     {
         var cleanupTasks = new List<Task>();
-        
+
         if (_appConfigEmulator != null)
         {
             cleanupTasks.Add(SafeDisposeAsync(_appConfigEmulator, "AppConfig"));
             _appConfigEmulator = null;
         }
-        
+
         if (_keyVaultEmulator != null)
         {
             cleanupTasks.Add(SafeDisposeAsync(_keyVaultEmulator, "KeyVault"));
@@ -200,7 +200,7 @@ public class ContainerHooks
             // Don't rethrow disposal errors to avoid masking test failures
         }
     }
-    
+
     public static AppConfigurationEmulatorContainer GetAppConfigEmulator()
     {
         return _appConfigEmulator ?? throw new InvalidOperationException("App Config emulator not started");

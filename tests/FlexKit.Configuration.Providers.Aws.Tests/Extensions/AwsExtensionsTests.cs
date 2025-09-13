@@ -370,7 +370,7 @@ public class AwsExtensionsTests
             .WithMessage("At least one secret name must be specified in SecretNames.*");
     }
 
-// Test for JsonException catch in IsValidJson
+    // Test for JsonException catch in IsValidJson
     [Fact]
     public void IsValidJson_WithMalformedJson_ReturnsFalse()
     {
@@ -384,7 +384,7 @@ public class AwsExtensionsTests
         result.Should().BeFalse();
     }
 
-// Test for JsonException catch in FlattenJsonValue
+    // Test for JsonException catch in FlattenJsonValue
     [Fact]
     public void FlattenJsonValue_WithInvalidJson_StoresAsSimpleValue()
     {
@@ -400,7 +400,7 @@ public class AwsExtensionsTests
         configurationData["prefix"].Should().Be(invalidJson);
     }
 
-// Test for JsonValueKind cases in ProcessPrimitive
+    // Test for JsonValueKind cases in ProcessPrimitive
     [Fact]
     public void FlattenJsonValue_WithBooleanAndNullValues_HandlesCorrectly()
     {
@@ -425,7 +425,7 @@ public class AwsExtensionsTests
         configurationData["values:nullValue"].Should().BeNull(); // JsonValueKind.Null
     }
 
-// Test for JsonValueKind.Undefined and default case
+    // Test for JsonValueKind.Undefined and default case
     [Fact]
     public void FlattenJsonValue_WithUndefinedValue_SkipsValue()
     {

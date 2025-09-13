@@ -34,13 +34,13 @@ public class AwsCredentialsSteps
     public async Task GivenIHaveStartedLocalStackContainer()
     {
         _logger.LogInformation("Starting LocalStack container for AWS credentials testing...");
-        
+
         var localStackLogger = LoggerFactory.Create(builder => builder.AddConsole())
             .CreateLogger<LocalStackContainerHelper>();
-            
+
         _localStackHelper = new LocalStackContainerHelper(_scenarioContext, localStackLogger);
         await _localStackHelper.StartAsync();
-        
+
         _logger.LogInformation("LocalStack container started successfully");
     }
 
@@ -48,7 +48,7 @@ public class AwsCredentialsSteps
     public void GivenIHaveConfiguredAwsCredentialsForLocalStack()
     {
         _localStackHelper.Should().NotBeNull("LocalStack should be started first");
-        
+
         _awsOptions = _localStackHelper!.CreateAwsOptions();
         _logger.LogInformation("Configured AWS credentials for LocalStack");
     }
@@ -57,13 +57,13 @@ public class AwsCredentialsSteps
     public void WhenIConfigureAwsWithAnonymousCredentials()
     {
         _localStackHelper.Should().NotBeNull("LocalStack should be started first");
-        
+
         _awsOptions = new AWSOptions
         {
             Credentials = new AnonymousAWSCredentials(),
             Region = RegionEndpoint.USEast1
         };
-        
+
         _logger.LogInformation("Configured AWS with anonymous credentials");
     }
 
@@ -71,14 +71,14 @@ public class AwsCredentialsSteps
     public void WhenIConfigureAwsWithCustomRegion(string regionName)
     {
         _localStackHelper.Should().NotBeNull("LocalStack should be started first");
-        
+
         var region = RegionEndpoint.GetBySystemName(regionName);
         _awsOptions = new AWSOptions
         {
             Credentials = new AnonymousAWSCredentials(),
             Region = region
         };
-        
+
         _logger.LogInformation($"Configured AWS with custom region: {regionName}");
     }
 
@@ -86,7 +86,7 @@ public class AwsCredentialsSteps
     public void WhenICreateParameterStoreClient()
     {
         _localStackHelper.Should().NotBeNull("LocalStack should be started first");
-        
+
         _parameterStoreClient = _localStackHelper!.CreateParameterStoreClient();
         _logger.LogInformation("Created Parameter Store client");
     }
@@ -95,7 +95,7 @@ public class AwsCredentialsSteps
     public void WhenICreateSecretsManagerClient()
     {
         _localStackHelper.Should().NotBeNull("LocalStack should be started first");
-        
+
         _secretsManagerClient = _localStackHelper!.CreateSecretsManagerClient();
         _logger.LogInformation("Created Secrets Manager client");
     }
@@ -105,7 +105,7 @@ public class AwsCredentialsSteps
     {
         _awsOptions.Should().NotBeNull("AWS options should be configured");
         _awsOptions!.Credentials.Should().BeOfType<AnonymousAWSCredentials>("Should use anonymous credentials");
-        
+
         _logger.LogInformation("Verified AWS configuration uses anonymous credentials");
     }
 
@@ -114,7 +114,7 @@ public class AwsCredentialsSteps
     {
         _awsOptions.Should().NotBeNull("AWS options should be configured");
         _awsOptions!.Region.SystemName.Should().Be(expectedRegion, $"AWS region should be {expectedRegion}");
-        
+
         _logger.LogInformation($"Verified AWS region is {expectedRegion}");
     }
 
@@ -123,7 +123,7 @@ public class AwsCredentialsSteps
     {
         _awsOptions.Should().NotBeNull("AWS options should be configured");
         _awsOptions!.Region.SystemName.Should().Be(expectedRegion, $"AWS should use {expectedRegion} region");
-        
+
         _logger.LogInformation($"Verified AWS uses {expectedRegion} region");
     }
 
@@ -132,14 +132,14 @@ public class AwsCredentialsSteps
     {
         _awsOptions.Should().NotBeNull("AWS options should be configured");
         _localStackHelper.Should().NotBeNull("LocalStack should be available");
-        
+
         // Test creating clients using AWS options
         var parameterStoreClient = _awsOptions!.CreateServiceClient<IAmazonSimpleSystemsManagement>();
         parameterStoreClient.Should().NotBeNull("Parameter Store client should be created");
-        
+
         var secretsManagerClient = _awsOptions.CreateServiceClient<IAmazonSecretsManager>();
         secretsManagerClient.Should().NotBeNull("Secrets Manager client should be created");
-        
+
         _logger.LogInformation("Verified AWS clients can be created successfully");
     }
 
@@ -148,15 +148,15 @@ public class AwsCredentialsSteps
     {
         _awsOptions.Should().NotBeNull("AWS options should be configured");
         _localStackHelper.Should().NotBeNull("LocalStack should be available");
-        
+
         // Create clients with a custom region using LocalStack helper
         var parameterStoreClient = _localStackHelper!.CreateParameterStoreClient(_awsOptions!.Region);
         parameterStoreClient.Should().NotBeNull("Parameter Store client should be created for custom region");
-        
+
         // Log the actual values for debugging
         _logger.LogInformation($"Expected region: {_awsOptions.Region?.SystemName}");
         _logger.LogInformation($"Client config region: {parameterStoreClient.Config.RegionEndpoint?.SystemName}");
-        
+
         // Check if the region is set correctly - AWS SDK sometimes doesn't populate RegionEndpoint
         if (parameterStoreClient.Config.RegionEndpoint != null)
         {
@@ -168,10 +168,10 @@ public class AwsCredentialsSteps
             _logger.LogInformation("RegionEndpoint is null, checking region by service URL configuration");
             parameterStoreClient.Config.ServiceURL.Should().NotBeNullOrEmpty("Client should have LocalStack endpoint configured");
         }
-        
+
         var secretsManagerClient = _localStackHelper.CreateSecretsManagerClient(_awsOptions.Region);
         secretsManagerClient.Should().NotBeNull("Secrets Manager client should be created for custom region");
-        
+
         _logger.LogInformation($"Verified AWS clients can be created for custom region: {_awsOptions.Region?.SystemName}");
     }
 
@@ -180,7 +180,7 @@ public class AwsCredentialsSteps
     {
         _parameterStoreClient.Should().NotBeNull("Parameter Store client should be created");
         _parameterStoreClient!.Config.Should().NotBeNull("Client configuration should be available");
-        
+
         _logger.LogInformation("Verified Parameter Store client creation");
     }
 
@@ -189,20 +189,20 @@ public class AwsCredentialsSteps
     {
         _parameterStoreClient.Should().NotBeNull("Parameter Store client should be created");
         _localStackHelper.Should().NotBeNull("LocalStack should be available");
-        
+
         var expectedEndpoint = _localStackHelper!.EndpointUrl;
         var actualEndpoint = _parameterStoreClient!.Config.ServiceURL;
-        
+
         // Handle trailing slash differences
         var normalizedExpected = expectedEndpoint.TrimEnd('/');
         var normalizedActual = actualEndpoint?.TrimEnd('/');
-        
+
         normalizedActual.Should().Be(normalizedExpected, "Client should use LocalStack endpoint");
-        
+
         // Test actual connectivity by making a simple API call
         var response = await _parameterStoreClient.DescribeParametersAsync(new DescribeParametersRequest { MaxResults = 1 });
         response.Should().NotBeNull("Parameter Store client should connect to LocalStack successfully");
-        
+
         _logger.LogInformation("Verified Parameter Store client connects to LocalStack");
     }
 
@@ -211,7 +211,7 @@ public class AwsCredentialsSteps
     {
         _secretsManagerClient.Should().NotBeNull("Secrets Manager client should be created");
         _secretsManagerClient!.Config.Should().NotBeNull("Client configuration should be available");
-        
+
         _logger.LogInformation("Verified Secrets Manager client creation");
     }
 
@@ -220,20 +220,20 @@ public class AwsCredentialsSteps
     {
         _secretsManagerClient.Should().NotBeNull("Secrets Manager client should be created");
         _localStackHelper.Should().NotBeNull("LocalStack should be available");
-        
+
         var expectedEndpoint = _localStackHelper!.EndpointUrl;
         var actualEndpoint = _secretsManagerClient!.Config.ServiceURL;
-        
+
         // Handle trailing slash differences
         var normalizedExpected = expectedEndpoint.TrimEnd('/');
         var normalizedActual = actualEndpoint?.TrimEnd('/');
-        
+
         normalizedActual.Should().Be(normalizedExpected, "Client should use LocalStack endpoint");
-        
+
         // Test actual connectivity by making a simple API call
         var response = await _secretsManagerClient.ListSecretsAsync(new ListSecretsRequest { MaxResults = 1 });
         response.Should().NotBeNull("Secrets Manager client should connect to LocalStack successfully");
-        
+
         _logger.LogInformation("Verified Secrets Manager client connects to LocalStack");
     }
 }

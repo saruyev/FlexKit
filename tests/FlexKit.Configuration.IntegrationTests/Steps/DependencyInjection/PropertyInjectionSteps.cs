@@ -60,8 +60,8 @@ public class PropertyInjectionSteps(ScenarioContext scenarioContext)
         public IFlexConfig? FlexConfiguration { get; [UsedImplicitly] set; }
         public IConfiguration? StandardConfiguration { get; [UsedImplicitly] set; }
         public dynamic? DynamicConfiguration { get; [UsedImplicitly] set; }
-        
-        public int InjectedPropertiesCount => 
+
+        public int InjectedPropertiesCount =>
             (FlexConfiguration != null ? 1 : 0) +
             (StandardConfiguration != null ? 1 : 0) +
             (DynamicConfiguration != null ? 1 : 0);
@@ -109,7 +109,7 @@ public class PropertyInjectionSteps(ScenarioContext scenarioContext)
     public void GivenIHaveConfiguredTestConfigurationData(Table table)
     {
         _testConfigurationData.Clear();
-        
+
         foreach (var row in table.Rows)
         {
             var key = row["Key"];
@@ -123,7 +123,7 @@ public class PropertyInjectionSteps(ScenarioContext scenarioContext)
             .Build();
 
         _flexConfiguration = _configuration.GetFlexConfiguration();
-        
+
         scenarioContext.Set(_configuration, "PropertyInjectionConfiguration");
         scenarioContext.Set(_flexConfiguration, "PropertyInjectionFlexConfiguration");
     }
@@ -136,10 +136,10 @@ public class PropertyInjectionSteps(ScenarioContext scenarioContext)
     public void WhenIEnablePropertyInjectionForContainer()
     {
         _containerBuilder.Should().NotBeNull("Container builder should be initialized");
-        
+
         // Enable property injection using Autofac's property injection support
         _propertyInjectionEnabled = true;
-        
+
         // Set up a basic configuration if none exists
         if (_configuration == null)
         {
@@ -148,13 +148,13 @@ public class PropertyInjectionSteps(ScenarioContext scenarioContext)
                 ["App:Name"] = "PropertyInjectionTest",
                 ["App:Version"] = "1.0.0"
             };
-            
+
             _configuration = _configurationBuilder!
                 .AddInMemoryCollection(basicConfig)
                 .Build();
 
             _flexConfiguration = _configuration.GetFlexConfiguration();
-            
+
             scenarioContext.Set(_configuration, "PropertyInjectionConfiguration");
             scenarioContext.Set(_flexConfiguration, "PropertyInjectionFlexConfiguration");
         }
@@ -164,7 +164,7 @@ public class PropertyInjectionSteps(ScenarioContext scenarioContext)
     public void WhenIRegisterServiceWithFlexConfigProperty()
     {
         _containerBuilder.Should().NotBeNull("Container builder should be initialized");
-        
+
         if (_propertyInjectionEnabled)
         {
             _containerBuilder!.RegisterType<PropertyInjectionTestService>()
@@ -182,7 +182,7 @@ public class PropertyInjectionSteps(ScenarioContext scenarioContext)
     public void WhenIRegisterServiceWithMultipleConfigurationProperties()
     {
         _containerBuilder.Should().NotBeNull("Container builder should be initialized");
-        
+
         if (_propertyInjectionEnabled)
         {
             _containerBuilder!.RegisterType<MultiplePropertyInjectionService>()
@@ -206,10 +206,10 @@ public class PropertyInjectionSteps(ScenarioContext scenarioContext)
     public void WhenIIntegrateJsonFileAsConfigurationSource(string filePath)
     {
         _configurationBuilder.Should().NotBeNull("Configuration builder should be initialized");
-        
+
         // Use the same simple normalization pattern as other steps
         var normalizedPath = filePath.Replace('/', Path.DirectorySeparatorChar);
-        
+
         if (!File.Exists(normalizedPath))
         {
             throw new FileNotFoundException($"Test data file not found: {normalizedPath}");
@@ -220,7 +220,7 @@ public class PropertyInjectionSteps(ScenarioContext scenarioContext)
             .Build();
 
         _flexConfiguration = _configuration.GetFlexConfiguration();
-        
+
         scenarioContext.Set(_configuration, "PropertyInjectionConfiguration");
         scenarioContext.Set(_flexConfiguration, "PropertyInjectionFlexConfiguration");
     }
@@ -229,7 +229,7 @@ public class PropertyInjectionSteps(ScenarioContext scenarioContext)
     public void WhenICreateCustomPropertyInjectionModuleWithConfiguration(Table table)
     {
         var moduleData = new Dictionary<string, string?>();
-        
+
         foreach (var row in table.Rows)
         {
             var key = row["Key"];
@@ -245,9 +245,9 @@ public class PropertyInjectionSteps(ScenarioContext scenarioContext)
     {
         _containerBuilder.Should().NotBeNull("Container builder should be initialized");
         _customPropertyModule.Should().NotBeNull("Custom module should be created");
-        
+
         _containerBuilder!.RegisterModule(_customPropertyModule!);
-        
+
         // Don't register configuration separately when using custom module
         // The module handles its own configuration registration
         _configuration = null;
@@ -265,13 +265,13 @@ public class PropertyInjectionSteps(ScenarioContext scenarioContext)
     public void WhenIAssignEnvironmentVariablesWithPrefixAsConfigurationSource(string prefix)
     {
         _configurationBuilder.Should().NotBeNull("Configuration builder should be initialized");
-        
+
         _configuration = _configurationBuilder!
             .AddEnvironmentVariables(prefix + "__")
             .Build();
 
         _flexConfiguration = _configuration.GetFlexConfiguration();
-        
+
         scenarioContext.Set(_configuration, "PropertyInjectionConfiguration");
         scenarioContext.Set(_flexConfiguration, "PropertyInjectionFlexConfiguration");
     }
@@ -282,7 +282,7 @@ public class PropertyInjectionSteps(ScenarioContext scenarioContext)
         try
         {
             _containerBuilder.Should().NotBeNull("Container builder should be initialized");
-            
+
             // Only register configuration if no custom module was registered
             // (custom modules handle their own configuration registration)
             if (_customPropertyModule == null && _configuration != null)
@@ -305,7 +305,7 @@ public class PropertyInjectionSteps(ScenarioContext scenarioContext)
 
             _container = _containerBuilder!.Build();
             _containerBuildSucceeded = true;
-            
+
             scenarioContext.RegisterAutofacContainer(_container);
         }
         catch (Exception ex)
@@ -332,7 +332,7 @@ public class PropertyInjectionSteps(ScenarioContext scenarioContext)
     public void WhenIResolveServiceWithPropertyInjection()
     {
         _container.Should().NotBeNull("Container should be built successfully");
-        
+
         try
         {
             _resolvedServiceWithProperty = _container!.Resolve<PropertyInjectionTestService>();
@@ -347,7 +347,7 @@ public class PropertyInjectionSteps(ScenarioContext scenarioContext)
     public void WhenIResolveServiceWithMultipleProperties()
     {
         _container.Should().NotBeNull("Container should be built successfully");
-        
+
         try
         {
             _resolvedServiceWithMultipleProperties = _container!.Resolve<MultiplePropertyInjectionService>();
@@ -362,7 +362,7 @@ public class PropertyInjectionSteps(ScenarioContext scenarioContext)
     public void WhenIResolveMultipleInstancesOfServiceWithPropertyInjection()
     {
         _container.Should().NotBeNull("Container should be built successfully");
-        
+
         try
         {
             for (int i = 0; i < 3; i++)
@@ -394,10 +394,10 @@ public class PropertyInjectionSteps(ScenarioContext scenarioContext)
     {
         _resolvedServiceWithProperty.Should().NotBeNull("Service should be resolved");
         _resolvedServiceWithProperty!.FlexConfiguration.Should().NotBeNull("FlexConfig property should be injected");
-        
+
         // Test that we can access configuration through the injected property
         var flexConfig = _resolvedServiceWithProperty.FlexConfiguration!;
-        
+
         // The FlexConfig should be functional for accessing configuration values
         flexConfig.Should().BeAssignableTo<IFlexConfig>("Injected property should implement IFlexConfig");
     }
@@ -407,7 +407,7 @@ public class PropertyInjectionSteps(ScenarioContext scenarioContext)
     {
         _resolvedServiceWithMultipleProperties.Should().NotBeNull("Service should be resolved successfully");
         _resolvedServiceWithMultipleProperties!.FlexConfiguration.Should().NotBeNull("FlexConfig property should be injected");
-        
+
         // Note: StandardConfiguration and DynamicConfiguration might be null if not registered
         // The test verifies that at least FlexConfig is injected
         _resolvedServiceWithMultipleProperties.InjectedPropertiesCount.Should().BeGreaterThan(0, "At least one property should be injected");
@@ -418,9 +418,9 @@ public class PropertyInjectionSteps(ScenarioContext scenarioContext)
     {
         _resolvedServiceWithMultipleProperties.Should().NotBeNull("Service should be resolved");
         _resolvedServiceWithMultipleProperties!.FlexConfiguration.Should().NotBeNull("FlexConfig property should be injected");
-        
+
         var flexConfig = _resolvedServiceWithMultipleProperties.FlexConfiguration!;
-        
+
         // Verify that the injected FlexConfig contains expected test data
         if (_testConfigurationData.TryGetValue("Database:Host", out var value))
         {
@@ -434,9 +434,9 @@ public class PropertyInjectionSteps(ScenarioContext scenarioContext)
     {
         _resolvedServiceWithProperty.Should().NotBeNull("Service should be resolved");
         _resolvedServiceWithProperty!.FlexConfiguration.Should().NotBeNull("FlexConfig property should be injected");
-        
+
         var flexConfig = _resolvedServiceWithProperty.FlexConfiguration!;
-        
+
         // Verify that we can access values from the JSON file
         // This will depend on what's in the appsettings.json test file
         var configEntries = ((FlexConfiguration)flexConfig).Configuration.AsEnumerable().ToList();
@@ -453,10 +453,10 @@ public class PropertyInjectionSteps(ScenarioContext scenarioContext)
     public void ThenAllInstancesShouldShareTheSameFlexConfigPropertyInstance()
     {
         _multipleResolvedInstances.Should().HaveCount(3, "Should have resolved three instances");
-        
+
         var firstFlexConfig = _multipleResolvedInstances[0].FlexConfiguration;
         firstFlexConfig.Should().NotBeNull("First instance should have FlexConfig injected");
-        
+
         for (int i = 1; i < _multipleResolvedInstances.Count; i++)
         {
             var currentFlexConfig = _multipleResolvedInstances[i].FlexConfiguration;
@@ -470,7 +470,7 @@ public class PropertyInjectionSteps(ScenarioContext scenarioContext)
     {
         // All instances should be the same reference since registered as singleton
         var firstService = _multipleResolvedInstances[0];
-        
+
         for (int i = 1; i < _multipleResolvedInstances.Count; i++)
         {
             var currentService = _multipleResolvedInstances[i];
@@ -483,9 +483,9 @@ public class PropertyInjectionSteps(ScenarioContext scenarioContext)
     {
         _resolvedServiceWithProperty.Should().NotBeNull("Service should be resolved");
         _resolvedServiceWithProperty!.FlexConfiguration.Should().NotBeNull("FlexConfig property should be injected");
-        
+
         var flexConfig = _resolvedServiceWithProperty.FlexConfiguration!;
-        
+
         // Verify that the custom module configuration is accessible
         var customSetting1 = flexConfig["CustomModule:Setting1"];
         customSetting1.Should().Be("custom-prop-value-1", "Custom module setting should be accessible");
@@ -511,9 +511,9 @@ public class PropertyInjectionSteps(ScenarioContext scenarioContext)
     {
         _resolvedServiceWithProperty.Should().NotBeNull("Service should be resolved");
         _resolvedServiceWithProperty!.FlexConfiguration.Should().NotBeNull("FlexConfig property should be injected");
-        
+
         var flexConfig = _resolvedServiceWithProperty.FlexConfiguration!;
-        
+
         // Verify environment variables are accessible (with the prefix removed)
         var dbHost = flexConfig["DATABASE:HOST"];
         dbHost.Should().Be("env-host.com", "Environment variable should be accessible through FlexConfig");

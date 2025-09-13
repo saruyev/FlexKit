@@ -125,7 +125,7 @@ public class IFlexConfigTests : UnitTestBase
         var builder = new ConfigurationBuilder();
         builder.AddInMemoryCollection(configData!);
         var configuration = builder.Build();
-        
+
         IFlexConfig flexConfig = new FlexConfiguration(configuration);
 
         // Act
@@ -148,14 +148,14 @@ public class IFlexConfigTests : UnitTestBase
             ["Api:BaseUrl"] = "https://api.example.com",
             ["Servers:0:Name"] = "Server1",
             ["Servers:0:Port"] = "8080",
-            ["Servers:1:Name"] = "Server2", 
+            ["Servers:1:Name"] = "Server2",
             ["Servers:1:Port"] = "8081"
         };
 
         var builder = new ConfigurationBuilder();
         builder.AddInMemoryCollection(testData);
         var configuration = builder.Build();
-        
+
         IFlexConfig flexConfig = new FlexConfiguration(configuration);
 
         // Act & Assert - String indexer access
@@ -167,7 +167,7 @@ public class IFlexConfigTests : UnitTestBase
         // Act & Assert - Numeric indexer access for arrays
         var serversSection = configuration.GetSection("Servers");
         var serverFlexConfig = new FlexConfiguration(serversSection);
-        
+
         var firstServer = serverFlexConfig[0];
         firstServer.Should().NotBeNull();
         firstServer["Name"].Should().Be("Server1");
@@ -198,7 +198,7 @@ public class IFlexConfigTests : UnitTestBase
         var builder = new ConfigurationBuilder();
         builder.AddInMemoryCollection(testData);
         var configuration = builder.Build();
-        
+
         IFlexConfig flexConfig = new FlexConfiguration(configuration);
 
         // Act
@@ -222,7 +222,7 @@ public class IFlexConfigTests : UnitTestBase
         var builder = new ConfigurationBuilder();
         builder.AddInMemoryCollection(new Dictionary<string, string?>());
         var configuration = builder.Build();
-        
+
         IFlexConfig flexConfig = new FlexConfiguration(configuration);
 
         // Act & Assert - String indexer with non-existent keys
@@ -247,7 +247,7 @@ public class IFlexConfigTests : UnitTestBase
         var builder = new ConfigurationBuilder();
         builder.AddInMemoryCollection(testData!);
         var configuration = builder.Build();
-        
+
         IFlexConfig flexConfig = new FlexConfiguration(configuration);
 
         // Act & Assert - Traditional access pattern
@@ -302,7 +302,7 @@ public class IFlexConfigTests : UnitTestBase
         var builder = new ConfigurationBuilder();
         builder.AddInMemoryCollection(testData);
         var configuration = builder.Build();
-        
+
         IFlexConfig flexConfig = new FlexConfiguration(configuration);
 
         // Simulate service that depends on IFlexConfig

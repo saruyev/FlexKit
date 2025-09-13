@@ -15,7 +15,7 @@ namespace FlexKit.Configuration.IntegrationTests.Utils;
 public class TestContainerBuilder : BaseTestContainerBuilder<TestContainerBuilder>
 {
     private bool _registerFlexConfig = true;
-    
+
     /// <summary>
     /// Sets up FlexKit configuration with the provided builder action.
     /// </summary>
@@ -26,7 +26,7 @@ public class TestContainerBuilder : BaseTestContainerBuilder<TestContainerBuilde
         Registrations.Add(builder => builder.AddFlexConfig(configureFlexConfig));
         return this;
     }
-    
+
     /// <summary>
     /// Disables automatic FlexConfig registration.
     /// Use this when you want to manually configure FlexConfig or don't need it.
@@ -38,7 +38,7 @@ public class TestContainerBuilder : BaseTestContainerBuilder<TestContainerBuilde
         _registerFlexConfig = false;
         return this;
     }
-    
+
     /// <summary>
     /// Creates a minimal container with just the essential services for basic testing.
     /// </summary>
@@ -67,7 +67,7 @@ public class TestContainerBuilder : BaseTestContainerBuilder<TestContainerBuilde
             .WithConfiguration(configurationData)
             .Build();
     }
-    
+
     /// <summary>
     /// Builds the Autofac container with all configured registrations.
     /// </summary>

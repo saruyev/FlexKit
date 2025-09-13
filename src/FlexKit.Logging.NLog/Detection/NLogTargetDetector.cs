@@ -8,12 +8,12 @@ namespace FlexKit.Logging.NLog.Detection;
 /// Auto-detects available NLog targets and layout renderers by scanning loaded assemblies for
 /// extension methods and target types that can be used with NLog configuration.
 /// </summary>
-public static class NLogTargetDetector
+internal static class NLogTargetDetector
 {
     /// <summary>
     /// Information about a detected NLog target, including its configuration details.
     /// </summary>
-    public class TargetInfo
+    internal sealed class TargetInfo
     {
         /// <summary>
         /// Gets the name of the detected NLog target.
@@ -59,7 +59,8 @@ public static class NLogTargetDetector
             catch (Exception ex)
             {
                 // Log warning but continue - one bad assembly shouldn't break everything
-                Debug.WriteLine($"Warning: Failed to scan assembly {assembly.FullName} for NLog targets: {ex.Message}");
+                Debug.WriteLine(
+                    $"Warning: Failed to scan assembly {assembly.FullName} for NLog targets: {ex.Message}");
             }
         }
 
@@ -218,7 +219,7 @@ public static class NLogTargetDetector
     /// <returns>
     /// A <see cref="TargetInfo"/> object containing details about the NLog target, or null if an error occurs during processing.
     /// </returns>
-    private static TargetInfo? CreateTargetInfoFromType(Type targetType)
+    private static TargetInfo CreateTargetInfoFromType(Type targetType)
     {
         // Determine a target name (use type name without "Target" suffix if present)
         var targetName = targetType.Name;

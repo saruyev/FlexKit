@@ -21,11 +21,11 @@ public class InterceptionDecisionCacheBenchmarks : FlexKitBenchmarkBase
     {
         base.Setup();
         _cache = FlexKitServices.GetService<InterceptionDecisionCache>()!;
-        
+
         // Get methods for testing
         _cachedMethod = typeof(ILogBothService).GetMethod(nameof(ILogBothService.ProcessData))!;
         _uncachedMethod = typeof(string).GetMethod(nameof(string.ToString), Type.EmptyTypes)!;
-        
+
         _multipleMethods = [.. typeof(ILogBothService).GetMethods().Take(10)];
     }
 

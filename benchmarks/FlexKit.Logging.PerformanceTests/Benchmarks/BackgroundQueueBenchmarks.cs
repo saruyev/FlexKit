@@ -6,7 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace FlexKit.Logging.PerformanceTests.Benchmarks;
 
-public class BackgroundQueueBenchmarks : FlexKitBenchmarkBase  
+public class BackgroundQueueBenchmarks : FlexKitBenchmarkBase
 {
     private IBackgroundLog _backgroundLog = null!;
     private LogEntry _testEntry;

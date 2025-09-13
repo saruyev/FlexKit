@@ -26,9 +26,20 @@ namespace FlexKit.Logging.NLog.Core;
 /// </para>
 /// </remarks>
 /// <param name="processor">The log entry processor that writes to NLog.</param>
-public sealed class NLogBackgroundLog(ILogEntryProcessor processor) : IBackgroundLog, IDisposable
+internal sealed class NLogBackgroundLog(ILogEntryProcessor processor) : IBackgroundLog, IDisposable
 {
+    /// <summary>
+    /// Represents the processor responsible for handling log entries.
+    /// This instance is used to process log entries either immediately or in a background context,
+    /// delegating actual processing tasks to the specified implementation of <see cref="ILogEntryProcessor"/>.
+    /// </summary>
     private readonly ILogEntryProcessor _processor = processor ?? throw new ArgumentNullException(nameof(processor));
+
+    /// <summary>
+    /// Indicates whether the current instance has been disposed.
+    /// This field is used to ensure that operations are not performed on a disposed object,
+    /// preventing potential resource leaks or invalid operation exceptions.
+    /// </summary>
     private volatile bool _disposed;
 
     /// <inheritdoc />

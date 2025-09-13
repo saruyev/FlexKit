@@ -12,6 +12,7 @@
 
     <ItemGroup>
       <InternalsVisibleTo Include="FlexKit.Configuration.Providers.Aws.Tests" />
+      <InternalsVisibleTo Include="FlexKit.Configuration.Providers.Aws.IntegrationTests" />
     </ItemGroup>
 
     <ItemGroup>

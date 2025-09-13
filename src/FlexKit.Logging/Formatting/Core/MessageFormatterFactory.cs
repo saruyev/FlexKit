@@ -7,9 +7,21 @@ namespace FlexKit.Logging.Formatting.Core;
 /// Default implementation of a message formatter factory that manages formatter instances
 /// and provides selection logic based on configuration and context requirements.
 /// </summary>
-public sealed class MessageFormatterFactory : IMessageFormatterFactory
+internal sealed class MessageFormatterFactory : IMessageFormatterFactory
 {
+    /// <summary>
+    /// Represents a read-only dictionary that maps formatter types to their corresponding
+    /// <see cref="IMessageFormatter"/> instances. This dictionary is used to manage
+    /// and provide message formatters based on configuration and context requirements.
+    /// </summary>
     private readonly IReadOnlyDictionary<FormatterType, IMessageFormatter> _formatters;
+
+    /// <summary>
+    /// Represents the default fallback formatter to be used when no suitable
+    /// formatter is found or explicitly specified. This instance ensures that
+    /// message formatting remains operational in scenarios where a formatter
+    /// type is unavailable or unrecognized.
+    /// </summary>
     private readonly IMessageFormatter _fallbackFormatter;
 
     /// <summary>

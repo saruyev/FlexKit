@@ -29,7 +29,7 @@ public class YamlFlexConfigIntegrationSteps(ScenarioContext scenarioContext)
     private IFlexConfig? _integrationFlexConfiguration;
     private Exception? _lastIntegrationException;
     private readonly List<string> _integrationValidationResults = new();
-    
+
     // Test services for dependency injection
     private TestServiceWithIFlexConfig? _resolvedServiceWithIFlexConfig;
     private TestServiceWithDynamicConfig? _resolvedServiceWithDynamicConfig;
@@ -45,9 +45,9 @@ public class YamlFlexConfigIntegrationSteps(ScenarioContext scenarioContext)
     public class TestServiceWithIFlexConfig(IFlexConfig configuration)
     {
         public IFlexConfig Configuration { get; } = configuration;
-        
+
         public string? GetConfigValue(string key) => Configuration[key];
-        
+
         // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
         public bool HasConfiguration() => Configuration != null;
     }
@@ -58,10 +58,10 @@ public class YamlFlexConfigIntegrationSteps(ScenarioContext scenarioContext)
     public class TestServiceWithDynamicConfig(dynamic configuration)
     {
         public dynamic Configuration { get; } = configuration;
-        
-        public object? GetDynamicValue(string path) => 
+
+        public object? GetDynamicValue(string path) =>
             YamlTestConfigurationBuilder.GetDynamicProperty(Configuration, path);
-        
+
         public bool HasDynamicConfiguration() => Configuration != null;
     }
 
@@ -72,7 +72,7 @@ public class YamlFlexConfigIntegrationSteps(ScenarioContext scenarioContext)
     {
         public IFlexConfig? FlexConfig { get; [UsedImplicitly] set; }
         public string ServiceName { get; set; } = "YamlIntegrationTestService";
-        
+
         public bool HasPropertyInjection() => FlexConfig != null;
         public string? GetPropertyValue(string key) => FlexConfig?[key];
     }
@@ -86,7 +86,7 @@ public class YamlFlexConfigIntegrationSteps(ScenarioContext scenarioContext)
     {
         _integrationBuilder = new YamlTestConfigurationBuilder(scenarioContext);
         _containerBuilder = new ContainerBuilder();
-        
+
         scenarioContext.Set(_integrationBuilder, "IntegrationBuilder");
         scenarioContext.Set(_containerBuilder, "ContainerBuilder");
     }
@@ -100,7 +100,7 @@ public class YamlFlexConfigIntegrationSteps(ScenarioContext scenarioContext)
         var testDataPath = Path.Combine("TestData", normalizedPath);
 
         _integrationBuilder!.AddYamlFile(testDataPath, optional: false);
-        
+
         scenarioContext.Set(_integrationBuilder, "IntegrationBuilder");
     }
 
@@ -110,7 +110,7 @@ public class YamlFlexConfigIntegrationSteps(ScenarioContext scenarioContext)
         _integrationBuilder.Should().NotBeNull("Integration builder should be established");
 
         _integrationBuilder!.AddTempYamlFile(yamlContent, optional: false);
-        
+
         scenarioContext.Set(_integrationBuilder, "IntegrationBuilder");
     }
 
@@ -123,13 +123,13 @@ public class YamlFlexConfigIntegrationSteps(ScenarioContext scenarioContext)
         {
             var filePath = row["FilePath"];
             var optional = bool.Parse(row["Optional"]);
-            
+
             var normalizedPath = filePath.Replace('/', Path.DirectorySeparatorChar);
             var testDataPath = Path.Combine("TestData", normalizedPath);
-            
+
             _integrationBuilder!.AddYamlFile(testDataPath, optional);
         }
-        
+
         scenarioContext.Set(_integrationBuilder, "IntegrationBuilder");
     }
 
@@ -137,7 +137,7 @@ public class YamlFlexConfigIntegrationSteps(ScenarioContext scenarioContext)
     public void GivenIHaveAnIntegrationModuleWithConfigurationHierarchy(Table table)
     {
         _integrationBuilder.Should().NotBeNull("Integration builder should be established");
-        
+
         var configData = new Dictionary<string, string?>();
         foreach (var row in table.Rows)
         {
@@ -145,7 +145,7 @@ public class YamlFlexConfigIntegrationSteps(ScenarioContext scenarioContext)
         }
 
         _integrationBuilder!.AddTempYamlFile(configData, optional: false);
-        
+
         scenarioContext.Set(_integrationBuilder, "IntegrationBuilder");
     }
 
@@ -162,7 +162,7 @@ public class YamlFlexConfigIntegrationSteps(ScenarioContext scenarioContext)
         try
         {
             // Register FlexConfig with Autofac using AddFlexConfig pattern
-            _containerBuilder!.AddFlexConfig(config => 
+            _containerBuilder!.AddFlexConfig(config =>
             {
                 // Copy all sources from the test configuration builder
                 foreach (var source in _integrationBuilder!.Sources)
@@ -360,7 +360,7 @@ public class YamlFlexConfigIntegrationSteps(ScenarioContext scenarioContext)
     {
         _resolvedIFlexConfig.Should().NotBeNull("IFlexConfig should be resolvable from container");
         _resolvedDynamicConfig!.Should().NotBeNull("Dynamic config should be resolvable from container");
-        
+
         // Verify the resolved config contains expected data
         _integrationValidationResults.Should().Contain(result => result.Contains("IFlexConfig resolved: True"));
         _integrationValidationResults.Should().Contain(result => result.Contains("Dynamic config resolved: True"));
@@ -381,7 +381,7 @@ public class YamlFlexConfigIntegrationSteps(ScenarioContext scenarioContext)
     {
         _resolvedServiceWithIFlexConfig.Should().NotBeNull("Service with IFlexConfig dependency should be resolved");
         _resolvedServiceWithDynamicConfig.Should().NotBeNull("Service with dynamic dependency should be resolved");
-        
+
         // Verify dependency injection worked
         _integrationValidationResults.Should().Contain(result => result.Contains("Constructor IFlexConfig injection: True"));
         _integrationValidationResults.Should().Contain(result => result.Contains("Constructor dynamic injection: True"));
@@ -393,7 +393,7 @@ public class YamlFlexConfigIntegrationSteps(ScenarioContext scenarioContext)
     public void ThenTheIntegrationModuleShouldSupportPropertyInjection()
     {
         _resolvedServiceWithPropertyInjection.Should().NotBeNull("Service with property injection should be resolved");
-        
+
         // Verify property injection worked
         _integrationValidationResults.Should().Contain(result => result.Contains("Property injection: True"));
         _integrationValidationResults.Should().Contain(result => result.StartsWith("Property injection value:"));
@@ -412,11 +412,11 @@ public class YamlFlexConfigIntegrationSteps(ScenarioContext scenarioContext)
     public void ThenTheIntegrationModuleShouldProvideFlexConfigDynamicAccess()
     {
         _resolvedIFlexConfig.Should().NotBeNull("IFlexConfig should be resolved");
-        
+
         // Test that the resolved FlexConfig supports dynamic access
         dynamic dynamicConfig = _resolvedIFlexConfig!;
         dynamicConfig.Should().NotBeNull("Dynamic access should be supported");
-        
+
         // Verify dynamic access results
         _integrationValidationResults.Should().Contain(result => result.StartsWith("DynamicAccess app.name ="));
     }
@@ -428,7 +428,7 @@ public class YamlFlexConfigIntegrationSteps(ScenarioContext scenarioContext)
         var directValue = _resolvedIFlexConfig!["app:name"];
         var serviceValue = _resolvedServiceWithIFlexConfig!.GetConfigValue("app:name");
         var propertyValue = _resolvedServiceWithPropertyInjection!.GetPropertyValue("app:name");
-        
+
         directValue.Should().Be(serviceValue, "Direct resolution and constructor injection should have same values");
         directValue.Should().Be(propertyValue, "Direct resolution and property injection should have same values");
     }
@@ -444,11 +444,11 @@ public class YamlFlexConfigIntegrationSteps(ScenarioContext scenarioContext)
     public void ThenTheIntegrationModuleShouldSupportMultipleYamlSources()
     {
         _integrationConfiguration.Should().NotBeNull("Configuration should be built from multiple sources");
-        
+
         // Verify configuration values from different sources are accessible
         var valueFromSource1 = _resolvedIFlexConfig!["app:name"];
         var valueFromSource2 = _resolvedIFlexConfig["database:host"];
-        
+
         valueFromSource1.Should().NotBeNull("Value from first YAML source should be accessible");
         valueFromSource2.Should().NotBeNull("Value from second YAML source should be accessible");
     }

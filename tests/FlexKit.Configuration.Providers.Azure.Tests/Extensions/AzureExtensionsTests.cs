@@ -207,13 +207,13 @@ public class AzureExtensionsTests
         action.Should().Throw<ArgumentNullException>()
             .WithParameterName("configure");
     }
-    
+
     [Fact]
     public void AddAzureKeyVault_WithInjectedSecretClient_LoadsSecretsFromMockClient()
     {
         // Arrange
         var builder = new FlexConfigurationBuilder();
-    
+
         // Setup mock client with test data
         var secretProperties = new[] { new SecretProperties("test--secret") { Enabled = true } };
         var pageable = AsyncPageable<SecretProperties>.FromPages([
@@ -409,7 +409,7 @@ public class AzureExtensionsTests
         action.Should().Throw<ArgumentNullException>()
             .WithParameterName("configure");
     }
-    
+
     [Fact]
     public void AddAzureAppConfiguration_WithInjectedSecretClient_LoadsSecretsFromMockClient()
     {
@@ -785,7 +785,7 @@ public class AzureExtensionsTests
         // Assert
         result["config:key"].Should().Be(expectedValue);
     }
-    
+
     [Fact]
     public void CanParseAsJson_WithInvalidJson_ReturnsFalse()
     {
@@ -810,23 +810,23 @@ public class AzureExtensionsTests
         // Assert
         result.Should().BeFalse();
     }
-    
+
     [Fact]
     public void FlattenJsonValue_WithUndefinedValueKind_SkipsValue()
     {
         // Arrange
         var prefix = "config";
         var result = new ConcurrentDictionary<string, string?>();
-    
+
         // Create a JsonElement with Undefined ValueKind using reflection
         var jsonElement = default(JsonElement); // This creates a JsonElement with ValueKind.Undefined
-    
+
         // Act
-        var processMethod = typeof(AzureExtensions).GetMethod("FlattenJsonElement", 
+        var processMethod = typeof(AzureExtensions).GetMethod("FlattenJsonElement",
             BindingFlags.NonPublic | BindingFlags.Static);
-    
+
         processMethod?.Invoke(null, [jsonElement, result, prefix]);
-    
+
         // Assert
         result.Should().BeEmpty(); // Undefined values should be skipped
     }

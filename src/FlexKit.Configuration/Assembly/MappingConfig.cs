@@ -77,7 +77,7 @@ namespace FlexKit.Configuration.Assembly;
 /// </list>
 /// </para>
 /// </remarks>
-public sealed record MappingConfig
+internal sealed record MappingConfig
 {
     /// <summary>
     /// Gets the assembly prefix pattern for filtering assemblies during module discovery.
@@ -118,7 +118,8 @@ public sealed record MappingConfig
 
     /// <summary>
     /// Gets the collection of assembly name prefixes for fine-grained filtering during module discovery.
-    /// When specified, only assemblies whose names start with one of these prefixes will be scanned for Autofac modules.
+    /// When specified, only assemblies whose names start with one of these prefixes will be scanned
+    /// for Autofac modules.
     /// </summary>
     /// <value>
     /// An array of strings representing the prefixes that assembly names must start with to be included in scanning.
@@ -187,7 +188,10 @@ public sealed record MappingConfig
     /// <item>Null references are handled correctly</item>
     /// <item>Reference equality is checked for performance optimization</item>
     /// <item>String properties are compared using default string equality</item>
-    /// <item>Collection properties are compared element-wise using <see cref="Enumerable.SequenceEqual{TSource}(IEnumerable{TSource}, IEnumerable{TSource})"/></item>
+    /// <item>
+    /// Collection properties are compared element-wise using
+    /// <see cref="Enumerable.SequenceEqual{TSource}(IEnumerable{TSource}, IEnumerable{TSource})"/>
+    /// </item>
     /// <item>Null collections are treated as equivalent to each other but not to non-null collections</item>
     /// </list>
     ///
@@ -234,14 +238,18 @@ public sealed record MappingConfig
     /// <item>Starts with the hash code of the <see cref="Prefix"/> property</item>
     /// <item>For non-null <see cref="Names"/> collections, incorporates the hash code of each element</item>
     /// <item>Uses <see cref="HashCode"/> struct for an efficient and collision-resistant hash combination</item>
-    /// <item>Handles null collections appropriately to maintain consistency with <see cref="Equals(MappingConfig?)"/></item>
+    /// <item>
+    /// Handles null collections appropriately to maintain consistency with <see cref="Equals(MappingConfig?)"/>
+    /// </item>
     /// </list>
     /// </para>
     ///
     /// <para>
     /// <strong>Performance Considerations:</strong>
-    /// The hash code calculation has O(n) complexity where n is the number of elements in the <see cref="Names"/> collection.
-    /// For large collections, consider caching the hash code if the instance is immutable and used frequently in hash-based operations.
+    /// The hash code calculation has O(n) complexity where n is the number of elements in the
+    /// <see cref="Names"/> collection.
+    /// For large collections, consider caching the hash code if the instance is immutable and used frequently
+    /// in hash-based operations.
     /// </para>
     ///
     /// <para>

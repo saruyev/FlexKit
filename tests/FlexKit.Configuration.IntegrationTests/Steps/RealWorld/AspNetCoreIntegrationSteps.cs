@@ -85,7 +85,7 @@ public class AspNetCoreIntegrationSteps(ScenarioContext scenarioContext)
         public IActionResult GetConfiguration()
         {
             dynamic config = configuration;
-            
+
             var result = new
             {
                 ApiBaseUrl = config.Api?.BaseUrl?.ToString(),
@@ -123,10 +123,10 @@ public class AspNetCoreIntegrationSteps(ScenarioContext scenarioContext)
             {
                 LoadedConfiguration = c.Resolve<IFlexConfig>();
                 IsLoaded = true;
-                
+
                 var moduleName = LoadedConfiguration["Autofac:ModuleName"] ?? "DefaultModule";
                 var isEnabled = LoadedConfiguration["Autofac:Enabled"].ToType<bool>();
-                
+
                 return new TestAutofacService(moduleName, isEnabled);
             }).As<ITestAutofacService>().SingleInstance();
         }
@@ -160,15 +160,15 @@ public class AspNetCoreIntegrationSteps(ScenarioContext scenarioContext)
         // Initialize web application builder
         var args = Array.Empty<string>();
         _webApplicationBuilder = WebApplication.CreateBuilder(args);
-        
+
         // Configure Autofac as the default service provider for all scenarios
         _webApplicationBuilder.Host.UseServiceProviderFactory(new AutofacServiceProviderFactory());
-        
+
         // Set up basic logging for testing
         _webApplicationBuilder.Logging.ClearProviders();
         _webApplicationBuilder.Logging.AddConsole();
         _webApplicationBuilder.Logging.SetMinimumLevel(LogLevel.Warning);
-        
+
         scenarioContext.Set(_webApplicationBuilder, "WebApplicationBuilder");
     }
 
@@ -194,13 +194,13 @@ public class AspNetCoreIntegrationSteps(ScenarioContext scenarioContext)
     public void WhenIConfigureAspNetCoreHostWithFlexConfigAndTheFollowingConfiguration(Table table)
     {
         _webApplicationBuilder.Should().NotBeNull("WebApplicationBuilder should be initialized");
-        
+
         // Store configuration data
         foreach (var row in table.Rows)
         {
             _aspNetCoreConfigurationData[row["Key"]] = row["Value"];
         }
-        
+
         // Configure FlexConfig with in-memory data (this will be added AFTER other sources for higher precedence)
         _webApplicationBuilder!.Host.ConfigureContainer<ContainerBuilder>(containerBuilder =>
         {
@@ -213,10 +213,10 @@ public class AspNetCoreIntegrationSteps(ScenarioContext scenarioContext)
     public void WhenIConfigureAspNetCoreHostToUseFlexConfigWithJsonFile(string filePath)
     {
         _webApplicationBuilder.Should().NotBeNull("WebApplicationBuilder should be initialized");
-        
+
         // Use the same path normalization pattern as JsonConfigurationSteps
         var normalizedPath = filePath.Replace('/', Path.DirectorySeparatorChar);
-        
+
         if (!File.Exists(normalizedPath))
         {
             throw new FileNotFoundException($"Test data file not found: {normalizedPath}");
@@ -229,7 +229,7 @@ public class AspNetCoreIntegrationSteps(ScenarioContext scenarioContext)
             {
                 // Add a JSON file first (lower precedence)
                 config.AddJsonFile(normalizedPath, optional: false, reloadOnChange: false);
-                
+
                 // Add in-memory data last (higher precedence) if we have any
                 if (_aspNetCoreConfigurationData.Any())
                 {
@@ -237,7 +237,7 @@ public class AspNetCoreIntegrationSteps(ScenarioContext scenarioContext)
                 }
             });
         });
-        
+
         _aspNetCoreConfigurationSources.Add($"JsonFile:{normalizedPath}");
     }
 
@@ -245,10 +245,10 @@ public class AspNetCoreIntegrationSteps(ScenarioContext scenarioContext)
     public void WhenIConfigureAspNetCoreHostWithFlexConfigUsingMultipleSources(Table table)
     {
         _webApplicationBuilder.Should().NotBeNull("WebApplicationBuilder should be initialized");
-        
+
         // Store the configuration sources - we'll configure FlexConfig later after environment variables are set
         var configurationSources = new List<(string sourceType, string path, bool optional)>();
-        
+
         foreach (var row in table.Rows)
         {
             var sourceType = row["Source"];
@@ -256,24 +256,24 @@ public class AspNetCoreIntegrationSteps(ScenarioContext scenarioContext)
             var optional = bool.Parse(row["Optional"]);
             configurationSources.Add((sourceType, path, optional));
         }
-        
+
         // Store for later configuration building
         scenarioContext.Set(configurationSources, "ConfigurationSources");
     }
-    
+
     private void BuildFlexConfigWithStoredSources()
     {
         var configurationSources = scenarioContext.Get<List<(string sourceType, string path, bool optional)>>("ConfigurationSources");
-        
+
         // Build the configuration using TestConfigurationBuilder (which handles environment variables properly)
         var testBuilder = TestConfigurationBuilder.Create(scenarioContext);
-        
+
         // Apply environment variables first using the proper pattern
         if (_aspNetCoreEnvironmentVariables.Any())
         {
             testBuilder.WithEnvironmentVariables(_aspNetCoreEnvironmentVariables);
         }
-        
+
         // Add sources in order of precedence (first = lowest, last = highest)
         foreach (var (sourceType, path, optional) in configurationSources)
         {
@@ -307,10 +307,10 @@ public class AspNetCoreIntegrationSteps(ScenarioContext scenarioContext)
                     break;
             }
         }
-        
+
         // Build FlexConfig using TestConfigurationBuilder (this properly handles environment variables)
         var flexConfig = testBuilder.BuildFlexConfig();
-        
+
         // Register the built FlexConfig directly with Autofac
         _webApplicationBuilder!.Host.ConfigureContainer<ContainerBuilder>(containerBuilder =>
         {
@@ -327,7 +327,7 @@ public class AspNetCoreIntegrationSteps(ScenarioContext scenarioContext)
             var key = row["Key"];
             var value = row["Value"];
             _aspNetCoreEnvironmentVariables[key] = value;
-            
+
             // Set environment variables immediately AND use scenario context for proper cleanup
             if (scenarioContext != null)
             {
@@ -338,7 +338,7 @@ public class AspNetCoreIntegrationSteps(ScenarioContext scenarioContext)
                 Environment.SetEnvironmentVariable(key, value);
             }
         }
-        
+
         // Now that environment variables are set, configure FlexConfig if we have stored sources
         if (scenarioContext!.ContainsKey("ConfigurationSources"))
         {
@@ -350,7 +350,7 @@ public class AspNetCoreIntegrationSteps(ScenarioContext scenarioContext)
     public void WhenIRegisterTheTestServiceInAspNetCoreServices()
     {
         _webApplicationBuilder.Should().NotBeNull("WebApplicationBuilder should be initialized");
-        
+
         _webApplicationBuilder!.Services.AddTransient<TestServiceWithFlexConfig>();
     }
 
@@ -358,7 +358,7 @@ public class AspNetCoreIntegrationSteps(ScenarioContext scenarioContext)
     public void WhenIConfigureAspNetCoreHostToUseAutofacServiceProviderFactory()
     {
         _webApplicationBuilder.Should().NotBeNull("WebApplicationBuilder should be initialized");
-        
+
         // Note: Autofac is already configured in the Given step, so just mark it
         _useAutofacServiceProvider = true;
     }
@@ -367,13 +367,13 @@ public class AspNetCoreIntegrationSteps(ScenarioContext scenarioContext)
     public void WhenIConfigureAspNetCoreAutofacContainerWithFlexConfigAndTheFollowingConfiguration(Table table)
     {
         _webApplicationBuilder.Should().NotBeNull("WebApplicationBuilder should be initialized");
-        
+
         // Store configuration data
         foreach (var row in table.Rows)
         {
             _aspNetCoreConfigurationData[row["Key"]] = row["Value"];
         }
-        
+
         // Configure Autofac container with FlexConfig
         _webApplicationBuilder!.Host.ConfigureContainer<ContainerBuilder>(containerBuilder =>
         {
@@ -386,9 +386,9 @@ public class AspNetCoreIntegrationSteps(ScenarioContext scenarioContext)
     public void WhenIRegisterATestAutofacModuleInTheAspNetCoreContainer()
     {
         _webApplicationBuilder.Should().NotBeNull("WebApplicationBuilder should be initialized");
-        
+
         _testAutofacModule = new TestAutofacModuleForAspNetCore();
-        
+
         _webApplicationBuilder!.Host.ConfigureContainer<ContainerBuilder>(containerBuilder =>
         {
             containerBuilder.RegisterModule(_testAutofacModule);
@@ -399,7 +399,7 @@ public class AspNetCoreIntegrationSteps(ScenarioContext scenarioContext)
     public void WhenIConfigureAspNetCoreHostToValidateConfigurationOnStartup()
     {
         _validateConfigurationOnStartup = true;
-        
+
         // Add validation logic to services
         _webApplicationBuilder!.Services.AddOptions();
         _webApplicationBuilder.Services.Configure<Dictionary<string, string?>>(config =>
@@ -415,9 +415,9 @@ public class AspNetCoreIntegrationSteps(ScenarioContext scenarioContext)
     public void WhenIConfigureAspNetCoreHostWithFlexConfigAndInvalidJsonFile(string filePath)
     {
         _webApplicationBuilder.Should().NotBeNull("WebApplicationBuilder should be initialized");
-        
+
         var normalizedPath = filePath.Replace('/', Path.DirectorySeparatorChar);
-        
+
         // Configure FlexConfig with an invalid JSON file - this should cause an error
         _webApplicationBuilder!.Host.ConfigureContainer<ContainerBuilder>(containerBuilder =>
         {
@@ -431,16 +431,16 @@ public class AspNetCoreIntegrationSteps(ScenarioContext scenarioContext)
     {
         _aspNetCoreEnvironmentName = environmentName;
         Environment.SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", environmentName);
-        
+
         // Recreate the builder with the correct environment
         var args = Array.Empty<string>();
         _webApplicationBuilder = WebApplication.CreateBuilder(args);
-        
+
         // Configure Autofac as the service provider
         _webApplicationBuilder.Host.UseServiceProviderFactory(new AutofacServiceProviderFactory());
-        
+
         _webApplicationBuilder.Environment.EnvironmentName = environmentName;
-        
+
         // Set up basic logging for testing
         _webApplicationBuilder.Logging.ClearProviders();
         _webApplicationBuilder.Logging.AddConsole();
@@ -451,7 +451,7 @@ public class AspNetCoreIntegrationSteps(ScenarioContext scenarioContext)
     public void WhenIConfigureAspNetCoreHostWithFlexConfigUsingEnvironmentSpecificFiles(Table table)
     {
         _webApplicationBuilder.Should().NotBeNull("WebApplicationBuilder should be initialized");
-        
+
         _webApplicationBuilder!.Host.ConfigureContainer<ContainerBuilder>(containerBuilder =>
         {
             containerBuilder.AddFlexConfig(config =>
@@ -460,9 +460,9 @@ public class AspNetCoreIntegrationSteps(ScenarioContext scenarioContext)
                 {
                     var environment = row["Environment"];
                     var jsonFile = row["JsonFile"];
-                    
+
                     var normalizedPath = jsonFile.Replace('/', Path.DirectorySeparatorChar);
-                    
+
                     if (environment == "Default")
                     {
                         if (File.Exists(normalizedPath))
@@ -480,7 +480,7 @@ public class AspNetCoreIntegrationSteps(ScenarioContext scenarioContext)
                         }
                     }
                 }
-                
+
                 // Add in-memory data last (the highest precedence) if we have any
                 if (_aspNetCoreConfigurationData.Any())
                 {
@@ -494,7 +494,7 @@ public class AspNetCoreIntegrationSteps(ScenarioContext scenarioContext)
     public void WhenIRegisterTheTestControllerInAspNetCoreServices()
     {
         _webApplicationBuilder.Should().NotBeNull("WebApplicationBuilder should be initialized");
-        
+
         _webApplicationBuilder!.Services.AddControllers();
         _webApplicationBuilder.Services.AddTransient<TestControllerWithFlexConfig>();
     }
@@ -503,29 +503,30 @@ public class AspNetCoreIntegrationSteps(ScenarioContext scenarioContext)
     public void WhenIBuildTheAspNetCoreApplicationHost()
     {
         _webApplicationBuilder.Should().NotBeNull("WebApplicationBuilder should be initialized");
-        
+
         try
         {
             // Ensure we always have FlexConfig configured, even if no explicit configuration was provided
             var hasFlexConfigBeenConfigured = _aspNetCoreConfigurationData.Any() || _aspNetCoreConfigurationSources.Any();
-            
+
             if (!hasFlexConfigBeenConfigured)
             {
                 // Add minimal FlexConfig configuration if none provided
                 _webApplicationBuilder!.Host.ConfigureContainer<ContainerBuilder>(containerBuilder =>
                 {
                     containerBuilder.AddFlexConfig(config => config
-                        .AddSource(new MemoryConfigurationSource { 
-                            InitialData = new Dictionary<string, string?> { ["Test:Key"] = "Test:Value" } 
+                        .AddSource(new MemoryConfigurationSource
+                        {
+                            InitialData = new Dictionary<string, string?> { ["Test:Key"] = "Test:Value" }
                         }));
                 });
             }
-            
+
             _webApplication = _webApplicationBuilder!.Build();
             _host = _webApplication;
             _serviceProvider = _webApplication.Services;
             _aspNetCoreHostBuildSucceeded = true;
-            
+
             // Store in a scenario context
             scenarioContext.Set(_webApplication, "WebApplication");
             scenarioContext.Set(_serviceProvider, "ServiceProvider");
@@ -534,7 +535,7 @@ public class AspNetCoreIntegrationSteps(ScenarioContext scenarioContext)
         {
             _lastAspNetCoreException = ex;
             _aspNetCoreHostBuildSucceeded = false;
-            
+
             // Log the exception for debugging
             Console.WriteLine($"ASP.NET Core host build failed: {ex}");
         }
@@ -558,12 +559,12 @@ public class AspNetCoreIntegrationSteps(ScenarioContext scenarioContext)
             var errorMessage = _lastAspNetCoreException?.ToString() ?? "Unknown build failure";
             throw new InvalidOperationException($"ASP.NET Core host failed to build: {errorMessage}");
         }
-        
+
         _serviceProvider.Should().NotBeNull("Service provider should be available");
-        
+
         var flexConfig = _serviceProvider!.GetService<IFlexConfig>();
         flexConfig.Should().NotBeNull("FlexConfig should be registered in ASP.NET Core services");
-        
+
         _hostFlexConfiguration = flexConfig;
     }
 
@@ -575,12 +576,12 @@ public class AspNetCoreIntegrationSteps(ScenarioContext scenarioContext)
             var errorMessage = _lastAspNetCoreException?.ToString() ?? "Unknown build failure";
             throw new InvalidOperationException($"ASP.NET Core host failed to build: {errorMessage}");
         }
-        
+
         _serviceProvider.Should().NotBeNull("Service provider should be available");
-        
+
         var flexConfig = _serviceProvider!.GetRequiredService<IFlexConfig>();
         flexConfig.Should().NotBeNull("FlexConfig should be resolvable from ASP.NET Core services");
-        
+
         _hostFlexConfiguration = flexConfig;
     }
 
@@ -588,7 +589,7 @@ public class AspNetCoreIntegrationSteps(ScenarioContext scenarioContext)
     public void ThenFlexConfigShouldContainTheExpectedAspNetCoreConfigurationValues()
     {
         _hostFlexConfiguration.Should().NotBeNull("FlexConfig should be resolved");
-        
+
         foreach (var kvp in _aspNetCoreConfigurationData)
         {
             var actualValue = _hostFlexConfiguration![kvp.Key];
@@ -601,7 +602,7 @@ public class AspNetCoreIntegrationSteps(ScenarioContext scenarioContext)
     {
         _hostFlexConfiguration.Should().NotBeNull("FlexConfig should be resolved");
         _aspNetCoreConfigurationSources.Should().NotBeEmpty("Configuration sources should be registered");
-        
+
         // Verify configuration contains some values (exact verification depends on test data files)
         var allConfigEntries = _hostFlexConfiguration!.Configuration.AsEnumerable().ToList();
         allConfigEntries.Should().NotBeEmpty("Configuration should contain entries from sources");
@@ -612,25 +613,25 @@ public class AspNetCoreIntegrationSteps(ScenarioContext scenarioContext)
     {
         // First, let's test it if a simple FlexConfig setup can read environment variables
         Environment.SetEnvironmentVariable("TEST_SIMPLE_VAR", "TEST_VALUE");
-        
+
         var simpleBuilder = new FlexConfigurationBuilder();
         simpleBuilder.AddEnvironmentVariables();
         var simpleFlexConfig = simpleBuilder.Build();
-        
+
         var simpleTestValue = simpleFlexConfig["TEST_SIMPLE_VAR"];
         simpleTestValue.Should().Be("TEST_VALUE", "Simple FlexConfig should be able to read environment variables");
-        
+
         // Clean up
         Environment.SetEnvironmentVariable("TEST_SIMPLE_VAR", null);
-        
+
         // Ensure we have FlexConfig resolved first
         if (_hostFlexConfiguration == null)
         {
             ThenIShouldBeAbleToResolveFlexConfigFromAspNetCoreServices();
         }
-        
+
         _hostFlexConfiguration.Should().NotBeNull("FlexConfig should be resolved");
-        
+
         // Now test our ASP.NET Core FlexConfig
         foreach (var kvp in _aspNetCoreEnvironmentVariables)
         {
@@ -638,7 +639,7 @@ public class AspNetCoreIntegrationSteps(ScenarioContext scenarioContext)
             var envValue = Environment.GetEnvironmentVariable(kvp.Key);
             envValue.Should().NotBeNull($"Environment variable '{kvp.Key}' should be set in the environment");
             envValue.Should().Be(kvp.Value, $"Environment variable '{kvp.Key}' should have the correct value in environment");
-            
+
             // Test with standalone configuration to ensure environment variables work in general
             var testBuilder = new ConfigurationBuilder();
             testBuilder.AddEnvironmentVariables();
@@ -646,7 +647,7 @@ public class AspNetCoreIntegrationSteps(ScenarioContext scenarioContext)
             var testValue = testConfig[kvp.Key];
             testValue.Should().NotBeNull($"Environment variable '{kvp.Key}' should be readable by standalone configuration");
             testValue.Should().Be(kvp.Value, $"Standalone configuration should read environment variable '{kvp.Key}' correctly");
-            
+
             // Now test with our FlexConfig
             var actualValue = _hostFlexConfiguration![kvp.Key];
             actualValue.Should().Be(kvp.Value, $"Environment variable '{kvp.Key}' should override file values in FlexConfig. " +
@@ -658,7 +659,7 @@ public class AspNetCoreIntegrationSteps(ScenarioContext scenarioContext)
     public void ThenIShouldBeAbleToResolveTheTestServiceFromAspNetCoreServices()
     {
         _serviceProvider.Should().NotBeNull("Service provider should be available");
-        
+
         _resolvedTestService = _serviceProvider!.GetRequiredService<TestServiceWithFlexConfig>();
         _resolvedTestService.Should().NotBeNull("Test service should be resolvable");
     }
@@ -674,19 +675,19 @@ public class AspNetCoreIntegrationSteps(ScenarioContext scenarioContext)
     public void ThenTheTestServiceShouldBeAbleToAccessConfigurationValuesThroughFlexConfig()
     {
         _resolvedTestService.Should().NotBeNull("Test service should be resolved");
-        
+
         // Verify that the service can access configuration values
         if (_aspNetCoreConfigurationData.TryGetValue("Service:Name", out var value2))
         {
             _resolvedTestService!.ServiceName.Should().Be(value2);
         }
-        
+
         if (_aspNetCoreConfigurationData.TryGetValue("Service:Enabled", out var value1))
         {
             var expectedEnabled = bool.Parse(value1 ?? "false");
             _resolvedTestService!.IsEnabled.Should().Be(expectedEnabled);
         }
-        
+
         if (_aspNetCoreConfigurationData.TryGetValue("Service:MaxRetries", out var value))
         {
             var expectedRetries = int.Parse(value ?? "0");
@@ -699,7 +700,7 @@ public class AspNetCoreIntegrationSteps(ScenarioContext scenarioContext)
     {
         _useAutofacServiceProvider.Should().BeTrue("Autofac service provider factory should be configured");
         _serviceProvider.Should().NotBeNull("Service provider should be available");
-        
+
         // Verify that we can resolve Autofac-specific services
         var lifetimeScope = _serviceProvider!.GetService<ILifetimeScope>();
         lifetimeScope.Should().NotBeNull("ILifetimeScope should be available when using Autofac");
@@ -709,10 +710,10 @@ public class AspNetCoreIntegrationSteps(ScenarioContext scenarioContext)
     public void ThenIShouldBeAbleToResolveFlexConfigFromAutofacContainer()
     {
         _serviceProvider.Should().NotBeNull("Service provider should be available");
-        
+
         var lifetimeScope = _serviceProvider!.GetRequiredService<ILifetimeScope>();
         var flexConfig = lifetimeScope.Resolve<IFlexConfig>();
-        
+
         flexConfig.Should().NotBeNull("FlexConfig should be resolvable from Autofac container");
         _hostFlexConfiguration = flexConfig;
     }
@@ -722,10 +723,10 @@ public class AspNetCoreIntegrationSteps(ScenarioContext scenarioContext)
     {
         _testAutofacModule.Should().NotBeNull("Test Autofac module should be created");
         _serviceProvider.Should().NotBeNull("Service provider should be available");
-        
+
         var lifetimeScope = _serviceProvider!.GetRequiredService<ILifetimeScope>();
         var testService = lifetimeScope.Resolve<ITestAutofacService>();
-        
+
         testService.Should().NotBeNull("Test Autofac service should be resolvable");
         _testAutofacModule!.IsLoaded.Should().BeTrue("Autofac module should be loaded");
         _testAutofacModule.LoadedConfiguration.Should().NotBeNull("Module should have access to FlexConfig");
@@ -747,16 +748,16 @@ public class AspNetCoreIntegrationSteps(ScenarioContext scenarioContext)
         {
             ThenIShouldBeAbleToResolveFlexConfigFromAspNetCoreServices();
         }
-        
+
         _hostFlexConfiguration.Should().NotBeNull("FlexConfig should be resolved");
-        
+
         // Verify validation-related configuration values
         if (_aspNetCoreConfigurationData.ContainsKey("Validation:Required"))
         {
             var requiredValue = _hostFlexConfiguration!["Validation:Required"];
             requiredValue.Should().NotBeNullOrEmpty("Required validation value should be present");
         }
-        
+
         if (_aspNetCoreConfigurationData.ContainsKey("Validation:MaxLength"))
         {
             var maxLength = _hostFlexConfiguration!["Validation:MaxLength"];
@@ -783,13 +784,13 @@ public class AspNetCoreIntegrationSteps(ScenarioContext scenarioContext)
     public void ThenTheErrorShouldIndicateConfigurationLoadingFailure()
     {
         _lastAspNetCoreException.Should().NotBeNull("An exception should be thrown");
-        
+
         // Check if the exception or its inner exceptions relate to configuration loading
         var exceptionMessage = _lastAspNetCoreException!.ToString();
         var isConfigurationError = exceptionMessage.Contains("configuration", StringComparison.OrdinalIgnoreCase) ||
                                  exceptionMessage.Contains("JSON", StringComparison.OrdinalIgnoreCase) ||
                                  exceptionMessage.Contains("invalid", StringComparison.OrdinalIgnoreCase);
-        
+
         isConfigurationError.Should().BeTrue("Exception should indicate configuration loading failure");
     }
 
@@ -797,7 +798,7 @@ public class AspNetCoreIntegrationSteps(ScenarioContext scenarioContext)
     public void ThenTheErrorMessageShouldBeDescriptiveForAspNetCoreContext()
     {
         _lastAspNetCoreException.Should().NotBeNull("An exception should be thrown");
-        
+
         var exceptionMessage = _lastAspNetCoreException!.Message;
         exceptionMessage.Should().NotBeNullOrEmpty("Exception should have a descriptive message");
         exceptionMessage.Length.Should().BeGreaterThan(10, "Exception message should be reasonably descriptive");
@@ -811,10 +812,10 @@ public class AspNetCoreIntegrationSteps(ScenarioContext scenarioContext)
         {
             ThenIShouldBeAbleToResolveFlexConfigFromAspNetCoreServices();
         }
-        
+
         _hostFlexConfiguration.Should().NotBeNull("FlexConfig should be resolved");
         _aspNetCoreEnvironmentName.Should().Be("Development", "Environment should be set to Development");
-        
+
         // Verify that configuration is loaded (specific verification depends on test data files)
         var allConfigEntries = _hostFlexConfiguration!.Configuration.AsEnumerable().ToList();
         allConfigEntries.Should().NotBeEmpty("Configuration should contain entries");
@@ -824,7 +825,7 @@ public class AspNetCoreIntegrationSteps(ScenarioContext scenarioContext)
     public void ThenTheDevelopmentValuesShouldOverrideBaseConfigurationValues()
     {
         _hostFlexConfiguration.Should().NotBeNull("FlexConfig should be resolved");
-        
+
         // This verification depends on the specific content of the test configuration files
         // For now, verify that configuration loading succeeded
         var allConfigEntries = _hostFlexConfiguration!.Configuration.AsEnumerable().ToList();
@@ -835,7 +836,7 @@ public class AspNetCoreIntegrationSteps(ScenarioContext scenarioContext)
     public void ThenTheAspNetCoreEnvironmentShouldBeCorrectlyConfigured()
     {
         _webApplication.Should().NotBeNull("Web application should be created");
-        _webApplication!.Environment.EnvironmentName.Should().Be(_aspNetCoreEnvironmentName, 
+        _webApplication!.Environment.EnvironmentName.Should().Be(_aspNetCoreEnvironmentName,
             "ASP.NET Core environment should match configured environment");
     }
 
@@ -843,7 +844,7 @@ public class AspNetCoreIntegrationSteps(ScenarioContext scenarioContext)
     public void ThenIShouldBeAbleToResolveTheTestControllerFromAspNetCoreServices()
     {
         _serviceProvider.Should().NotBeNull("Service provider should be available");
-        
+
         _resolvedTestController = _serviceProvider!.GetRequiredService<TestControllerWithFlexConfig>();
         _resolvedTestController.Should().NotBeNull("Test controller should be resolvable");
     }
@@ -852,11 +853,11 @@ public class AspNetCoreIntegrationSteps(ScenarioContext scenarioContext)
     public void ThenTheTestControllerShouldAccessConfigurationValuesDynamically()
     {
         _resolvedTestController.Should().NotBeNull("Test controller should be resolved");
-        
+
         // Simulate a call to the controller's configuration action
         var result = _resolvedTestController!.GetConfiguration();
         result.Should().NotBeNull("Controller action should return a result");
-        
+
         // Verify that the controller can access specific configuration values
         if (_aspNetCoreConfigurationData.ContainsKey("Api:BaseUrl"))
         {
@@ -869,7 +870,7 @@ public class AspNetCoreIntegrationSteps(ScenarioContext scenarioContext)
     public void ThenTheControllerShouldDemonstrateFlexConfigDynamicAccessPatterns()
     {
         _resolvedTestController.Should().NotBeNull("Test controller should be resolved");
-        
+
         // The TestControllerWithFlexConfig class demonstrates dynamic access patterns
         // by using both the indexer pattern and dynamic member access
         // This step verifies that the controller was created and can be used
@@ -907,10 +908,10 @@ public class AspNetCoreIntegrationSteps(ScenarioContext scenarioContext)
             // Dispose of ASP.NET Core resources
             _webApplication?.DisposeAsync().GetAwaiter().GetResult();
             _host?.Dispose();
-            
+
             // Clean up environment variables
             CleanupEnvironmentVariables();
-            
+
             // Clear environment variable for the next test
             Environment.SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", null);
         }

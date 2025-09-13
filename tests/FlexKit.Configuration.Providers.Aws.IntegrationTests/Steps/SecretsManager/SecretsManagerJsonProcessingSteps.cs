@@ -41,7 +41,7 @@ public class SecretsManagerJsonProcessingSteps(ScenarioContext scenarioContext)
         var fullPath = Path.Combine("TestData", testDataPath);
         _secretsJsonBuilder!.AddSecretsManagerFromTestData(fullPath, optional: false, jsonProcessor: true);
         _jsonProcessingEnabled = true;
-        
+
         scenarioContext.Set(_secretsJsonBuilder, "SecretsJsonBuilder");
     }
 
@@ -53,7 +53,7 @@ public class SecretsManagerJsonProcessingSteps(ScenarioContext scenarioContext)
         var fullPath = Path.Combine("TestData", testDataPath);
         _secretsJsonBuilder!.AddSecretsManagerFromTestData(fullPath, optional: true, jsonProcessor: true);
         _jsonProcessingEnabled = true;
-        
+
         scenarioContext.Set(_secretsJsonBuilder, "SecretsJsonBuilder");
     }
 
@@ -65,7 +65,7 @@ public class SecretsManagerJsonProcessingSteps(ScenarioContext scenarioContext)
         var fullPath = Path.Combine("TestData", testDataPath);
         _secretsJsonBuilder!.AddSecretsManagerFromTestData(fullPath, optional: false, jsonProcessor: true);
         _jsonProcessingEnabled = true;
-        
+
         scenarioContext.Set(_secretsJsonBuilder, "SecretsJsonBuilder");
         scenarioContext.Set("mixed_types_processing", "MixedTypesProcessing");
     }
@@ -78,7 +78,7 @@ public class SecretsManagerJsonProcessingSteps(ScenarioContext scenarioContext)
         var fullPath = Path.Combine("TestData", testDataPath);
         _secretsJsonBuilder!.AddSecretsManagerFromTestData(fullPath, optional: false, jsonProcessor: true);
         _jsonProcessingEnabled = true;
-        
+
         scenarioContext.Set(_secretsJsonBuilder, "SecretsJsonBuilder");
         scenarioContext.Set("deep_nesting_processing", "DeepNestingProcessing");
     }
@@ -91,7 +91,7 @@ public class SecretsManagerJsonProcessingSteps(ScenarioContext scenarioContext)
         var fullPath = Path.Combine("TestData", testDataPath);
         _secretsJsonBuilder!.AddSecretsManagerFromTestData(fullPath, optional: true, jsonProcessor: true);
         _jsonProcessingEnabled = true;
-        
+
         scenarioContext.Set(_secretsJsonBuilder, "SecretsJsonBuilder");
         scenarioContext.Set("error_tolerance_enabled", "ErrorToleranceEnabled");
     }
@@ -162,7 +162,7 @@ public class SecretsManagerJsonProcessingSteps(ScenarioContext scenarioContext)
                     _secretsJsonValidationResults.Add($"Error accessing '{key}': {ex.Message}");
                 }
             }
-            
+
             scenarioContext.Set(_secretsJsonValidationResults, "SecretsJsonValidationResults");
         }
         catch (Exception ex)
@@ -199,7 +199,7 @@ public class SecretsManagerJsonProcessingSteps(ScenarioContext scenarioContext)
                     _secretsJsonValidationResults.Add($"Error in {description} for '{pattern}': {ex.Message}");
                 }
             }
-            
+
             scenarioContext.Set(_secretsJsonValidationResults, "SecretsJsonValidationResults");
         }
         catch (Exception ex)
@@ -237,7 +237,7 @@ public class SecretsManagerJsonProcessingSteps(ScenarioContext scenarioContext)
             .ToList();
 
         hierarchicalKeys.Should().NotBeEmpty("JSON secrets should be processed into hierarchical keys");
-        hierarchicalKeys.Should().Contain(key => key.Contains("infrastructure-module") && 
+        hierarchicalKeys.Should().Contain(key => key.Contains("infrastructure-module") &&
                                                  (key.Contains("config") || key.Contains("credentials") || key.Contains("api-keys")),
             "JSON secrets should contain infrastructure module hierarchical structure");
     }
@@ -353,7 +353,7 @@ public class SecretsManagerJsonProcessingSteps(ScenarioContext scenarioContext)
 
         // Test with the first available key
         var testKey = availableKeys.First().Key;
-    
+
         var directValue = _secretsJsonConfiguration![testKey];
         directValue.Should().NotBeNull($"Direct access should work for key '{testKey}'");
 
@@ -363,7 +363,7 @@ public class SecretsManagerJsonProcessingSteps(ScenarioContext scenarioContext)
         {
             var sectionKey = string.Join(":", keyParts.Take(keyParts.Length - 1));
             var propertyKey = keyParts.Last();
-        
+
             var sectionValue = _secretsJsonConfiguration!.GetSection(sectionKey)[propertyKey];
             sectionValue.Should().Be(directValue, "Section-based access should return the same value as direct access");
         }
@@ -410,7 +410,7 @@ public class SecretsManagerJsonProcessingSteps(ScenarioContext scenarioContext)
         // Verify that configuration contains some data
         var allKeys = _secretsJsonConfiguration!.AsEnumerable().ToList();
         allKeys.Should().NotBeEmpty("Configuration should contain some data");
-        
+
         // Verify at least some keys have values
         var keysWithValues = allKeys.Where(kvp => !string.IsNullOrEmpty(kvp.Value)).ToList();
         keysWithValues.Should().NotBeEmpty("Configuration should contain keys with values");

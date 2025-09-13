@@ -37,13 +37,20 @@ namespace FlexKit.Logging.Log4Net.Core;
 /// <param name="repository">Log4Net repository.</param>
 [UsedImplicitly]
 [SuppressMessage("Major Code Smell", "S2629:Logging templates should be constant")]
-public sealed class Log4NetLogWriter(
+internal sealed class Log4NetLogWriter(
     LoggingConfig loggingConfig,
     IMessageFormatterFactory formatterFactory,
     ILoggerRepository repository) : ILogEntryProcessor
 {
+    /// <summary>
+    /// Factory instance responsible for creating message formatters used for processing log entry contexts.
+    /// </summary>
     private readonly IMessageFormatterFactory _formatterFactory =
         formatterFactory ?? throw new ArgumentNullException(nameof(formatterFactory));
+
+    /// <summary>
+    /// Cache to store and retrieve loggers by type name, ensuring efficient and reusable access to logger instances.
+    /// </summary>
     private readonly ConcurrentDictionary<string, ILogger> _loggerCache = new();
 
     /// <inheritdoc />

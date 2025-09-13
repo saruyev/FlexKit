@@ -47,7 +47,7 @@ public class ParameterStoreErrorHandlingSteps(ScenarioContext scenarioContext)
         _parametersErrorBuilder.Should().NotBeNull("Parameters error builder should be established");
 
         var fullPath = Path.Combine("TestData", testDataPath);
-        
+
         // Load test data and prepare configuration with error simulation
         var jsonContent = File.ReadAllText(fullPath);
         using var document = JsonDocument.Parse(jsonContent);
@@ -65,16 +65,16 @@ public class ParameterStoreErrorHandlingSteps(ScenarioContext scenarioContext)
                     var parameterElement = scenario.GetProperty("parameter");
                     var paramName = parameterElement.GetProperty("name").GetString() ?? "";
                     var paramValue = parameterElement.GetProperty("value").GetString() ?? "";
-                    
+
                     // Store the invalid JSON value for later processing
                     _invalidJsonValue = paramValue;
-                    
+
                     // Add the invalid JSON parameter to test data (this will be processed later)
                     var configData = new Dictionary<string, string?>
                     {
                         [ConvertParameterNameToConfigKey(paramName)] = paramValue
                     };
-                    
+
                     _parametersErrorBuilder!.AddInMemoryCollection(configData);
                     break;
                 }
@@ -88,7 +88,7 @@ public class ParameterStoreErrorHandlingSteps(ScenarioContext scenarioContext)
             ["infrastructure-module:database:port"] = "5432"
         };
         _parametersErrorBuilder!.AddInMemoryCollection(validConfigData);
-        
+
         scenarioContext.Set(_parametersErrorBuilder, "ParametersErrorBuilder");
     }
 
@@ -98,7 +98,7 @@ public class ParameterStoreErrorHandlingSteps(ScenarioContext scenarioContext)
         _parametersErrorBuilder.Should().NotBeNull("Parameters error builder should be established");
 
         var fullPath = Path.Combine("TestData", testDataPath);
-        
+
         // Load error scenarios to understand what should be restricted
         var jsonContent = File.ReadAllText(fullPath);
         using var document = JsonDocument.Parse(jsonContent);
@@ -114,7 +114,7 @@ public class ParameterStoreErrorHandlingSteps(ScenarioContext scenarioContext)
                 {
                     var parameterElement = scenario.GetProperty("parameter");
                     var paramName = parameterElement.GetProperty("name").GetString() ?? "";
-                    
+
                     // Mark this parameter as restricted (will be handled in processing)
                     scenarioContext.Set(paramName, "RestrictedParameter");
                     break;
@@ -129,7 +129,7 @@ public class ParameterStoreErrorHandlingSteps(ScenarioContext scenarioContext)
             ["infrastructure-module:fallback:mode"] = "graceful"
         };
         _parametersErrorBuilder!.AddInMemoryCollection(fallbackData);
-        
+
         scenarioContext.Set(_parametersErrorBuilder, "ParametersErrorBuilder");
     }
 
@@ -139,7 +139,7 @@ public class ParameterStoreErrorHandlingSteps(ScenarioContext scenarioContext)
         _parametersErrorBuilder.Should().NotBeNull("Parameters error builder should be established");
 
         var fullPath = Path.Combine("TestData", testDataPath);
-        
+
         // Load error scenarios to understand what parameter should be missing
         var jsonContent = File.ReadAllText(fullPath);
         using var document = JsonDocument.Parse(jsonContent);
@@ -167,7 +167,7 @@ public class ParameterStoreErrorHandlingSteps(ScenarioContext scenarioContext)
             ["infrastructure-module:database:port"] = "5432"
         };
         _parametersErrorBuilder!.AddInMemoryCollection(configData);
-        
+
         scenarioContext.Set(_parametersErrorBuilder, "ParametersErrorBuilder");
     }
 
@@ -175,7 +175,7 @@ public class ParameterStoreErrorHandlingSteps(ScenarioContext scenarioContext)
     public void GivenIHaveParametersErrorHandlerConfigurationWithMissingOptionalParameterFrom(string testDataPath)
     {
         _parametersErrorBuilder.Should().NotBeNull("Parameters error builder should be established");
-        
+
         // Similar to missing required, but we'll handle it as optional
         var configData = new Dictionary<string, string?>
         {
@@ -183,7 +183,7 @@ public class ParameterStoreErrorHandlingSteps(ScenarioContext scenarioContext)
             ["infrastructure-module:database:port"] = "5432"
         };
         _parametersErrorBuilder!.AddInMemoryCollection(configData);
-        
+
         scenarioContext.Set(_parametersErrorBuilder, "ParametersErrorBuilder");
     }
 
@@ -193,7 +193,7 @@ public class ParameterStoreErrorHandlingSteps(ScenarioContext scenarioContext)
         _parametersErrorBuilder.Should().NotBeNull("Parameters error builder should be established");
 
         var fullPath = Path.Combine("TestData", testDataPath);
-        
+
         // Load error scenarios to get the large parameter
         var jsonContent = File.ReadAllText(fullPath);
         using var document = JsonDocument.Parse(jsonContent);
@@ -210,7 +210,7 @@ public class ParameterStoreErrorHandlingSteps(ScenarioContext scenarioContext)
                     var parameterElement = scenario.GetProperty("parameter");
                     var paramName = parameterElement.GetProperty("name").GetString() ?? "";
                     var paramValue = parameterElement.GetProperty("value").GetString() ?? "";
-                    
+
                     // Check if this parameter should be treated as oversized
                     if (parameterElement.TryGetProperty("simulated_size", out var sizeElement))
                     {
@@ -221,7 +221,7 @@ public class ParameterStoreErrorHandlingSteps(ScenarioContext scenarioContext)
                             scenarioContext.Set(paramName, "OversizedParameter");
                         }
                     }
-                    
+
                     var configData = new Dictionary<string, string?>
                     {
                         [ConvertParameterNameToConfigKey(paramName)] = paramValue
@@ -239,7 +239,7 @@ public class ParameterStoreErrorHandlingSteps(ScenarioContext scenarioContext)
             ["infrastructure-module:database:port"] = "5432"
         };
         _parametersErrorBuilder!.AddInMemoryCollection(normalConfigData);
-        
+
         scenarioContext.Set(_parametersErrorBuilder, "ParametersErrorBuilder");
     }
 
@@ -250,7 +250,7 @@ public class ParameterStoreErrorHandlingSteps(ScenarioContext scenarioContext)
 
         var fullPath = Path.Combine("TestData", testDataPath);
         _parametersErrorBuilder!.AddParameterStoreFromTestData(fullPath, optional: false, jsonProcessor: false);
-        
+
         scenarioContext.Set(_parametersErrorBuilder, "ParametersErrorBuilder");
     }
 
@@ -258,7 +258,7 @@ public class ParameterStoreErrorHandlingSteps(ScenarioContext scenarioContext)
     public void GivenIHaveParametersErrorHandlerConfigurationWithMixedErrorsFrom(string testDataPath)
     {
         _parametersErrorBuilder.Should().NotBeNull("Parameters error builder should be established");
-        
+
         // Simulate a configuration with both valid and problematic parameters
         var configData = new Dictionary<string, string?>
         {
@@ -268,7 +268,7 @@ public class ParameterStoreErrorHandlingSteps(ScenarioContext scenarioContext)
             ["infrastructure-module:valid:setting"] = "value123"
         };
         _parametersErrorBuilder!.AddInMemoryCollection(configData);
-        
+
         scenarioContext.Set(_parametersErrorBuilder, "ParametersErrorBuilder");
     }
 
@@ -308,7 +308,7 @@ public class ParameterStoreErrorHandlingSteps(ScenarioContext scenarioContext)
                 .AddInMemoryCollection(validConfigData)
                 .Build();
             _parametersErrorFlexConfiguration = new FlexConfiguration(_parametersErrorConfiguration);
-            
+
             scenarioContext.Set(_parametersErrorConfiguration, "ParametersErrorConfiguration");
             scenarioContext.Set(_parametersErrorFlexConfiguration, "ParametersErrorFlexConfiguration");
         }
@@ -316,7 +316,7 @@ public class ParameterStoreErrorHandlingSteps(ScenarioContext scenarioContext)
         {
             _lastParametersErrorException = ex;
             _capturedErrorExceptions.Add(ex);
-            
+
             // Provide minimal fallback configuration even if there's an error
             var fallbackData = new Dictionary<string, string?>
             {
@@ -342,7 +342,7 @@ public class ParameterStoreErrorHandlingSteps(ScenarioContext scenarioContext)
                 var accessDeniedException = new UnauthorizedAccessException("Access denied to Parameter Store path");
                 _capturedErrorExceptions.Add(accessDeniedException);
                 _errorLogMessages.Add($"Access denied: {accessDeniedException.Message}");
-                
+
                 // Provide fallback configuration
                 var fallbackData = new Dictionary<string, string?>
                 {
@@ -357,7 +357,7 @@ public class ParameterStoreErrorHandlingSteps(ScenarioContext scenarioContext)
             {
                 _parametersErrorConfiguration = _parametersErrorBuilder!.Build();
             }
-            
+
             scenarioContext.Set(_parametersErrorConfiguration, "ParametersErrorConfiguration");
         }
         catch (Exception ex)
@@ -381,7 +381,7 @@ public class ParameterStoreErrorHandlingSteps(ScenarioContext scenarioContext)
                     $"Required parameter '{missingParam}' was not found in Parameter Store");
                 throw requiredParameterException;
             }
-            
+
             _parametersErrorConfiguration = _parametersErrorBuilder!.Build();
             scenarioContext.Set(_parametersErrorConfiguration, "ParametersErrorConfiguration");
         }
@@ -402,7 +402,7 @@ public class ParameterStoreErrorHandlingSteps(ScenarioContext scenarioContext)
             // For optional sources, missing parameters should not cause failures
             _parametersErrorConfiguration = _parametersErrorBuilder!.Build();
             _errorLogMessages.Add("Warning: Optional parameter path not found, continuing with available configuration");
-            
+
             scenarioContext.Set(_parametersErrorConfiguration, "ParametersErrorConfiguration");
         }
         catch (Exception ex)
@@ -424,7 +424,7 @@ public class ParameterStoreErrorHandlingSteps(ScenarioContext scenarioContext)
                 var sizeLimitException = new ArgumentException("Parameter value exceeds maximum allowed size");
                 _capturedErrorExceptions.Add(sizeLimitException);
                 _errorLogMessages.Add("Parameter size limit exceeded, truncating or rejecting large parameter");
-                
+
                 // Continue with other parameters, excluding the oversized one
                 var configData = new Dictionary<string, string?>
                 {
@@ -439,7 +439,7 @@ public class ParameterStoreErrorHandlingSteps(ScenarioContext scenarioContext)
             {
                 _parametersErrorConfiguration = _parametersErrorBuilder!.Build();
             }
-            
+
             scenarioContext.Set(_parametersErrorConfiguration, "ParametersErrorConfiguration");
         }
         catch (Exception ex)
@@ -460,7 +460,7 @@ public class ParameterStoreErrorHandlingSteps(ScenarioContext scenarioContext)
             var networkException = new TimeoutException("Network timeout while connecting to Parameter Store");
             _capturedErrorExceptions.Add(networkException);
             _errorLogMessages.Add("Network failure detected, attempting retry with cached values");
-            
+
             // Simulate using cached or default values
             var cachedData = new Dictionary<string, string?>
             {
@@ -471,7 +471,7 @@ public class ParameterStoreErrorHandlingSteps(ScenarioContext scenarioContext)
             _parametersErrorConfiguration = new ConfigurationBuilder()
                 .AddInMemoryCollection(cachedData)
                 .Build();
-            
+
             scenarioContext.Set(_parametersErrorConfiguration, "ParametersErrorConfiguration");
         }
         catch (Exception ex)
@@ -490,7 +490,7 @@ public class ParameterStoreErrorHandlingSteps(ScenarioContext scenarioContext)
         {
             _parametersErrorConfiguration = _parametersErrorBuilder!.Build();
             _parametersErrorFlexConfiguration = _parametersErrorBuilder.BuildFlexConfig();
-            
+
             scenarioContext.Set(_parametersErrorConfiguration, "ParametersErrorConfiguration");
             scenarioContext.Set(_parametersErrorFlexConfiguration, "ParametersErrorFlexConfiguration");
         }
@@ -498,7 +498,7 @@ public class ParameterStoreErrorHandlingSteps(ScenarioContext scenarioContext)
         {
             _lastParametersErrorException = ex;
             _capturedErrorExceptions.Add(ex);
-            
+
             // Create minimal FlexConfig even with errors
             var minimalData = new Dictionary<string, string?>
             {
@@ -521,7 +521,7 @@ public class ParameterStoreErrorHandlingSteps(ScenarioContext scenarioContext)
         {
             // Test various error recovery scenarios
             dynamic config = _parametersErrorFlexConfiguration!;
-            
+
             // Test graceful handling of missing keys - this should not throw
             try
             {
@@ -536,7 +536,7 @@ public class ParameterStoreErrorHandlingSteps(ScenarioContext scenarioContext)
             {
                 _parametersErrorValidationResults.Add($"Missing key handled: default-value (exception caught: {ex.GetType().Name})");
             }
-            
+
             // Test null coalescing for failed parameters
             try
             {
@@ -551,7 +551,7 @@ public class ParameterStoreErrorHandlingSteps(ScenarioContext scenarioContext)
             {
                 _parametersErrorValidationResults.Add($"Fallback value: 30 (exception caught: {ex.GetType().Name})");
             }
-            
+
             // Test error recovery flag
             try
             {
@@ -579,7 +579,7 @@ public class ParameterStoreErrorHandlingSteps(ScenarioContext scenarioContext)
         {
             _capturedErrorExceptions.Add(ex);
             _errorLogMessages.Add($"Error during recovery verification: {ex.Message}");
-            
+
             // Add fallback validation results even if there's an error
             _parametersErrorValidationResults.Add("Missing key handled: default-value (recovery mode)");
             _parametersErrorValidationResults.Add("Fallback value: 30 (recovery mode)");
@@ -594,7 +594,7 @@ public class ParameterStoreErrorHandlingSteps(ScenarioContext scenarioContext)
     public void ThenTheParametersErrorHandlerShouldCaptureJsonParsingErrors()
     {
         _capturedErrorExceptions.Should().NotBeEmpty("Should have captured at least one exception");
-        
+
         var jsonErrors = _capturedErrorExceptions.OfType<JsonException>().ToList();
         if (jsonErrors.Count == 0)
         {
@@ -612,11 +612,11 @@ public class ParameterStoreErrorHandlingSteps(ScenarioContext scenarioContext)
     public void ThenTheParametersErrorHandlerShouldContinueLoadingValidParameters()
     {
         _parametersErrorConfiguration.Should().NotBeNull("Configuration should be available despite errors");
-        
+
         // Verify that valid parameters were still loaded
         var hasValidConfig = _parametersErrorConfiguration!["infrastructure-module:database:host"] != null ||
                            _parametersErrorConfiguration["infrastructure-module:database:port"] != null;
-        
+
         hasValidConfig.Should().BeTrue("Should have loaded valid parameters despite JSON errors");
     }
 
@@ -640,12 +640,12 @@ public class ParameterStoreErrorHandlingSteps(ScenarioContext scenarioContext)
     public void ThenTheParametersErrorHandlerShouldLogAuthorizationFailureDetails()
     {
         _errorLogMessages.Should().NotBeEmpty("Should have logged error messages");
-        
-        var authorizationLogs = _errorLogMessages.Where(msg => 
-            msg.Contains("Access denied") || 
-            msg.Contains("authorization") || 
+
+        var authorizationLogs = _errorLogMessages.Where(msg =>
+            msg.Contains("Access denied") ||
+            msg.Contains("authorization") ||
             msg.Contains("Access denied")).ToList();
-            
+
         authorizationLogs.Should().NotBeEmpty("Should have logged authorization failure details");
     }
 
@@ -653,7 +653,7 @@ public class ParameterStoreErrorHandlingSteps(ScenarioContext scenarioContext)
     public void ThenTheParametersErrorHandlerShouldProvideFallbackConfigurationValues()
     {
         _parametersErrorConfiguration.Should().NotBeNull("Configuration should be available");
-        
+
         var fallbackEnabled = _parametersErrorConfiguration!["infrastructure-module:fallback:enabled"];
         fallbackEnabled.Should().NotBeNull("Should have fallback configuration");
         fallbackEnabled.Should().Be("true", "Fallback should be enabled");
@@ -677,7 +677,7 @@ public class ParameterStoreErrorHandlingSteps(ScenarioContext scenarioContext)
     public void ThenTheParametersErrorHandlerExceptionShouldContainParameterNameDetails()
     {
         _lastParametersErrorException.Should().NotBeNull("Should have captured an exception");
-        
+
         if (scenarioContext.TryGetValue("MissingRequiredParameter", out string? missingParam))
         {
             _lastParametersErrorException!.Message.Should().Contain(missingParam, "Exception should contain the missing parameter name");
@@ -695,11 +695,11 @@ public class ParameterStoreErrorHandlingSteps(ScenarioContext scenarioContext)
     public void ThenTheParametersErrorHandlerShouldSkipMissingParameterPaths()
     {
         _errorLogMessages.Should().NotBeEmpty("Should have logged warnings about missing parameters");
-        
-        var missingPathWarnings = _errorLogMessages.Where(msg => 
-            msg.Contains("Warning") && 
+
+        var missingPathWarnings = _errorLogMessages.Where(msg =>
+            msg.Contains("Warning") &&
             msg.Contains("not found")).ToList();
-            
+
         missingPathWarnings.Should().NotBeEmpty("Should have logged warnings about missing parameter paths");
     }
 
@@ -707,11 +707,11 @@ public class ParameterStoreErrorHandlingSteps(ScenarioContext scenarioContext)
     public void ThenTheParametersErrorHandlerShouldLogMissingParameterWarnings()
     {
         _errorLogMessages.Should().NotBeEmpty("Should have logged warning messages");
-        
-        var warningLogs = _errorLogMessages.Where(msg => 
-            msg.Contains("Warning") || 
+
+        var warningLogs = _errorLogMessages.Where(msg =>
+            msg.Contains("Warning") ||
             msg.Contains("Optional parameter")).ToList();
-            
+
         warningLogs.Should().NotBeEmpty("Should have logged missing parameter warnings");
     }
 
@@ -734,12 +734,12 @@ public class ParameterStoreErrorHandlingSteps(ScenarioContext scenarioContext)
     public void ThenTheParametersErrorHandlerShouldTruncateOrRejectLargeParameters()
     {
         _errorLogMessages.Should().NotBeEmpty("Should have logged size handling messages");
-        
-        var sizeLogs = _errorLogMessages.Where(msg => 
-            msg.Contains("truncating") || 
-            msg.Contains("rejecting") || 
+
+        var sizeLogs = _errorLogMessages.Where(msg =>
+            msg.Contains("truncating") ||
+            msg.Contains("rejecting") ||
             msg.Contains("size limit")).ToList();
-            
+
         sizeLogs.Should().NotBeEmpty("Should have logged parameter size handling");
     }
 
@@ -747,11 +747,11 @@ public class ParameterStoreErrorHandlingSteps(ScenarioContext scenarioContext)
     public void ThenTheParametersErrorHandlerShouldContinueProcessingRemainingParameters()
     {
         _parametersErrorConfiguration.Should().NotBeNull("Configuration should be available");
-        
+
         // Verify that normal-sized parameters were still processed
         var hasValidParameters = _parametersErrorConfiguration!["infrastructure-module:database:host"] != null ||
                                _parametersErrorConfiguration["infrastructure-module:database:port"] != null;
-        
+
         hasValidParameters.Should().BeTrue("Should have processed remaining valid parameters");
     }
 
@@ -761,8 +761,8 @@ public class ParameterStoreErrorHandlingSteps(ScenarioContext scenarioContext)
         var timeoutErrors = _capturedErrorExceptions.OfType<TimeoutException>().ToList();
         if (timeoutErrors.Count == 0)
         {
-            var hasNetworkLogs = _errorLogMessages.Any(msg => 
-                msg.Contains("Network failure") || 
+            var hasNetworkLogs = _errorLogMessages.Any(msg =>
+                msg.Contains("Network failure") ||
                 msg.Contains("timeout"));
             hasNetworkLogs.Should().BeTrue("Should have captured network timeout errors");
         }
@@ -776,11 +776,11 @@ public class ParameterStoreErrorHandlingSteps(ScenarioContext scenarioContext)
     public void ThenTheParametersErrorHandlerShouldAttemptRetryOperations()
     {
         _errorLogMessages.Should().NotBeEmpty("Should have logged retry attempts");
-        
-        var retryLogs = _errorLogMessages.Where(msg => 
-            msg.Contains("retry") || 
+
+        var retryLogs = _errorLogMessages.Where(msg =>
+            msg.Contains("retry") ||
             msg.Contains("attempting")).ToList();
-            
+
         retryLogs.Should().NotBeEmpty("Should have logged retry operations");
     }
 
@@ -788,7 +788,7 @@ public class ParameterStoreErrorHandlingSteps(ScenarioContext scenarioContext)
     public void ThenTheParametersErrorHandlerShouldProvideCachedOrDefaultValues()
     {
         _parametersErrorConfiguration.Should().NotBeNull("Configuration should be available");
-        
+
         var cacheSource = _parametersErrorConfiguration!["infrastructure-module:cache:source"];
         cacheSource.Should().NotBeNull("Should have cache source indicator");
         cacheSource.Should().Be("fallback", "Should indicate fallback/cached values are being used");
@@ -798,10 +798,10 @@ public class ParameterStoreErrorHandlingSteps(ScenarioContext scenarioContext)
     public void ThenTheParametersErrorHandlerFlexConfigShouldHandleMissingKeyAccessGracefully()
     {
         _parametersErrorFlexConfiguration.Should().NotBeNull("FlexConfig should be available");
-        
-        var recoveryResults = _parametersErrorValidationResults.Where(result => 
+
+        var recoveryResults = _parametersErrorValidationResults.Where(result =>
             result.Contains("Missing key handled")).ToList();
-            
+
         recoveryResults.Should().NotBeEmpty("Should have handled missing key access gracefully");
     }
 
@@ -809,11 +809,11 @@ public class ParameterStoreErrorHandlingSteps(ScenarioContext scenarioContext)
     public void ThenTheParametersErrorHandlerFlexConfigShouldProvideDefaultValuesForFailedParameters()
     {
         _parametersErrorValidationResults.Should().NotBeEmpty("Should have validation results");
-        
-        var defaultValueResults = _parametersErrorValidationResults.Where(result => 
-            result.Contains("Fallback value") || 
+
+        var defaultValueResults = _parametersErrorValidationResults.Where(result =>
+            result.Contains("Fallback value") ||
             result.Contains("default-value")).ToList();
-            
+
         defaultValueResults.Should().NotBeEmpty("Should have provided default values for failed parameters");
     }
 
@@ -821,7 +821,7 @@ public class ParameterStoreErrorHandlingSteps(ScenarioContext scenarioContext)
     public void ThenTheParametersErrorHandlerConfigurationShouldContainWithValue(string key, string expectedValue)
     {
         _parametersErrorConfiguration.Should().NotBeNull("Configuration should be loaded");
-        
+
         var actualValue = _parametersErrorConfiguration![key];
         actualValue.Should().NotBeNull($"Configuration should contain key '{key}'");
         actualValue.Should().Be(expectedValue, $"Key '{key}' should have expected value");

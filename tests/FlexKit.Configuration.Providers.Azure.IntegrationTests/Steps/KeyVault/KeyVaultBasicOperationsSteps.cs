@@ -48,7 +48,7 @@ public class KeyVaultBasicOperationsSteps(ScenarioContext scenarioContext)
         var fullPath = Path.Combine("TestData", testDataPath);
         var jsonContent = await File.ReadAllTextAsync(fullPath);
         _testData = JsonConvert.DeserializeObject<Dictionary<string, object>>(jsonContent)!;
-        
+
         // Load Key Vault secrets from test data with a scenario prefix
         if (_testData.TryGetValue("keyVaultSecrets", out var secretsObj) && secretsObj is Newtonsoft.Json.Linq.JObject secretsJson)
         {
@@ -57,7 +57,7 @@ public class KeyVaultBasicOperationsSteps(ScenarioContext scenarioContext)
                 await keyVaultEmulator.SetSecretAsync(secret.Key, secret.Value?.ToString() ?? "", scenarioPrefix);
             }
         }
-        
+
         _keyVaultValidationResults.Add($"✓ Key Vault secrets loaded with prefix '{scenarioPrefix}'");
     }
 
@@ -78,7 +78,7 @@ public class KeyVaultBasicOperationsSteps(ScenarioContext scenarioContext)
         var fullPath = Path.Combine("TestData", testDataPath);
         var jsonContent = await File.ReadAllTextAsync(fullPath);
         _testData = JsonConvert.DeserializeObject<Dictionary<string, object>>(jsonContent)!;
-        
+
         // Load Key Vault secrets from test data with a scenario prefix
         if (_testData.TryGetValue("keyVaultSecrets", out var secretsObj) && secretsObj is Newtonsoft.Json.Linq.JObject secretsJson)
         {
@@ -87,7 +87,7 @@ public class KeyVaultBasicOperationsSteps(ScenarioContext scenarioContext)
                 await keyVaultEmulator.SetSecretAsync(secret.Key, secret.Value?.ToString() ?? "", scenarioPrefix);
             }
         }
-        
+
         // Load JSON secrets for JSON processing tests with a scenario prefix
         if (_testData.TryGetValue("jsonSecrets", out var jsonSecretsObj) && jsonSecretsObj is Newtonsoft.Json.Linq.JObject jsonSecretsJson)
         {
@@ -97,7 +97,7 @@ public class KeyVaultBasicOperationsSteps(ScenarioContext scenarioContext)
                 await keyVaultEmulator.SetSecretAsync(jsonSecret.Key, jsonValue, scenarioPrefix);
             }
         }
-        
+
         _jsonProcessingEnabled = true;
         _keyVaultValidationResults.Add($"✓ JSON-enabled Key Vault secrets loaded with prefix '{scenarioPrefix}'");
     }
@@ -134,10 +134,10 @@ public class KeyVaultBasicOperationsSteps(ScenarioContext scenarioContext)
 
             _keyVaultFlexConfiguration = builder.Build();
             _keyVaultConfiguration = _keyVaultFlexConfiguration.Configuration;
-            
+
             scenarioContext.Set(_keyVaultConfiguration, "KeyVaultConfiguration");
             scenarioContext.Set(_keyVaultFlexConfiguration, "KeyVaultFlexConfiguration");
-            
+
             _keyVaultValidationResults.Add("✓ Key vault configuration built successfully");
         }
         catch (Exception ex)
@@ -170,10 +170,10 @@ public class KeyVaultBasicOperationsSteps(ScenarioContext scenarioContext)
 
             _keyVaultFlexConfiguration = builder.Build();
             _keyVaultConfiguration = _keyVaultFlexConfiguration.Configuration;
-            
+
             scenarioContext.Set(_keyVaultConfiguration, "KeyVaultConfiguration");
             scenarioContext.Set(_keyVaultFlexConfiguration, "KeyVaultFlexConfiguration");
-            
+
             _keyVaultValidationResults.Add("✓ Key vault configuration built successfully with error tolerance");
         }
         catch (Exception ex)
@@ -197,7 +197,7 @@ public class KeyVaultBasicOperationsSteps(ScenarioContext scenarioContext)
         {
             // Test dynamic access patterns specific to FlexKit
             dynamic config = _keyVaultFlexConfiguration!;
-            
+
             // Test various FlexKit access patterns - Key Vault transforms -- to :
             var dynamicTests = new List<(string description, Func<object?> test)>
             {
@@ -234,7 +234,7 @@ public class KeyVaultBasicOperationsSteps(ScenarioContext scenarioContext)
         {
             _keyVaultValidationResults.Add($"✗ Dynamic access patterns verification failed: {ex.Message}");
         }
-        
+
         scenarioContext.Set(_keyVaultValidationResults, "KeyVaultValidationResults");
     }
 
@@ -246,7 +246,7 @@ public class KeyVaultBasicOperationsSteps(ScenarioContext scenarioContext)
         // Key Vault automatically transforms secret names: -- becomes :
         var actualValue = _keyVaultConfiguration![expectedKey];
         actualValue.Should().Be(expectedValue, $"Configuration key '{expectedKey}' should have the expected value");
-        
+
         _keyVaultValidationResults.Add($"✓ Configuration validation passed: {expectedKey} = {expectedValue}");
         scenarioContext.Set(_keyVaultValidationResults, "KeyVaultValidationResults");
     }
@@ -289,7 +289,7 @@ public class KeyVaultBasicOperationsSteps(ScenarioContext scenarioContext)
         {
             _keyVaultValidationResults.Add($"✗ Type conversion verification failed: {ex.Message}");
         }
-        
+
         scenarioContext.Set(_keyVaultValidationResults, "KeyVaultValidationResults");
     }
 
@@ -339,7 +339,7 @@ public class KeyVaultBasicOperationsSteps(ScenarioContext scenarioContext)
         {
             _keyVaultValidationResults.Add($"✗ Hierarchical access verification failed: {ex.Message}");
         }
-        
+
         scenarioContext.Set(_keyVaultValidationResults, "KeyVaultValidationResults");
     }
 
@@ -352,11 +352,11 @@ public class KeyVaultBasicOperationsSteps(ScenarioContext scenarioContext)
         try
         {
             // Test JSON flattening - these should be flattened from JSON secrets
-            // Key Vault transforms secret names from -- to : automatically
+            // Key Vault transforms secret names from "--" to ":" automatically
             var jsonFlatteningTests = new List<(string description, string key)>
             {
                 ("Database config host", "database-config:host"),
-                ("Database config port", "database-config:port"),  
+                ("Database config port", "database-config:port"),
                 ("Database config SSL", "database-config:ssl"),
                 ("API settings base URL", "api-settings:baseUrl"),
                 ("API settings timeout", "api-settings:timeout"),
@@ -391,7 +391,7 @@ public class KeyVaultBasicOperationsSteps(ScenarioContext scenarioContext)
         {
             _keyVaultValidationResults.Add($"✗ JSON flattening verification failed: {ex.Message}");
         }
-        
+
         scenarioContext.Set(_keyVaultValidationResults, "KeyVaultValidationResults");
     }
 
@@ -399,11 +399,11 @@ public class KeyVaultBasicOperationsSteps(ScenarioContext scenarioContext)
     public void ThenTheKeyVaultControllerShouldBuildSuccessfullyWithErrorTolerance()
     {
         _errorToleranceEnabled.Should().BeTrue("Error tolerance should be enabled");
-        
+
         // Even with errors, the configuration should build when error tolerance is enabled
         // This tests that optional Key Vault sources don't fail the entire configuration
         bool configurationBuilt = _keyVaultConfiguration != null || _lastKeyVaultException == null;
-        
+
         if (!configurationBuilt && _lastKeyVaultException != null)
         {
             // If configuration failed to build even with error tolerance, this might be acceptable
@@ -427,7 +427,7 @@ public class KeyVaultBasicOperationsSteps(ScenarioContext scenarioContext)
             if (_keyVaultFlexConfiguration != null)
             {
                 dynamic config = _keyVaultFlexConfiguration;
-                
+
                 // Try to access various properties - some may be null, but FlexKit should handle this gracefully
                 var capabilityTests = new List<(string description, Func<object?> test)>
                 {
@@ -464,7 +464,7 @@ public class KeyVaultBasicOperationsSteps(ScenarioContext scenarioContext)
         {
             _keyVaultValidationResults.Add($"✗ FlexKit capabilities test failed: {ex.Message}");
         }
-        
+
         scenarioContext.Set(_keyVaultValidationResults, "KeyVaultValidationResults");
     }
 

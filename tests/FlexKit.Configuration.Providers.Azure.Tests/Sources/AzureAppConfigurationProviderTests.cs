@@ -34,7 +34,7 @@ public class AzureAppConfigurationProviderTests : IDisposable
         };
 
         _provider = new AzureAppConfigurationProvider(_source);
-        
+
         // Use reflection to replace the private _configClient field
         var configClientField = typeof(AzureAppConfigurationProvider)
             .GetField("_configClient", BindingFlags.NonPublic | BindingFlags.Instance);
@@ -158,7 +158,7 @@ public class AzureAppConfigurationProviderTests : IDisposable
         provider.Should().NotBeNull();
         provider.Dispose();
     }
-    
+
     // [Fact]
     // public void Constructor_WithFullConnectionString_UsesConnectionStringPath()
     // {
@@ -208,7 +208,7 @@ public class AzureAppConfigurationProviderTests : IDisposable
 
         // Act
         var provider = new AzureAppConfigurationProvider(source);
-    
+
         // Wait briefly to allow a timer callback to potentially execute
         Thread.Sleep(1500);
 
@@ -325,7 +325,7 @@ public class AzureAppConfigurationProviderTests : IDisposable
         _provider.TryGet("myapp:test", out var value).Should().BeTrue();
         value.Should().Be("value");
     }
-    
+
     [Fact]
     public void Load_WithJsonProcessorEnabledAndValidJsonValue_FlattensJsonValue()
     {
@@ -659,12 +659,12 @@ public class AzureAppConfigurationProviderTests : IDisposable
         // Arrange
         var firstPageSettings = new[] { CreateConfigurationSetting("key1", "value1") };
         var secondPageSettings = new[] { CreateConfigurationSetting("key2", "value2") };
-        
+
         var paginatedSettings = AsyncPageable<ConfigurationSetting>.FromPages([
             Page<ConfigurationSetting>.FromValues(firstPageSettings, "continuationtoken", Substitute.For<Response>()),
             Page<ConfigurationSetting>.FromValues(secondPageSettings, null, Substitute.For<Response>())
         ]);
-        
+
         _mockConfigClient?.GetConfigurationSettingsAsync(Arg.Any<SettingSelector>(), CancellationToken.None)
             .Returns(paginatedSettings);
 

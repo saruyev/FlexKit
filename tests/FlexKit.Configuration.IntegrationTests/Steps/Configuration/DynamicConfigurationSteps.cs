@@ -45,7 +45,7 @@ public class DynamicConfigurationSteps
     public void GivenISetupAComplexConfigurationStructure(Table table)
     {
         var configData = new Dictionary<string, string?>();
-        
+
         foreach (var row in table.Rows)
         {
             var key = row["Key"];
@@ -72,7 +72,7 @@ public class DynamicConfigurationSteps
     public void WhenINavigateDynamicallyTo(string propertyPath)
     {
         _flexConfiguration.Should().NotBeNull("FlexConfiguration should be initialized");
-        
+
         dynamic config = _flexConfiguration!;
         _lastPropertyValue = NavigateToProperty(config, propertyPath);
     }
@@ -81,7 +81,7 @@ public class DynamicConfigurationSteps
     public void WhenIGetDynamicSection(string sectionPath)
     {
         _flexConfiguration.Should().NotBeNull("FlexConfiguration should be initialized");
-        
+
         dynamic config = _flexConfiguration!;
         var sectionResult = NavigateToProperty(config, sectionPath);
         _lastSection = sectionResult as IFlexConfig;
@@ -172,21 +172,21 @@ public class DynamicConfigurationSteps
     {
         _flexConfiguration.Should().NotBeNull("FlexConfiguration should be initialized");
         dynamic config = _flexConfiguration!;
-        
+
         var stopwatch = Stopwatch.StartNew();
-        
+
         for (int i = 0; i < count; i++)
         {
             var iterationStart = stopwatch.ElapsedMilliseconds;
-            
+
             // Perform various property accesses
             var result1 = NavigateToProperty(config, "Database.Primary.ConnectionString")?.ToString();
             var result2 = NavigateToProperty(config, "External.PaymentGateway.ApiKey")?.ToString();
             var result3 = NavigateToProperty(config, "Features.Payment.Enabled")?.ToString();
-            
+
             var iterationEnd = stopwatch.ElapsedMilliseconds;
             _performanceMetrics.Add(iterationEnd - iterationStart);
-            
+
             // Store some results for validation
             if (i % 10 == 0)
             {
@@ -195,7 +195,7 @@ public class DynamicConfigurationSteps
                 _navigationResults.Add(result3);
             }
         }
-        
+
         stopwatch.Stop();
     }
 
@@ -280,7 +280,7 @@ public class DynamicConfigurationSteps
     public void ThenAllNavigationAttemptsShouldReturnConsistentResults()
     {
         _navigationResults.Should().NotBeEmpty("Should have navigation results");
-        _navigationResults.Should().AllSatisfy(result => 
+        _navigationResults.Should().AllSatisfy(result =>
             result.Should().Be(_navigationResults[0], "All navigation results should be consistent"));
     }
 
@@ -289,7 +289,7 @@ public class DynamicConfigurationSteps
     {
         _performanceMetrics.Should().NotBeEmpty("Should have performance metrics");
         _navigationResults.Should().NotBeEmpty("Should have navigation results");
-        
+
         // Verify we got expected results
         _navigationResults.Should().Contain("Server=primary.db.com;Database=AppPrimary;");
         _navigationResults.Should().Contain("pk_test_dynamic_12345");
@@ -322,9 +322,9 @@ public class DynamicConfigurationSteps
 
         foreach (var part in parts)
         {
-            if (current == null) 
+            if (current == null)
                 return null;
-                
+
             current = GetPropertyFromContext(current, part);
         }
 

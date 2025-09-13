@@ -78,7 +78,7 @@ public class AutofacIntegrationSteps(ScenarioContext scenarioContext)
         protected override void Load(ContainerBuilder builder)
         {
             var flexConfig = configuration.GetFlexConfiguration();
-            
+
             builder.RegisterInstance(flexConfig)
                 .As<IFlexConfig>()
                 .As<dynamic>()
@@ -96,7 +96,7 @@ public class AutofacIntegrationSteps(ScenarioContext scenarioContext)
         _testContainerBuilder = TestContainerBuilder.Create(scenarioContext);
         _autofacContainerBuilder = new ContainerBuilder();
         _configurationBuilder = TestConfigurationBuilder.Create(scenarioContext);
-        
+
         scenarioContext.Set(_testContainerBuilder, "TestContainerBuilder");
         scenarioContext.Set(_autofacContainerBuilder, "AutofacContainerBuilder");
         scenarioContext.Set(_configurationBuilder, "ConfigurationBuilder");
@@ -110,7 +110,7 @@ public class AutofacIntegrationSteps(ScenarioContext scenarioContext)
     public void WhenIConfigureFlexConfigWithBasicConfigurationData(Table table)
     {
         _configurationBuilder.Should().NotBeNull("Configuration builder should be initialized");
-        
+
         var configData = new Dictionary<string, string?>();
         foreach (var row in table.Rows)
         {
@@ -123,7 +123,7 @@ public class AutofacIntegrationSteps(ScenarioContext scenarioContext)
             .Build();
 
         _flexConfiguration = _configuration.GetFlexConfiguration();
-        
+
         scenarioContext.Set(_configuration, "Configuration");
         scenarioContext.Set(_flexConfiguration, "FlexConfiguration");
     }
@@ -162,10 +162,10 @@ public class AutofacIntegrationSteps(ScenarioContext scenarioContext)
     public void WhenISetupFlexConfigWithJsonConfigurationFrom(string filePath)
     {
         _configurationBuilder.Should().NotBeNull("Configuration builder should be initialized");
-        
+
         // Use the same pattern as JsonConfigurationSteps for consistency
         var normalizedPath = filePath.Replace('/', Path.DirectorySeparatorChar);
-        
+
         if (!File.Exists(normalizedPath))
         {
             throw new FileNotFoundException($"Test data file not found: {normalizedPath}");
@@ -174,7 +174,7 @@ public class AutofacIntegrationSteps(ScenarioContext scenarioContext)
         // Read and parse JSON content, then add as in-memory data (same approach as other steps)
         var jsonContent = File.ReadAllText(normalizedPath);
         var configData = ParseJsonToConfigurationData(jsonContent);
-        
+
         _configurationBuilder!.AddInMemoryCollection(configData);
     }
 
@@ -182,10 +182,10 @@ public class AutofacIntegrationSteps(ScenarioContext scenarioContext)
     public void WhenISetupFlexConfigWithEnvironmentConfigurationFrom(string filePath)
     {
         _configurationBuilder.Should().NotBeNull("Configuration builder should be initialized");
-        
+
         // Use the same pattern as DotEnvFileSteps for consistency
         var normalizedPath = filePath.Replace('/', Path.DirectorySeparatorChar);
-        
+
         if (!File.Exists(normalizedPath))
         {
             throw new FileNotFoundException($"Test data file not found: {normalizedPath}");
@@ -214,17 +214,17 @@ public class AutofacIntegrationSteps(ScenarioContext scenarioContext)
     public void WhenIRegisterTheMultiSourceFlexConfigInTheAutofacContainer()
     {
         _configurationBuilder.Should().NotBeNull("Configuration builder should be initialized");
-        
+
         // Build the multi-source configuration
         _configuration = _configurationBuilder!.Build();
         _flexConfiguration = _configuration.GetFlexConfiguration();
-        
+
         // Register in Autofac container
         _autofacContainerBuilder!.RegisterInstance(_flexConfiguration)
             .As<IFlexConfig>()
             .As<dynamic>()
             .SingleInstance();
-            
+
         scenarioContext.Set(_configuration, "Configuration");
         scenarioContext.Set(_flexConfiguration, "FlexConfiguration");
     }
@@ -257,7 +257,7 @@ public class AutofacIntegrationSteps(ScenarioContext scenarioContext)
     public void WhenIRegisterFlexConfigAsIFlexConfigInTheAutofacContainer()
     {
         _autofacContainerBuilder.Should().NotBeNull("Autofac container builder should be initialized");
-        
+
         // Check if we already have a FlexConfiguration configured, if not build one from test data
         if (_flexConfiguration == null && _testConfigurationData.Count > 0)
         {
@@ -267,7 +267,7 @@ public class AutofacIntegrationSteps(ScenarioContext scenarioContext)
                 .Build();
             _flexConfiguration = _configuration.GetFlexConfiguration();
         }
-        
+
         _flexConfiguration.Should().NotBeNull("FlexConfiguration should be configured");
 
         _autofacContainerBuilder!.RegisterInstance(_flexConfiguration!)
@@ -279,7 +279,7 @@ public class AutofacIntegrationSteps(ScenarioContext scenarioContext)
     public void WhenIRegisterFlexConfigAsDynamicInTheAutofacContainer()
     {
         _autofacContainerBuilder.Should().NotBeNull("Autofac container builder should be initialized");
-        
+
         // Check if we already have a FlexConfiguration configured, if not build one from test data
         if (_flexConfiguration == null && _testConfigurationData.Count > 0)
         {
@@ -289,7 +289,7 @@ public class AutofacIntegrationSteps(ScenarioContext scenarioContext)
                 .Build();
             _flexConfiguration = _configuration.GetFlexConfiguration();
         }
-        
+
         _flexConfiguration.Should().NotBeNull("FlexConfiguration should be configured");
 
         _autofacContainerBuilder!.RegisterInstance(_flexConfiguration!)
@@ -353,9 +353,9 @@ public class AutofacIntegrationSteps(ScenarioContext scenarioContext)
                 .AddInMemoryCollection(_testConfigurationData)
                 .Build();
         }
-        
+
         _configuration.Should().NotBeNull("Configuration should be set up");
-        
+
         _testModule = new TestAutofacModule(_configuration!);
         scenarioContext.Set(_testModule, "TestModule");
     }
@@ -364,7 +364,7 @@ public class AutofacIntegrationSteps(ScenarioContext scenarioContext)
     public void WhenIConfigureTheModuleWithConfigurationData(Table table)
     {
         _configurationBuilder.Should().NotBeNull("Configuration builder should be initialized");
-        
+
         var configData = new Dictionary<string, string?>();
         foreach (var row in table.Rows)
         {
@@ -397,13 +397,13 @@ public class AutofacIntegrationSteps(ScenarioContext scenarioContext)
     public void WhenIBuildTheAutofacContainer()
     {
         _autofacContainerBuilder.Should().NotBeNull("Autofac container builder should be initialized");
-        
+
         try
         {
             _autofacContainer = _autofacContainerBuilder!.Build();
             _containerBuildSucceeded = true;
             _lastAutofacException = null;
-            
+
             scenarioContext.Set(_autofacContainer, "AutofacContainer");
         }
         catch (Exception ex)
@@ -417,7 +417,7 @@ public class AutofacIntegrationSteps(ScenarioContext scenarioContext)
     public void WhenIAttemptToRegisterFlexConfigWithInvalidConfiguration()
     {
         _autofacContainerBuilder.Should().NotBeNull("Autofac container builder should be initialized");
-        
+
         try
         {
             // Create an invalid configuration scenario
@@ -425,12 +425,12 @@ public class AutofacIntegrationSteps(ScenarioContext scenarioContext)
             {
                 { null!, "invalid-key" } // This will cause issues
             };
-            
+
             var invalidFlexConfig = TestConfigurationBuilder.Create()
                 .AddInMemoryCollection(invalidConfig)
                 .Build()
                 .GetFlexConfiguration();
-                
+
             _autofacContainerBuilder!.RegisterInstance(invalidFlexConfig)
                 .As<IFlexConfig>()
                 .SingleInstance();
@@ -451,7 +451,7 @@ public class AutofacIntegrationSteps(ScenarioContext scenarioContext)
     public void WhenICreateALifetimeScope()
     {
         _autofacContainer.Should().NotBeNull("Autofac container should be built");
-        
+
         _lifetimeScope = _autofacContainer!.BeginLifetimeScope();
         scenarioContext.Set(_lifetimeScope, "LifetimeScope");
     }
@@ -460,7 +460,7 @@ public class AutofacIntegrationSteps(ScenarioContext scenarioContext)
     public void WhenIResolveDynamicConfigurationFromTheContainer()
     {
         _autofacContainer.Should().NotBeNull("Autofac container should be built");
-        
+
         _resolvedDynamicConfig = _autofacContainer!.Resolve<dynamic>();
     }
 
@@ -473,7 +473,7 @@ public class AutofacIntegrationSteps(ScenarioContext scenarioContext)
     {
         _autofacContainer.Should().NotBeNull("Autofac container should be built");
         _containerBuildSucceeded.Should().BeTrue("Container build should have succeeded");
-        
+
         _autofacContainer!.IsRegistered<IFlexConfig>().Should().BeTrue("IFlexConfig should be registered");
     }
 
@@ -481,7 +481,7 @@ public class AutofacIntegrationSteps(ScenarioContext scenarioContext)
     public void ThenIShouldBeAbleToResolveIFlexConfigFromTheContainer()
     {
         _autofacContainer.Should().NotBeNull("Autofac container should be built");
-        
+
         _resolvedFlexConfig = _autofacContainer!.Resolve<IFlexConfig>();
         _resolvedFlexConfig.Should().NotBeNull("Resolved FlexConfig should not be null");
     }
@@ -490,9 +490,9 @@ public class AutofacIntegrationSteps(ScenarioContext scenarioContext)
     public void ThenIShouldBeAbleToResolveDynamicConfigurationFromTheContainer()
     {
         _autofacContainer.Should().NotBeNull("Autofac container should be built");
-        
+
         _resolvedDynamicConfig = _autofacContainer!.Resolve<dynamic>();
-        
+
         // Don't use Should().NotBeNull() on dynamic objects - check differently
         Assert.NotNull(_resolvedDynamicConfig);
     }
@@ -501,7 +501,7 @@ public class AutofacIntegrationSteps(ScenarioContext scenarioContext)
     public void ThenTheResolvedConfigurationShouldContainExpectedValues()
     {
         _resolvedFlexConfig.Should().NotBeNull("FlexConfig should be resolved");
-        
+
         foreach (var kvp in _testConfigurationData)
         {
             _resolvedFlexConfig![kvp.Key].Should().Be(kvp.Value, $"Configuration key '{kvp.Key}' should have expected value");
@@ -519,7 +519,7 @@ public class AutofacIntegrationSteps(ScenarioContext scenarioContext)
     public void ThenTheResolvedFlexConfigShouldContainDataFromJsonSources()
     {
         _resolvedFlexConfig.Should().NotBeNull("FlexConfig should be resolved");
-        
+
         // These values are expected from the test appsettings.json file
         _resolvedFlexConfig!["Application:Name"].Should().NotBeNullOrEmpty("Application name should be loaded from JSON");
     }
@@ -528,7 +528,7 @@ public class AutofacIntegrationSteps(ScenarioContext scenarioContext)
     public void ThenTheResolvedFlexConfigShouldContainDataFromEnvironmentSources()
     {
         _resolvedFlexConfig.Should().NotBeNull("FlexConfig should be resolved");
-        
+
         // These values are expected from the test.env file
         _resolvedFlexConfig!["APP_NAME"].Should().NotBeNullOrEmpty("App name should be loaded from .env file");
     }
@@ -537,7 +537,7 @@ public class AutofacIntegrationSteps(ScenarioContext scenarioContext)
     public void ThenEnvironmentValuesShouldOverrideJsonValuesWhereApplicable()
     {
         _resolvedFlexConfig.Should().NotBeNull("FlexConfig should be resolved");
-        
+
         // Environment variables should take precedence over JSON values
         // This will depend on the actual test data files
         _resolvedFlexConfig.Should().NotBeNull("Configuration precedence should be maintained");
@@ -547,7 +547,7 @@ public class AutofacIntegrationSteps(ScenarioContext scenarioContext)
     public void ThenTheContainerShouldResolveTheTestServiceWithIFlexConfigDependency()
     {
         _autofacContainer.Should().NotBeNull("Autofac container should be built");
-        
+
         _resolvedServiceWithIFlexConfig = _autofacContainer!.Resolve<TestServiceWithIFlexConfig>();
         _resolvedServiceWithIFlexConfig.Should().NotBeNull("Test service should be resolved");
         _resolvedServiceWithIFlexConfig.Configuration.Should().NotBeNull("FlexConfig should be injected");
@@ -557,10 +557,10 @@ public class AutofacIntegrationSteps(ScenarioContext scenarioContext)
     public void ThenTheContainerShouldResolveTheTestServiceWithDynamicDependency()
     {
         _autofacContainer.Should().NotBeNull("Autofac container should be built");
-        
+
         _resolvedServiceWithDynamicConfig = _autofacContainer!.Resolve<TestServiceWithDynamicConfig>();
         _resolvedServiceWithDynamicConfig.Should().NotBeNull("Test service should be resolved");
-        
+
         // Don't use Should().NotBeNull() on dynamic objects
         Assert.NotNull(_resolvedServiceWithDynamicConfig.Configuration);
     }
@@ -587,7 +587,7 @@ public class AutofacIntegrationSteps(ScenarioContext scenarioContext)
     public void ThenTheContainerShouldResolveTheService()
     {
         _autofacContainer.Should().NotBeNull("Autofac container should be built");
-        
+
         _resolvedServiceWithProperty = _autofacContainer!.Resolve<TestServiceWithPropertyInjection>();
         _resolvedServiceWithProperty.Should().NotBeNull("Test service should be resolved");
     }
@@ -604,7 +604,7 @@ public class AutofacIntegrationSteps(ScenarioContext scenarioContext)
     {
         _resolvedServiceWithProperty.Should().NotBeNull("Service should be resolved");
         _resolvedServiceWithProperty!.FlexConfig.Should().NotBeNull("FlexConfig should be injected");
-        
+
         foreach (var kvp in _testConfigurationData)
         {
             _resolvedServiceWithProperty.FlexConfig![kvp.Key].Should().Be(kvp.Value);
@@ -616,7 +616,7 @@ public class AutofacIntegrationSteps(ScenarioContext scenarioContext)
     {
         _autofacContainer.Should().NotBeNull("Autofac container should be built");
         _containerBuildSucceeded.Should().BeTrue("Container build should have succeeded");
-        
+
         _autofacContainer!.IsRegistered<IFlexConfig>().Should().BeTrue("Module should have registered IFlexConfig");
     }
 
@@ -624,7 +624,7 @@ public class AutofacIntegrationSteps(ScenarioContext scenarioContext)
     public void ThenTheModuleShouldHaveRegisteredFlexConfigCorrectly()
     {
         _autofacContainer.Should().NotBeNull("Autofac container should be built");
-        
+
         var resolvedFromModule = _autofacContainer!.Resolve<IFlexConfig>();
         resolvedFromModule.Should().NotBeNull("FlexConfig should be resolvable from module registration");
     }
@@ -633,10 +633,10 @@ public class AutofacIntegrationSteps(ScenarioContext scenarioContext)
     public void ThenIShouldBeAbleToResolveConfigurationThroughTheModule()
     {
         _autofacContainer.Should().NotBeNull("Autofac container should be built");
-        
+
         var configFromModule = _autofacContainer!.Resolve<IFlexConfig>();
         var dynamicFromModule = _autofacContainer.Resolve<dynamic>();
-        
+
         configFromModule.Should().NotBeNull("IFlexConfig should be resolvable");
         Assert.NotNull(dynamicFromModule); // Use Assert.NotNull for dynamic objects
     }
@@ -645,14 +645,14 @@ public class AutofacIntegrationSteps(ScenarioContext scenarioContext)
     public void ThenResolvingFlexConfigMultipleTimesShouldReturnTheSameInstance()
     {
         _autofacContainer.Should().NotBeNull("Autofac container should be built");
-        
+
         var instance1 = _autofacContainer!.Resolve<IFlexConfig>();
         var instance2 = _autofacContainer.Resolve<IFlexConfig>();
         var instance3 = _autofacContainer.Resolve<IFlexConfig>();
-        
+
         instance1.Should().BeSameAs(instance2, "First and second instances should be the same");
         instance2.Should().BeSameAs(instance3, "Second and third instances should be the same");
-        
+
         _multipleResolvedInstances.AddRange([instance1, instance2, instance3]);
     }
 
@@ -660,7 +660,7 @@ public class AutofacIntegrationSteps(ScenarioContext scenarioContext)
     public void ThenTheSingletonInstanceShouldMaintainStateAcrossResolutions()
     {
         _multipleResolvedInstances.Should().HaveCount(3, "Three instances should have been resolved");
-        
+
         foreach (var instance in _multipleResolvedInstances)
         {
             foreach (var kvp in _testConfigurationData)
@@ -674,7 +674,7 @@ public class AutofacIntegrationSteps(ScenarioContext scenarioContext)
     public void ThenDisposingTheContainerShouldDisposeTheFlexConfigInstance()
     {
         _autofacContainer.Should().NotBeNull("Autofac container should be built");
-        
+
         // This is more about ensuring the container properly manages the lifecycle
         // FlexConfig itself may not be IDisposable, but the container should handle it properly
         Action disposeAction = () => _autofacContainer!.Dispose();
@@ -685,7 +685,7 @@ public class AutofacIntegrationSteps(ScenarioContext scenarioContext)
     public void ThenIShouldBeAbleToResolveFlexConfigFromTheLifetimeScope()
     {
         _lifetimeScope.Should().NotBeNull("Lifetime scope should be created");
-        
+
         var scopedFlexConfig = _lifetimeScope!.Resolve<IFlexConfig>();
         scopedFlexConfig.Should().NotBeNull("FlexConfig should be resolvable from scope");
     }
@@ -694,7 +694,7 @@ public class AutofacIntegrationSteps(ScenarioContext scenarioContext)
     public void ThenTheScopedFlexConfigShouldContainTheExpectedData()
     {
         _lifetimeScope.Should().NotBeNull("Lifetime scope should be created");
-        
+
         var scopedFlexConfig = _lifetimeScope!.Resolve<IFlexConfig>();
         foreach (var kvp in _testConfigurationData)
         {
@@ -707,10 +707,10 @@ public class AutofacIntegrationSteps(ScenarioContext scenarioContext)
     {
         _lifetimeScope.Should().NotBeNull("Lifetime scope should be created");
         _autofacContainer.Should().NotBeNull("Autofac container should be built");
-        
+
         // Dispose the scope
         _lifetimeScope!.Dispose();
-        
+
         // Parent container should still work
         var configFromParent = _autofacContainer!.Resolve<IFlexConfig>();
         configFromParent.Should().NotBeNull("Parent container should still resolve FlexConfig");
@@ -727,7 +727,7 @@ public class AutofacIntegrationSteps(ScenarioContext scenarioContext)
     public void ThenDynamicAccessShouldWorkFor(string propertyPath)
     {
         Assert.NotNull(_resolvedDynamicConfig);
-        
+
         // Navigate to the specified property path
         var value = NavigateToProperty(_resolvedDynamicConfig, propertyPath);
         Assert.NotNull(value);
@@ -737,7 +737,7 @@ public class AutofacIntegrationSteps(ScenarioContext scenarioContext)
     public void ThenDynamicAccessShouldReturnCorrectValues()
     {
         Assert.NotNull(_resolvedDynamicConfig);
-        
+
         // Verify that dynamic access returns values consistent with the test data
         foreach (var kvp in _testConfigurationData)
         {
@@ -763,7 +763,7 @@ public class AutofacIntegrationSteps(ScenarioContext scenarioContext)
         {
             _lastAutofacException.Should().NotBeNull("Exception should be captured when build fails");
         }
-        
+
         // The important thing is that the system doesn't crash unexpectedly
         _lastAutofacException?.Message.Should().NotBeNullOrEmpty("Error message should be informative");
     }
@@ -782,12 +782,12 @@ public class AutofacIntegrationSteps(ScenarioContext scenarioContext)
     {
         // Even if FlexConfig registration failed, other registrations should still be possible
         _autofacContainerBuilder.Should().NotBeNull("Container builder should remain usable");
-        
+
         // Test by registering a simple service
         _autofacContainerBuilder!.RegisterType<TestServiceWithPropertyInjection>()
             .AsSelf()
             .SingleInstance();
-            
+
         // This registration should not throw
     }
 
@@ -795,17 +795,17 @@ public class AutofacIntegrationSteps(ScenarioContext scenarioContext)
     public void ThenBothRegistrationsShouldReferToTheSameConfigurationData()
     {
         _autofacContainer.Should().NotBeNull("Autofac container should be built");
-        
+
         var flexConfigInterface = _autofacContainer!.Resolve<IFlexConfig>();
         var flexConfigDynamic = _autofacContainer.Resolve<dynamic>();
-        
+
         // Both should reference the same underlying data
         foreach (var kvp in _testConfigurationData)
         {
             var interfaceValue = flexConfigInterface[kvp.Key];
             interfaceValue.Should().Be(kvp.Value, "Both registrations should have consistent data");
         }
-        
+
         // Verify dynamic config is not null, avoid complex dynamic assertions
         Assert.NotNull(flexConfigDynamic);
     }
@@ -826,7 +826,7 @@ public class AutofacIntegrationSteps(ScenarioContext scenarioContext)
     private static Dictionary<string, string?> ParseJsonToConfigurationData(string jsonContent)
     {
         var configData = new Dictionary<string, string?>();
-        
+
         try
         {
             using var document = JsonDocument.Parse(jsonContent);
@@ -836,7 +836,7 @@ public class AutofacIntegrationSteps(ScenarioContext scenarioContext)
         {
             throw new InvalidOperationException($"Failed to parse JSON content: {ex.Message}", ex);
         }
-        
+
         return configData;
     }
 
@@ -854,7 +854,7 @@ public class AutofacIntegrationSteps(ScenarioContext scenarioContext)
                     FlattenJsonElement(key, property.Value, configData);
                 }
                 break;
-                
+
             case JsonValueKind.Array:
                 var index = 0;
                 foreach (var item in element.EnumerateArray())
@@ -864,7 +864,7 @@ public class AutofacIntegrationSteps(ScenarioContext scenarioContext)
                     index++;
                 }
                 break;
-                
+
             default:
                 configData[prefix] = element.ToString();
                 break;
@@ -878,7 +878,7 @@ public class AutofacIntegrationSteps(ScenarioContext scenarioContext)
     {
         var segments = propertyPath.Split('.');
         dynamic current = source;
-        
+
         foreach (var segment in segments)
         {
             try
@@ -891,7 +891,7 @@ public class AutofacIntegrationSteps(ScenarioContext scenarioContext)
                 return current;
             }
         }
-        
+
         return current;
     }
 

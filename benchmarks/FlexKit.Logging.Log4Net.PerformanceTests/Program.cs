@@ -1,6 +1,5 @@
 ﻿using BenchmarkDotNet.Running;
 using FlexKit.Logging.Log4Net.PerformanceTests.Benchmarks;
-using FlexKit.Logging.PerformanceTests.Benchmarks;
 
 BenchmarkRunner.Run<Log4NetAsyncMethodBenchmarks>();
 BenchmarkRunner.Run<Log4NetBackgroundQueueBenchmarks>();

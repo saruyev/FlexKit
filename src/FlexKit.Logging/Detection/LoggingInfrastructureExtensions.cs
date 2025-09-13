@@ -24,7 +24,7 @@ public static class LoggingInfrastructureExtensions
     /// Call this before registering any types that need logging interception.
     /// </summary>
     /// <param name="builder">The Autofac container builder.</param>
-    public static void RegisterLoggingInfrastructure(this ContainerBuilder builder)
+    internal static void RegisterLoggingInfrastructure(this ContainerBuilder builder)
     {
         builder.RegisterLoggingConfiguration();
         builder.RegisterMessageFormatting();
@@ -165,13 +165,7 @@ public static class LoggingInfrastructureExtensions
                 // Return minimal logger factory if no targets configured
                 if (loggingConfig.Targets.Count == 0)
                 {
-                    var emptyServices = new ServiceCollection();
-                    emptyServices.AddLogging(b =>
-                    {
-                        b.AddConsole();
-                        b.SetMinimumLevel(LogLevel.Information);
-                    });
-                    return emptyServices.BuildServiceProvider().GetRequiredService<ILoggerFactory>();
+                    return SetupDefaultLogging();
                 }
 
                 // Configure full logging with targets
@@ -190,6 +184,22 @@ public static class LoggingInfrastructureExtensions
         builder.RegisterGeneric(typeof(Logger<>))
             .As(typeof(ILogger<>))
             .InstancePerDependency();
+    }
+
+    /// <summary>
+    /// Sets up a default logging configuration with a console logger and a minimum log level of Information.
+    /// Provides a minimal implementation of <see cref="ILoggerFactory"/> when no other logging targets are configured.
+    /// </summary>
+    /// <returns>A configured <see cref="ILoggerFactory"/> instance with a default console logger.</returns>
+    private static ILoggerFactory SetupDefaultLogging()
+    {
+        var emptyServices = new ServiceCollection();
+        emptyServices.AddLogging(b =>
+        {
+            b.AddConsole();
+            b.SetMinimumLevel(LogLevel.Information);
+        });
+        return emptyServices.BuildServiceProvider().GetRequiredService<ILoggerFactory>();
     }
 
     /// <summary>
@@ -256,9 +266,12 @@ public static class LoggingInfrastructureExtensions
 
     /// <summary>
     /// Ensures that all remaining log entries are flushed before the application exits.
-    /// Intended to prevent the loss of any pending log messages by invoking the background logging service's flush operation.
+    /// Intended to prevent the loss of any pending log messages by invoking the background
+    /// logging service's flush operation.
     /// </summary>
-    /// <param name="backgroundService">The instance of <see cref="BackgroundLoggingService"/> responsible for managing and flushing log entries.</param>
+    /// <param name="backgroundService">
+    /// The instance of <see cref="BackgroundLoggingService"/> responsible for managing and flushing log entries.
+    /// </param>
     [UsedImplicitly]
     public static void FlushLogsOnExit(BackgroundLoggingService backgroundService)
     {

@@ -100,7 +100,9 @@ public static class YamlExtensions
     /// </para>
     /// </remarks>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="builder"/> is null.</exception>
-    /// <exception cref="InvalidOperationException">Thrown when called after Build() has been called on the builder.</exception>
+    /// <exception cref="InvalidOperationException">
+    /// Thrown when called after Build() has been called on the builder.
+    /// </exception>
     /// <example>
     /// <code>
     /// // Basic YAML file addition

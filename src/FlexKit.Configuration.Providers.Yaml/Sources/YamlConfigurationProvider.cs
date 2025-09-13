@@ -140,7 +140,7 @@ namespace FlexKit.Configuration.Providers.Yaml.Sources;
 /// </remarks>
 /// <param name="source">The configuration source containing YAML file settings and options.</param>
 /// <exception cref="ArgumentNullException">Thrown when the source is null.</exception>
-public class YamlConfigurationProvider(YamlConfigurationSource source) : ConfigurationProvider
+internal class YamlConfigurationProvider(YamlConfigurationSource source) : ConfigurationProvider
 {
     /// <summary>
     /// The configuration source that defines the YAML file location and loading options.

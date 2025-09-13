@@ -39,7 +39,7 @@ public abstract class BaseTestContainerBuilder<T> where T : BaseTestContainerBui
     /// <returns>New TestContainerBuilder instance</returns>
     public static T Create(ScenarioContext scenarioContext)
     {
-        return new T{ _scenarioContext = scenarioContext };
+        return new T { _scenarioContext = scenarioContext };
     }
 
     /// <summary>
@@ -260,7 +260,7 @@ public abstract class BaseTestContainerBuilder<T> where T : BaseTestContainerBui
         if (_scenarioContext != null)
         {
             _scenarioContext.RegisterAutofacContainer(container);
-            
+
             if (_mockFileSystem != null)
             {
                 _scenarioContext.RegisterMockFileSystem(_mockFileSystem);
@@ -300,7 +300,7 @@ public abstract class BaseTestContainerBuilder<T> where T : BaseTestContainerBui
         var serviceProvider = new AutofacServiceProvider(container);
 
         _scenarioContext?.RegisterServiceProvider(serviceProvider);
-        
+
         return serviceProvider;
     }
 

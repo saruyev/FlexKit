@@ -21,12 +21,12 @@ public class AppConfigurationEmulatorContainer : IAsyncDisposable
         .WithWaitStrategy(Wait.ForUnixContainer().UntilPortIsAvailable(8080))
         .Build();
     private ConfigurationClient? _configurationClient;
-    
+
     /// <summary>
     /// Gets the ConfigurationClient configured for the emulator.
     /// This can be injected into the FlexKit configuration for testing.
     /// </summary>
-    public ConfigurationClient ConfigurationClient 
+    public ConfigurationClient ConfigurationClient
     {
         get
         {
@@ -52,29 +52,29 @@ public class AppConfigurationEmulatorContainer : IAsyncDisposable
         await _container.DisposeAsync();
         Console.WriteLine("App Configuration Emulator stopped.");
     }
-    
+
     public string GetConnectionString()
     {
         var host = _container.Hostname;
         var port = _container.GetMappedPublicPort(8080);
         return $"Endpoint=http://{host}:{port};Id=abcd;Secret=c2VjcmV0";
     }
-    
+
     public async Task SetConfigurationAsync(string key, string value, string? label = null)
     {
         var setting = new ConfigurationSetting(key, value, label);
         await ConfigurationClient.SetConfigurationSettingAsync(setting);
-        Console.WriteLine($"Configuration '{key}' set with value '{value}'" + 
+        Console.WriteLine($"Configuration '{key}' set with value '{value}'" +
                          (label != null ? $" and label '{label}'" : ""));
     }
-    
+
     public async Task CreateTestDataAsync(string configFilePath, string prefix)
     {
         var jsonContent = await File.ReadAllTextAsync(configFilePath);
         var json = (Dictionary<string, object>)JsonHelper.Deserialize(jsonContent);
         await CreateAppConfigurationSettingsAsync(json!, prefix);
     }
-    
+
     private async Task CreateAppConfigurationSettingsAsync(Dictionary<string, object> settings, string prefix)
     {
         foreach (var setting in settings)
@@ -82,7 +82,7 @@ public class AppConfigurationEmulatorContainer : IAsyncDisposable
             await ProcessSettingAsync(setting.Key, setting.Value, prefix);
         }
     }
-    
+
     private async Task ProcessSettingAsync(string key, object value, string prefix, string? label = null)
     {
         if (value is Dictionary<string, object> nestedSettings)
@@ -95,7 +95,7 @@ public class AppConfigurationEmulatorContainer : IAsyncDisposable
         }
         else
         {
-            var prefixedKey =$"{prefix}:{key}";
+            var prefixedKey = $"{prefix}:{key}";
             await SetConfigurationAsync(prefixedKey, value.ToString()!, label);
         }
     }

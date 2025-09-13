@@ -526,13 +526,13 @@ public class AwsTestConfigurationBuilder(ScenarioContext? scenarioContext = null
         {
             throw new InvalidOperationException($"Required version stage '{versionStage}' not found for secrets in AWS Secrets Manager.");
         }
-        
+
         if (versionStage == "MISSING_STAGE" && optional)
         {
             AddInMemoryCollection(new Dictionary<string, string?>());
             return this;
         }
-        
+
         var normalizedPath = testDataPath.Replace('/', Path.DirectorySeparatorChar);
 
         if (!File.Exists(normalizedPath))

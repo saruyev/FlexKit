@@ -35,7 +35,7 @@ public class AzureAppConfigurationBenchmarks
 
         // Setup simple configuration
         await _appConfigEmulator.CreateTestDataAsync("./TestData/simple-config.json");
-        
+
         var simpleConfigBuilder = new FlexConfigurationBuilder()
             .AddAzureAppConfiguration(options =>
             {
@@ -48,7 +48,7 @@ public class AzureAppConfigurationBenchmarks
 
         // Setup complex configuration
         await _appConfigEmulator.CreateTestDataAsync("./TestData/complex-secret.json");
-        
+
         var complexConfigBuilder = new FlexConfigurationBuilder()
             .AddAzureAppConfiguration(options =>
             {
@@ -61,7 +61,7 @@ public class AzureAppConfigurationBenchmarks
 
         // Setup large configuration
         await _appConfigEmulator.CreateTestDataAsync("./TestData/large-secret.json");
-        
+
         var largeConfigBuilder = new FlexConfigurationBuilder()
             .AddAzureAppConfiguration(options =>
             {
@@ -100,7 +100,7 @@ public class AzureAppConfigurationBenchmarks
         await _appConfigEmulator.SetConfigurationAsync("app:environment", "production", "prod");
         await _appConfigEmulator.SetConfigurationAsync("app:database:host", "prod-db.example.com", "prod");
         await _appConfigEmulator.SetConfigurationAsync("app:cache:enabled", "true", "prod");
-        
+
         var labeledConfigBuilder = new FlexConfigurationBuilder()
             .AddAzureAppConfiguration(options =>
             {
@@ -348,7 +348,7 @@ public class AzureAppConfigurationBenchmarks
         var dbPort = _complexConfig["database:primary:port"];
         var dbUser = _complexConfig["database:primary:username"];
         var sslEnabled = _complexConfig["database:primary:ssl"].ToType<bool>();
-        
+
         return (dbHost, dbPort, dbUser, sslEnabled);
     }
 

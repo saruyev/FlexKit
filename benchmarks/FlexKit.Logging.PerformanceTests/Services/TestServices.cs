@@ -33,7 +33,7 @@ public class ManualService(IFlexKitLogger logger) : IManualService
         var entry = LogEntry.CreateStart(nameof(ProcessData), GetType().FullName!)
             .WithInput(input);
         logger.Log(entry);
-        
+
         var result = $"Manual: {input}";
         logger.Log(entry.WithCompletion(true).WithOutput(result));
         return result;
@@ -57,8 +57,8 @@ public class LogInputService : ILogInputService
     public string ProcessData(string input) => $"LogInput: {input}";
 }
 
-public interface ILogBothService 
-{ 
+public interface ILogBothService
+{
     string ProcessData(string input);
     string ProcessComplexData(ComplexTestData data);
 }
@@ -82,7 +82,7 @@ public record ComplexTestData(string Name, int Value)
 {
     [UsedImplicitly]
     public Dictionary<string, object> Properties { get; init; } = new();
-    
+
     [UsedImplicitly]
     public string[] Items { get; init; } = [];
 }
@@ -90,7 +90,7 @@ public record ComplexTestData(string Name, int Value)
 public interface IAsyncLogBothService
 {
     Task<string> ProcessDataAsync(string input);
-    
+
     [UsedImplicitly]
     Task ProcessVoidAsync(string input);
 }
@@ -125,10 +125,10 @@ public class AsyncManualService(IFlexKitLogger logger) : IAsyncManualService
         var entry = LogEntry.CreateStart(nameof(ProcessDataAsync), GetType().FullName!)
             .WithInput(input);
         logger.Log(entry);
-        
+
         await Task.Delay(1);
         var result = $"Manual Async: {input}";
-        
+
         logger.Log(entry.WithCompletion(true).WithOutput(result));
         return result;
     }
@@ -169,29 +169,29 @@ public class NoConfigService : INoConfigService
 }
 
 // Additional service interfaces for exclusion patterns (reuse implementations from v5)
-public interface IExactExclusionService 
-{ 
+public interface IExactExclusionService
+{
     string ProcessData(string input);
     string ToString();
 }
 
-public interface IPrefixExclusionService 
-{ 
+public interface IPrefixExclusionService
+{
     string GetUserName(int id);
 }
 
-public interface ISuffixExclusionService 
-{ 
+public interface ISuffixExclusionService
+{
     string ProcessInternal(string data);
 }
 
-public interface IMixedExclusionService 
-{ 
+public interface IMixedExclusionService
+{
     string ProcessMainData(string data);
 }
 
-public interface INoExclusionService 
-{ 
+public interface INoExclusionService
+{
     string ProcessData(string input);
 }
 
@@ -202,13 +202,13 @@ public record SimpleData(string Name, int Value);
 public record VeryComplexData
 {
     public Guid Id { get; init; }
-    
+
     [UsedImplicitly]
     public Dictionary<string, object> Data { get; init; } = new();
-    
+
     [UsedImplicitly]
     public List<ComplexTestData> NestedObjects { get; init; } = new();
-    
+
     [UsedImplicitly]
     public int[] LargeArray { get; init; } = [];
 }
@@ -226,7 +226,7 @@ public class ExtendedLogBothService : LogBothService, IExtendedLogBothService
 {
     public string ProcessSimpleData(SimpleData data) => $"Simple: {data.Name}";
     public string ProcessVeryComplexData(VeryComplexData data) => $"VeryComplex: {data.Id}";
-    public string ProcessMultipleParameters(string str, int num, SimpleData data, int[] array) => 
+    public string ProcessMultipleParameters(string str, int num, SimpleData data, int[] array) =>
         $"Multiple: {str}, {num}, {data.Name}, [{string.Join(",", array)}]";
 }
 
@@ -271,22 +271,18 @@ public interface IFormatterManualService
     string ProcessWithFormatter(string formatterName, ComplexTestData data);
 }
 
-public class FormatterManualService : IFormatterManualService
+public class FormatterManualService(IFlexKitLogger logger) : IFormatterManualService
 {
-    private readonly IFlexKitLogger _logger;
-
-    public FormatterManualService(IFlexKitLogger logger) => _logger = logger;
-
     public string ProcessWithFormatter(string formatterName, ComplexTestData data)
     {
         var formatterType = Enum.Parse<FormatterType>(formatterName);
-        
+
         var startEntry = LogEntry.CreateStart(nameof(ProcessWithFormatter), GetType().FullName!)
             .WithInput(data)
             .WithFormatter(formatterType)
             .WithTarget("Console");
 
-        _logger.Log(startEntry);
+        logger.Log(startEntry);
 
         var result = $"Manual {formatterName}: {data.Name}";
 
@@ -294,7 +290,7 @@ public class FormatterManualService : IFormatterManualService
             .WithCompletion(true)
             .WithOutput(result);
 
-        _logger.Log(endEntry);
+        logger.Log(endEntry);
         return result;
     }
 }

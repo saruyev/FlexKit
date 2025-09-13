@@ -132,21 +132,21 @@ public class JsonConfigurationSteps(ScenarioContext scenarioContext)
     public void WhenIRegisterJsonFileAsConfigurationSource(string filePath)
     {
         _jsonConfigurationBuilder.Should().NotBeNull("JSON configuration builder should be prepared");
-        
+
         // Use the same pattern as ConfigurationBuilderSteps for consistency
         var normalizedPath = filePath.Replace('/', Path.DirectorySeparatorChar);
-        
+
         if (!File.Exists(normalizedPath))
         {
             throw new FileNotFoundException($"Test data file not found: {normalizedPath}");
         }
 
         // Read and parse JSON content, then add as in-memory data (same as ConfigurationBuilderSteps)
-        try 
+        try
         {
             var jsonContent = File.ReadAllText(normalizedPath);
             var configData = ParseJsonToConfigurationData(jsonContent);
-            
+
             _jsonConfigurationBuilder!.AddInMemoryCollection(configData);
             _registeredJsonFiles.Add(normalizedPath);
         }
@@ -178,10 +178,10 @@ public class JsonConfigurationSteps(ScenarioContext scenarioContext)
     public void WhenIRegisterNonExistentJsonFileAsOptionalConfiguration(string filePath)
     {
         _jsonConfigurationBuilder.Should().NotBeNull("JSON configuration builder should be prepared");
-        
+
         // Use the same simple path normalization as other methods
         var normalizedPath = filePath.Replace('/', Path.DirectorySeparatorChar);
-        
+
         // Don't validate the existence for optional files - just add to the builder
         _jsonConfigurationBuilder!.AddJsonFile(normalizedPath, optional: true, reloadOnChange: false);
     }
@@ -190,7 +190,7 @@ public class JsonConfigurationSteps(ScenarioContext scenarioContext)
     public void WhenIRegisterJsonFileWithInvalidJsonContentAsConfigurationSource()
     {
         _jsonConfigurationBuilder.Should().NotBeNull("JSON configuration builder should be prepared");
-        
+
         // Create invalid JSON content
         var invalidJsonContent = @"{ ""Application"": { ""Name"": ""Invalid"", ""Version"" }"; // Missing closing braces
         _jsonConfigurationBuilder!.AddTempJsonFile(invalidJsonContent, optional: false, reloadOnChange: false);
@@ -200,7 +200,7 @@ public class JsonConfigurationSteps(ScenarioContext scenarioContext)
     public void WhenIProvideJsonContentWithNestedConfiguration(string jsonContent)
     {
         _jsonConfigurationBuilder.Should().NotBeNull("JSON configuration builder should be prepared");
-        
+
         // Validate JSON format
         try
         {
@@ -210,7 +210,7 @@ public class JsonConfigurationSteps(ScenarioContext scenarioContext)
         {
             throw new InvalidOperationException($"Invalid JSON content provided: {ex.Message}");
         }
-        
+
         _dynamicJsonContent.Add(jsonContent);
     }
 
@@ -237,7 +237,7 @@ public class JsonConfigurationSteps(ScenarioContext scenarioContext)
     {
         _jsonConfigurationBuilder.Should().NotBeNull("JSON configuration builder should be prepared");
         _dynamicJsonContent.Should().NotBeEmpty("Dynamic JSON content should be provided");
-        
+
         foreach (var jsonContent in _dynamicJsonContent)
         {
             var configData = ParseJsonToConfigurationData(jsonContent);
@@ -249,7 +249,7 @@ public class JsonConfigurationSteps(ScenarioContext scenarioContext)
     public void WhenIRegisterJsonFileWithBaseConfiguration(string jsonContent)
     {
         _jsonConfigurationBuilder.Should().NotBeNull("JSON configuration builder should be prepared");
-        
+
         var configData = ParseJsonToConfigurationData(jsonContent);
         _jsonConfigurationBuilder!.AddInMemoryCollection(configData);
     }
@@ -258,7 +258,7 @@ public class JsonConfigurationSteps(ScenarioContext scenarioContext)
     public void WhenIRegisterJsonFileWithOverrideConfiguration(string jsonContent)
     {
         _jsonConfigurationBuilder.Should().NotBeNull("JSON configuration builder should be prepared");
-        
+
         var configData = ParseJsonToConfigurationData(jsonContent);
         _jsonConfigurationBuilder!.AddInMemoryCollection(configData);
     }
@@ -267,11 +267,11 @@ public class JsonConfigurationSteps(ScenarioContext scenarioContext)
     public void WhenIRegisterJsonFileWithReloadOnChangeEnabled()
     {
         _jsonConfigurationBuilder.Should().NotBeNull("JSON configuration builder should be prepared");
-        
+
         var testFilePath = "TestData/ConfigurationFiles/appsettings.json";
         // Use the same simple normalization pattern as ConfigurationBuilderSteps
         var normalizedPath = testFilePath.Replace('/', Path.DirectorySeparatorChar);
-        
+
         if (!File.Exists(normalizedPath))
         {
             throw new FileNotFoundException($"Test data file not found: {normalizedPath}");
@@ -286,16 +286,16 @@ public class JsonConfigurationSteps(ScenarioContext scenarioContext)
     public void WhenIRegisterMultipleJsonFilesWithMixedValidity(Table table)
     {
         _jsonConfigurationBuilder.Should().NotBeNull("JSON configuration builder should be prepared");
-        
+
         foreach (var row in table.Rows)
         {
             var filePath = row["File"];
             var isValid = bool.Parse(row["Valid"]);
             var isOptional = bool.Parse(row["Optional"]);
-            
+
             // Use the same simple path normalization as other methods
             var normalizedPath = filePath.Replace('/', Path.DirectorySeparatorChar);
-            
+
             if (isValid && File.Exists(normalizedPath))
             {
                 // Load valid files as in-memory data (working approach from your code)
@@ -315,7 +315,7 @@ public class JsonConfigurationSteps(ScenarioContext scenarioContext)
     public void WhenICreateTheJsonBasedConfiguration()
     {
         _jsonConfigurationBuilder.Should().NotBeNull("JSON configuration builder should be prepared");
-        
+
         try
         {
             _jsonConfiguration = _jsonConfigurationBuilder!.Build();
@@ -326,7 +326,7 @@ public class JsonConfigurationSteps(ScenarioContext scenarioContext)
         {
             _lastJsonException = ex;
             _jsonLoadingSucceeded = false;
-            
+
             // Store exception details for debugging
             scenarioContext.Set(ex, "LastException");
             scenarioContext.Set(ex.Message, "LastExceptionMessage");
@@ -343,7 +343,7 @@ public class JsonConfigurationSteps(ScenarioContext scenarioContext)
     public void WhenICreateTheFlexConfigFromJsonConfiguration()
     {
         _jsonConfigurationBuilder.Should().NotBeNull("JSON configuration builder should be prepared");
-        
+
         try
         {
             _jsonConfiguration = _jsonConfigurationBuilder!.Build();
@@ -372,7 +372,7 @@ public class JsonConfigurationSteps(ScenarioContext scenarioContext)
                 $"JSON configuration loading failed: {_lastJsonException.Message}",
                 _lastJsonException);
         }
-        
+
         _jsonLoadingSucceeded.Should().BeTrue("JSON configuration loading should have succeeded");
         _jsonConfiguration.Should().NotBeNull("JSON configuration should be created");
         _lastJsonException.Should().BeNull("No exceptions should have occurred during JSON loading");
@@ -382,11 +382,11 @@ public class JsonConfigurationSteps(ScenarioContext scenarioContext)
     public void ThenTheJsonConfigurationShouldContainApplicationSettings()
     {
         _jsonConfiguration.Should().NotBeNull("JSON configuration should be loaded");
-        
+
         // Verify that some application settings are present
         var hasAppSettings = _jsonConfiguration!.AsEnumerable()
             .Any(kvp => kvp.Key.StartsWith("Application:") && !string.IsNullOrEmpty(kvp.Value));
-        
+
         hasAppSettings.Should().BeTrue("JSON configuration should contain application settings");
     }
 
@@ -394,11 +394,11 @@ public class JsonConfigurationSteps(ScenarioContext scenarioContext)
     public void ThenTheJsonConfigurationShouldHaveTheExpectedJsonStructure()
     {
         _jsonConfiguration.Should().NotBeNull("JSON configuration should be loaded");
-        
+
         // Verify the hierarchical structure is flattened correctly (using colon notation)
         var configEntries = _jsonConfiguration!.AsEnumerable().ToList();
         var hasHierarchy = configEntries.Any(kvp => kvp.Key.Contains(':'));
-        
+
         hasHierarchy.Should().BeTrue("JSON configuration should have hierarchical structure flattened with colon notation");
     }
 
@@ -406,7 +406,7 @@ public class JsonConfigurationSteps(ScenarioContext scenarioContext)
     public void ThenTheEnvironmentSpecificValuesShouldOverrideBaseValues()
     {
         _jsonConfiguration.Should().NotBeNull("JSON configuration should be loaded");
-        
+
         // This would require specific knowledge of what's in the test files
         // For now, verify configuration was loaded
         var configEntries = _jsonConfiguration!.AsEnumerable().ToList();
@@ -417,10 +417,10 @@ public class JsonConfigurationSteps(ScenarioContext scenarioContext)
     public void ThenBothJsonFilesShouldContributeToTheFinalConfiguration()
     {
         _jsonConfiguration.Should().NotBeNull("JSON configuration should be loaded");
-        
+
         var configEntries = _jsonConfiguration!.AsEnumerable().ToList();
         configEntries.Should().NotBeEmpty("Configuration should contain entries from multiple JSON files");
-        
+
         // Verify we have registered multiple files
         _registeredJsonFiles.Should().HaveCountGreaterThan(1, "Multiple JSON files should have been registered");
     }
@@ -429,7 +429,7 @@ public class JsonConfigurationSteps(ScenarioContext scenarioContext)
     public void ThenTheRequiredJsonFileValuesShouldBePresent()
     {
         _jsonConfiguration.Should().NotBeNull("JSON configuration should be loaded");
-        
+
         var configEntries = _jsonConfiguration!.AsEnumerable().ToList();
         configEntries.Should().NotBeEmpty("Required JSON file values should be present in configuration");
     }
@@ -446,13 +446,13 @@ public class JsonConfigurationSteps(ScenarioContext scenarioContext)
     {
         _jsonLoadingSucceeded.Should().BeFalse("JSON configuration loading should have failed");
         _lastJsonException.Should().NotBeNull("An exception should have been thrown for invalid JSON");
-        
+
         // Check for JSON-related exceptions
         var exceptionMessage = _lastJsonException!.ToString();
         var isJsonFormatError = exceptionMessage.Contains("JSON", StringComparison.OrdinalIgnoreCase) ||
                                exceptionMessage.Contains("format", StringComparison.OrdinalIgnoreCase) ||
                                exceptionMessage.Contains("parse", StringComparison.OrdinalIgnoreCase);
-        
+
         isJsonFormatError.Should().BeTrue("Exception should indicate JSON format error");
     }
 
@@ -460,11 +460,11 @@ public class JsonConfigurationSteps(ScenarioContext scenarioContext)
     public void ThenTheErrorShouldIndicateJsonParsingFailure()
     {
         _lastJsonException.Should().NotBeNull("An exception should have been thrown");
-        
+
         var exceptionMessage = _lastJsonException!.ToString();
         var isJsonParsingError = exceptionMessage.Contains("JSON", StringComparison.OrdinalIgnoreCase) ||
                                 exceptionMessage.Contains("parsing", StringComparison.OrdinalIgnoreCase);
-        
+
         isJsonParsingError.Should().BeTrue("Exception should indicate JSON parsing failure");
     }
 
@@ -487,7 +487,7 @@ public class JsonConfigurationSteps(ScenarioContext scenarioContext)
     public void ThenTheFlexConfigShouldProvideAccessToJsonConfigurationValues()
     {
         _jsonFlexConfiguration.Should().NotBeNull("FlexConfig should be created");
-        
+
         // Test basic access
         var configEntries = _jsonFlexConfiguration!.Configuration.AsEnumerable().ToList();
         configEntries.Should().NotBeEmpty("FlexConfig should provide access to configuration values");
@@ -497,12 +497,12 @@ public class JsonConfigurationSteps(ScenarioContext scenarioContext)
     public void ThenTheFlexConfigShouldSupportDynamicAccessToJsonData()
     {
         _jsonFlexConfiguration.Should().NotBeNull("FlexConfig should be created");
-        
+
         // FIX PROBLEM 1: Test dynamic support without performing operations that could fail on null.
         // Verify the FlexConfig type supports dynamic access
         var flexConfigType = _jsonFlexConfiguration!.GetType();
         flexConfigType.Should().NotBeNull("FlexConfig should have a valid type that supports dynamic access");
-        
+
         // Verify it implements DynamicObject or has dynamic capabilities
         var isDynamicObject = typeof(System.Dynamic.DynamicObject).IsAssignableFrom(flexConfigType);
         isDynamicObject.Should().BeTrue("FlexConfig should inherit from DynamicObject to support dynamic access");
@@ -512,7 +512,7 @@ public class JsonConfigurationSteps(ScenarioContext scenarioContext)
     public void ThenTheFlexConfigShouldMaintainCompatibilityWithStandardConfigurationAccess()
     {
         _jsonFlexConfiguration.Should().NotBeNull("FlexConfig should be created");
-        
+
         // Test indexer access
         var firstEntry = _jsonFlexConfiguration!.Configuration.AsEnumerable().FirstOrDefault();
         if (firstEntry.Key != null)
@@ -544,7 +544,7 @@ public class JsonConfigurationSteps(ScenarioContext scenarioContext)
     public void ThenValidJsonFilesShouldContributeToConfiguration()
     {
         _jsonConfiguration.Should().NotBeNull("JSON configuration should be loaded");
-        
+
         var configEntries = _jsonConfiguration!.AsEnumerable().ToList();
         configEntries.Should().NotBeEmpty("Valid JSON files should contribute configuration entries");
     }
@@ -559,7 +559,7 @@ public class JsonConfigurationSteps(ScenarioContext scenarioContext)
     public void ThenTheConfigurationShouldContainDataFromValidSourcesOnly()
     {
         _jsonConfiguration.Should().NotBeNull("JSON configuration should be loaded");
-        
+
         // Verify that we have some configuration data (from valid sources)
         var configEntries = _jsonConfiguration!.AsEnumerable().ToList();
         configEntries.Should().NotBeEmpty("Configuration should contain data from valid sources");

@@ -42,7 +42,7 @@ public class FlexConfigurationTests : UnitTestBase
     {
         // Act & Assert
         var action = () => new FlexConfiguration(null!);
-        
+
         action.Should().Throw<ArgumentNullException>()
             .WithParameterName("root");
     }
@@ -149,7 +149,7 @@ public class FlexConfigurationTests : UnitTestBase
 
         // Act & Assert
         var action = () => _flexConfiguration["InvalidNumber"].ToType<int>();
-        
+
         action.Should().Throw<FormatException>()
             .WithMessage("*not in a correct format*");
     }
@@ -213,13 +213,13 @@ public class FlexConfigurationTests : UnitTestBase
         result.Should().Be(string.Empty);
     }
 
-    [Fact] 
+    [Fact]
     public void TryConvert_WithInvalidValueForValueType_ThrowsException()
     {
         // Arrange
         var mockSection = Substitute.For<IConfigurationSection>();
         mockSection.Value.Returns("not-a-number");
-    
+
         var flexConfig = new FlexConfiguration(mockSection);
 
         // Act & Assert
@@ -229,7 +229,7 @@ public class FlexConfigurationTests : UnitTestBase
             int result = (int)dynamicConfig; // This should throw
             return result;
         };
-    
+
         action.Should().Throw<FormatException>();
     }
 
@@ -239,7 +239,7 @@ public class FlexConfigurationTests : UnitTestBase
         // Arrange
         var mockSection = Substitute.For<IConfigurationSection>();
         mockSection.Value.Returns("42");
-    
+
         var flexConfig = new FlexConfiguration(mockSection);
 
         // Act
@@ -321,7 +321,7 @@ public class FlexConfigurationTests : UnitTestBase
         // Assert
         result.Should().BeNull();
     }
-    
+
     [Fact]
     public void TryConvert_WithDictionaryType_ConvertsToDictionary()
     {
@@ -329,22 +329,22 @@ public class FlexConfigurationTests : UnitTestBase
         var grandChild1 = Substitute.For<IConfigurationSection>();
         grandChild1.Value.Returns("10");
         grandChild1.Key.Returns("key1"); // This becomes the dictionary key
-    
+
         var grandChild2 = Substitute.For<IConfigurationSection>();
         grandChild2.Value.Returns("20");
         grandChild2.Key.Returns("key2"); // This becomes the dictionary key
-    
+
         var child1 = Substitute.For<IConfigurationSection>();
         child1.Key.Returns("parent1"); // This is ignored
         child1.GetChildren().Returns([grandChild1]);
-    
+
         var child2 = Substitute.For<IConfigurationSection>();
         child2.Key.Returns("parent2"); // This is ignored
         child2.GetChildren().Returns([grandChild2]);
-    
+
         var mockSection = Substitute.For<IConfigurationSection>();
         mockSection.GetChildren().Returns([child1, child2]);
-    
+
         var flexConfig = new FlexConfiguration(mockSection);
 
         // Act
@@ -356,17 +356,17 @@ public class FlexConfigurationTests : UnitTestBase
         result.Should().ContainKey("key1").WhoseValue.Should().Be(10);
         result.Should().ContainKey("key2").WhoseValue.Should().Be(20);
     }
-    
+
     [Fact]
     public void NumericIndexer_WithValidIndex_ReturnsCurrentConfig()
     {
         // Arrange
         var index = 123;
         var key = index.ToString(CultureInfo.InvariantCulture);
-    
+
         var mockSection = Substitute.For<IConfigurationSection>();
         mockSection.Key.Returns(key);
-    
+
         _mockConfiguration.GetChildren().Returns([mockSection]);
 
         // Act
@@ -389,5 +389,115 @@ public class FlexConfigurationTests : UnitTestBase
 
         // Assert
         result.Should().BeNull();
+    }
+
+    [Theory]
+    [AutoData]
+    public void GetSection_WithValidKey_ReturnsFlexConfig(string key)
+    {
+        // Arrange
+        var mockSection = CreateMock<IConfigurationSection>();
+        mockSection.Key.Returns(key);
+
+        _mockConfiguration.GetChildren().Returns([mockSection]);
+
+        // Act
+        var result = _flexConfiguration.GetSection(key);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Configuration.Should().BeSameAs(mockSection);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void GetSection_WithNullOrEmptyKey_ReturnsNull(string? key)
+    {
+        // Act
+        var result = _flexConfiguration.GetSection(key!);
+
+        // Assert
+        result.Should().BeNull();
+    }
+
+    [Theory]
+    [AutoData]
+    public void GetSection_WithNonExistentKey_ReturnsNull(string nonExistentKey)
+    {
+        // Arrange
+        _mockConfiguration.GetChildren().Returns([]);
+
+        // Act
+        var result = _flexConfiguration.GetSection(nonExistentKey);
+
+        // Assert
+        result.Should().BeNull();
+    }
+
+    [Theory]
+    [AutoData]
+    public void GetSection_WithCaseInsensitiveKey_ReturnsFlexConfig(string key)
+    {
+        // Arrange
+        var mockSection = CreateMock<IConfigurationSection>();
+        mockSection.Key.Returns(key.ToUpper());
+
+        _mockConfiguration.GetChildren().Returns([mockSection]);
+
+        // Act
+        var result = _flexConfiguration.GetSection(key.ToLower());
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Configuration.Should().BeSameAs(mockSection);
+    }
+
+    [Fact]
+    public void GetSection_WithValidKey_EnablesChainedAccess()
+    {
+        // Arrange
+        var parentKey = "Parent";
+        var childKey = "Child";
+
+        var mockChildSection = CreateMock<IConfigurationSection>();
+        mockChildSection.Key.Returns(childKey);
+
+        var mockParentSection = CreateMock<IConfigurationSection>();
+        mockParentSection.Key.Returns(parentKey);
+        mockParentSection.GetChildren().Returns([mockChildSection]);
+
+        _mockConfiguration.GetChildren().Returns([mockParentSection]);
+
+        // Act
+        var parentSection = _flexConfiguration.GetSection(parentKey);
+        var childSection = parentSection?.GetSection(childKey);
+
+        // Assert
+        parentSection.Should().NotBeNull();
+        childSection.Should().NotBeNull();
+        childSection.Configuration.Should().BeSameAs(mockChildSection);
+    }
+
+    [Fact]
+    public void GetSection_WithRealisticConfigurationData_WorksCorrectly()
+    {
+        // Arrange
+        var configData = ConfigurationTestDataBuilder.CreateConfigurationDictionary();
+        var databaseKey = "Database";
+
+        var mockDatabaseSection = CreateMock<IConfigurationSection>();
+        mockDatabaseSection.Key.Returns(databaseKey);
+        mockDatabaseSection["CommandTimeout"].Returns(configData["Database:CommandTimeout"]);
+
+        _mockConfiguration.GetChildren().Returns([mockDatabaseSection]);
+
+        // Act
+        var databaseSection = _flexConfiguration.GetSection(databaseKey);
+
+        // Assert
+        databaseSection.Should().NotBeNull();
+        databaseSection.Configuration.Should().BeSameAs(mockDatabaseSection);
+        databaseSection["CommandTimeout"].Should().Be(configData["Database:CommandTimeout"]);
     }
 }

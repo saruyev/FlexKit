@@ -10,8 +10,13 @@ namespace FlexKit.Logging.ZLogger.Detection;
 /// Builds ZLogger configuration from FlexKit LoggingConfig by dynamically
 /// detecting available processors and configuring them using reflection.
 /// </summary>
-public class ZLoggerConfigurationBuilder
+internal sealed class ZLoggerConfigurationBuilder
 {
+    /// <summary>
+    /// A dictionary containing information about all available ZLogger processors,
+    /// keyed by their respective names. This data is populated dynamically by detecting
+    /// processors in the current environment through the <see cref="ZLoggerProcessorDetector"/>.
+    /// </summary>
     private readonly Dictionary<string, ZLoggerProcessorDetector.ProcessorInfo> _availableProcessors;
 
     /// <summary>
@@ -60,29 +65,28 @@ public class ZLoggerConfigurationBuilder
         string[] types) =>
         config.Targets.Values
             .Where(t => t.Enabled)
-            .Count(target => TryConfigureProcessor(target, loggingBuilder, types));
+            .Count(target => TryConfigureProcessor(
+                new BuildContext { LoggingBuilder = loggingBuilder, Target = target, Config = config },
+                types));
 
     /// <summary>
     /// Attempts to configure a ZLogger processor for the specified FlexKit logging target.
     /// </summary>
-    /// <param name="target">The FlexKit logging target to configure.</param>
-    /// <param name="loggingBuilder">The ILoggingBuilder to configure.</param>
+    /// <param name="context">Context for the current configuration.</param>
     /// <param name="types">Array of all target types for filtering purposes.</param>
     /// <returns>True if the processor was successfully configured; otherwise, false.</returns>
     private bool TryConfigureProcessor(
-        LoggingTarget target,
-        ILoggingBuilder loggingBuilder,
+        BuildContext context,
         string[] types)
     {
-        if (!_availableProcessors.TryGetValue(target.Type, out var processorInfo))
+        if (!_availableProcessors.TryGetValue(context.Target.Type, out var processorInfo))
         {
-            Debug.WriteLine($"Warning: ZLogger processor '{target.Type}' not found in available processors");
+            Debug.WriteLine($"Warning: ZLogger processor '{context.Target.Type}' not found in available processors");
             return false;
         }
 
         try
         {
-            var context = new BuildContext { LoggingBuilder = loggingBuilder, Target = target };
             var success = processorInfo.IsBuiltIn
                 ? context.ConfigureBuiltInProcessor(processorInfo)
                 : context.ConfigureAsyncLogProcessor(processorInfo);
@@ -97,7 +101,7 @@ public class ZLoggerConfigurationBuilder
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"Warning: Failed to configure ZLogger processor '{target.Type}': {ex.Message}");
+            Debug.WriteLine($"Warning: Failed to configure ZLogger processor '{context.Target.Type}': {ex.Message}");
             return false;
         }
     }
@@ -128,7 +132,18 @@ public class ZLoggerConfigurationBuilder
         Debug.WriteLine("Warning: Could not configure fallback ZLogger console - no suitable method found");
     }
 
-    private static bool InvokeConsoleLoggerMethod(ILoggingBuilder loggingBuilder, ZLoggerProcessorDetector.ProcessorInfo consoleProcessor)
+    /// <summary>
+    /// Invokes the method to configure a ZLogger console logger using the specified logging builder
+    /// and console processor information.
+    /// </summary>
+    /// <param name="loggingBuilder">The logging builder used to configure logging settings.</param>
+    /// <param name="consoleProcessor">
+    /// The processor information containing details about the ZLogger console configuration.
+    /// </param>
+    /// <returns>True if the console logger method was successfully invoked, otherwise false.</returns>
+    private static bool InvokeConsoleLoggerMethod(
+        ILoggingBuilder loggingBuilder,
+        ZLoggerProcessorDetector.ProcessorInfo consoleProcessor)
     {
         // Call AddZLoggerConsole() without parameters
         var method = consoleProcessor.ExtensionMethod;
@@ -147,7 +162,6 @@ public class ZLoggerConfigurationBuilder
 
         simpleMethod.Invoke(null, [loggingBuilder]);
         return true;
-
     }
 
     /// <summary>
@@ -160,7 +174,7 @@ public class ZLoggerConfigurationBuilder
         BuildContext context,
         string[] types)
     {
-        var filterType = Type.GetType(MelExtensions.FilterType);
+        var filterType = Type.GetType(MelNames.FilterType);
 
         // Find the generic AddFilter<T> method: AddFilter<T>(ILoggingBuilder, string?, LogLevel)
         var genericMethod = filterType?.GetMethods()
@@ -178,14 +192,7 @@ public class ZLoggerConfigurationBuilder
 
         try
         {
-            // Block other categories from this provider
-            foreach (var otherCategory in types.Where(t => t != context.Target.Type))
-            {
-                specificMethod.Invoke(null, [context.LoggingBuilder, otherCategory, LogLevel.None]);
-            }
-
-            // Allow this target's category through
-            specificMethod.Invoke(null, [context.LoggingBuilder, context.Target.Type, GetLogLevel(context.Target)]);
+            ConfigureLoggingForCategories(context, types, specificMethod);
         }
         catch (Exception ex)
         {
@@ -197,6 +204,36 @@ public class ZLoggerConfigurationBuilder
             m.GetParameters().Length == 3 &&
             m.GetParameters()[1].ParameterType == typeof(string) &&
             m.GetParameters()[2].ParameterType == typeof(LogLevel);
+    }
+
+    /// <summary>
+    /// Configures logging behavior for specific categories based on the logging configuration and target type.
+    /// </summary>
+    /// <param name="context">The context containing logging configuration details and target settings.</param>
+    /// <param name="types">An array of string representing the type categories to configure logging for.</param>
+    /// <param name="specificMethod">
+    /// The method that handles the actual configuration of logging for a specific category.
+    /// </param>
+    private static void ConfigureLoggingForCategories(
+        BuildContext context,
+        string[] types,
+        MethodInfo specificMethod)
+    {
+        foreach (var suppressedCategory in context.Config.SuppressedCategories)
+        {
+            specificMethod.Invoke(
+                null,
+                [context.LoggingBuilder, suppressedCategory, context.Config.SuppressedLogLevel]);
+        }
+
+        // Block other categories from this provider
+        foreach (var otherCategory in types.Where(t => t != context.Target.Type))
+        {
+            specificMethod.Invoke(null, [context.LoggingBuilder, otherCategory, LogLevel.None]);
+        }
+
+        // Allow this target's category through
+        specificMethod.Invoke(null, [context.LoggingBuilder, context.Target.Type, GetLogLevel(context.Target)]);
     }
 
     /// <summary>

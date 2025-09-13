@@ -39,7 +39,7 @@ public class YamlConfigurationSteps(ScenarioContext scenarioContext)
     public void GivenIHaveConfiguredAConfigurationModuleWithBaseSettings()
     {
         _configurationBuilder.Should().NotBeNull("Configuration builder should be established");
-        
+
         var baseData = new Dictionary<string, string?>
         {
             ["Application:Name"] = "TestApp",
@@ -50,7 +50,7 @@ public class YamlConfigurationSteps(ScenarioContext scenarioContext)
 
         _configurationBuilder!.AddTempYamlFile(baseData);
         _configurationSources.Add("BaseSettings");
-        
+
         scenarioContext.Set(_configurationBuilder, "ConfigurationBuilder");
     }
 
@@ -64,7 +64,7 @@ public class YamlConfigurationSteps(ScenarioContext scenarioContext)
 
         _configurationBuilder!.AddYamlFile(testDataPath, optional: false);
         _configurationSources.Add($"File:{filePath}");
-        
+
         scenarioContext.Set(_configurationBuilder, "ConfigurationBuilder");
     }
 
@@ -94,10 +94,10 @@ public class YamlConfigurationSteps(ScenarioContext scenarioContext)
         _configurationBuilder!
             .AddTempYamlFile(baseConfig)
             .AddTempYamlFile(overrideConfig);
-            
+
         _configurationSources.Add("Base");
         _configurationSources.Add("Override");
-        
+
         scenarioContext.Set(_configurationBuilder, "ConfigurationBuilder");
     }
 
@@ -114,7 +114,7 @@ public class YamlConfigurationSteps(ScenarioContext scenarioContext)
         {
             _configuration = _configurationBuilder!.Build();
             _flexConfiguration = _configuration.GetFlexConfiguration();
-            
+
             // Store in a scenario context
             scenarioContext.Set(_configuration, "Configuration");
             scenarioContext.Set(_flexConfiguration, "FlexConfiguration");
@@ -132,7 +132,7 @@ public class YamlConfigurationSteps(ScenarioContext scenarioContext)
 
         _configurationBuilder!.AddTempYamlFile(yamlContent);
         _configurationSources.Add("Additional");
-        
+
         scenarioContext.Set(_configurationBuilder, "ConfigurationBuilder");
     }
 
@@ -147,7 +147,7 @@ public class YamlConfigurationSteps(ScenarioContext scenarioContext)
 
         _configurationBuilder!.AddTempYamlFile(yamlContent);
         _configurationSources.Add("Hierarchical");
-        
+
         scenarioContext.Set(_configurationBuilder, "ConfigurationBuilder");
     }
 
@@ -165,17 +165,17 @@ public class YamlConfigurationSteps(ScenarioContext scenarioContext)
             var key = row["Key"];
             var value = row["Value"];
             var parts = key.Split(':');
-            
+
             if (parts.Length > 1)
             {
                 var section = parts[0];
                 var remainingPath = string.Join(":", parts.Skip(1));
-                
+
                 if (!sections.ContainsKey(section))
                 {
                     sections[section] = new Dictionary<string, object>();
                 }
-                
+
                 SetNestedValue(sections[section], remainingPath, value);
             }
             else
@@ -198,7 +198,7 @@ public class YamlConfigurationSteps(ScenarioContext scenarioContext)
     {
         var parts = path.Split(':');
         Dictionary<string, object> current = section;
-        
+
         for (int i = 0; i < parts.Length - 1; i++)
         {
             var part = parts[i];
@@ -208,14 +208,14 @@ public class YamlConfigurationSteps(ScenarioContext scenarioContext)
             }
             current = (Dictionary<string, object>)current[part];
         }
-        
+
         current[parts[^1]] = value;
     }
 
     private static void WriteYamlSection(StringBuilder yaml, Dictionary<string, object> section, int indent)
     {
         var indentStr = new string(' ', indent);
-        
+
         foreach (var kvp in section)
         {
             if (kvp.Value is Dictionary<string, object> nestedSection)
@@ -254,7 +254,7 @@ public class YamlConfigurationSteps(ScenarioContext scenarioContext)
         // Clear previous sources
         _configurationBuilder!.Clear();
         _configurationSources.Clear();
-        
+
         // Add new configuration
         var newData = new Dictionary<string, string?>
         {
@@ -264,7 +264,7 @@ public class YamlConfigurationSteps(ScenarioContext scenarioContext)
 
         _configurationBuilder.AddTempYamlFile(newData);
         _configurationSources.Add("Rebuilt");
-        
+
         scenarioContext.Set(_configurationBuilder, "ConfigurationBuilder");
     }
 
@@ -300,7 +300,7 @@ public class YamlConfigurationSteps(ScenarioContext scenarioContext)
 
         _configurationBuilder!.AddTempYamlFile(envConfig);
         _configurationSources.Add($"Environment:{environment}");
-        
+
         scenarioContext.Set(_configurationBuilder, "ConfigurationBuilder");
     }
 
@@ -321,30 +321,30 @@ public class YamlConfigurationSteps(ScenarioContext scenarioContext)
     {
         _configuration.Should().NotBeNull("Configuration should be built");
         var actualValue = _configuration![key];
-        
+
         // Handle boolean values - YAML produces a lowercase string, but tests might expect titlecase
-        if (expectedValue.Equals("True", StringComparison.OrdinalIgnoreCase) && 
+        if (expectedValue.Equals("True", StringComparison.OrdinalIgnoreCase) &&
             actualValue?.Equals("true", StringComparison.OrdinalIgnoreCase) == true)
         {
             actualValue = "True"; // Normalize for test comparison
         }
-        else if (expectedValue.Equals("False", StringComparison.OrdinalIgnoreCase) && 
+        else if (expectedValue.Equals("False", StringComparison.OrdinalIgnoreCase) &&
                  actualValue?.Equals("false", StringComparison.OrdinalIgnoreCase) == true)
         {
             actualValue = "False"; // Normalize for test comparison
         }
-        
+
         actualValue.Should().Be(expectedValue);
-        
+
         // Also verify through FlexConfig
         _flexConfiguration.Should().NotBeNull("FlexConfiguration should be available");
         var flexValue = _flexConfiguration![key];
-        if (expectedValue.Equals("True", StringComparison.OrdinalIgnoreCase) && 
+        if (expectedValue.Equals("True", StringComparison.OrdinalIgnoreCase) &&
             flexValue?.Equals("true", StringComparison.OrdinalIgnoreCase) == true)
         {
             flexValue = "True";
         }
-        else if (expectedValue.Equals("False", StringComparison.OrdinalIgnoreCase) && 
+        else if (expectedValue.Equals("False", StringComparison.OrdinalIgnoreCase) &&
                  flexValue?.Equals("false", StringComparison.OrdinalIgnoreCase) == true)
         {
             flexValue = "False";
@@ -376,15 +376,15 @@ public class YamlConfigurationSteps(ScenarioContext scenarioContext)
     public void ThenTheConfigurationModuleShouldHavePrecedenceWhereLaterSourcesOverrideEarlierOnes()
     {
         _configuration.Should().NotBeNull("Configuration should be built");
-        
+
         // Verify that override values are present (from later sources)
         _configuration!["Application:Environment"].Should().Be("Testing", "Later source should override earlier");
         _configuration["Database:Host"].Should().Be("test.db.com", "Later source should override earlier");
-        
+
         // Verify that base values are still available when not overridden
         _configuration["Application:Name"].Should().Be("MultiSourceApp", "Base value should remain when not overridden");
         _configuration["Database:Port"].Should().Be("5432", "Base value should remain when not overridden");
-        
+
         // Verify that new values from later sources are available
         _configuration["Api:Timeout"].Should().Be("30", "New value from later source should be available");
     }
@@ -393,20 +393,20 @@ public class YamlConfigurationSteps(ScenarioContext scenarioContext)
     public void ThenTheConfigurationModuleShouldSupportFlexConfigDynamicAccess()
     {
         _flexConfiguration.Should().NotBeNull("FlexConfiguration should be available");
-        
+
         // Test basic indexer access instead of dynamic access to avoid null reference issues
         var appName = _flexConfiguration!["Application:Name"];
         appName.Should().NotBeNull("Application Name should be accessible");
-        
+
         // Test section access
         var appSection = _flexConfiguration.Configuration.GetSection("Application");
         appSection.Should().NotBeNull("Application section should exist");
         appSection.Exists().Should().BeTrue("Application section should have data");
-        
+
         // Test FlexConfig section access
         var appFlexSection = appSection.GetFlexConfiguration();
         appFlexSection.Should().NotBeNull("Application section should be accessible as FlexConfig");
-        
+
         var nameFromSection = appFlexSection["Name"];
         nameFromSection.Should().Be(appName, "Section access should return same value as direct access");
     }
@@ -424,7 +424,7 @@ public class YamlConfigurationSteps(ScenarioContext scenarioContext)
     {
         _lastException.Should().BeNull("Empty YAML files should not cause exceptions");
         _configuration.Should().NotBeNull("Configuration should still be built with empty files");
-        
+
         // The configuration should have been built but may not contain any data from empty files
         // This is expected behavior
         _flexConfiguration.Should().NotBeNull("FlexConfiguration should be available even with empty files");
@@ -434,11 +434,11 @@ public class YamlConfigurationSteps(ScenarioContext scenarioContext)
     public void ThenTheConfigurationModuleAfterClearShouldOnlyContainNewData()
     {
         _configuration.Should().NotBeNull("Configuration should be built after clear");
-        
+
         // Should contain new data
         _configuration!["NewApp:Name"].Should().Be("ClearedAndRebuilt");
         _configuration["NewApp:Setting"].Should().Be("Fresh");
-        
+
         // Should not contain old data
         _configuration["Application:Name"].Should().BeNull("Old data should be cleared");
         _configuration["Server:Host"].Should().BeNull("Old data should be cleared");
@@ -448,7 +448,7 @@ public class YamlConfigurationSteps(ScenarioContext scenarioContext)
     public void ThenTheConfigurationModuleShouldReflectEnvironmentSpecificValuesFor(string environment)
     {
         _configuration.Should().NotBeNull("Configuration should be built");
-        
+
         var expectedEnvironment = environment;
         var expectedHost = environment.ToLowerInvariant() switch
         {
@@ -456,7 +456,7 @@ public class YamlConfigurationSteps(ScenarioContext scenarioContext)
             "staging" => "staging.db.com",
             _ => "localhost"
         };
-        
+
         _configuration!["Application:Environment"].Should().Be(expectedEnvironment);
         _configuration["Database:Host"].Should().Be(expectedHost);
     }

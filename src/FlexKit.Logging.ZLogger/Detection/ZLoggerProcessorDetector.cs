@@ -8,12 +8,12 @@ namespace FlexKit.Logging.ZLogger.Detection;
 /// Auto-detects available ZLogger processors by scanning loaded assemblies for
 /// built-in extension methods and classes that implement IAsyncLogProcessor.
 /// </summary>
-public static class ZLoggerProcessorDetector
+internal static class ZLoggerProcessorDetector
 {
     /// <summary>
     /// Information about a detected ZLogger processor, including its configuration details.
     /// </summary>
-    public class ProcessorInfo
+    internal sealed class ProcessorInfo
     {
         /// <summary>
         /// Gets the name of the detected ZLogger processor.

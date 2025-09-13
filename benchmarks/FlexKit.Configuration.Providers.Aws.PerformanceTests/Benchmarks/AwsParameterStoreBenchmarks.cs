@@ -24,7 +24,7 @@ public class AwsParameterStoreBenchmarks
 {
     private const int LocalStackPort = 4566;
     private const string LocalStackImage = "localstack/localstack:latest";
-    
+
     private string _testParameterPath = null!;
     private string _testParameterValue = null!;
     private AWSOptions _localstackOptions = null!;
@@ -45,7 +45,7 @@ public class AwsParameterStoreBenchmarks
         // Setup localstack connection options
         var mappedPort = _container!.GetMappedPublicPort(LocalStackPort);
         var endpointUrl = $"http://localhost:{mappedPort}";
-        
+
         _localstackOptions = new AWSOptions
         {
             Credentials = new AnonymousAWSCredentials(),
@@ -61,7 +61,7 @@ public class AwsParameterStoreBenchmarks
             MaxErrorRetry = 0,
             Timeout = TimeSpan.FromSeconds(30)
         };
-        
+
         _ssmClient = new AmazonSimpleSystemsManagementClient(new AnonymousAWSCredentials(), config);
 
         // Health check - ensure the localstack is running and accessible
@@ -69,7 +69,7 @@ public class AwsParameterStoreBenchmarks
 
         // Setup test parameter in a localstack
         await SetupTestParameter();
-        
+
         // Update AWS options with the correct endpoint for the benchmarks
         _localstackOptions.DefaultClientConfig.ServiceURL = endpointUrl;
         _localstackOptions.DefaultClientConfig.UseHttp = true;
@@ -91,7 +91,7 @@ public class AwsParameterStoreBenchmarks
             .Build();
 
         await _container.StartAsync();
-        
+
         // Wait a bit for services to be ready
         await Task.Delay(2000);
     }
@@ -101,10 +101,10 @@ public class AwsParameterStoreBenchmarks
         try
         {
             // Try to get parameters to verify connectivity
-            await _ssmClient.GetParametersByPathAsync(new GetParametersByPathRequest 
-            { 
-                Path = "/", 
-                MaxResults = 1 
+            await _ssmClient.GetParametersByPathAsync(new GetParametersByPathRequest
+            {
+                Path = "/",
+                MaxResults = 1
             });
         }
         catch (Exception ex)
@@ -201,7 +201,7 @@ public class AwsParameterStoreBenchmarks
             .Build();
     }
 
-        private IConfiguration? _standardConfig;
+    private IConfiguration? _standardConfig;
     private FlexConfiguration? _flexConfig;
     private IFlexConfig? _flexConfigFromBuilder;
     private IFlexConfig? _flexConfigWithJson;
@@ -388,7 +388,7 @@ public class AwsParameterStoreBenchmarks
         finally
         {
             _ssmClient.Dispose();
-            
+
             // Stop and dispose container
             if (_container != null)
             {

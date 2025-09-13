@@ -43,7 +43,7 @@ namespace FlexKit.Configuration.Assembly;
 /// </code>
 /// </para>
 /// </remarks>
-public static class AssemblyExtensions
+internal static class AssemblyExtensions
 {
     /// <summary>
     /// Configuration section path for assembly mapping definitions.
@@ -94,7 +94,9 @@ public static class AssemblyExtensions
     /// </summary>
     /// <param name="builder">Container builder instance to register modules with.</param>
     /// <param name="registered">Previously registered assemblies to avoid duplications.</param>
-    /// <param name="configuration">The current application configuration settings containing assembly mapping rules.</param>
+    /// <param name="configuration">
+    /// The current application configuration settings containing assembly mapping rules.
+    /// </param>
     /// <remarks>
     /// This method performs the following operations:
     /// 1. Retrieves assembly mapping configuration from the "Application:Mapping" section
@@ -153,12 +155,15 @@ public static class AssemblyExtensions
     /// <param name="builder">The container builder to extend with discovered modules.</param>
     /// <param name="configuration">The current application configuration settings containing assembly mapping rules.</param>
     /// <remarks>
+    /// <para>
     /// This method implements a two-phase scanning approach:
     /// 1. Scans assemblies from the dependency context (compile-time dependencies)
     /// 2. Scans assemblies from the current application domain (runtime assemblies)
-    ///
+    /// </para>
+    /// <para>
     /// This dual approach ensures that modules are discovered regardless of how the
     /// application is deployed or which assemblies are loaded at runtime.
+    /// </para>
     ///
     /// <para>
     /// <strong>Usage Pattern:</strong>
@@ -227,8 +232,10 @@ public static class AssemblyExtensions
         // ReSharper disable once NullableWarningSuppressionIsUsed - we already checked the issue
         return [.. context!.RuntimeLibraries
             .Select(lib => lib.ConvertToCompilation()) // Convert to a compilation library for resolution
-            .Where(lib => FilterLibraries(lib.Name, config)) // Apply name-based filtering
-            .Where(lib => !lib.Name.Equals("FlexKit.Configuration", StringComparison.OrdinalIgnoreCase)) // Exclude self
+            .Where(lib =>
+                FilterLibraries(lib.Name, config) &&
+                !lib.Name.Equals("FlexKit.Configuration",
+                    StringComparison.OrdinalIgnoreCase)) // Apply name-based filtering and exclude self
             .SelectMany(ResolveReferencePaths) // Resolve to file paths
             .Where(File.Exists) // Ensure files exist
             .Select(AssemblyLoadContext.Default.LoadFromAssemblyPath)];

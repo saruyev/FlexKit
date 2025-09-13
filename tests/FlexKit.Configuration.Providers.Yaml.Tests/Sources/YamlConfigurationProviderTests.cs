@@ -548,7 +548,7 @@ public class YamlConfigurationProviderTests : YamlTestBase
               version: "1.0.0"
             """;
         var tempFile = CreateTempYamlFile(yamlContent);
-        
+
         var builder = new ConfigurationBuilder();
         builder.Add(new YamlConfigurationSource { Path = tempFile, Optional = false });
 

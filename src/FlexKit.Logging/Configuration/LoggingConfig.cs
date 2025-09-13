@@ -1,4 +1,5 @@
 using JetBrains.Annotations;
+using Microsoft.Extensions.Logging;
 
 namespace FlexKit.Logging.Configuration;
 
@@ -96,7 +97,9 @@ public class LoggingConfig
     /// Gets or sets whether to enable fallback formatting when the primary formatter fails.
     /// When enabled, failed formatting attempts fall back to a simple default format.
     /// </summary>
-    /// <value>True to enable fallback formatting; false to log formatting errors without a fallback. Default is true.</value>
+    /// <value>
+    /// True to enable fallback formatting; false to log formatting errors without a fallback. Default is true.
+    /// </value>
     public bool EnableFallbackFormatting { get; [UsedImplicitly] set; } = true;
 
     /// <summary>
@@ -104,7 +107,8 @@ public class LoggingConfig
     /// Only used when <see cref="EnableFallbackFormatting"/> is true.
     /// </summary>
     /// <value>The fallback template string. Default provides basic method execution information.</value>
-    public string FallbackTemplate { get; [UsedImplicitly] set; } = "Method {TypeName}.{MethodName} - Status: {Success}";
+    public string FallbackTemplate { get; [UsedImplicitly] set; } =
+        "Method {TypeName}.{MethodName} - Status: {Success}";
 
     /// <summary>
     /// Gets or sets whether to enable automatic method interception for all registered services.
@@ -138,7 +142,9 @@ public class LoggingConfig
     /// <strong>Pattern Matching Rules:</strong>
     /// <list type="bullet">
     /// <item><strong>Exact match:</strong> "MyApp.Services.PaymentService" matches only that specific service</item>
-    /// <item><strong>Wildcard match:</strong> "MyApp.Services.*" matches all services in the MyApp.Services namespace</item>
+    /// <item>
+    /// <strong>Wildcard match:</strong> "MyApp.Services.*" matches all services in the MyApp.Services namespace
+    /// </item>
     /// <item><strong>Precedence:</strong> Exact matches override wildcard patterns</item>
     /// </list>
     /// </para>
@@ -170,6 +176,28 @@ public class LoggingConfig
     /// </summary>
     /// <value>The default target name. Default is null (auto-detect).</value>
     public string? DefaultTarget { get; [UsedImplicitly] set; }
+
+    /// <summary>
+    /// Gets or sets the collection of logging categories that should be suppressed and not logged.
+    /// </summary>
+    /// <value>
+    /// A list of category names to be excluded from logging. Default includes common framework categories.
+    /// </value>
+    [UsedImplicitly]
+    public List<string> SuppressedCategories { get; set; } = [
+        "Microsoft",
+        "System",
+        "FlexKit",
+    ];
+
+    /// <summary>
+    /// Gets or sets the minimum log level for which logs should be suppressed.
+    /// </summary>
+    /// <value>
+    /// The log level below which log entries will not be processed. Default is <see cref="LogLevel.None"/>.
+    /// </value>
+    [UsedImplicitly]
+    public LogLevel SuppressedLogLevel { get; set; } = LogLevel.None;
 
     /// <summary>
     /// Gets or sets the name of the ActivitySource to use for manual logging.

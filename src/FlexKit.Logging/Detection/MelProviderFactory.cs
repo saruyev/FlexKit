@@ -9,11 +9,37 @@ namespace FlexKit.Logging.Detection;
 /// for the Microsoft.Extensions.Logging framework. Enables dynamic management
 /// of log provider configurations based on a logging configuration model.
 /// </summary>
-public class MelProviderFactory
+internal class MelProviderFactory
 {
+    /// <summary>
+    /// A dictionary that maps logging provider types (as strings) to their respective configuration actions.
+    /// These actions are responsible for configuring the corresponding logging providers based on the
+    /// provided logging target information. It enables dynamic and extensible management of logging
+    /// providers in the Microsoft.Extensions.Logging framework.
+    /// </summary>
     private readonly Dictionary<string, Action<LoggingTarget>> _providerConfigurers = [];
+
+    /// <summary>
+    /// Represents the logging configuration settings used to determine and manage
+    /// the logging targets and their respective configurations within the
+    /// Microsoft.Extensions.Logging framework. This configuration is used
+    /// to dynamically configure and adapt logging providers based on the specified
+    /// targets and their associated properties.
+    /// </summary>
     private readonly LoggingConfig _config;
+
+    /// <summary>
+    /// An instance of <see cref="ILoggingBuilder"/> that provides methods and configuration for setting up
+    /// logging providers in the Microsoft.Extensions.Logging framework. It serves as the core mechanism for
+    /// adding, clearing, and configuring logging providers dynamically based on the application's requirements.
+    /// </summary>
     private readonly ILoggingBuilder _builder;
+
+    /// <summary>
+    /// An array of strings representing the distinct types of logging targets
+    /// specified in the logging configuration. This provides a way to manage and
+    /// interact with supported logging providers dynamically based on their types.
+    /// </summary>
     private readonly string[] _types;
 
     /// <summary>
@@ -62,12 +88,12 @@ public class MelProviderFactory
     /// <param name="target">The logging target configuration defining the Debug provider settings.</param>
     private void TryAddDebug(LoggingTarget target)
     {
-        var type = Type.GetType(MelExtensions.DebugType);
+        var type = Type.GetType(MelNames.DebugType);
         var method = type?.GetMethod("AddDebug", [typeof(ILoggingBuilder)]);
         method?.Invoke(null, [_builder]);
 
         // Add filters for this provider
-        AddFiltersForProvider(Type.GetType(MelExtensions.DebugProviderType), target);
+        AddFiltersForProvider(Type.GetType(MelNames.DebugProviderType), target);
     }
 
     /// <summary>
@@ -80,7 +106,7 @@ public class MelProviderFactory
     /// </param>
     private void TryAddConsole(LoggingTarget target)
     {
-        var type = Type.GetType(MelExtensions.ConsoleType);
+        var type = Type.GetType(MelNames.ConsoleType);
         var (configMethodType, methodName) = target.GetFormatterOptionsType();
 
         if (configMethodType != null)
@@ -88,7 +114,7 @@ public class MelProviderFactory
             InvokeLoggingMethod(new(target, configMethodType, type, methodName));
         }
 
-        AddFiltersForProvider(Type.GetType(MelExtensions.ConsoleProviderType), target);
+        AddFiltersForProvider(Type.GetType(MelNames.ConsoleProviderType), target);
     }
 
     /// <summary>
@@ -100,11 +126,11 @@ public class MelProviderFactory
     /// </param>
     private void TryAddEventSource(LoggingTarget target)
     {
-        var type = Type.GetType(MelExtensions.EventSourceType);
+        var type = Type.GetType(MelNames.EventSourceType);
         var method = type?.GetMethod("AddEventSourceLogger", [typeof(ILoggingBuilder)]);
         method?.Invoke(null, [_builder]);
 
-        AddFiltersForProvider(Type.GetType(MelExtensions.EventSourceProviderType), target);
+        AddFiltersForProvider(Type.GetType(MelNames.EventSourceProviderType), target);
     }
 
     /// <summary>
@@ -116,8 +142,8 @@ public class MelProviderFactory
     /// </param>
     private void TryAddEventLog(LoggingTarget target)
     {
-        var type = Type.GetType(MelExtensions.EventLogType);
-        var settingsType = Type.GetType(MelExtensions.EventLogSettingsType);
+        var type = Type.GetType(MelNames.EventLogType);
+        var settingsType = Type.GetType(MelNames.EventLogSettingsType);
 
         if (settingsType != null && target.HasEventLogConfiguration())
         {
@@ -129,7 +155,7 @@ public class MelProviderFactory
             method?.Invoke(null, [_builder]);
         }
 
-        AddFiltersForProvider(Type.GetType(MelExtensions.EventLogProviderType), target);
+        AddFiltersForProvider(Type.GetType(MelNames.EventLogProviderType), target);
     }
 
     /// <summary>
@@ -141,18 +167,20 @@ public class MelProviderFactory
     /// </param>
     private void TryAddApplicationInsights(LoggingTarget target)
     {
-        var type = Type.GetType(MelExtensions.ApplicationInsightsType);
+        var type = Type.GetType(MelNames.ApplicationInsightsType);
 
         // Check for the two-parameter configuration method
-        var telemetryConfigType = Type.GetType(MelExtensions.TelemetryConfigurationType);
-        var optionsType = Type.GetType(MelExtensions.ApplicationInsightsOptionsType);
+        var telemetryConfigType = Type.GetType(MelNames.TelemetryConfigurationType);
+        var optionsType = Type.GetType(MelNames.ApplicationInsightsOptionsType);
 
         if (telemetryConfigType != null && optionsType != null)
         {
-            InvokeApplicationInsightsMethod(new(target, optionsType, type, "AddApplicationInsights"), telemetryConfigType);
+            InvokeApplicationInsightsMethod(
+                new(target, optionsType, type, "AddApplicationInsights"),
+                telemetryConfigType);
         }
 
-        AddFiltersForProvider(Type.GetType(MelExtensions.ApplicationInsightsProviderType), target);
+        AddFiltersForProvider(Type.GetType(MelNames.ApplicationInsightsProviderType), target);
     }
 
     /// <summary>
@@ -166,13 +194,13 @@ public class MelProviderFactory
     /// </param>
     private void TryAddAzureWebAppDiagnostics(LoggingTarget target)
     {
-        var type = Type.GetType(MelExtensions.AzureAppServicesType);
+        var type = Type.GetType(MelNames.AzureAppServicesType);
         var method = type?.GetMethod("AddAzureWebAppDiagnostics", [typeof(ILoggingBuilder)]);
 
         method?.Invoke(null, [_builder]);
         ConfigureAzureFileLoggerOptions(target);
         ConfigureAzureBlobLoggerOptions(target);
-        AddFiltersForProvider(Type.GetType(MelExtensions.AzureAppServicesProviderType), target);
+        AddFiltersForProvider(Type.GetType(MelNames.AzureAppServicesProviderType), target);
     }
 
     /// <summary>
@@ -212,7 +240,9 @@ public class MelProviderFactory
     /// <param name="telemetryConfigType">
     /// The type representing the telemetry configuration model required for Application Insights.
     /// </param>
-    private void InvokeApplicationInsightsMethod(InvocationContext context, Type telemetryConfigType)
+    private void InvokeApplicationInsightsMethod(
+        InvocationContext context,
+        Type telemetryConfigType)
     {
         var telemetryActionType = typeof(Action<>).MakeGenericType(telemetryConfigType);
         var actionType = typeof(Action<>).MakeGenericType(context.ConfigMethodType);
@@ -239,7 +269,7 @@ public class MelProviderFactory
     /// <param name="target">The logging target whose Azure File Logger options need to be configured.</param>
     private void ConfigureAzureFileLoggerOptions(LoggingTarget target)
     {
-        var optionsType = Type.GetType(MelExtensions.AzureFileOptionsType);
+        var optionsType = Type.GetType(MelNames.AzureFileOptionsType);
 
         if (optionsType == null)
         {
@@ -275,7 +305,7 @@ public class MelProviderFactory
     /// <param name="target">The logging target that contains settings for configuring Azure Blob logging.</param>
     private void ConfigureAzureBlobLoggerOptions(LoggingTarget target)
     {
-        var optionsType = Type.GetType(MelExtensions.AzureBlobOptionsType);
+        var optionsType = Type.GetType(MelNames.AzureBlobOptionsType);
 
         if (optionsType == null)
         {
@@ -321,7 +351,7 @@ public class MelProviderFactory
             return;
         }
 
-        var filterType = Type.GetType(MelExtensions.FilterType);
+        var filterType = Type.GetType(MelNames.FilterType);
 
         // Find the generic AddFilter<T> method: AddFilter<T>(ILoggingBuilder, string?, LogLevel)
         var genericMethod = filterType?.GetMethods()
@@ -339,6 +369,11 @@ public class MelProviderFactory
         foreach (var otherCategory in _types.Where(t => t != target.Type))
         {
             specificMethod.Invoke(null, [_builder, otherCategory, LogLevel.None]);
+        }
+
+        foreach (var suppressedCategory in _config.SuppressedCategories)
+        {
+            specificMethod.Invoke(null, [_builder, suppressedCategory, _config.SuppressedLogLevel]);
         }
 
         // Allow this target's category through

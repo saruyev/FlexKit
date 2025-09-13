@@ -58,18 +58,44 @@ namespace FlexKit.Configuration.Providers.Azure.Sources;
 /// </remarks>
 public sealed class AzureKeyVaultConfigurationProvider : ConfigurationProvider, IDisposable
 {
+    /// <summary>
+    /// Represents the configuration source for Azure Key Vault. This variable holds
+    /// the instance of <see cref="AzureKeyVaultConfigurationSource"/> used to provide
+    /// configuration settings from an Azure Key Vault.
+    /// </summary>
     private readonly AzureKeyVaultConfigurationSource _source;
+
+    /// <summary>
+    /// Represents the client used to interact with Azure Key Vault secrets.
+    /// This variable holds an instance of <see cref="SecretClient"/>
+    /// to retrieve, process, and manage secrets from an Azure Key Vault.
+    /// </summary>
     private readonly SecretClient _secretClient;
+
+    /// <summary>
+    /// Represents a timer used to handle periodic reloading of configuration data
+    /// from Azure Key Vault. This timer triggers load operations at intervals
+    /// specified by the <see cref="AzureKeyVaultConfigurationSource.ReloadAfter"/> value.
+    /// </summary>
     private Timer? _reloadTimer;
+
+    /// <summary>
+    /// Indicates whether the object has already been disposed. This field is used to prevent
+    /// multiple disposal actions on the same instance, ensuring the proper implementation
+    /// of the <see cref="IDisposable"/> pattern.
+    /// </summary>
     private bool _disposed;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="AzureKeyVaultConfigurationProvider"/> class with an existing secret client.
+    /// Initializes a new instance of the <see cref="AzureKeyVaultConfigurationProvider"/> class with
+    /// an existing secret client.
     /// This constructor is primarily used for testing scenarios where a pre-configured client is provided.
     /// </summary>
     /// <param name="source">The configuration source that contains the Key Vault access configuration.</param>
     /// <param name="secretClient">The pre-configured Azure Key Vault secret client to use.</param>
-    /// <exception cref="ArgumentNullException">Thrown when <paramref name="source"/> or <paramref name="secretClient"/> is null.</exception>
+    /// <exception cref="ArgumentNullException">
+    /// Thrown when <paramref name="source"/> or <paramref name="secretClient"/> is null.
+    /// </exception>
     [UsedImplicitly]
     internal AzureKeyVaultConfigurationProvider(
         AzureKeyVaultConfigurationSource source,
@@ -93,7 +119,9 @@ public sealed class AzureKeyVaultConfigurationProvider : ConfigurationProvider, 
     /// including the vault URI, Azure options, and processing settings.
     /// </param>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="source"/> is null.</exception>
-    /// <exception cref="InvalidOperationException">Thrown when Azure credentials cannot be resolved or Key Vault client creation fails.</exception>
+    /// <exception cref="InvalidOperationException">
+    /// Thrown when Azure credentials cannot be resolved or Key Vault client creation fails.
+    /// </exception>
     public AzureKeyVaultConfigurationProvider(AzureKeyVaultConfigurationSource source)
         : this(source, CreateSecretClient(source))
     {
@@ -105,7 +133,9 @@ public sealed class AzureKeyVaultConfigurationProvider : ConfigurationProvider, 
     /// </summary>
     /// <param name="source">The configuration source containing the vault URI and credential details.</param>
     /// <returns>A configured <see cref="SecretClient"/> instance.</returns>
-    /// <exception cref="InvalidOperationException">Thrown when the client cannot be created due to invalid configuration or credential issues.</exception>
+    /// <exception cref="InvalidOperationException">
+    /// Thrown when the client cannot be created due to invalid configuration or credential issues.
+    /// </exception>
     private static SecretClient CreateSecretClient(AzureKeyVaultConfigurationSource source)
     {
         try
@@ -143,8 +173,12 @@ public sealed class AzureKeyVaultConfigurationProvider : ConfigurationProvider, 
     /// Retrieves all secrets from the specified Key Vault and processes them according
     /// to their type and the provider's configuration options.
     /// </summary>
-    /// <exception cref="InvalidOperationException">Thrown when Key Vault access fails and the source is not optional.</exception>
-    /// <exception cref="UnauthorizedAccessException">Thrown when the configured credentials lack necessary permissions.</exception>
+    /// <exception cref="InvalidOperationException">
+    /// Thrown when Key Vault access fails and the source is not optional.
+    /// </exception>
+    /// <exception cref="UnauthorizedAccessException">
+    /// Thrown when the configured credentials lack necessary permissions.
+    /// </exception>
     public override void Load()
     {
         try
@@ -312,7 +346,8 @@ public sealed class AzureKeyVaultConfigurationProvider : ConfigurationProvider, 
 
     /// <summary>
     /// Determines whether a secret should be processed as JSON based on the provider configuration.
-    /// Checks against JsonProcessorSecrets if specified, otherwise applies to all secrets when JsonProcessor is enabled.
+    /// Checks against JsonProcessorSecrets if specified, otherwise applies to all secrets when
+    /// JsonProcessor is enabled.
     /// </summary>
     /// <param name="secretName">The secret name to check.</param>
     /// <returns>True if the secret should be processed as JSON, false otherwise.</returns>
@@ -332,7 +367,9 @@ public sealed class AzureKeyVaultConfigurationProvider : ConfigurationProvider, 
     /// Releases the unmanaged resources used by the provider and optionally releases the managed resources.
     /// Disposes of the Azure Key Vault client and stops the reload timer if configured.
     /// </summary>
-    /// <param name="disposing">True to release both managed and unmanaged resources; false to release only unmanaged resources.</param>
+    /// <param name="disposing">
+    /// True to release both managed and unmanaged resources; false to release only unmanaged resources.
+    /// </param>
     [SuppressMessage("ReSharper", "FlagArgument", Justification =
         "Flag argument is used to indicate whether to dispose managed resources." +
         "No SRP violation as this is a standard pattern for IDisposable implementations.")]
@@ -352,7 +389,8 @@ public sealed class AzureKeyVaultConfigurationProvider : ConfigurationProvider, 
     }
 
     /// <summary>
-    /// Releases all resources used by the current instance of the <see cref="AzureKeyVaultConfigurationProvider"/> class.
+    /// Releases all resources used by the current instance of the
+    /// <see cref="AzureKeyVaultConfigurationProvider"/> class.
     /// </summary>
     public void Dispose() => Dispose(disposing: true);
 }

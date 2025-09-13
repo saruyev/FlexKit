@@ -40,7 +40,7 @@ public class TestContainerBuilder : BaseTestContainerBuilder<TestContainerBuilde
     public TestContainerBuilder WithLocalStack(bool autoStart = true, string services = "ssm,secretsmanager")
     {
         _autoStartLocalStack = autoStart;
-        
+
         Registrations.Add(builder =>
         {
             _localStackHelper ??= new LocalStackContainerHelper(_scenarioContext);
@@ -66,7 +66,7 @@ public class TestContainerBuilder : BaseTestContainerBuilder<TestContainerBuilde
             builder.Register(_ =>
             {
                 var awsOptions = _localStackHelper != null ? _localStackHelper.CreateAwsOptions() : new AWSOptions();
-                
+
                 configureOptions?.Invoke(awsOptions);
                 return awsOptions;
             })
@@ -138,7 +138,7 @@ public class TestContainerBuilder : BaseTestContainerBuilder<TestContainerBuilde
 
         var testDataPath = _scenarioContext.GetInfrastructureModuleTestDataPath(configFileName);
         var configData = LoadTestDataConfiguration(testDataPath);
-        
+
         WithConfiguration(configData);
 
         return this;
@@ -156,7 +156,7 @@ public class TestContainerBuilder : BaseTestContainerBuilder<TestContainerBuilde
             // Registers mock AWS service clients
             // This would be implemented based on your mocking strategy,
             // For example, using NSubstitute or Moq
-            
+
             builder.RegisterType<MockAwsServiceProvider>()
                 .As<IAwsServiceProvider>()
                 .SingleInstance();
@@ -174,7 +174,7 @@ public class TestContainerBuilder : BaseTestContainerBuilder<TestContainerBuilde
     {
         RegisterServices();
         var container = ApplyRegistrations();
-        
+
         // Handle auto-start LocalStack after the container is built
         if (_autoStartLocalStack && _localStackHelper != null)
         {
@@ -187,7 +187,7 @@ public class TestContainerBuilder : BaseTestContainerBuilder<TestContainerBuilde
                 throw new InvalidOperationException("Failed to auto-start LocalStack container", ex);
             }
         }
-        
+
         return container;
     }
 
@@ -201,13 +201,13 @@ public class TestContainerBuilder : BaseTestContainerBuilder<TestContainerBuilde
         var builder = Create(scenarioContext)
             .WithTestDefaults()
             .WithLocalStack(autoStart: false); // Don't auto-start for minimal setup
-        
+
         var container = builder.Build();
-        
+
         // Manually start LocalStack for minimal setup
         var localStackHelper = container.Resolve<LocalStackContainerHelper>();
         await localStackHelper.StartAsync();
-        
+
         return container;
     }
 
@@ -221,19 +221,19 @@ public class TestContainerBuilder : BaseTestContainerBuilder<TestContainerBuilde
     {
         var builder = Create(scenarioContext)
             .WithInfrastructureModuleDefaults();
-            
+
         if (!string.IsNullOrEmpty(testDataConfig))
         {
             builder.WithInfrastructureModuleTestData(testDataConfig);
         }
-        
+
         return builder.Build();
     }
 
     private Dictionary<string, string?> LoadTestDataConfiguration(string filePath)
     {
         var fullPath = Path.GetFullPath(filePath);
-        
+
         if (!File.Exists(fullPath))
         {
             throw new FileNotFoundException($"Infrastructure module test data file not found: {filePath}");
@@ -241,7 +241,7 @@ public class TestContainerBuilder : BaseTestContainerBuilder<TestContainerBuilde
 
         var jsonContent = File.ReadAllText(fullPath);
         var config = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(jsonContent);
-        
+
         // Flatten the configuration for use with IConfiguration
         return FlattenConfiguration(config ?? new Dictionary<string, object>());
     }
@@ -249,11 +249,11 @@ public class TestContainerBuilder : BaseTestContainerBuilder<TestContainerBuilde
     private Dictionary<string, string?> FlattenConfiguration(Dictionary<string, object> config, string prefix = "")
     {
         var flattened = new Dictionary<string, string?>();
-        
+
         foreach (var kvp in config)
         {
             var key = string.IsNullOrEmpty(prefix) ? kvp.Key : $"{prefix}:{kvp.Key}";
-            
+
             if (kvp.Value is Dictionary<string, object> nestedDict)
             {
                 var nested = FlattenConfiguration(nestedDict, key);
@@ -271,7 +271,7 @@ public class TestContainerBuilder : BaseTestContainerBuilder<TestContainerBuilde
                 flattened[key] = kvp.Value.ToString();
             }
         }
-        
+
         return flattened;
     }
 }

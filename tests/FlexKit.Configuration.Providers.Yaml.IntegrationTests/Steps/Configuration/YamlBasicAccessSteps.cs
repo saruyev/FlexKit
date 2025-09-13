@@ -40,7 +40,7 @@ public class YamlBasicAccessSteps(ScenarioContext scenarioContext)
     public void GivenIHaveAYamlModuleSourceWithTheFollowingData(Table table)
     {
         _yamlConfigurationBuilder.Should().NotBeNull("YAML configuration builder should be initialized");
-        
+
         var yamlData = new Dictionary<string, string?>();
         foreach (var row in table.Rows)
         {
@@ -100,7 +100,7 @@ public class YamlBasicAccessSteps(ScenarioContext scenarioContext)
     {
         var existingConfig = scenarioContext.Get<IConfiguration>("YamlConfiguration");
         var additionalData = new Dictionary<string, string?>();
-        
+
         foreach (var row in table.Rows)
         {
             var key = row["Key"];
@@ -110,13 +110,13 @@ public class YamlBasicAccessSteps(ScenarioContext scenarioContext)
 
         // Create a new configuration builder with existing data plus additional data
         var allData = new Dictionary<string, string?>();
-        
+
         // Copy existing configuration data
         foreach (var kvp in existingConfig.AsEnumerable())
         {
             allData[kvp.Key] = kvp.Value;
         }
-        
+
         // Add new data
         foreach (var kvp in additionalData)
         {
@@ -151,7 +151,7 @@ public class YamlBasicAccessSteps(ScenarioContext scenarioContext)
     public void WhenIUtilizeYamlAccessWithDynamicProperty(string propertyPath)
     {
         _yamlFlexConfiguration.Should().NotBeNull("YAML FlexConfiguration should be initialized");
-        
+
         dynamic yamlConfig = _yamlFlexConfiguration!;
         _lastYamlDynamicResult = NavigateToYamlProperty(yamlConfig, propertyPath);
         _yamlAccessResults.Add($"Dynamic[{propertyPath}] = {_lastYamlDynamicResult ?? "null"}");
@@ -177,7 +177,7 @@ public class YamlBasicAccessSteps(ScenarioContext scenarioContext)
     public void WhenIUtilizeYamlDynamicNavigationTo(string navigationPath)
     {
         _yamlFlexConfiguration.Should().NotBeNull("YAML FlexConfiguration should be initialized");
-        
+
         dynamic yamlConfig = _yamlFlexConfiguration!;
         _lastYamlDynamicResult = NavigateToYamlProperty(yamlConfig, navigationPath);
         _yamlAccessResults.Add($"Navigation[{navigationPath}] = {_lastYamlDynamicResult ?? "null"}");
@@ -285,14 +285,14 @@ public class YamlBasicAccessSteps(ScenarioContext scenarioContext)
     private static object? NavigateToYamlProperty(dynamic config, string propertyPath)
     {
         if (config is not IFlexConfig flexConfig) return null;
-    
+
         var properties = propertyPath.Split('.');
         IFlexConfig? current = flexConfig;
 
         foreach (var property in properties)
         {
             if (current == null) return null;
-        
+
             // Use CurrentConfig, which returns IFlexConfig or null for missing sections
             current = current.Configuration.CurrentConfig(property);
         }

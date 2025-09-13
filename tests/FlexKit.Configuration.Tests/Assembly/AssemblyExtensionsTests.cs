@@ -157,7 +157,7 @@ public class AssemblyExtensionsTests : UnitTestBase
         var config = new MappingConfig { Prefix = "FlexKit" };
 
         // Act - Use reflection to call the private method
-        var method = typeof(AssemblyExtensions).GetMethod("FilterLibraries", 
+        var method = typeof(AssemblyExtensions).GetMethod("FilterLibraries",
             System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
         var result = (bool)method!.Invoke(null, [assemblyName, config])!;
 
@@ -169,14 +169,14 @@ public class AssemblyExtensionsTests : UnitTestBase
     [InlineData("Acme.Services", true)]
     [InlineData("Acme.Data", true)]
     [InlineData("OtherVendor.Services", false)]
-    [InlineData("FlexKit.Configuration", false)] // Not in the names list
+    [InlineData("FlexKit.Configuration", false)] // Not in the names' list
     public void FilterLibraries_WithNames_FiltersCorrectly(string assemblyName, bool shouldInclude)
     {
         // Arrange
         var config = new MappingConfig { Names = ["Acme.Services", "Acme.Data"] };
 
         // Act - Use reflection to call the private method
-        var method = typeof(AssemblyExtensions).GetMethod("FilterLibraries", 
+        var method = typeof(AssemblyExtensions).GetMethod("FilterLibraries",
             System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
         var result = (bool)method!.Invoke(null, [assemblyName, config])!;
 
@@ -197,7 +197,7 @@ public class AssemblyExtensionsTests : UnitTestBase
         MappingConfig? config = null;
 
         // Act - Use reflection to call the private method
-        var method = typeof(AssemblyExtensions).GetMethod("FilterLibraries", 
+        var method = typeof(AssemblyExtensions).GetMethod("FilterLibraries",
             System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
         var result = (bool)method!.Invoke(null, [assemblyName, config])!;
 
@@ -213,7 +213,7 @@ public class AssemblyExtensionsTests : UnitTestBase
         var config = new MappingConfig { Prefix = "FlexKit" };
 
         // Act - Use reflection to call the private method
-        var method = typeof(AssemblyExtensions).GetMethod("FilterLibraries", 
+        var method = typeof(AssemblyExtensions).GetMethod("FilterLibraries",
             System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
         var result = (bool)method!.Invoke(null, [nullAssemblyName, config])!;
 
@@ -225,14 +225,14 @@ public class AssemblyExtensionsTests : UnitTestBase
     public void FilterLibraries_WithPrefixTakesPrecedenceOverNames()
     {
         // Arrange
-        var config = new MappingConfig 
-        { 
-            Prefix = "FlexKit", 
+        var config = new MappingConfig
+        {
+            Prefix = "FlexKit",
             Names = ["Acme.Services"]
         };
 
         // Act - Test with an assembly that matches names but not a prefix
-        var method = typeof(AssemblyExtensions).GetMethod("FilterLibraries", 
+        var method = typeof(AssemblyExtensions).GetMethod("FilterLibraries",
             System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
         var result1 = (bool)method!.Invoke(null, ["Acme.Services", config])!;
         var result2 = (bool)method.Invoke(null, ["FlexKit.Something", config])!;
@@ -249,7 +249,7 @@ public class AssemblyExtensionsTests : UnitTestBase
         var testAssembly = typeof(AssemblyExtensionsTests).Assembly;
 
         // Act - Use reflection to call the private method
-        var method = typeof(AssemblyExtensions).GetMethod("ContainsModules", 
+        var method = typeof(AssemblyExtensions).GetMethod("ContainsModules",
             System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
         bool result = (bool)method!.Invoke(null, [testAssembly])!;
 
@@ -264,7 +264,7 @@ public class AssemblyExtensionsTests : UnitTestBase
         var systemAssembly = typeof(string).Assembly; // mscorlib/System.Private.CoreLib
 
         // Act - Use reflection to call the private method
-        var method = typeof(AssemblyExtensions).GetMethod("ContainsModules", 
+        var method = typeof(AssemblyExtensions).GetMethod("ContainsModules",
             System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
         var result = (bool)method!.Invoke(null, [systemAssembly])!;
 
@@ -324,7 +324,7 @@ public class AssemblyExtensionsTests : UnitTestBase
         var mockRuntimeLibrary = CreateMockRuntimeLibrary();
 
         // Act - Use reflection to call the private extension method
-        var method = typeof(AssemblyExtensions).GetMethod("ConvertToCompilation", 
+        var method = typeof(AssemblyExtensions).GetMethod("ConvertToCompilation",
             System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
         var result = method!.Invoke(null, [mockRuntimeLibrary]);
 
@@ -332,7 +332,7 @@ public class AssemblyExtensionsTests : UnitTestBase
         result.Should().NotBeNull();
         result.Should().BeOfType<CompilationLibrary>();
     }
-    
+
     [Theory]
     [AutoData]
     public void GetAssemblies_WithCustomConfiguration_FiltersUsingMappingConfig(string customPrefix)
@@ -363,7 +363,7 @@ public class AssemblyExtensionsTests : UnitTestBase
     public void MappingSectionName_HasCorrectValue()
     {
         // Arrange & Act - Use reflection to get the private constant
-        var field = typeof(AssemblyExtensions).GetField("MappingSectionName", 
+        var field = typeof(AssemblyExtensions).GetField("MappingSectionName",
             System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
         var value = (string)field!.GetValue(null)!;
 
@@ -405,7 +405,7 @@ public class AssemblyExtensionsTests : UnitTestBase
         mockAssembly.GetTypes().Returns(_ => throw new System.Reflection.ReflectionTypeLoadException([], []));
 
         // Act - Use reflection to call the private method
-        var method = typeof(AssemblyExtensions).GetMethod("ContainsModules", 
+        var method = typeof(AssemblyExtensions).GetMethod("ContainsModules",
             System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
         var result = (bool)method!.Invoke(null, [mockAssembly])!;
 
@@ -421,7 +421,7 @@ public class AssemblyExtensionsTests : UnitTestBase
         var config = new MappingConfig { Prefix = "FlexKit" };
 
         // Act - Use reflection to call the private method
-        var method = typeof(AssemblyExtensions).GetMethod("FilterLibraries", 
+        var method = typeof(AssemblyExtensions).GetMethod("FilterLibraries",
             System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
         var result = (bool)method!.Invoke(null, [emptyAssemblyName, config])!;
 
@@ -437,7 +437,7 @@ public class AssemblyExtensionsTests : UnitTestBase
         var assemblyName = "FlexKit.Configuration";
 
         // Act - Use reflection to call the private method
-        var method = typeof(AssemblyExtensions).GetMethod("FilterLibraries", 
+        var method = typeof(AssemblyExtensions).GetMethod("FilterLibraries",
             System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
         var result = (bool)method!.Invoke(null, [assemblyName, config])!;
 
@@ -455,7 +455,7 @@ public class AssemblyExtensionsTests : UnitTestBase
         MappingConfig? config = null; // Use default filtering
 
         // Act - Use reflection to call the private method
-        var method = typeof(AssemblyExtensions).GetMethod("FilterLibraries", 
+        var method = typeof(AssemblyExtensions).GetMethod("FilterLibraries",
             System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
         var result = (bool)method!.Invoke(null, [assemblyName, config])!;
 
@@ -483,7 +483,7 @@ public class AssemblyExtensionsTests : UnitTestBase
         // Assert
         result.Should().NotBeNull();
         // Check that FlexKit.Configuration assembly is filtered out
-        result.Should().NotContain(assembly => 
+        result.Should().NotContain(assembly =>
             assembly.GetName().Name != null && assembly.GetName().Name!.Equals("FlexKit.Configuration", StringComparison.OrdinalIgnoreCase));
     }
 
@@ -494,7 +494,7 @@ public class AssemblyExtensionsTests : UnitTestBase
         var mockRuntimeLibrary = CreateMockRuntimeLibrary();
 
         // Act - Use reflection to call the private extension method
-        var method = typeof(AssemblyExtensions).GetMethod("ConvertToCompilation", 
+        var method = typeof(AssemblyExtensions).GetMethod("ConvertToCompilation",
             System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
         var result = (CompilationLibrary)method!.Invoke(null, [mockRuntimeLibrary])!;
 
@@ -522,7 +522,7 @@ public class AssemblyExtensionsTests : UnitTestBase
         );
 
         // Act - Use reflection to call the private method
-        var method = typeof(AssemblyExtensions).GetMethod("ResolveReferencePaths", 
+        var method = typeof(AssemblyExtensions).GetMethod("ResolveReferencePaths",
             System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
         var result = (IEnumerable<string>)method!.Invoke(null, [emptyCompilationLibrary])!;
 

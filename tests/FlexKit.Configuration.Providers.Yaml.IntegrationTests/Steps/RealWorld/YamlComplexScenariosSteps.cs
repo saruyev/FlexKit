@@ -46,7 +46,7 @@ public class YamlComplexScenariosSteps(ScenarioContext scenarioContext)
 
         _complexConfigurationBuilder!.AddYamlFile(testDataPath, optional: false);
         _complexConfigurationSources.Add($"MicroservicesFile:{filePath}");
-        
+
         scenarioContext.Set(_complexConfigurationBuilder, "ComplexConfigurationBuilder");
     }
 
@@ -60,7 +60,7 @@ public class YamlComplexScenariosSteps(ScenarioContext scenarioContext)
 
         _complexConfigurationBuilder!.AddYamlFile(testDataPath, optional: false);
         _complexConfigurationSources.Add($"MultiEnvironmentFile:{filePath}");
-        
+
         scenarioContext.Set(_complexConfigurationBuilder, "ComplexConfigurationBuilder");
     }
 
@@ -74,7 +74,7 @@ public class YamlComplexScenariosSteps(ScenarioContext scenarioContext)
 
         _complexConfigurationBuilder!.AddYamlFile(testDataPath, optional: false);
         _complexConfigurationSources.Add($"DeepNestingFile:{filePath}");
-        
+
         scenarioContext.Set(_complexConfigurationBuilder, "ComplexConfigurationBuilder");
     }
 
@@ -88,7 +88,7 @@ public class YamlComplexScenariosSteps(ScenarioContext scenarioContext)
 
         _complexConfigurationBuilder!.AddYamlFile(testDataPath, optional: false);
         _complexConfigurationSources.Add($"SecurityFile:{filePath}");
-        
+
         scenarioContext.Set(_complexConfigurationBuilder, "ComplexConfigurationBuilder");
     }
 
@@ -298,7 +298,7 @@ public class YamlComplexScenariosSteps(ScenarioContext scenarioContext)
         var authImage = _complexFlexConfiguration["services:auth-service:image"];
         var userImage = _complexFlexConfiguration["services:user-service:image"];
         var orderImage = _complexFlexConfiguration["services:order-service:image"];
-        
+
         _complexValidationResults.Add($"Auth: {authImage}");
         _complexValidationResults.Add($"User: {userImage}");
         _complexValidationResults.Add($"Order: {orderImage}");
@@ -434,18 +434,18 @@ public class YamlComplexScenariosSteps(ScenarioContext scenarioContext)
 
         // String values
         _complexFlexConfiguration!["string_value"].Should().Be("Hello World");
-        
+
         // Numeric values (stored as strings in configuration)
         _complexFlexConfiguration["integer_value"].Should().Be("42");
         _complexFlexConfiguration["float_value"].Should().Be("3.14159");
-        
+
         // Boolean values (YAML parses as lowercase)
         _complexFlexConfiguration["boolean_true"].Should().Be("true");
         _complexFlexConfiguration["boolean_false"].Should().Be("false");
-        
+
         // Null values
         _complexFlexConfiguration["null_value"].Should().BeNull();
-        
+
         // Array elements
         _complexFlexConfiguration["array_mixed:0"].Should().Be("string");
         _complexFlexConfiguration["array_mixed:1"].Should().Be("123");
@@ -463,7 +463,7 @@ public class YamlComplexScenariosSteps(ScenarioContext scenarioContext)
         _complexFlexConfiguration["numbers:negative"].Should().Be("-17");
         _complexFlexConfiguration["numbers:float"].Should().Be("3.14159");
         _complexFlexConfiguration["numbers:scientific"].Should().Be("1.23e+4"); // YAML preserves scientific notation
-        
+
         // Quoted numbers (should remain as strings)
         _complexFlexConfiguration["strings:quotedNumber"].Should().Be("123");
         _complexFlexConfiguration["strings:quotedFloat"].Should().Be("45.67");
@@ -491,7 +491,7 @@ public class YamlComplexScenariosSteps(ScenarioContext scenarioContext)
             .Where(kvp => kvp.Value != null)
             .Select(kvp => $"{kvp.Key} = {kvp.Value}")
             .ToList();
-        
+
         foreach (var key in allKeys)
         {
             _complexValidationResults.Add($"ConfigKey: {key}");
@@ -500,23 +500,23 @@ public class YamlComplexScenariosSteps(ScenarioContext scenarioContext)
         // Try different possible key formats based on the YAML structure
         // The YAML has development: <<: *defaults followed by host: "dev.example.com"
         // This could result in various flattening patterns
-        
+
         // Pattern 1: Direct properties
         var devTimeout1 = _complexFlexConfiguration["development:timeout"];
         var devHost1 = _complexFlexConfiguration["development:host"];
-        
+
         // Pattern 2: With defaults merged
         var devTimeout2 = _complexFlexConfiguration["timeout"]; // If defaults are merged at root
         var devHost2 = _complexFlexConfiguration["host"];
-        
+
         // Pattern 3: Nested structure
         var devTimeout3 = _complexFlexConfiguration["defaults:timeout"];
-        
+
         // Log what we found
         _complexValidationResults.Add($"Pattern1 - dev:timeout={devTimeout1}, dev:host={devHost1}");
         _complexValidationResults.Add($"Pattern2 - timeout={devTimeout2}, host={devHost2}");
         _complexValidationResults.Add($"Pattern3 - defaults:timeout={devTimeout3}");
-        
+
         // Use flexible assertions based on what actually exists
         if (!string.IsNullOrEmpty(devTimeout1))
         {
@@ -545,14 +545,14 @@ public class YamlComplexScenariosSteps(ScenarioContext scenarioContext)
         // Literal strings (preserve line breaks)
         var installation = _complexFlexConfiguration!["documentation:installation"];
         installation.Should().Contain("Step 1:").And.Contain("Step 2:").And.Contain("Step 3:").And.Contain("Step 4:");
-        
+
         var changelog = _complexFlexConfiguration["documentation:changelog"];
         changelog.Should().Contain("Version 1.0.0:").And.Contain("Version 1.1.0:");
-        
+
         // Folded strings (may contain line breaks but are processed as single paragraphs)
         var description = _complexFlexConfiguration["messages:description"];
         description.Should().Contain("spans multiple lines");
-        
+
         var terms = _complexFlexConfiguration["messages:terms"];
         terms.Should().Contain("user agreement document");
     }
@@ -569,13 +569,13 @@ public class YamlComplexScenariosSteps(ScenarioContext scenarioContext)
         _complexFlexConfiguration["flags:falseLowercase"].Should().Be("false");
         _complexFlexConfiguration["flags:falseUppercase"].Should().Be("False"); // Preserved from YAML
         _complexFlexConfiguration["flags:falseCaps"].Should().Be("FALSE"); // Preserved from YAML
-        
+
         // YAML boolean equivalents are preserved as strings, not converted
         _complexFlexConfiguration["flags:yesValue"].Should().Be("yes"); // Not converted to "true"
         _complexFlexConfiguration["flags:noValue"].Should().Be("no"); // Not converted to "false"
         _complexFlexConfiguration["flags:onValue"].Should().Be("on"); // Not converted to "true"
         _complexFlexConfiguration["flags:offValue"].Should().Be("off"); // Not converted to "false"
-        
+
         // Various null representations - emptyValue: in YAML becomes null, not empty string
         _complexFlexConfiguration["nulls:explicitNull"].Should().BeNull();
         _complexFlexConfiguration["nulls:tildeNull"].Should().BeNull();
@@ -598,7 +598,7 @@ public class YamlComplexScenariosSteps(ScenarioContext scenarioContext)
 
         // Test dynamic access patterns safely
         dynamic _ = _complexFlexConfiguration!;
-        
+
         // Access microservices configuration dynamically
         var services = _complexFlexConfiguration.Configuration.GetSection("services");
         if (services.Exists())
@@ -606,21 +606,21 @@ public class YamlComplexScenariosSteps(ScenarioContext scenarioContext)
             var gatewayConfig = services.GetSection("gateway");
             gatewayConfig.Exists().Should().BeTrue("Gateway service should be accessible");
         }
-        
+
         // Access environment configuration dynamically  
         var environments = _complexFlexConfiguration.Configuration.GetSection("environments");
         if (environments.Exists())
         {
             environments.GetChildren().Should().NotBeEmpty("Environments should be accessible");
         }
-        
+
         // Access security configuration dynamically
         var security = _complexFlexConfiguration.Configuration.GetSection("security");
         if (security.Exists())
         {
             security.GetChildren().Should().NotBeEmpty("Security configuration should be accessible");
         }
-        
+
         _complexValidationResults.Add("DynamicAccess: All features accessible");
     }
 

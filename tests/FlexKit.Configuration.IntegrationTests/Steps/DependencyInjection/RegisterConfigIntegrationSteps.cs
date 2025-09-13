@@ -25,10 +25,10 @@ public class RegisterConfigIntegrationSteps(ScenarioContext scenarioContext)
     private TestConfigurationBuilder? _configurationBuilder;
     private ContainerBuilder? _containerBuilder;
     private IContainer? _container;
-    
+
     private readonly List<(Type ConfigType, string SectionPath)> _configRegistrations = new();
     private readonly Dictionary<string, string?> _configurationData = new();
-    
+
     private Exception? _lastException;
     private bool _containerBuildSucceeded;
 
@@ -38,7 +38,7 @@ public class RegisterConfigIntegrationSteps(ScenarioContext scenarioContext)
     private PaymentApiConfig? _resolvedPaymentApiConfig;
     private FeatureConfig? _resolvedFeatureConfig;
     private ApiConfig? _resolvedApiConfig;
-    
+
     // Test services
     private DatabaseService? _resolvedDatabaseService;
     private ApiService? _resolvedApiService;
@@ -81,7 +81,7 @@ public class RegisterConfigIntegrationSteps(ScenarioContext scenarioContext)
     [UsedImplicitly]
     public class FeatureConfig
     {
-        public bool EnableCaching { get;  [UsedImplicitly] set; }
+        public bool EnableCaching { get; [UsedImplicitly] set; }
         public bool EnableMetrics { get; set; }
         public int MaxCacheSize { get; [UsedImplicitly] set; } = 500;
     }
@@ -110,10 +110,10 @@ public class RegisterConfigIntegrationSteps(ScenarioContext scenarioContext)
         // Quote: "public static T Create(ScenarioContext scenarioContext)"
         _configurationBuilder = TestConfigurationBuilder.Create(scenarioContext);
         _containerBuilder = new ContainerBuilder();
-        
+
         _configRegistrations.Clear();
         _configurationData.Clear();
-        
+
         _lastException = null;
         _containerBuildSucceeded = false;
     }
@@ -126,9 +126,9 @@ public class RegisterConfigIntegrationSteps(ScenarioContext scenarioContext)
     public void WhenIProvisionRegistrationModuleTestDataFrom(string filePath)
     {
         _configurationBuilder.Should().NotBeNull("Configuration builder should be established");
-        
+
         var normalizedPath = filePath.Replace('/', Path.DirectorySeparatorChar);
-        
+
         // Quote: "public T AddJsonFile(string path, bool optional = true, bool reloadOnChange = false)"
         _configurationBuilder!.AddJsonFile(normalizedPath, optional: false);
     }
@@ -137,7 +137,7 @@ public class RegisterConfigIntegrationSteps(ScenarioContext scenarioContext)
     public void WhenIProvisionAdditionalRegistrationModuleData(Table table)
     {
         _configurationBuilder.Should().NotBeNull("Configuration builder should be established");
-        
+
         var configData = new Dictionary<string, string?>();
         foreach (var row in table.Rows)
         {
@@ -146,7 +146,7 @@ public class RegisterConfigIntegrationSteps(ScenarioContext scenarioContext)
 
         // Quote: "public T AddInMemoryCollection(Dictionary<string, string?> data)"
         _configurationBuilder!.AddInMemoryCollection(configData);
-        
+
         // Store for later use in container registration
         foreach (var kvp in configData)
         {
@@ -183,11 +183,11 @@ public class RegisterConfigIntegrationSteps(ScenarioContext scenarioContext)
         {
             var configTypeName = row["ConfigType"];
             var sectionPath = row["SectionPath"];
-            
+
             var configType = GetConfigurationType(configTypeName);
             _configRegistrations.Add((configType, sectionPath));
         }
-        
+
         RegisterConfigurations();
     }
 
@@ -199,7 +199,7 @@ public class RegisterConfigIntegrationSteps(ScenarioContext scenarioContext)
             .AddFlexConfig(config => config.AddSource(new MemoryConfigurationSource { InitialData = _configurationData }))
             .RegisterConfig<DatabaseConfig>("Database")
             .RegisterConfig<ApiConfig>("Api");
-        
+
         builder.Should().BeSameAs(_containerBuilder, "fluent interface should return the same builder");
     }
 
@@ -210,7 +210,7 @@ public class RegisterConfigIntegrationSteps(ScenarioContext scenarioContext)
         {
             var configTypeName = row["ConfigType"];
             var sectionPath = row["SectionPath"];
-            
+
             var configType = GetConfigurationType(configTypeName);
             _configRegistrations.Add((configType, sectionPath));
         }
@@ -289,7 +289,7 @@ public class RegisterConfigIntegrationSteps(ScenarioContext scenarioContext)
         _resolvedDatabaseConfig = _container!.Resolve<DatabaseConfig>();
         _resolvedPaymentApiConfig = _container!.Resolve<PaymentApiConfig>();
         _resolvedFeatureConfig = _container!.Resolve<FeatureConfig>();
-        
+
         _resolvedAppConfig.Should().NotBeNull();
         _resolvedDatabaseConfig.Should().NotBeNull();
         _resolvedPaymentApiConfig.Should().NotBeNull();
@@ -301,10 +301,10 @@ public class RegisterConfigIntegrationSteps(ScenarioContext scenarioContext)
     {
         _resolvedDatabaseService = _container!.Resolve<DatabaseService>();
         _resolvedApiService = _container!.Resolve<ApiService>();
-        
+
         _resolvedDatabaseService.Should().NotBeNull();
         _resolvedApiService.Should().NotBeNull();
-        
+
         _resolvedDatabaseService!.Config.Should().NotBeNull();
         _resolvedApiService!.Config.Should().NotBeNull();
     }
@@ -314,7 +314,7 @@ public class RegisterConfigIntegrationSteps(ScenarioContext scenarioContext)
     {
         _resolvedDatabaseConfig = _container!.Resolve<DatabaseConfig>();
         _resolvedApiConfig = _container!.Resolve<ApiConfig>();
-        
+
         _resolvedDatabaseConfig.Should().NotBeNull();
         _resolvedApiConfig.Should().NotBeNull();
     }
@@ -324,7 +324,7 @@ public class RegisterConfigIntegrationSteps(ScenarioContext scenarioContext)
     {
         _resolvedDatabaseConfig = _container!.Resolve<DatabaseConfig>();
         _resolvedApiConfig = _container!.Resolve<ApiConfig>();
-        
+
         _resolvedDatabaseConfig.Should().NotBeNull();
         _resolvedApiConfig.Should().NotBeNull();
     }
@@ -333,7 +333,7 @@ public class RegisterConfigIntegrationSteps(ScenarioContext scenarioContext)
     public void ThenAllBatchRegisteredConfigurationsShouldBeAvailable()
     {
         _resolvedDatabaseConfig = _container!.Resolve<DatabaseConfig>();
-        
+
         _resolvedDatabaseConfig.Should().NotBeNull();
     }
 
@@ -379,7 +379,7 @@ public class RegisterConfigIntegrationSteps(ScenarioContext scenarioContext)
     {
         _resolvedDatabaseService.Should().NotBeNull();
         _resolvedDatabaseService!.Config.Should().NotBeNull();
-        
+
         var config = _resolvedDatabaseService.Config;
         config.ConnectionString.Should().Contain("Server=test;Database=ServiceTest;");
         config.CommandTimeout.Should().Be(45);
@@ -391,7 +391,7 @@ public class RegisterConfigIntegrationSteps(ScenarioContext scenarioContext)
     {
         _resolvedApiService.Should().NotBeNull();
         _resolvedApiService!.Config.Should().NotBeNull();
-        
+
         var config = _resolvedApiService.Config;
         config.BaseUrl.Should().Be("https://service-test.api.com");
         config.ApiKey.Should().Be("service-test-key");
@@ -428,7 +428,7 @@ public class RegisterConfigIntegrationSteps(ScenarioContext scenarioContext)
         var appConfig1 = _container!.Resolve<AppConfig>();
         var appConfig2 = _container!.Resolve<AppConfig>();
         appConfig1.Should().BeSameAs(appConfig2);
-        
+
         var dbConfig1 = _container!.Resolve<DatabaseConfig>();
         var dbConfig2 = _container!.Resolve<DatabaseConfig>();
         dbConfig1.Should().BeSameAs(dbConfig2);
@@ -439,7 +439,7 @@ public class RegisterConfigIntegrationSteps(ScenarioContext scenarioContext)
     {
         var directDbConfig = _container!.Resolve<DatabaseConfig>();
         var directApiConfig = _container!.Resolve<ApiConfig>();
-        
+
         _resolvedDatabaseService!.Config.Should().BeSameAs(directDbConfig);
         _resolvedApiService!.Config.Should().BeSameAs(directApiConfig);
     }
@@ -530,7 +530,7 @@ public class RegisterConfigIntegrationSteps(ScenarioContext scenarioContext)
         {
             _container = _containerBuilder!.Build();
             _containerBuildSucceeded = true;
-            
+
             // Quote: "public static void RegisterAutofacContainer(this ScenarioContext scenarioContext, IContainer container)"
             scenarioContext.RegisterAutofacContainer(_container);
         }

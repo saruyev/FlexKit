@@ -22,7 +22,7 @@ public class MemoryAllocationBenchmarks : FlexKitBenchmarkBase
         _backgroundLog = FlexKitServices.GetService<IBackgroundLog>()!;
         _testData = new ComplexTestData("memory test", 42)
         {
-            Properties = new() { {"key1", "value1"}, {"key2", 123} }
+            Properties = new() { { "key1", "value1" }, { "key2", 123 } }
         };
     }
 

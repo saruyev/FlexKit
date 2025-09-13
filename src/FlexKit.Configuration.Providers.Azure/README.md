@@ -1,653 +1,424 @@
 # FlexKit.Configuration.Providers.Azure
 
-Azure configuration providers for FlexKit.Configuration, enabling seamless integration with Azure Key Vault and App Configuration. Store your application configuration securely in Azure while maintaining all FlexKit capabilities including dynamic access, strongly-typed binding, and automatic reloading.
+[![NuGet](https://img.shields.io/nuget/v/FlexKit.Configuration.Providers.Azure.svg)](https://www.nuget.org/packages/FlexKit.Configuration.Providers.Azure)
+[![Downloads](https://img.shields.io/nuget/dt/FlexKit.Configuration.Providers.Azure.svg)](https://www.nuget.org/packages/FlexKit.Configuration.Providers.Azure)
+
+Azure configuration providers for FlexKit, enabling seamless integration with Azure Key Vault and Azure App Configuration services. Store your application configuration and secrets securely in Azure while maintaining full compatibility with the FlexKit configuration system.
 
 ## Features
 
-- **🔐 Azure Key Vault Integration**: Secure secret storage with hierarchical organization and JSON processing
-- **⚙️ Azure App Configuration Support**: Centralized configuration management with labels and key filtering
-- **📋 JSON Processing**: Automatic flattening of JSON secrets into configuration hierarchies
-- **🔄 Automatic Reloading**: Periodic refresh of configuration data from Azure services
-- **🎯 Selective Processing**: Apply JSON processing only to specific secrets for optimal performance
-- **🔑 Secure by Default**: Uses Azure credential resolution chain and Azure RBAC for access control
-- **⚡ FlexKit Integration**: Full compatibility with dynamic access, type conversion, and RegisterConfig
-- **🏷️ Label Support**: Environment and version-specific configuration with App Configuration labels
+### 🔐 Azure Key Vault Integration
+- **Secure secret management** - Store sensitive configuration data encrypted in Azure Key Vault
+- **Hierarchical secret naming** - Transform Key Vault secret names (`my-app--database--host`) to .NET configuration keys (`my-app:database:host`)
+- **JSON secret processing** - Automatically flatten complex JSON secrets into hierarchical configuration structure
+- **Selective JSON processing** - Apply JSON processing only to specific secrets for optimal performance
+- **Automatic reloading** - Periodically refresh secrets from Azure Key Vault
+- **Azure credential integration** - Seamless authentication using Azure Identity and Managed Identity
 
-## Installation
+### ⚙️ Azure App Configuration Integration
+- **Centralized configuration management** - Store application settings in Azure App Configuration
+- **Label-based environment management** - Use labels for environment-specific configuration (development, staging, production)
+- **Key filtering** - Load only relevant configuration keys to reduce memory usage and improve performance
+- **JSON configuration processing** - Automatically flatten JSON configuration values into hierarchical keys
+- **Feature flag support** - Integrate with Azure App Configuration feature flags
+- **Real-time configuration updates** - Automatic reloading with configurable intervals
+
+### 🚀 Performance & Reliability
+- **Optimized performance** - Static configuration access in 25-55ns, building in 1-3ms for App Configuration
+- **Memory efficient** - Key filtering reduces memory usage by up to 88%
+- **Optional source handling** - Graceful degradation when Azure services are unavailable
+- **Comprehensive error handling** - Custom exception handling with detailed error information
+- **Production-ready** - Battle-tested with comprehensive benchmarks and performance analysis
+
+## Quick Start
+
+### Installation
 
 ```bash
 dotnet add package FlexKit.Configuration.Providers.Azure
 ```
 
-## Quick Start
-
-### Basic Key Vault Usage
+### Basic Usage
 
 ```csharp
 using FlexKit.Configuration.Core;
 using FlexKit.Configuration.Providers.Azure.Extensions;
 
-var config = new FlexConfigurationBuilder()
+var builder = Host.CreateDefaultBuilder(args);
+
+builder.AddFlexConfig(config =>
+{
     .AddAzureKeyVault("https://myapp-vault.vault.azure.net/")
-    .Build();
-
-// Dynamic access
-dynamic settings = config;
-var dbHost = settings.myapp.database.host; // From secret: myapp--database--host
-var apiKey = settings.myapp.api.key;       // From secret: myapp--api--key
-
-// Direct access
-var connectionString = config["myapp:database:connectionstring"];
-```
-
-### Basic App Configuration Usage
-
-```csharp
-var config = new FlexConfigurationBuilder()
     .AddAzureAppConfiguration("https://myapp-config.azconfig.io")
     .Build();
+}
 
-// Dynamic access
-dynamic settings = config;
-var feature = settings.myapp.features.caching;
+var host = builder.Build();
+var config = host.Services.GetRequiredService<IFlexConfig>();
 
-// Direct access
-var apiTimeout = config["myapp:api:timeout"];
+// Access configuration values
+var dbHost = config["myapp:database:host"];
+var apiKey = config["myapp:api:key"];
 ```
 
 ### Advanced Configuration
 
 ```csharp
-var config = new FlexConfigurationBuilder()
+var builder = Host.CreateDefaultBuilder(args);
+
+builder.AddFlexConfig(config =>
+{
+    // Azure Key Vault with JSON processing
     .AddAzureKeyVault(options =>
     {
-        options.VaultUri = "https://prod-vault.vault.azure.net/";
-        options.Optional = false; // Required in production
+        options.VaultUri = "https://production-vault.vault.azure.net/";
+        options.Optional = false; // Required for production
         options.JsonProcessor = true;
-        options.JsonProcessorSecrets = new[] 
-        { 
-            "database-config",
-            "cache-config"
-        };
+        options.JsonProcessorSecrets = new[] { "database-config", "api-settings" };
         options.ReloadAfter = TimeSpan.FromMinutes(15);
-        options.Credential = new DefaultAzureCredential();
-        options.OnLoadException = ex => logger.LogError(ex, "Key Vault failed");
     })
+    // Azure App Configuration with labels and filtering
     .AddAzureAppConfiguration(options =>
     {
-        options.ConnectionString = "https://prod-config.azconfig.io";
+        options.ConnectionString = "https://production-config.azconfig.io";
         options.Optional = false;
-        options.KeyFilter = "myapp:*";
-        options.Label = "production";
-        options.ReloadAfter = TimeSpan.FromMinutes(5);
-        options.OnLoadException = ex => logger.LogError(ex, "App Configuration failed");
-    })
-    .Build();
-```
-
-## Key Vault Configuration
-
-### Secret Naming Convention
-
-Key Vault uses double hyphens (`--`) to represent hierarchy:
-
-```
-# Key Vault secrets:
-myapp--database--host = "localhost"
-myapp--database--port = "5432"
-myapp--features--caching = "true"
-myapp--api--keys--external = "abc123"
-```
-
-Results in configuration keys:
-```
-myapp:database:host = "localhost"
-myapp:database:port = "5432"
-myapp:features:caching = "true"
-myapp:api:keys:external = "abc123"
-```
-
-### JSON Secret Processing
-
-Store complex configuration as JSON in a single secret:
-
-```
-# Secret: database-config
-# Value: {"host": "localhost", "port": 5432, "ssl": true, "pool": {"min": 5, "max": 20}}
-```
-
-With `JsonProcessor = true`, this becomes:
-```
-database-config:host = "localhost"
-database-config:port = "5432"
-database-config:ssl = "true"
-database-config:pool:min = "5"
-database-config:pool:max = "20"
-```
-
-### Secret Types
-
-**Simple String Secrets:**
-```
-# Secret: api-key
-# Value: "secret-api-key-12345"
-```
-Results in:
-```
-api:key = "secret-api-key-12345"
-```
-
-**JSON Secrets (Database Credentials):**
-```
-# Secret: database-credentials
-# Value: {"host": "db.example.com", "port": 5432, "username": "app", "password": "secret123"}
-```
-Results in:
-```
-database:credentials:host = "db.example.com"
-database:credentials:port = "5432"
-database:credentials:username = "app"
-database:credentials:password = "secret123"
-```
-
-## App Configuration
-
-### Key Filtering
-
-Load only specific configuration keys:
-
-```csharp
-var config = new FlexConfigurationBuilder()
-    .AddAzureAppConfiguration(options =>
-    {
-        options.ConnectionString = "https://myapp-config.azconfig.io";
-        options.KeyFilter = "myapp:database:*"; // Only database-related keys
-    })
-    .Build();
-```
-
-### Label-Based Environment Management
-
-Use labels for environment-specific configuration:
-
-```csharp
-// Production configuration
-var config = new FlexConfigurationBuilder()
-    .AddAzureAppConfiguration(options =>
-    {
-        options.ConnectionString = "https://myapp-config.azconfig.io";
-        options.Label = "production";
-        options.KeyFilter = "myapp:*";
-    })
-    .Build();
-
-// Development configuration
-var devConfig = new FlexConfigurationBuilder()
-    .AddAzureAppConfiguration(options =>
-    {
-        options.ConnectionString = "https://myapp-config.azconfig.io";
-        options.Label = "development";
-        options.KeyFilter = "myapp:*";
-    })
-    .Build();
-```
-
-**App Configuration Structure:**
-```
-Key: myapp:database:host
-├── Label: production → Value: "prod-db.example.com"
-├── Label: development → Value: "dev-db.example.com"
-└── Label: staging → Value: "staging-db.example.com"
-
-Key: myapp:features:caching
-├── Label: production → Value: "true"
-├── Label: development → Value: "false"
-└── Label: staging → Value: "true"
-```
-
-### Connection String vs Endpoint
-
-**Full Connection String:**
-```csharp
-options.ConnectionString = "Endpoint=https://myapp-config.azconfig.io;Id=xxx;Secret=yyy";
-```
-
-**Endpoint with Credential:**
-```csharp
-options.ConnectionString = "https://myapp-config.azconfig.io";
-options.Credential = new DefaultAzureCredential();
-```
-
-## Strongly-Typed Configuration
-
-### With RegisterConfig (Key Vault JSON)
-
-```csharp
-// Secret: database-config (JSON format)
-// {"host": "db.example.com", "port": 5432, "username": "app", "password": "secret", "pool": {"min": 5, "max": 20}}
-
-public class DatabaseConfig
-{
-    public string Host { get; set; }
-    public int Port { get; set; }
-    public string Username { get; set; }
-    public string Password { get; set; }
-    public PoolConfig Pool { get; set; }
-}
-
-public class PoolConfig
-{
-    public int Min { get; set; }
-    public int Max { get; set; }
-}
-
-// Register strongly-typed configuration
-containerBuilder
-    .AddFlexConfig(config => config
-        .AddAzureKeyVault(options =>
-        {
-            options.VaultUri = "https://prod-vault.vault.azure.net/";
-            options.JsonProcessor = true;
-            options.JsonProcessorSecrets = new[] { "database-config" };
-        }))
-    .RegisterConfig<DatabaseConfig>("database:config");
-
-// Use in services
-public class DatabaseService
-{
-    public DatabaseService(DatabaseConfig dbConfig)
-    {
-        var connectionString = BuildConnectionString(dbConfig);
-        // Configure connection pool with dbConfig.Pool.Min and dbConfig.Pool.Max
-    }
-}
-```
-
-### With RegisterConfig (App Configuration)
-
-```csharp
-// App Configuration:
-// myapp:database:host = "localhost" (Label: production)
-// myapp:database:port = "5432" (Label: production)
-// myapp:database:ssl = "true" (Label: production)
-
-public class DatabaseConfig
-{
-    public string Host { get; set; }
-    public int Port { get; set; }
-    public bool Ssl { get; set; }
-}
-
-// Register strongly-typed configuration
-containerBuilder
-    .AddFlexConfig(config => config
-        .AddAzureAppConfiguration(options =>
-        {
-            options.ConnectionString = "https://prod-config.azconfig.io";
-            options.Label = "production";
-            options.KeyFilter = "myapp:database:*";
-        }))
-    .RegisterConfig<DatabaseConfig>("myapp:database");
-
-// Use in services
-public class DatabaseService
-{
-    public DatabaseService(DatabaseConfig dbConfig)
-    {
-        var connectionString = $"Host={dbConfig.Host};Port={dbConfig.Port};SSL={dbConfig.Ssl}";
-    }
-}
-```
-
-## Azure Authentication
-
-The providers automatically use the Azure credential resolution chain:
-
-1. **Environment Variables**: `AZURE_CLIENT_ID`, `AZURE_CLIENT_SECRET`, `AZURE_TENANT_ID`
-2. **Managed Identity**: When running on Azure resources (VM, App Service, etc.)
-3. **Azure CLI**: `az login` credentials
-4. **Visual Studio**: Signed-in user credentials
-5. **Azure PowerShell**: `Connect-AzAccount` credentials
-
-### Custom Azure Configuration
-
-```csharp
-var config = new FlexConfigurationBuilder()
-    .AddAzureKeyVault(options =>
-    {
-        options.VaultUri = "https://prod-vault.vault.azure.net/";
-        options.Credential = new ClientSecretCredential(
-            tenantId: "tenant-id",
-            clientId: "client-id", 
-            clientSecret: "client-secret");
-    })
-    .AddAzureAppConfiguration(options =>
-    {
-        options.ConnectionString = "https://prod-config.azconfig.io";
-        options.Credential = new ManagedIdentityCredential(); // Use system-assigned identity
-    })
-    .Build();
-```
-
-## Performance Optimization
-
-### Selective JSON Processing
-
-Process JSON only for specific secrets:
-
-```csharp
-var config = new FlexConfigurationBuilder()
-    .AddAzureKeyVault(options =>
-    {
-        options.VaultUri = "https://prod-vault.vault.azure.net/";
+        options.KeyFilter = "myapp:*"; // Load only myapp keys
+        options.Label = "production"; // Environment-specific configuration
         options.JsonProcessor = true;
-        options.JsonProcessorSecrets = new[]
-        {
-            "database-config",  // Process as JSON
-            "cache-config"      // Process as JSON
-            // api-key remains as simple string
-        };
-    })
-    .Build();
+        options.ReloadAfter = TimeSpan.FromMinutes(5);
+    }
+}).Build();
 ```
 
-### Automatic Reloading
+## Configuration Examples
 
-Configure periodic refresh with appropriate intervals:
+### Azure Key Vault Secrets
+
+Create secrets in Azure Key Vault using the hierarchical naming convention:
+
+```bash
+# Basic secrets
+az keyvault secret set --vault-name "myapp-vault" --name "myapp--database--host" --value "prod-db.example.com"
+az keyvault secret set --vault-name "myapp-vault" --name "myapp--database--port" --value "5432"
+az keyvault secret set --vault-name "myapp-vault" --name "myapp--api--key" --value "secret-api-key-12345"
+
+# JSON secrets for complex configuration
+az keyvault secret set --vault-name "myapp-vault" --name "myapp--features--config" \
+    --value '{"caching": {"enabled": true, "ttl": 300}, "logging": {"level": "Information"}}'
+```
+
+**FlexKit Configuration Access:**
+```csharp
+// Basic secrets (automatically transformed from -- to :)
+var dbHost = config["myapp:database:host"];        // "prod-db.example.com"
+var dbPort = config["myapp:database:port"];        // "5432"
+var apiKey = config["myapp:api:key"];              // "secret-api-key-12345"
+
+// JSON secrets (automatically flattened when JsonProcessor = true)
+var cachingEnabled = config["myapp:features:caching:enabled"]; // "true"
+var cachingTtl = config["myapp:features:caching:ttl"];         // "300"
+var loggingLevel = config["myapp:features:logging:level"];     // "Information"
+```
+
+### Azure App Configuration
+
+Create configuration in Azure App Configuration:
+
+```bash
+# Basic configuration keys
+az appconfig kv set --name "myapp-config" --key "myapp:database:host" --value "prod-db.example.com" --yes
+az appconfig kv set --name "myapp-config" --key "myapp:api:baseurl" --value "https://api.production.com" --yes
+
+# JSON configuration
+az appconfig kv set --name "myapp-config" --key "myapp:features:config" \
+    --value '{"featureFlags": {"enableNewUI": true, "enableBeta": false}, "limits": {"maxUsers": 1000}}' --yes
+
+# Environment-specific configuration with labels
+az appconfig kv set --name "myapp-config" --key "myapp:logging:level" --value "Debug" --label "development" --yes
+az appconfig kv set --name "myapp-config" --key "myapp:logging:level" --value "Information" --label "production" --yes
+```
+
+**FlexKit Configuration Access:**
+```csharp
+// Basic configuration
+var dbHost = config["myapp:database:host"];        // "prod-db.example.com"
+var apiUrl = config["myapp:api:baseurl"];          // "https://api.production.com"
+
+// JSON configuration (automatically flattened when JsonProcessor = true)
+var enableNewUI = config["myapp:features:config:featureFlags:enableNewUI"]; // "true"
+var maxUsers = config["myapp:features:config:limits:maxUsers"];             // "1000"
+
+// Environment-specific (based on configured label)
+var logLevel = config["myapp:logging:level"]; // "Information" (from production label)
+```
+
+## Integration with .NET Dependency Injection
+
+### Strongly Typed Configuration
 
 ```csharp
-var config = new FlexConfigurationBuilder()
-    .AddAzureKeyVault(options =>
-    {
-        options.VaultUri = "https://prod-vault.vault.azure.net/";
-        options.ReloadAfter = TimeSpan.FromMinutes(15); // Key Vault reload
-    })
-    .AddAzureAppConfiguration(options =>
-    {
-        options.ConnectionString = "https://prod-config.azconfig.io";
-        options.ReloadAfter = TimeSpan.FromMinutes(5); // App Configuration reload
-    })
-    .Build();
+public class DatabaseConfig
+{
+    public string Host { get; set; } = string.Empty;
+    public int Port { get; set; }
+    public string Username { get; set; } = string.Empty;
+    public string Password { get; set; } = string.Empty;
+}
+
+public class ApiConfig
+{
+    public string BaseUrl { get; set; } = string.Empty;
+    public string ApiKey { get; set; } = string.Empty;
+    public int Timeout { get; set; }
+}
 ```
 
-**Recommended Reload Intervals:**
+**Configuration Setup:**
+```csharp
+var builder = WebApplication.CreateBuilder(args);
 
-| Service | Configuration Type | Development | Production |
-|---------|-------------------|-------------|------------|
-| Key Vault | Secrets | 5-10 minutes | 15-30 minutes |
-| App Configuration | Configuration | 1-2 minutes | 5-15 minutes |
-| App Configuration | Feature flags | 30 seconds | 1-5 minutes |
+builder.AddFlexConfig(config =>
+{
+        config.AddAzureKeyVault("https://myapp-vault.vault.azure.net/")
+        .AddAzureAppConfiguration("https://myapp-config.azconfig.io")
+});
+
+// Configure FlexKit with Azure providers
+builder.ConfigureServices((context, services) =>
+{
+    // Register strongly typed configuration
+    services.ConfigureFlexKit<DatabaseConfig>("myapp:database");
+    services.ConfigureFlexKit<ApiConfig>("myapp:api");
+});
+
+var host = builder.Build();
+```
+
+**Usage in Services:**
+```csharp
+public class DatabaseService
+{
+    private readonly DatabaseConfig _config;
+
+    public DatabaseService(IOptions<DatabaseConfig> config)
+    {
+        _config = config.Value;
+    }
+
+    public void Connect()
+    {
+        var connectionString = $"Host={_config.Host};Port={_config.Port};Username={_config.Username}";
+        // Use configuration...
+    }
+}
+```
+
+## Performance Characteristics
+
+Based on comprehensive benchmarks from [FlexKit.Configuration.Providers.Azure.PerformanceTests](../../benchmarks/FlexKit.Configuration.Providers.Azure.PerformanceTests/README.md):
+
+### Configuration Building (Startup)
+- **Azure App Configuration**: ~1.3-3.1ms initialization
+- **Azure Key Vault**: ~135-158ms initialization (includes network security overhead)
+- **Combined providers**: ~68-83ms (acceptable for production startup)
+
+### Runtime Access Performance
+- **Static access**: 25-55ns (excellent performance)
+- **Dynamic access**: 1.3-57μs (50-2000x slower - use for non-critical paths only)
+
+### Memory Optimization
+- **Key filtering**: Reduces memory usage by up to 88%
+- **Label filtering**: Reduces memory usage by up to 94%
+- **Static configuration**: Zero allocation during runtime access
+
+### Performance Recommendations
+
+**✅ Recommended for High-Performance Applications:**
+```csharp
+// Strongly typed configuration (static access - 25-55ns)
+services.Configure<DatabaseConfig>(config.GetSection("database"));
+
+// Direct static access
+var host = config["database:host"]; // 25-55ns
+```
+
+**⚠️ Use Carefully in Performance-Critical Paths:**
+```csharp
+// Dynamic access (1.3-57μs - 50-2000x slower)
+var host = config.GetValue<string>("database:host");
+```
+
+## Security Best Practices
+
+### Azure Key Vault
+```csharp
+.AddAzureKeyVault(options =>
+{
+    options.VaultUri = "https://production-vault.vault.azure.net/";
+    options.Optional = false; // Fail fast if secrets unavailable
+    options.Credential = new DefaultAzureCredential(); // Use Managed Identity in production
+    options.JsonProcessor = true;
+    options.JsonProcessorSecrets = new[] { "database-config" }; // Process only specific secrets
+})
+```
+
+### Azure App Configuration
+```csharp
+.AddAzureAppConfiguration(options =>
+{
+    options.ConnectionString = "https://production-config.azconfig.io"; // Use endpoint + credential
+    options.Credential = new DefaultAzureCredential(); // Avoid connection strings in production
+    options.Label = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
+    options.KeyFilter = "myapp:*"; // Load only application-specific keys
+})
+```
 
 ## Error Handling
 
-### Optional vs Required Sources
-
+### Optional Sources with Error Callbacks
 ```csharp
-// Optional sources (development/testing)
-var config = new FlexConfigurationBuilder()
-    .AddAzureKeyVault(options =>
-    {
-        options.VaultUri = "https://dev-vault.vault.azure.net/";
-        options.Optional = true; // Won't fail if vault is unavailable
-        options.OnLoadException = ex => logger.LogWarning(ex, "Dev Key Vault unavailable");
-    })
-    .AddAzureAppConfiguration(options =>
-    {
-        options.ConnectionString = "https://dev-config.azconfig.io";
-        options.Optional = true; // Won't fail if App Configuration is unavailable
-        options.OnLoadException = ex => logger.LogWarning(ex, "Dev App Configuration unavailable");
-    })
-    .Build();
-
-// Required sources (production)
-var config = new FlexConfigurationBuilder()
-    .AddAzureKeyVault(options =>
-    {
-        options.VaultUri = "https://prod-vault.vault.azure.net/";
-        options.Optional = false; // Will fail if vault can't be accessed
-    })
-    .AddAzureAppConfiguration(options =>
-    {
-        options.ConnectionString = "https://prod-config.azconfig.io";
-        options.Optional = false; // Will fail if App Configuration can't be accessed
-    })
-    .Build();
-```
-
-### Custom Error Handling
-
-```csharp
-var config = new FlexConfigurationBuilder()
-    .AddAzureKeyVault(options =>
-    {
-        options.VaultUri = "https://prod-vault.vault.azure.net/";
-        options.Optional = true;
-        options.OnLoadException = exception =>
-        {
-            // Log the error
-            logger.LogError(exception.InnerException, 
-                "Failed to load Key Vault secrets from {VaultUri}", 
-                exception.Source);
-            
-            // Send metrics
-            metrics.Increment("config.keyvault.failures", 
-                new[] { ("vault", options.VaultUri) });
-        };
-    })
-    .AddAzureAppConfiguration(options =>
-    {
-        options.ConnectionString = "https://prod-config.azconfig.io";
-        options.Optional = true;
-        options.OnLoadException = exception =>
-        {
-            // Log the error
-            logger.LogError(exception.InnerException, 
-                "Failed to load App Configuration from {ConnectionString}", 
-                exception.Source);
-            
-            // Send alert for production failures
-            if (options.Label == "production")
-            {
-                alertService.SendAlert("Production Configuration Loading Failed", exception.Message);
-            }
-        };
-    })
-    .Build();
-```
-
-## Integration with ASP.NET Core
-
-```csharp
-using Autofac;
-using Autofac.Extensions.DependencyInjection;
-using FlexKit.Configuration.Core;
-using FlexKit.Configuration.Providers.Azure.Extensions;
-
-var builder = WebApplication.CreateBuilder(args);
-
-builder.Host.UseServiceProviderFactory(new AutofacServiceProviderFactory());
-
-builder.Host.ConfigureContainer<ContainerBuilder>(containerBuilder =>
+.AddAzureKeyVault(options =>
 {
-    containerBuilder.AddFlexConfig(config => config
-        .AddJsonFile("appsettings.json")
-        .AddAzureKeyVault(options =>
-        {
-            options.VaultUri = $"https://{builder.Environment.EnvironmentName.ToLower()}-myapp-vault.vault.azure.net/";
-            options.Optional = builder.Environment.IsDevelopment();
-            options.JsonProcessor = true;
-            options.ReloadAfter = builder.Environment.IsDevelopment() 
-                ? TimeSpan.FromMinutes(5) 
-                : TimeSpan.FromMinutes(30);
-        })
-        .AddAzureAppConfiguration(options =>
-        {
-            options.ConnectionString = "https://myapp-config.azconfig.io";
-            options.Label = builder.Environment.EnvironmentName.ToLower();
-            options.KeyFilter = "myapp:*";
-            options.Optional = builder.Environment.IsDevelopment();
-            options.ReloadAfter = TimeSpan.FromMinutes(builder.Environment.IsDevelopment() ? 1 : 10);
-        })
-        .AddEnvironmentVariables());
+    options.VaultUri = "https://myapp-vault.vault.azure.net/";
+    options.Optional = true; // Don't fail startup if unavailable
+    options.OnLoadException = ex =>
+    {
+        logger.LogWarning(ex, "Failed to load Key Vault secrets - using fallback configuration");
+        // Implement fallback logic or alerting
+    };
+})
+```
+
+### Required Sources for Critical Configuration
+```csharp
+.AddAzureAppConfiguration(options =>
+{
+    options.ConnectionString = "https://production-config.azconfig.io";
+    options.Optional = false; // Fail startup if configuration unavailable
+    // Application will not start if this configuration source fails
+})
+```
+
+## Testing
+
+### Unit Testing with Mock Clients
+```csharp
+public class ConfigurationTests
+{
+    [Test]
+    public void TestAzureKeyVaultIntegration()
+    {
+        var mockSecretClient = new Mock<SecretClient>();
+        
+        var config = new FlexConfigurationBuilder()
+            .AddAzureKeyVault(options =>
+            {
+                options.VaultUri = "https://test-vault.vault.azure.net/";
+                options.SecretClient = mockSecretClient.Object; // Use mock for testing
+                options.JsonProcessor = true;
+            })
+            .Build();
+
+        // Test configuration access
+        Assert.AreEqual("expected-value", config["test:key"]);
+    }
+}
+```
+
+### Integration Testing
+```csharp
+// Use test Azure resources for integration testing
+var config = new FlexConfigurationBuilder()
+    .AddAzureKeyVault("https://test-vault.vault.azure.net/")
+    .AddAzureAppConfiguration("https://test-config.azconfig.io")
+    .Build();
+
+// Verify real Azure integration
+var testValue = config["integration:test:value"];
+Assert.IsNotNull(testValue);
+```
+
+## Migration Guide
+
+### From Microsoft.Extensions.Configuration.AzureAppConfiguration
+```csharp
+// Before (Microsoft)
+builder.Configuration.AddAzureAppConfiguration(options =>
+{
+    options.Connect(connectionString)
+           .Select("myapp:*", "production")
+           .ConfigureRefresh(refresh => refresh.Register("myapp:refresh", refreshAll: true));
 });
 
-var app = builder.Build();
-```
-
-## Mixed Configuration Sources
-
-Combine Key Vault, App Configuration, and other sources:
-
-```csharp
-var config = new FlexConfigurationBuilder()
-    // Base configuration
-    .AddJsonFile("appsettings.json")
-    
-    // Non-sensitive configuration from App Configuration
-    .AddAzureAppConfiguration(options =>
+// After (FlexKit)
+builder.AddFlexConfig(config =>
+{
+    config.AddAzureAppConfiguration(options =>
     {
-        options.ConnectionString = "https://myapp-config.azconfig.io";
-        options.Label = "production";
+        options.ConnectionString = connectionString;
         options.KeyFilter = "myapp:*";
-    })
-    
-    // Sensitive configuration from Key Vault
-    .AddAzureKeyVault(options =>
+        options.Label = "production";
+        options.ReloadAfter = TimeSpan.FromMinutes(5); // Automatic refresh
+    });
+});
+```
+
+### From Azure.Extensions.AspNetCore.Configuration.Secrets
+```csharp
+// Before (Microsoft)
+builder.Configuration.AddAzureKeyVault(
+    new Uri("https://myapp-vault.vault.azure.net/"), 
+    new DefaultAzureCredential());
+
+// After (FlexKit)
+builder.AddFlexConfig(config =>
+{
+    config.AddAzureKeyVault(options =>
     {
-        options.VaultUri = "https://prod-vault.vault.azure.net/";
-        options.JsonProcessor = true;
-    })
-    
-    // Environment variable overrides (highest precedence)
-    .AddEnvironmentVariables()
-    .Build();
-
-// Configuration precedence (last wins):
-// 1. appsettings.json (lowest)
-// 2. App Configuration
-// 3. Key Vault  
-// 4. Environment variables (highest)
+        options.VaultUri = "https://myapp-vault.vault.azure.net/";
+        options.Credential = new DefaultAzureCredential();
+        options.JsonProcessor = true; // Additional FlexKit feature
+    });
+});
 ```
 
-## Azure RBAC Permissions
+## Azure Resource Setup
 
-### Key Vault Permissions
+### Azure Key Vault
+```bash
+# Create Key Vault
+az keyvault create --name "myapp-vault" --resource-group "myapp-rg" --location "eastus"
 
-Assign the **Key Vault Secrets User** role or create a custom role:
+# Set access policy for your application
+az keyvault set-policy --name "myapp-vault" --object-id <app-object-id> --secret-permissions get list
 
-```json
-{
-    "properties": {
-        "roleName": "Key Vault Configuration Reader",
-        "description": "Read secrets for application configuration",
-        "permissions": [
-            {
-                "actions": [],
-                "notActions": [],
-                "dataActions": [
-                    "Microsoft.KeyVault/vaults/secrets/getSecret/action"
-                ],
-                "notDataActions": []
-            }
-        ],
-        "assignableScopes": [
-            "/subscriptions/{subscription-id}/resourceGroups/{resource-group}/providers/Microsoft.KeyVault/vaults/{vault-name}"
-        ]
-    }
-}
+# Create secrets
+az keyvault secret set --vault-name "myapp-vault" --name "myapp--database--host" --value "prod-db.example.com"
 ```
 
-### App Configuration Permissions
+### Azure App Configuration
+```bash
+# Create App Configuration
+az appconfig create --name "myapp-config" --resource-group "myapp-rg" --location "eastus" --sku Free
 
-Assign the **App Configuration Data Reader** role or create a custom role:
+# Assign access role
+az role assignment create --assignee <app-object-id> --role "App Configuration Data Reader" --scope /subscriptions/<subscription-id>/resourceGroups/myapp-rg/providers/Microsoft.AppConfiguration/configurationStores/myapp-config
 
-```json
-{
-    "properties": {
-        "roleName": "App Configuration Reader",
-        "description": "Read configuration data from App Configuration",
-        "permissions": [
-            {
-                "actions": [],
-                "notActions": [],
-                "dataActions": [
-                    "Microsoft.AppConfiguration/configurationStores/*/read"
-                ],
-                "notDataActions": []
-            }
-        ],
-        "assignableScopes": [
-            "/subscriptions/{subscription-id}/resourceGroups/{resource-group}/providers/Microsoft.AppConfiguration/configurationStores/{store-name}"
-        ]
-    }
-}
+# Create configuration
+az appconfig kv set --name "myapp-config" --key "myapp:database:host" --value "prod-db.example.com" --yes
 ```
 
-## Best Practices
+## Contributing
 
-### Secret and Configuration Organization
+We welcome contributions! Please see our [Contributing Guide](../../CONTRIBUTING.md) for details.
 
-**Key Vault Secrets:**
-```
-prod-vault.vault.azure.net:
-├── database-config          # JSON: database credentials and settings
-├── cache-config            # JSON: Redis/cache configuration
-├── api-keys-external       # JSON: third-party API keys
-├── certificates-ssl        # Binary: SSL certificates
-└── encryption-keys         # Simple: application encryption keys
-```
+## License
 
-**App Configuration:**
-```
-myapp-config.azconfig.io:
-myapp:database:timeout = "30" (Label: production)
-myapp:database:pool-size = "20" (Label: production)
-myapp:features:caching = "true" (Label: production)
-myapp:features:analytics = "false" (Label: development)
-myapp:api:base-url = "https://api.prod.com" (Label: production)
-myapp:api:base-url = "https://api.dev.com" (Label: development)
-```
+This project is licensed under the MIT License - see the [LICENSE](../../LICENSE) file for details.
 
-### Environment Separation
+## Related Projects
 
-Use environment-specific resources:
-
-**Key Vault:**
-- Development: `dev-myapp-vault.vault.azure.net`
-- Staging: `staging-myapp-vault.vault.azure.net`
-- Production: `prod-myapp-vault.vault.azure.net`
-
-**App Configuration:**
-- Development: Use labels (`development`, `dev`)
-- Staging: Use labels (`staging`, `test`)
-- Production: Use labels (`production`, `prod`)
-
-### Security
-
-1. **Use appropriate service for data type**:
-    - **Key Vault**: Passwords, API keys, certificates, encryption keys
-    - **App Configuration**: Non-sensitive configuration, feature flags, connection strings (non-sensitive parts)
-
-2. **Apply least-privilege RBAC permissions** with specific resource scopes
-3. **Use Managed Identity** when running on Azure resources
-4. **Separate vaults/stores** for different environments and applications
-5. **Enable diagnostic logging** for audit trails
-6. **Use private endpoints** for enhanced security in production
-
-### Cost Optimization
-
-1. **Key Vault**: 
-   - Group related secrets in JSON format to reduce API calls
-   - Use appropriate secret renewal periods
-   - Consider Key Vault pricing tiers for high-volume scenarios
-
-2. **App Configuration**: 
-   - Use key filtering to minimize data transfer
-   - Set appropriate reload intervals to balance freshness with cost
-   - Leverage the free tier for development/testing
-
-3. **Set reasonable reload intervals** to balance configuration freshness with API costs
-4. **Use selective JSON processing** to avoid unnecessary parsing overhead
-5. **Implement proper caching** in application layers when possible
-
-This comprehensive Azure integration enables you to leverage both Azure Key Vault and App Configuration while maintaining the familiar FlexKit configuration experience!
+- [FlexKit.Configuration](../FlexKit.Configuration/) - Core FlexKit configuration system
+- [FlexKit.Configuration.Providers.Yaml](../FlexKit.Configuration.Providers.Yaml/) - YAML configuration provider
+- [FlexKit.Configuration.Providers.Aws](../FlexKit.Configuration.Providers.Aws/) - AWS configuration providers
+- [Performance Tests](../../benchmarks/FlexKit.Configuration.Providers.Azure.PerformanceTests/) - Comprehensive performance benchmarks

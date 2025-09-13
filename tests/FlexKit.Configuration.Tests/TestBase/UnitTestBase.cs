@@ -19,7 +19,7 @@ public abstract class UnitTestBase : IDisposable
     /// <summary>
     /// Autofac container for dependency injection in tests.
     /// </summary>
-    [UsedImplicitly] 
+    [UsedImplicitly]
     protected IContainer Container { get; private set; } = null!;
 
     /// <summary>
@@ -42,7 +42,7 @@ public abstract class UnitTestBase : IDisposable
     private void SetupFixture()
     {
         Fixture = new Fixture();
-        
+
         // Enable auto-mocking with NSubstitute
         Fixture.Customize(new AutoNSubstituteCustomization
         {
@@ -74,13 +74,13 @@ public abstract class UnitTestBase : IDisposable
     private void SetupContainer()
     {
         var builder = new ContainerBuilder();
-        
+
         // Register AutoFixture as a service
         builder.RegisterInstance(Fixture).As<IFixture>();
-        
+
         // Allow derived classes to configure the container
         ConfigureContainer(builder);
-        
+
         Container = builder.Build();
     }
 

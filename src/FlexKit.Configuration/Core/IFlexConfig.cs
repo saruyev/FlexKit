@@ -475,4 +475,16 @@ public interface IFlexConfig : IDynamicMetaObjectProvider
     /// </example>
     [UsedImplicitly]
     IFlexConfig? this[int index] { get; }
+
+    /// <summary>
+    /// Retrieves a subsection of the configuration hierarchy based on the specified key.
+    /// This method is used to navigate deeper into the configuration structure.
+    /// </summary>
+    /// <param name="key">The key identifying the configuration subsection to retrieve.</param>
+    /// <returns>
+    /// The configuration subsection corresponding to the provided key if found;
+    /// otherwise, null if the key is empty or not found.
+    /// </returns>
+    [UsedImplicitly]
+    IFlexConfig? GetSection(string key);
 }

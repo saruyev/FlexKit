@@ -15,7 +15,7 @@ namespace FlexKit.Configuration.Core;
 /// Registers configuration components in an Autofac container.
 /// </summary>
 [UsedImplicitly]
-public class ConfigurationModule : Module
+internal class ConfigurationModule : Module
 {
     /// <summary>
     /// Override to attach module-specific functionality to a component registration.

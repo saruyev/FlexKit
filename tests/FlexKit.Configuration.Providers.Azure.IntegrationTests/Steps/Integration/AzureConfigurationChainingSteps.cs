@@ -66,7 +66,7 @@ public class AzureConfigurationChainingSteps(ScenarioContext scenarioContext)
         });
 
         _configurationSources.Add("Key Vault");
-        
+
         scenarioContext.Set(_chainingBuilder, "ChainingBuilder");
         _chainingValidationResults.Add($"✓ Key Vault configuration source added to chain with prefix '{scenarioPrefix}'");
     }
@@ -91,7 +91,7 @@ public class AzureConfigurationChainingSteps(ScenarioContext scenarioContext)
         });
 
         _configurationSources.Add("App Configuration");
-        
+
         scenarioContext.Set(_chainingBuilder, "ChainingBuilder");
         _chainingValidationResults.Add($"✓ App Configuration source added to chain with prefix '{scenarioPrefix}'");
     }
@@ -118,7 +118,7 @@ public class AzureConfigurationChainingSteps(ScenarioContext scenarioContext)
         });
 
         _configurationSources.Add("Key Vault (JSON)");
-        
+
         scenarioContext.Set(_chainingBuilder, "ChainingBuilder");
         _chainingValidationResults.Add($"✓ JSON-enabled Key Vault configuration source added to chain with prefix '{scenarioPrefix}'");
     }
@@ -144,7 +144,7 @@ public class AzureConfigurationChainingSteps(ScenarioContext scenarioContext)
         });
 
         _configurationSources.Add("App Configuration (JSON)");
-        
+
         scenarioContext.Set(_chainingBuilder, "ChainingBuilder");
         _chainingValidationResults.Add($"✓ JSON-enabled App Configuration source added to chain with prefix '{scenarioPrefix}'");
     }
@@ -178,11 +178,11 @@ public class AzureConfigurationChainingSteps(ScenarioContext scenarioContext)
 
             // Build FlexKit configuration - actually do some work here
             var flexBuildTime = Stopwatch.StartNew();
-        
+
             // Access some configuration to ensure it's built
             var allKeys = _chainingConfiguration.AsEnumerable().ToList();
             var keyCount = allKeys.Count;
-        
+
             flexBuildTime.Stop();
             _performanceMetrics["FlexKit Build"] = flexBuildTime.Elapsed;
 
@@ -191,10 +191,10 @@ public class AzureConfigurationChainingSteps(ScenarioContext scenarioContext)
             {
                 _performanceMetrics["Total Time"] = _performanceStopwatch.Elapsed;
             }
-        
+
             scenarioContext.Set(_chainingConfiguration, "ChainingConfiguration");
             scenarioContext.Set(_chainingFlexConfiguration, "ChainingFlexConfiguration");
-        
+
             _chainingValidationResults.Add($"✓ Chained configuration built successfully with {keyCount} keys");
         }
         catch (Exception ex)
@@ -235,18 +235,18 @@ public class AzureConfigurationChainingSteps(ScenarioContext scenarioContext)
             // Test that we have configuration values from both sources
             var allKeys = _chainingConfiguration!.AsEnumerable().ToList();
             var prefixedKeys = allKeys.Where(kv => kv.Key.StartsWith("keyVaultSecrets") || kv.Key.StartsWith("appConfigurationSettings")).ToList();
-        
+
             var hasKeyVaultData = prefixedKeys.Any(kv => kv.Key.Contains("database") || kv.Key.Contains("api"));
             var hasAppConfigData = prefixedKeys.Any(kv => kv.Key.Contains("timeout") || kv.Key.Contains("baseUrl"));
-        
-            _chainingValidationResults.Add(hasKeyVaultData 
+
+            _chainingValidationResults.Add(hasKeyVaultData
                 ? "✓ Key Vault data loaded successfully"
                 : "✗ Key Vault data not found");
-            
-            _chainingValidationResults.Add(hasAppConfigData 
+
+            _chainingValidationResults.Add(hasAppConfigData
                 ? "✓ App Configuration data loaded successfully"
                 : "✗ App Configuration data not found");
-        
+
             bool passed = hasKeyVaultData || hasAppConfigData; // At least one source should work
             passed.Should().BeTrue("Key override precedence validation should pass");
         }
@@ -269,17 +269,17 @@ public class AzureConfigurationChainingSteps(ScenarioContext scenarioContext)
             // Test JSON configuration processing with a scenario prefix
             var jsonTests = new List<(string description, string key, Func<bool> validation)>
             {
-                ("JSON Key Vault secret processing", $"{scenarioPrefix}:infrastructure-module:database-credentials:host", () => 
+                ("JSON Key Vault secret processing", $"{scenarioPrefix}:infrastructure-module:database-credentials:host", () =>
                 {
                     var value = _chainingConfiguration![$"{scenarioPrefix}:infrastructure-module:database-credentials:host"];
                     return !string.IsNullOrEmpty(value);
                 }),
-                ("Nested JSON structure access", $"{scenarioPrefix}:infrastructure-module:api-config:authentication:type", () => 
+                ("Nested JSON structure access", $"{scenarioPrefix}:infrastructure-module:api-config:authentication:type", () =>
                 {
                     var value = _chainingConfiguration![$"{scenarioPrefix}:infrastructure-module:api-config:authentication:type"];
                     return value == "bearer";
                 }),
-                ("JSON array processing", $"{scenarioPrefix}:infrastructure-module:cache-settings:redis:host", () => 
+                ("JSON array processing", $"{scenarioPrefix}:infrastructure-module:cache-settings:redis:host", () =>
                 {
                     var value = _chainingConfiguration![$"{scenarioPrefix}:infrastructure-module:cache-settings:redis:host"];
                     return !string.IsNullOrEmpty(value);
@@ -289,10 +289,10 @@ public class AzureConfigurationChainingSteps(ScenarioContext scenarioContext)
             foreach (var test in jsonTests)
             {
                 var passed = test.validation();
-                _chainingValidationResults.Add(passed 
+                _chainingValidationResults.Add(passed
                     ? $"✓ {test.description} test passed for key '{test.key}'"
                     : $"✗ {test.description} test failed for key '{test.key}'");
-                
+
                 passed.Should().BeTrue($"{test.description} validation should pass");
             }
         }
@@ -324,10 +324,10 @@ public class AzureConfigurationChainingSteps(ScenarioContext scenarioContext)
                 if (_performanceMetrics.TryGetValue(benchmark.Key, out var actualTime))
                 {
                     var passed = actualTime <= benchmark.Value;
-                    _chainingValidationResults.Add(passed 
+                    _chainingValidationResults.Add(passed
                         ? $"✓ {benchmark.Key} benchmark met: {actualTime.TotalMilliseconds:F0}ms (limit: {benchmark.Value.TotalMilliseconds:F0}ms)"
                         : $"✗ {benchmark.Key} benchmark exceeded: {actualTime.TotalMilliseconds:F0}ms (limit: {benchmark.Value.TotalMilliseconds:F0}ms)");
-                    
+
                     passed.Should().BeTrue($"{benchmark.Key} should meet performance benchmark");
                 }
                 else
@@ -356,17 +356,17 @@ public class AzureConfigurationChainingSteps(ScenarioContext scenarioContext)
 
             var dynamicTests = new List<(string description, Func<bool> validation)>
             {
-                ("Dynamic property access", () => 
+                ("Dynamic property access", () =>
                 {
                     var value = config[$"{scenarioPrefix}:myapp:api:timeout"];
                     return value != null;
                 }),
-                ("Nested dynamic access", () => 
+                ("Nested dynamic access", () =>
                 {
                     var value = config[$"{scenarioPrefix}:myapp:database:host"];
                     return value != null;
                 }),
-                ("Infrastructure module access", () => 
+                ("Infrastructure module access", () =>
                 {
                     var value = config[$"{scenarioPrefix}:infrastructure-module:environment"];
                     return !string.IsNullOrEmpty(value?.ToString());
@@ -376,10 +376,10 @@ public class AzureConfigurationChainingSteps(ScenarioContext scenarioContext)
             foreach (var test in dynamicTests)
             {
                 var passed = test.validation();
-                _chainingValidationResults.Add(passed 
+                _chainingValidationResults.Add(passed
                     ? $"✓ {test.description} test passed"
                     : $"✗ {test.description} test failed");
-                
+
                 passed.Should().BeTrue($"{test.description} validation should pass");
             }
         }
@@ -405,7 +405,7 @@ public class AzureConfigurationChainingSteps(ScenarioContext scenarioContext)
 
             // Ensure no critical failures
             failureCount.Should().Be(0, "No critical validation failures should occur");
-            
+
             // Ensure minimum validation coverage
             successCount.Should().BeGreaterThan(5, "Should have comprehensive validation coverage");
         }
@@ -415,7 +415,7 @@ public class AzureConfigurationChainingSteps(ScenarioContext scenarioContext)
             throw;
         }
     }
-    
+
     [Then(@"the chaining controller configuration should prioritize App Configuration over Key Vault")]
     public void ThenTheChainingControllerConfigurationShouldPrioritizeAppConfigurationOverKeyVault()
     {
@@ -437,11 +437,11 @@ public class AzureConfigurationChainingSteps(ScenarioContext scenarioContext)
             {
                 var value = _chainingConfiguration![test.key];
                 var hasValue = !string.IsNullOrEmpty(value);
-                
-                _chainingValidationResults.Add(hasValue 
+
+                _chainingValidationResults.Add(hasValue
                     ? $"✓ {test.description} prioritization verified for key '{test.key}' from {test.expectedSource}"
                     : $"✗ {test.description} prioritization failed for key '{test.key}'");
-                
+
                 hasValue.Should().BeTrue($"Priority validation should pass for {test.description}");
             }
         }
@@ -451,7 +451,7 @@ public class AzureConfigurationChainingSteps(ScenarioContext scenarioContext)
             throw;
         }
     }
-    
+
     [Then(@"the chaining controller should support FlexKit dynamic access patterns")]
     public void ThenTheChainingControllerShouldSupportFlexKitDynamicAccessPatterns()
     {
@@ -464,22 +464,22 @@ public class AzureConfigurationChainingSteps(ScenarioContext scenarioContext)
 
             var dynamicTests = new List<(string description, Func<bool> validation)>
             {
-                ("Dot notation style access", () => 
+                ("Dot notation style access", () =>
                 {
                     var value = config["appConfigurationSettings:myapp:api:timeout"];
                     return value != null;
                 }),
-                ("Nested object access", () => 
+                ("Nested object access", () =>
                 {
                     var value = config["keyVaultSecrets:myapp:database:host"];
                     return value != null;
                 }),
-                ("Array-style access", () => 
+                ("Array-style access", () =>
                 {
                     var value = config["keyVaultSecrets:myapp:features:cache:enabled"];
                     return value != null;
                 }),
-                ("Mixed access patterns", () => 
+                ("Mixed access patterns", () =>
                 {
                     var value = config["appConfigurationSettings:infrastructure-module:environment"];
                     return !string.IsNullOrEmpty(value?.ToString());
@@ -489,10 +489,10 @@ public class AzureConfigurationChainingSteps(ScenarioContext scenarioContext)
             foreach (var test in dynamicTests)
             {
                 var passed = test.validation();
-                _chainingValidationResults.Add(passed 
+                _chainingValidationResults.Add(passed
                     ? $"✓ {test.description} test passed"
                     : $"✗ {test.description} test failed");
-                
+
                 passed.Should().BeTrue($"{test.description} validation should pass");
             }
         }
@@ -502,7 +502,7 @@ public class AzureConfigurationChainingSteps(ScenarioContext scenarioContext)
             throw;
         }
     }
-    
+
     [Then(@"the chaining controller should support cross-source JSON processing")]
     public void ThenTheChainingControllerShouldSupportCrossSourceJsonProcessing()
     {
@@ -514,17 +514,17 @@ public class AzureConfigurationChainingSteps(ScenarioContext scenarioContext)
             // Test cross-source JSON processing capabilities with a scenario prefix
             var jsonTests = new List<(string description, string key, Func<bool> validation)>
             {
-                ("Key Vault JSON secret processing", "keyVaultSecrets:infrastructure-module-database-credentials:host", () => 
+                ("Key Vault JSON secret processing", "keyVaultSecrets:infrastructure-module-database-credentials:host", () =>
                 {
                     var value = _chainingConfiguration!["keyVaultSecrets:infrastructure-module-database-credentials:host"];
                     return !string.IsNullOrEmpty(value);
                 }),
-                ("App Configuration JSON processing", "appConfigurationSettings:myapp:api:baseUrl", () => 
+                ("App Configuration JSON processing", "appConfigurationSettings:myapp:api:baseUrl", () =>
                 {
                     var value = _chainingConfiguration!["appConfigurationSettings:myapp:api:baseUrl"];
                     return !string.IsNullOrEmpty(value);
                 }),
-                ("Cross-source JSON hierarchy", "jsonSecrets:api-settings:authentication:type", () => 
+                ("Cross-source JSON hierarchy", "jsonSecrets:api-settings:authentication:type", () =>
                 {
                     var value = _chainingConfiguration!["jsonSecrets:api-settings:authentication:type"];
                     return value == "bearer";
@@ -534,10 +534,10 @@ public class AzureConfigurationChainingSteps(ScenarioContext scenarioContext)
             foreach (var test in jsonTests)
             {
                 var passed = test.validation();
-                _chainingValidationResults.Add(passed 
+                _chainingValidationResults.Add(passed
                     ? $"✓ {test.description} test passed for key '{test.key}'"
                     : $"✗ {test.description} test failed for key '{test.key}'");
-                
+
                 passed.Should().BeTrue($"{test.description} validation should pass");
             }
         }
@@ -547,7 +547,7 @@ public class AzureConfigurationChainingSteps(ScenarioContext scenarioContext)
             throw;
         }
     }
-    
+
     [Then(@"the chaining controller configuration should demonstrate complex JSON chaining")]
     public void ThenTheChainingControllerConfigurationShouldDemonstrateComplexJsonChaining()
     {
@@ -559,17 +559,17 @@ public class AzureConfigurationChainingSteps(ScenarioContext scenarioContext)
             // Test complex JSON chaining scenarios with a scenario prefix
             var complexTests = new List<(string description, string key, Func<bool> validation)>
             {
-                ("Nested JSON object access", "keyVaultSecrets:infrastructure-module-cache-settings:redis:host", () => 
+                ("Nested JSON object access", "keyVaultSecrets:infrastructure-module-cache-settings:redis:host", () =>
                 {
                     var value = _chainingConfiguration!["keyVaultSecrets:infrastructure-module-cache-settings:redis:host"];
                     return !string.IsNullOrEmpty(value);
                 }),
-                ("Deep JSON hierarchy", "jsonSecrets:api-settings:authentication:refreshToken", () => 
+                ("Deep JSON hierarchy", "jsonSecrets:api-settings:authentication:refreshToken", () =>
                 {
                     var value = _chainingConfiguration!["jsonSecrets:api-settings:authentication:refreshToken"];
                     return !string.IsNullOrEmpty(value);
                 }),
-                ("JSON array processing", "appConfigurationSettings:myapp:cache:ttl", () => 
+                ("JSON array processing", "appConfigurationSettings:myapp:cache:ttl", () =>
                 {
                     var value = _chainingConfiguration!["appConfigurationSettings:myapp:cache:ttl"];
                     return !string.IsNullOrEmpty(value) && int.TryParse(value, out _);
@@ -579,10 +579,10 @@ public class AzureConfigurationChainingSteps(ScenarioContext scenarioContext)
             foreach (var test in complexTests)
             {
                 var passed = test.validation();
-                _chainingValidationResults.Add(passed 
+                _chainingValidationResults.Add(passed
                     ? $"✓ {test.description} test passed for key '{test.key}'"
                     : $"✗ {test.description} test failed for key '{test.key}'");
-                
+
                 passed.Should().BeTrue($"{test.description} validation should pass");
             }
         }
@@ -592,7 +592,7 @@ public class AzureConfigurationChainingSteps(ScenarioContext scenarioContext)
             throw;
         }
     }
-    
+
     [Then(@"the chaining controller should maintain proper precedence with JSON flattening")]
     public void ThenTheChainingControllerShouldMaintainProperPrecedenceWithJsonFlattening()
     {
@@ -613,11 +613,11 @@ public class AzureConfigurationChainingSteps(ScenarioContext scenarioContext)
             {
                 var value = _chainingConfiguration![test.key];
                 var hasValue = !string.IsNullOrEmpty(value);
-                
-                _chainingValidationResults.Add(hasValue 
+
+                _chainingValidationResults.Add(hasValue
                     ? $"✓ {test.description} JSON precedence maintained for key '{test.key}' from {test.expectedSource}"
                     : $"✗ {test.description} JSON precedence failed for key '{test.key}'");
-                
+
                 hasValue.Should().BeTrue($"JSON precedence validation should pass for {test.description}");
             }
         }
@@ -627,7 +627,7 @@ public class AzureConfigurationChainingSteps(ScenarioContext scenarioContext)
             throw;
         }
     }
-    
+
     [Then(@"the chaining controller should complete configuration loading within acceptable time")]
     public void ThenTheChainingControllerShouldCompleteConfigurationLoadingWithinAcceptableTime()
     {
@@ -638,14 +638,14 @@ public class AzureConfigurationChainingSteps(ScenarioContext scenarioContext)
         {
             // Define acceptable time limits for configuration loading
             var timeLimit = TimeSpan.FromSeconds(10); // 10 seconds should be more than enough
-            
+
             if (_performanceMetrics.TryGetValue("Total Time", out var totalTime))
             {
                 var passed = totalTime <= timeLimit;
-                _chainingValidationResults.Add(passed 
+                _chainingValidationResults.Add(passed
                     ? $"✓ Configuration loading completed in {totalTime.TotalMilliseconds:F0}ms (limit: {timeLimit.TotalMilliseconds:F0}ms)"
                     : $"✗ Configuration loading took {totalTime.TotalMilliseconds:F0}ms (limit: {timeLimit.TotalMilliseconds:F0}ms)");
-                
+
                 passed.Should().BeTrue($"Configuration loading should complete within {timeLimit.TotalSeconds} seconds");
             }
             else
@@ -660,7 +660,7 @@ public class AzureConfigurationChainingSteps(ScenarioContext scenarioContext)
             throw;
         }
     }
-    
+
     [Then(@"the chaining controller should demonstrate efficient source chaining")]
     public void ThenTheChainingControllerShouldDemonstrateEfficientSourceChaining()
     {
@@ -681,10 +681,10 @@ public class AzureConfigurationChainingSteps(ScenarioContext scenarioContext)
                 if (_performanceMetrics.TryGetValue(test.metric, out var actualTime))
                 {
                     var passed = actualTime <= test.limit;
-                    _chainingValidationResults.Add(passed 
+                    _chainingValidationResults.Add(passed
                         ? $"✓ {test.metric} efficiency verified: {actualTime.TotalMilliseconds:F0}ms (limit: {test.limit.TotalMilliseconds:F0}ms)"
                         : $"✗ {test.metric} efficiency failed: {actualTime.TotalMilliseconds:F0}ms (limit: {test.limit.TotalMilliseconds:F0}ms)");
-                    
+
                     passed.Should().BeTrue($"{test.metric} should be efficient");
                 }
                 else
@@ -696,7 +696,7 @@ public class AzureConfigurationChainingSteps(ScenarioContext scenarioContext)
             // Verify we have a reasonable source chain
             var sourceCount = _configurationSources.Count;
             _chainingValidationResults.Add($"✓ Source chaining efficiency: {sourceCount} sources configured");
-            
+
             sourceCount.Should().BeGreaterThan(1, "Should have multiple configuration sources");
         }
         catch (Exception ex)
@@ -705,7 +705,7 @@ public class AzureConfigurationChainingSteps(ScenarioContext scenarioContext)
             throw;
         }
     }
-    
+
     [Then(@"the chaining controller should report meaningful performance metrics")]
     public void ThenTheChainingControllerShouldReportMeaningfulPerformanceMetrics()
     {
@@ -716,14 +716,14 @@ public class AzureConfigurationChainingSteps(ScenarioContext scenarioContext)
         {
             // Define required performance metrics
             var requiredMetrics = new[] { "Configuration Build", "FlexKit Build", "Total Time" };
-            
+
             foreach (var metric in requiredMetrics)
             {
                 var hasMetric = _performanceMetrics.ContainsKey(metric);
-                _chainingValidationResults.Add(hasMetric 
+                _chainingValidationResults.Add(hasMetric
                     ? $"✓ {metric} metric reported: {_performanceMetrics[metric].TotalMilliseconds:F0}ms"
                     : $"✗ {metric} metric missing");
-                
+
                 hasMetric.Should().BeTrue($"{metric} performance metric should be available");
             }
 
@@ -731,17 +731,17 @@ public class AzureConfigurationChainingSteps(ScenarioContext scenarioContext)
             foreach (var metric in _performanceMetrics)
             {
                 var isValid = metric.Value.TotalMilliseconds > 0;
-                _chainingValidationResults.Add(isValid 
+                _chainingValidationResults.Add(isValid
                     ? $"✓ {metric.Key} has valid timing: {metric.Value.TotalMilliseconds:F0}ms"
                     : $"✗ {metric.Key} has invalid timing: {metric.Value.TotalMilliseconds:F0}ms");
-                
+
                 isValid.Should().BeTrue($"{metric.Key} should have a positive time value");
             }
 
             // Summary of performance metrics
             var totalMetrics = _performanceMetrics.Count;
             _chainingValidationResults.Add($"✓ Performance reporting summary: {totalMetrics} metrics collected");
-            
+
             totalMetrics.Should().BeGreaterThanOrEqualTo(3, "Should have at least 3 performance metrics");
         }
         catch (Exception ex)

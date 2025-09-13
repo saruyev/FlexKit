@@ -73,7 +73,9 @@ public static class TypeConversionExtensions
     /// </item>
     /// <item>
     /// <term>Primitive Conversion:</term>
-    /// <description>Uses <see cref="Convert.ChangeType(object, Type, IFormatProvider)"/> with invariant culture</description>
+    /// <description>
+    /// Uses <see cref="Convert.ChangeType(object, Type, IFormatProvider)"/> with invariant culture
+    /// </description>
     /// </item>
     /// <item>
     /// <term>Culture Handling:</term>
@@ -131,7 +133,9 @@ public static class TypeConversionExtensions
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="type"/> is <c>null</c>.</exception>
     /// <exception cref="ArgumentException">Thrown when the target type is not supported for conversion.</exception>
     /// <exception cref="FormatException">Thrown when the input string format is invalid for the target type.</exception>
-    /// <exception cref="OverflowException">Thrown when the input value is outside the valid range for the target numeric type.</exception>
+    /// <exception cref="OverflowException">
+    /// Thrown when the input value is outside the valid range for the target numeric type.
+    /// </exception>
     public static object? ToType(
         this string? text,
         Type type)
@@ -196,9 +200,15 @@ public static class TypeConversionExtensions
     /// </list>
     /// </para>
     /// </remarks>
-    /// <exception cref="ArgumentException">Thrown when <typeparamref name="T"/> is not supported for conversion.</exception>
-    /// <exception cref="FormatException">Thrown when the input string format is invalid for <typeparamref name="T"/>.</exception>
-    /// <exception cref="OverflowException">Thrown when the input value is outside the valid range for <typeparamref name="T"/>.</exception>
+    /// <exception cref="ArgumentException">
+    /// Thrown when <typeparamref name="T"/> is not supported for conversion.
+    /// </exception>
+    /// <exception cref="FormatException">
+    /// Thrown when the input string format is invalid for <typeparamref name="T"/>.
+    /// </exception>
+    /// <exception cref="OverflowException">
+    /// Thrown when the input value is outside the valid range for <typeparamref name="T"/>.
+    /// </exception>
     [UsedImplicitly]
     public static T? ToType<T>(this string? text) => (T?)ToType(text, typeof(T));
 
@@ -268,9 +278,15 @@ public static class TypeConversionExtensions
     /// </list>
     /// </para>
     /// </remarks>
-    /// <exception cref="ArgumentException">Thrown when individual string values cannot be converted to the element type.</exception>
-    /// <exception cref="FormatException">Thrown when string values have an invalid format for the element type.</exception>
-    /// <exception cref="OverflowException">Thrown when string values represent numbers outside the valid range for the element type.</exception>
+    /// <exception cref="ArgumentException">
+    /// Thrown when individual string values cannot be converted to the element type.
+    /// </exception>
+    /// <exception cref="FormatException">
+    /// Thrown when string values have an invalid format for the element type.
+    /// </exception>
+    /// <exception cref="OverflowException">
+    /// Thrown when string values represent numbers outside the valid range for the element type.
+    /// </exception>
     public static object? ToArray(
         this IEnumerable<string?>? source,
         Type? type)
@@ -320,7 +336,7 @@ public static class TypeConversionExtensions
     /// <strong>Processing Steps:</strong>
     /// <list type="number">
     /// <item>Splits the source string using the specified separator</item>
-    /// <item>Converts each substring to type <typeparamref name="T"/></item>
+    /// <item>Converts each substring to a type <typeparamref name="T"/></item>
     /// <item>Returns an array containing all converted values</item>
     /// </list>
     /// </para>
@@ -362,30 +378,30 @@ public static class TypeConversionExtensions
     /// </list>
     /// </para>
     /// </remarks>
-    /// <exception cref="ArgumentException">Thrown when individual values cannot be converted to <typeparamref name="T"/>.</exception>
-    /// <exception cref="FormatException">Thrown when individual values have an invalid format for <typeparamref name="T"/>.</exception>
-    /// <exception cref="OverflowException">Thrown when individual values are outside the valid range for <typeparamref name="T"/>.</exception>
+    /// <exception cref="ArgumentException">
+    /// Thrown when individual values cannot be converted to <typeparamref name="T"/>.
+    /// </exception>
+    /// <exception cref="FormatException">
+    /// Thrown when individual values have an invalid format for <typeparamref name="T"/>.
+    /// </exception>
+    /// <exception cref="OverflowException">
+    /// Thrown when individual values are outside the valid range for <typeparamref name="T"/>.
+    /// </exception>
     [UsedImplicitly]
     public static T?[]? GetCollection<T>(
         this string? source,
-        char separator = ',')
-    {
-        if (string.IsNullOrEmpty(source))
-        {
-            return null;
-        }
-
-        var list = source.Split(separator);
-        return list.Select(item => item.ToType<T>()).ToArray();
-    }
+        char separator = ',') =>
+        string.IsNullOrEmpty(source) ? null : [.. source.Split(separator).Select(item => item.ToType<T>())];
 
     /// <summary>
-    /// Converts an <see cref="IConfigurationSection"/> collection to a dictionary with keys and values of specified types.
-    /// Creates a strongly typed dictionary from configuration sections where each section represents a key-value pair
-    /// or contains child sections that represent dictionary entries.
+    /// Converts an <see cref="IConfigurationSection"/> collection to a dictionary with keys and values
+    /// of specified types. Creates a strongly typed dictionary from configuration sections where each section
+    /// represents a key-value pair or contains child sections that represent dictionary entries.
     /// </summary>
     /// <param name="source">The source collection of configuration sections to convert.</param>
-    /// <param name="type">The generic dictionary type specifying key and value types (e.g., typeof(Dictionary&lt;string, int&gt;)).</param>
+    /// <param name="type">
+    /// The generic dictionary type specifying key and value types (e.g., typeof(Dictionary&lt;string, int&gt;)).
+    /// </param>
     /// <returns>
     /// An <see cref="IDictionary"/> instance of the specified type containing the converted key-value pairs,
     /// or <c>null</c> if the dictionary cannot be created.
@@ -513,8 +529,13 @@ public static class TypeConversionExtensions
     /// <para>
     /// <strong>Casing Behavior:</strong>
     /// <list type="bullet">
-    /// <item>The entire input string is first converted to lowercase using <see cref="string.ToLowerInvariant"/></item>
-    /// <item>The first character is then converted to uppercase using <see cref="char.ToUpper(char, CultureInfo)"/> with invariant culture</item>
+    /// <item>
+    /// The entire input string is first converted to lowercase using <see cref="string.ToLowerInvariant"/>
+    /// </item>
+    /// <item>
+    /// The first character is then converted to uppercase using <see cref="char.ToUpper(char, CultureInfo)"/>
+    /// with invariant culture
+    /// </item>
     /// <item>All other characters remain in the lowercase</item>
     /// </list>
     /// </para>
