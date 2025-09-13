@@ -6,6 +6,7 @@
 using FlexKit.Configuration.Sources;
 using JetBrains.Annotations;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Configuration.CommandLine;
 using Microsoft.Extensions.Configuration.EnvironmentVariables;
 using Microsoft.Extensions.Configuration.Json;
 using Microsoft.Extensions.Configuration.Memory;
@@ -87,7 +88,9 @@ public class FlexConfigurationBuilder
     /// JSON files are the most common configuration source and support hierarchical
     /// configuration structures with strong typing support.
     /// </summary>
-    /// <param name="path">The file path to the JSON configuration file, relative to the application base directory.</param>
+    /// <param name="path">
+    /// The file path to the JSON configuration file, relative to the application base directory.
+    /// </param>
     /// <param name="optional">
     /// Whether the file is optional. If <c>false</c> and the file doesn't exist,
     /// an exception will be thrown during configuration building.
@@ -254,11 +257,76 @@ public class FlexConfigurationBuilder
         AddSource(new EnvironmentVariablesConfigurationSource());
 
     /// <summary>
+    /// Adds command line arguments as a configuration source to the builder.
+    /// Command line arguments provide the highest precedence way to override configuration
+    /// values at runtime, making them ideal for deployment scripts and runtime customization.
+    /// </summary>
+    /// <param name="args">The command line arguments array, typically from "Main(string[] args)".</param>
+    /// <param name="switchMappings">Optional dictionary to map command line switches to configuration keys.</param>
+    /// <returns>The same builder instance to enable method chaining.</returns>
+    /// <remarks>
+    /// Command line arguments are typically added last in the configuration hierarchy
+    /// to give them the highest precedence over all other configuration sources.
+    ///
+    /// <para>
+    /// <strong>Argument Format:</strong>
+    /// Command line arguments support several formats:
+    /// <list type="bullet">
+    /// <item>Key-value pairs: --key=value or --key value</item>
+    /// <item>Switch mappings: -k value (when switch mapping configured)</item>
+    /// <item>Hierarchical keys: --Database:ConnectionString="Server=localhost;"</item>
+    /// </list>
+    /// </para>
+    ///
+    /// <para>
+    /// <strong>Switch Mappings:</strong>
+    /// Use switch mappings to create shorter aliases for configuration keys:
+    /// <code>
+    /// var switchMappings = new Dictionary&lt;string, string&gt;
+    /// {
+    ///     ["-e"] = "Environment",
+    ///     ["-c"] = "Database:ConnectionString",
+    ///     ["-v"] = "Logging:LogLevel:Default"
+    /// };
+    ///
+    /// builder.AddCommandLine(args, switchMappings);
+    ///
+    /// // Usage: myapp.exe -e Production -c "Server=prod;" -v Debug
+    /// </code>
+    /// </para>
+    /// </remarks>
+    /// <example>
+    /// <code>
+    /// // Basic usage with command line args
+    /// var config = new FlexConfigurationBuilder()
+    ///     .AddJsonFile("appsettings.json")
+    ///     .AddEnvironmentVariables()
+    ///     .AddCommandLine(args)  // Highest precedence
+    ///     .Build();
+    ///
+    /// // With switch mappings
+    /// var switchMappings = new Dictionary&lt;string, string&gt;
+    /// {
+    ///     ["--environment"] = "Environment",
+    ///     ["-env"] = "Environment"
+    /// };
+    ///
+    /// builder.AddCommandLine(args, switchMappings);
+    /// </code>
+    /// </example>
+    public FlexConfigurationBuilder AddCommandLine(
+        string[] args,
+        IDictionary<string, string>? switchMappings = null) =>
+        AddSource(new CommandLineConfigurationSource { Args = args, SwitchMappings = switchMappings });
+
+    /// <summary>
     /// Adds a ".env" file configuration source to the builder.
     /// .env files provide a convenient way to manage environment-like configuration
     /// in development scenarios, following the twelve-factor app configuration principles.
     /// </summary>
-    /// <param name="path">The file path to the .env file, relative to the application base directory. Defaults to ".env".</param>
+    /// <param name="path">
+    /// The file path to the .env file, relative to the application base directory. Defaults to ".env".
+    /// </param>
     /// <param name="optional">
     /// Whether the .env file is optional. If <c>false</c> and the file doesn't exist,
     /// an exception will be thrown during configuration building.
