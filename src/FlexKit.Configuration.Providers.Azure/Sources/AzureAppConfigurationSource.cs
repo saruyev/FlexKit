@@ -110,10 +110,12 @@ public class AzureAppConfigurationSource : IConfigurationSource
 
     /// <summary>
     /// Gets or sets a pre-configured Azure App Configuration client for testing scenarios.
-    /// When provided, this client will be used instead of creating a new one from the App Configuration URI and credentials.
+    /// When provided, this client will be used instead of creating a new one from the
+    /// App Configuration URI and credentials.
     /// </summary>
     /// <value>
-    /// A configured ConfigurationClient instance, or null to create a new client using the App Configuration URI and credentials.
+    /// A configured ConfigurationClient instance, or null to create a new client using the
+    /// App Configuration URI and credentials.
     /// Default is null.
     /// </value>
     public ConfigurationClient? ConfigurationClient { get; [UsedImplicitly] set; }

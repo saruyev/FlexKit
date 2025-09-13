@@ -14,6 +14,7 @@ using Xunit;
 // ReSharper disable TooManyDeclarations
 // ReSharper disable NullableWarningSuppressionIsUsed
 // ReSharper disable ClassTooBig
+// ReSharper disable ConvertToLocalFunction
 
 namespace FlexKit.Configuration.Tests.Core;
 

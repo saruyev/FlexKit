@@ -31,13 +31,21 @@ namespace FlexKit.Logging.NLog.Translation;
 /// However, for simplicity and compatibility, we use the direct ${propertyName} format.
 /// </para>
 /// </remarks>
-public partial class NLogMessageTranslator : DefaultMessageTranslator
+internal sealed partial class NLogMessageTranslator : DefaultMessageTranslator
 {
+    /// <summary>
+    /// Represents a regular expression used to identify placeholders within curly braces in templates.
+    /// </summary>
+    /// <returns>
+    /// A <see cref="Regex"/> object configured to match template parameters enclosed in curly braces.
+    /// </returns>
     [GeneratedRegex(@"\{([^}]+)\}")]
     private static partial Regex ParameterRegex();
 
     /// <inheritdoc />
-    public override string TranslateTemplate(string? messageTemplate, LoggingConfig? config = null)
+    public override string TranslateTemplate(
+        string? messageTemplate,
+        LoggingConfig? config = null)
     {
         if (string.IsNullOrEmpty(messageTemplate))
         {

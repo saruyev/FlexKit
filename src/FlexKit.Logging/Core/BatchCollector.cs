@@ -9,12 +9,37 @@ namespace FlexKit.Logging.Core;
 /// </remarks>
 /// <param name="maxSize">The maximum number of items in a batch before triggering a flush.</param>
 /// <param name="timeout">The maximum time to wait before triggering a flush, regardless of batch size.</param>
-public class BatchCollector<T>(
+internal class BatchCollector<T>(
     int maxSize,
     in TimeSpan timeout)
 {
+    /// <summary>
+    /// Holds the collection of items being accumulated for the current batch in the <see cref="BatchCollector{T}"/>.
+    /// </summary>
+    /// <remarks>
+    /// Items are added to this variable until the maximum batch size or timeout is reached,
+    /// at which point the batch is either processed or flushed.
+    /// </remarks>
     private readonly List<T> _batch = new(maxSize);
+
+    /// <summary>
+    /// Represents the maximum duration to wait before forcing a batch flush,
+    /// regardless of the current number of items in the batch.
+    /// </summary>
+    /// <remarks>
+    /// This value acts as a timeout threshold to ensure timely processing of batches
+    /// even if the maximum batch size is not reached.
+    /// </remarks>
     private readonly TimeSpan _timeout = timeout;
+
+    /// <summary>
+    /// Stores the timestamp of the last flush operation performed by the <see cref="BatchCollector{T}"/>.
+    /// </summary>
+    /// <remarks>
+    /// This variable is updated each time a batch is flushed, either automatically when the
+    /// size or timeout thresholds are reached, or manually through the <see cref="Flush"/> method.
+    /// It is used to determine if the timeout threshold for flushing has been exceeded.
+    /// </remarks>
     private DateTime _lastFlush = DateTime.UtcNow;
 
     /// <summary>

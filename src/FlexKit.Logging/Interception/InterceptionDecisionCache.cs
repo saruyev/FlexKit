@@ -23,8 +23,20 @@ namespace FlexKit.Logging.Interception;
 /// Initializes a new instance of the InterceptionDecisionCache.
 /// </remarks>
 /// <param name="loggingConfig">The logging configuration for pattern matching and defaults.</param>
-public sealed class InterceptionDecisionCache(LoggingConfig loggingConfig)
+internal sealed class InterceptionDecisionCache(LoggingConfig loggingConfig)
 {
+    /// <summary>
+    /// Stores a cache of method-level interception decisions for specific types,
+    /// organized by declaring type and their respective methods. This helps optimize
+    /// the process of determining whether a given method requires interception logic
+    /// to be applied.
+    /// </summary>
+    /// <remarks>
+    /// The <c>_typeDecisions</c> field is a thread-safe dictionary that maps types to
+    /// another dictionary of their methods, each associated with a nullable
+    /// <see cref="InterceptionDecision"/>. The cache is used to avoid recalculating
+    /// interception decisions repeatedly for the same methods across the application.
+    /// </remarks>
     private readonly ConcurrentDictionary<Type, ConcurrentDictionary<MethodInfo, InterceptionDecision?>>
         _typeDecisions = new();
 
@@ -224,7 +236,10 @@ public sealed class InterceptionDecisionCache(LoggingConfig loggingConfig)
         MethodInfo interfaceMethod,
         Type implementationType)
     {
-        var parameterTypes = interfaceMethod.GetParameters().Select(p => p.ParameterType).ToArray();
+        var parameterTypes = interfaceMethod
+            .GetParameters()
+            .Select(p => p.ParameterType)
+            .ToArray();
         return implementationType.GetMethod(interfaceMethod.Name, parameterTypes);
     }
 
@@ -267,9 +282,12 @@ public sealed class InterceptionDecisionCache(LoggingConfig loggingConfig)
     }
 
     /// <summary>
-    /// Finds the matching logging configuration for the specified type name, either by exact match or wildcard pattern.
+    /// Finds the matching logging configuration for the specified type name, either by exact match
+    /// or wildcard pattern.
     /// </summary>
-    /// <param name="typeName">The fully qualified name of the type to search for in the logging configuration.</param>
+    /// <param name="typeName">
+    /// The fully qualified name of the type to search for in the logging configuration.
+    /// </param>
     /// <returns>The matching <see cref="InterceptionConfig"/> if found; otherwise, null.</returns>
     private InterceptionConfig? FindMatchingConfiguration(string typeName)
     {
@@ -328,7 +346,8 @@ public sealed class InterceptionDecisionCache(LoggingConfig loggingConfig)
             return methodName.EndsWith(pattern[1..], StringComparison.InvariantCulture); // *suffix
         }
 
-        return pattern.EndsWith('*') && methodName.StartsWith(pattern[..^1], StringComparison.InvariantCulture); // prefix*
+        return pattern.EndsWith('*') &&
+               methodName.StartsWith(pattern[..^1], StringComparison.InvariantCulture); // prefix*
     }
 
     /// <summary>

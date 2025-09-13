@@ -47,7 +47,7 @@ namespace FlexKit.Logging.Log4Net.Detection;
 /// </para>
 /// </remarks>
 [UsedImplicitly]
-public class Log4NetLoggingModule : Module
+internal sealed class Log4NetLoggingModule : Module
 {
     /// <summary>
     /// Configures the container with Log4Net-based logging services.

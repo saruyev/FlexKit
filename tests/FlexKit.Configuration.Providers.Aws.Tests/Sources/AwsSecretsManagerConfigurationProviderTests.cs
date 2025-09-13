@@ -10,6 +10,7 @@ using Xunit;
 // ReSharper disable ClassTooBig
 // ReSharper disable ComplexConditionExpression
 // ReSharper disable NullableWarningSuppressionIsUsed
+// ReSharper disable MethodTooLong
 #pragma warning disable CS0618 // Type or member is obsolete
 
 namespace FlexKit.Configuration.Providers.Aws.Tests.Sources;

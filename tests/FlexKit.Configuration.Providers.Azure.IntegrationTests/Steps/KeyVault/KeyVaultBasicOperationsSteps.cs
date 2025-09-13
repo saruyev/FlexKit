@@ -352,7 +352,7 @@ public class KeyVaultBasicOperationsSteps(ScenarioContext scenarioContext)
         try
         {
             // Test JSON flattening - these should be flattened from JSON secrets
-            // Key Vault transforms secret names from -- to : automatically
+            // Key Vault transforms secret names from "--" to ":" automatically
             var jsonFlatteningTests = new List<(string description, string key)>
             {
                 ("Database config host", "database-config:host"),

@@ -7,6 +7,7 @@ using FlexKit.Logging.Core;
 using FlexKit.Logging.Formatting.Utils;
 using FlexKit.Logging.Models;
 using Microsoft.Extensions.Logging;
+// ReSharper disable NullableWarningSuppressionIsUsed
 
 namespace FlexKit.Logging.Interception;
 
@@ -21,20 +22,50 @@ namespace FlexKit.Logging.Interception;
 /// <param name="cache">The cache containing pre-computed interception decisions.</param>
 /// <param name="logQueue">The background log queue for processing log entries.</param>
 /// <param name="logger">Logger for the interceptor itself.</param>
-public sealed class MethodLoggingInterceptor(
+internal sealed class MethodLoggingInterceptor(
     InterceptionDecisionCache cache,
     IBackgroundLog logQueue,
     ILogger<MethodLoggingInterceptor> logger) : IInterceptor
 {
+    /// <summary>
+    /// Represents a private readonly instance of <see cref="InterceptionDecisionCache"/> used within
+    /// the <see cref="MethodLoggingInterceptor"/> to cache decisions related to method interception.
+    /// This cache is used for determining interception behavior, configuration, and logging details.
+    /// </summary>
     private readonly InterceptionDecisionCache _cache = cache ?? throw new ArgumentNullException(nameof(cache));
+
+    /// <summary>
+    /// Represents a private readonly instance of <see cref="IBackgroundLog"/> used for handling background
+    /// logging operations. This queue is responsible for enqueueing log entries and managing asynchronous
+    /// logging workflows within <see cref="MethodLoggingInterceptor"/>.
+    /// Ensures that log messages are processed efficiently without blocking the main execution flow.
+    /// </summary>
     private readonly IBackgroundLog _logQueue = logQueue ?? throw new ArgumentNullException(nameof(logQueue));
+
+    /// <summary>
+    /// Represents an instance of <see cref="ILogger{TCategoryName}"/> specifically for
+    /// the <see cref="MethodLoggingInterceptor"/> class. This logger is used for handling
+    /// logging operations, including asynchronous logging failures and warnings when the
+    /// logging queue is full.
+    /// </summary>
     private readonly ILogger<MethodLoggingInterceptor> _logger =
         logger ?? throw new ArgumentNullException(nameof(logger));
+
+    /// <summary>
+    /// Defines a static, cached logging action for serialization failure messages during logging interception.
+    /// Used to log warnings when input parameter serialization fails, improving log consistency and performance.
+    /// </summary>
     private static readonly Action<ILogger, Exception?> _logSerializationFailure =
         LoggerMessage.Define(
             LogLevel.Warning,
             new EventId(1),
             "Failed to serialize input parameters for logging");
+
+    /// <summary>
+    /// Represents a static logger action used to log a warning when the background log queue fails
+    /// to enqueue a logging task. Primarily used within the <see cref="MethodLoggingInterceptor"/> to notify about
+    /// potential logging issues, such as the background log queue being full or unavailable.
+    /// </summary>
     private static readonly Action<ILogger, Exception?> _logQueueFullWarning =
         LoggerMessage.Define(
             LogLevel.Warning,
@@ -163,7 +194,9 @@ public sealed class MethodLoggingInterceptor(
 
             if (details.Success && ShouldLogOutput(decision))
             {
-                entry = entry.WithOutput(ExtractTaskResult(completedTask).ApplyOutputMasking(details.DeclaringType, _cache.Config));
+                entry = entry.WithOutput(
+                    ExtractTaskResult(completedTask)
+                    .ApplyOutputMasking(details.DeclaringType, _cache.Config));
             }
 
             TryEnqueueEntry(entry);
@@ -272,7 +305,9 @@ public sealed class MethodLoggingInterceptor(
         return taskType.GetInterfaces()
             .Where(IsGenericTask)
             .Select(interfaceType =>
-                typeof(Task<>).MakeGenericType(interfaceType.GetGenericArguments()[0]).GetProperty("Result"))
+                typeof(Task<>)
+                    .MakeGenericType(interfaceType.GetGenericArguments()[0])
+                    .GetProperty("Result"))
             .Select(resultProperty => resultProperty?.GetValue(task)).FirstOrDefault();
     }
 
@@ -350,8 +385,7 @@ public sealed class MethodLoggingInterceptor(
     /// </summary>
     /// <param name="context">The input context containing method arguments and metadata.</param>
     /// <returns>An array of structured parameter objects.</returns>
-    private static object[] CreateParameterStructures(
-        InputContext context) =>
+    private static object[] CreateParameterStructures(InputContext context) =>
         [.. context.Arguments.Select((arg, index) => CreateSingleParameterStructure(arg, index, context))];
 
     /// <summary>

@@ -18,11 +18,25 @@ namespace FlexKit.Logging.Formatting.Formatters;
 /// </remarks>
 /// <param name="translator">The message translator for provider-specific syntax conversion.</param>
 [UsedImplicitly]
-public sealed partial class CustomTemplateFormatter(IMessageTranslator translator) : IMessageFormatter
+internal sealed partial class CustomTemplateFormatter(IMessageTranslator translator) : IMessageFormatter
 {
-    private readonly IMessageTranslator _translator = translator ?? throw new ArgumentNullException(nameof(translator));
+    /// <summary>
+    /// Represents a translator used for translating message templates and parameters within the formatter.
+    /// </summary>
+    private readonly IMessageTranslator _translator =
+        translator ?? throw new ArgumentNullException(nameof(translator));
+
+    /// <summary>
+    /// Serves as a cache for storing and retrieving processed log message templates,
+    /// reducing the overhead of repeatedly processing the same template.
+    /// </summary>
     private readonly ConcurrentDictionary<string, string> _templateCache = new();
 
+    /// <summary>
+    /// Generates a compiled regular expression to match placeholders within a template string.
+    /// Placeholders are expected in the format "{PlaceholderName}".
+    /// </summary>
+    /// <returns>A compiled Regex instance for matching placeholders in templates.</returns>
     [GeneratedRegex(@"\{([^}]+)\}", RegexOptions.Compiled)]
     private static partial Regex PlaceholderRegex();
 
@@ -68,10 +82,16 @@ public sealed partial class CustomTemplateFormatter(IMessageTranslator translato
     /// Processes the provided parameters in the context of the specified template, translating and formatting them
     /// as needed based on the given formatting context and template configuration.
     /// </summary>
-    /// <param name="context">The formatting context containing configuration and parameter extraction details.</param>
-    /// <param name="processedTemplate">The processed template string to be used for formatting and translation.</param>
+    /// <param name="context">
+    /// The formatting context containing configuration and parameter extraction details.
+    /// </param>
+    /// <param name="processedTemplate">
+    /// The processed template string to be used for formatting and translation.
+    /// </param>
     /// <returns>A formatted message containing the result of the parameter processing and translation.</returns>
-    private FormattedMessage ProcessParameters(FormattingContext context, string processedTemplate)
+    private FormattedMessage ProcessParameters(
+        FormattingContext context,
+        string processedTemplate)
     {
         IReadOnlyDictionary<string, object?> parameters;
 
@@ -149,7 +169,7 @@ public sealed partial class CustomTemplateFormatter(IMessageTranslator translato
     /// <param name="settings">The custom template formatter settings.</param>
     /// <returns>The type-specific template or null if not found.</returns>
     private static string? TryGetTypeTemplate(
-        FormattingContext context,
+        in FormattingContext context,
         CustomTemplateFormatterSettings settings) =>
         GetValidTemplateFromConfig(context, context.LogEntry.TypeName, settings);
 

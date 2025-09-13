@@ -8,8 +8,14 @@ namespace FlexKit.Logging.Formatting.Utils;
 /// Provides an extension method for retrieving the appropriate template for log entry formatting
 /// based on configuration or fallback logic.
 /// </summary>
-public static class TemplateExtensions
+internal static class TemplateExtensions
 {
+    /// <summary>
+    /// A dictionary variable that holds predefined logging templates for different formatter types.
+    /// It maps a <see cref="FormatterType"/> to another dictionary which associates <see cref="TemplateKeys"/>
+    /// with corresponding template strings. These templates are used for generating formatted log messages
+    /// during success or error events for methods.
+    /// </summary>
     private static readonly Dictionary<FormatterType, Dictionary<TemplateKeys, string>> _templates = new()
     {
         [FormatterType.StandardStructured] = new()
@@ -24,7 +30,8 @@ public static class TemplateExtensions
             [TemplateKeys.SuccessStart] = "✅ Method {MethodName} started successfully",
             [TemplateKeys.SuccessEnd] = "✅ Method {MethodName} completed successfully in {Duration}ms",
             [TemplateKeys.ErrorStart] = "❌ Method {MethodName} failed: {ExceptionType} - {ExceptionMessage}",
-            [TemplateKeys.ErrorEnd] = "❌ Method {MethodName} failed: {ExceptionType} - {ExceptionMessage} (after {Duration}ms)"
+            [TemplateKeys.ErrorEnd] =
+                "❌ Method {MethodName} failed: {ExceptionType} - {ExceptionMessage} (after {Duration}ms)"
         },
     };
 
@@ -34,10 +41,14 @@ public static class TemplateExtensions
     /// <param name="context">The formatting context containing configuration and log entry.</param>
     /// <param name="key">The formatter type to use for the template.</param>
     /// <returns>The template string to use for formatting.</returns>
-    public static string GetTemplate(this in FormattingContext context, FormatterType key)
+    public static string GetTemplate(
+        this in FormattingContext context,
+        FormatterType key)
     {
         var configuredTemplate = TryGetConfiguredTemplate(context, key.ToString());
-        return !string.IsNullOrEmpty(configuredTemplate) ? configuredTemplate : GetFallbackTemplate(context.LogEntry, key);
+        return !string.IsNullOrEmpty(configuredTemplate)
+            ? configuredTemplate
+            : GetFallbackTemplate(context.LogEntry, key);
     }
 
     /// <summary>
@@ -46,7 +57,9 @@ public static class TemplateExtensions
     /// <param name="context">The formatting context containing configuration.</param>
     /// <param name="key">The template key to look up.</param>
     /// <returns>The configured template if available and valid; otherwise, null.</returns>
-    private static string? TryGetConfiguredTemplate(in FormattingContext context, string key)
+    private static string? TryGetConfiguredTemplate(
+        in FormattingContext context,
+        string key)
     {
         var validTemplate = context.Configuration.Templates.TryGetValue(
             key,
@@ -61,7 +74,9 @@ public static class TemplateExtensions
     /// <param name="entry">The log entry to create a template for.</param>
     /// <param name="key">The formatter type to use for the template.</param>
     /// <returns>A fallback template appropriate for the log entry type.</returns>
-    private static string GetFallbackTemplate(in LogEntry entry, FormatterType key) =>
+    private static string GetFallbackTemplate(
+        in LogEntry entry,
+        FormatterType key) =>
         entry.Success
             ? GetSuccessTemplate(entry, key)
             : GetFailureTemplate(entry, key);
@@ -72,7 +87,9 @@ public static class TemplateExtensions
     /// <param name="entry">The log entry representing a successful operation.</param>
     /// <param name="key">The formatter type to use for the template.</param>
     /// <returns>A template string for successful operations.</returns>
-    private static string GetSuccessTemplate(in LogEntry entry, FormatterType key)
+    private static string GetSuccessTemplate(
+        in LogEntry entry,
+        FormatterType key)
     {
         var baseTemplate = entry.DurationTicks.HasValue
             ? _templates[key][TemplateKeys.SuccessEnd]
@@ -87,7 +104,9 @@ public static class TemplateExtensions
     /// <param name="entry">The log entry representing a failed operation.</param>
     /// <param name="key">The formatter type to use for the template.</param>
     /// <returns>A template string for failed operations.</returns>
-    private static string GetFailureTemplate(in LogEntry entry, FormatterType key)
+    private static string GetFailureTemplate(
+        in LogEntry entry,
+        FormatterType key)
     {
         var baseTemplate = entry.DurationTicks.HasValue
             ? _templates[key][TemplateKeys.ErrorEnd]

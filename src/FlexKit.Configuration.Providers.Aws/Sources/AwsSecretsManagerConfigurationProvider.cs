@@ -95,11 +95,27 @@ namespace FlexKit.Configuration.Providers.Aws.Sources;
 /// containerBuilder.RegisterConfig&lt;DatabaseConfig&gt;("myapp-database");
 /// </code>
 /// </example>
-public sealed class AwsSecretsManagerConfigurationProvider : ConfigurationProvider, IDisposable
+internal sealed class AwsSecretsManagerConfigurationProvider : ConfigurationProvider, IDisposable
 {
+    /// <summary>
+    /// Represents the underlying AWS Secrets Manager configuration source used by the provider.
+    /// </summary>
     private readonly AwsSecretsManagerConfigurationSource _source;
+
+    /// <summary>
+    /// Represents the AWS Secrets Manager client used to interact with and retrieve secrets from AWS Secrets Manager.
+    /// </summary>
     private readonly IAmazonSecretsManager _secretsClient;
+
+    /// <summary>
+    /// Represents the timer responsible for triggering the periodic reload of configuration data from
+    /// AWS Secrets Manager.
+    /// </summary>
     private readonly Timer? _reloadTimer;
+
+    /// <summary>
+    /// Indicates whether the object has been disposed to prevent multiple dispose operations.
+    /// </summary>
     private bool _disposed;
 
     /// <summary>
@@ -111,7 +127,9 @@ public sealed class AwsSecretsManagerConfigurationProvider : ConfigurationProvid
     /// including secret names, AWS options, and processing settings.
     /// </param>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="source"/> is null.</exception>
-    /// <exception cref="InvalidOperationException">Thrown when AWS credentials cannot be resolved or Secrets Manager client creation fails.</exception>
+    /// <exception cref="InvalidOperationException">
+    /// Thrown when AWS credentials cannot be resolved or Secrets Manager client creation fails.
+    /// </exception>
     /// <remarks>
     /// The constructor creates an AWS Secrets Manager client using the credentials and region
     /// specified in the source options, or falls back to the default AWS credential resolution chain.
@@ -150,7 +168,8 @@ public sealed class AwsSecretsManagerConfigurationProvider : ConfigurationProvid
 
     /// <summary>
     /// Loads configuration data from AWS Secrets Manager.
-    /// Retrieves all specified secrets and processes them according to their type and the provider's configuration options.
+    /// Retrieves all specified secrets and processes them according to their type and the provider's
+    /// configuration options.
     /// </summary>
     /// <remarks>
     /// This method is called by the .NET configuration system during application startup
@@ -175,8 +194,12 @@ public sealed class AwsSecretsManagerConfigurationProvider : ConfigurationProvid
     /// Required sources will throw exceptions on failure.
     /// </para>
     /// </remarks>
-    /// <exception cref="InvalidOperationException">Thrown when Secrets Manager access fails and the source is not optional.</exception>
-    /// <exception cref="UnauthorizedAccessException">Thrown when the configured credentials lack necessary permissions.</exception>
+    /// <exception cref="InvalidOperationException">
+    /// Thrown when Secrets Manager access fails and the source is not optional.
+    /// </exception>
+    /// <exception cref="UnauthorizedAccessException">
+    /// Thrown when the configured credentials lack necessary permissions.
+    /// </exception>
     public override void Load()
     {
         try
@@ -309,7 +332,8 @@ public sealed class AwsSecretsManagerConfigurationProvider : ConfigurationProvid
         var secretNamePrefix = secretPattern.TrimEnd('*');
         var request = CreateListSecretsRequest(secretNamePrefix);
         var allSecrets = await ListAllSecretsWithPrefixAsync(request, secretNamePrefix);
-        var loadTasks = allSecrets.Select(secret => LoadSingleSecretAsync(secret.Name, configurationData));
+        var loadTasks = allSecrets.Select(
+            secret => LoadSingleSecretAsync(secret.Name, configurationData));
 
         await Task.WhenAll(loadTasks).ConfigureAwait(false);
     }
@@ -330,7 +354,8 @@ public sealed class AwsSecretsManagerConfigurationProvider : ConfigurationProvid
         };
 
     /// <summary>
-    /// Iterates through all pages of secret listings, accumulating only those secrets whose names match the specified prefix.
+    /// Iterates through all pages of secret listings, accumulating only those secrets whose names match
+    /// the specified prefix.
     /// </summary>
     /// <param name="request">Initial ListSecretsRequest with applied filters and no NextToken.</param>
     /// <param name="secretNamePrefix">The prefix used for additional filtering.</param>
@@ -397,7 +422,10 @@ public sealed class AwsSecretsManagerConfigurationProvider : ConfigurationProvid
     /// <param name="secretResponse">The AWS secret response containing the secret value.</param>
     /// <param name="configurationData">The dictionary to store the processed configuration data.</param>
     /// <param name="configKey">The transformed configuration key for this secret.</param>
-    private void ProcessSecretValue(GetSecretValueResponse secretResponse, Dictionary<string, string?> configurationData, string configKey)
+    private void ProcessSecretValue(
+        GetSecretValueResponse secretResponse,
+        Dictionary<string, string?> configurationData,
+        string configKey)
     {
         if (!string.IsNullOrEmpty(secretResponse.SecretString))
         {
@@ -416,7 +444,10 @@ public sealed class AwsSecretsManagerConfigurationProvider : ConfigurationProvid
     /// <param name="secretString">The SecretString value to process.</param>
     /// <param name="configurationData">The dictionary to store the processed configuration data.</param>
     /// <param name="configKey">The configuration key for this secret.</param>
-    private void ProcessSecretString(string secretString, Dictionary<string, string?> configurationData, string configKey)
+    private void ProcessSecretString(
+        string secretString,
+        Dictionary<string, string?> configurationData,
+        string configKey)
     {
         // Check if JSON processing is enabled and this value contains JSON
         if (_source.JsonProcessor && ShouldProcessAsJson(configKey) && secretString.IsValidJson())
@@ -446,7 +477,8 @@ public sealed class AwsSecretsManagerConfigurationProvider : ConfigurationProvid
 
     /// <summary>
     /// Determines whether a configuration key should be processed as JSON based on the provider configuration.
-    /// Checks against JsonProcessorSecrets if specified, otherwise applies to all secrets when JsonProcessor is enabled.
+    /// Checks against JsonProcessorSecrets if specified, otherwise applies to all secrets when
+    /// JsonProcessor is enabled.
     /// </summary>
     /// <param name="configKey">The configuration key to check.</param>
     /// <returns>True if the secret should be processed as JSON, false otherwise.</returns>
@@ -469,7 +501,9 @@ public sealed class AwsSecretsManagerConfigurationProvider : ConfigurationProvid
     /// Releases the unmanaged resources used by the provider and optionally releases the managed resources.
     /// Disposes of the AWS Secrets Manager client and stops the reload timer if configured.
     /// </summary>
-    /// <param name="disposing">True to release both managed and unmanaged resources; false to release only unmanaged resources.</param>
+    /// <param name="disposing">
+    /// True to release both managed and unmanaged resources; false to release only unmanaged resources.
+    /// </param>
     [SuppressMessage("ReSharper", "FlagArgument", Justification =
         "Flag argument is used to indicate whether to dispose managed resources." +
         "No SRP violation as this is a standard pattern for IDisposable implementations.")]
@@ -490,7 +524,8 @@ public sealed class AwsSecretsManagerConfigurationProvider : ConfigurationProvid
     }
 
     /// <summary>
-    /// Releases all resources used by the current instance of the <see cref="AwsSecretsManagerConfigurationProvider"/> class.
+    /// Releases all resources used by the current instance of the
+    /// <see cref="AwsSecretsManagerConfigurationProvider"/> class.
     /// </summary>
     public void Dispose() => Dispose(disposing: true);
 }

@@ -50,7 +50,9 @@ public static class ContainerBuilderConfigurationExtensions
     /// Registers a strongly typed configuration object bound to the root configuration.
     /// Creates a singleton registration that binds the entire configuration root to the specified type.
     /// </summary>
-    /// <typeparam name="T">The configuration class type to register. Must have a parameterless constructor.</typeparam>
+    /// <typeparam name="T">
+    /// The configuration class type to register. Must have a parameterless constructor.
+    /// </typeparam>
     /// <param name="builder">The container builder to register the configuration with.</param>
     /// <returns>The same container builder instance to enable method chaining.</returns>
     /// <remarks>
@@ -105,8 +107,12 @@ public static class ContainerBuilderConfigurationExtensions
     /// </para>
     /// </remarks>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="builder"/> is null.</exception>
-    /// <exception cref="InvalidOperationException">Thrown when IConfiguration is not registered in the container.</exception>
-    /// <exception cref="FormatException">Thrown when configuration values cannot be converted to the target property types.</exception>
+    /// <exception cref="InvalidOperationException">
+    /// Thrown when IConfiguration is not registered in the container.
+    /// </exception>
+    /// <exception cref="FormatException">
+    /// Thrown when configuration values cannot be converted to the target property types.
+    /// </exception>
     /// <example>
     /// <code>
     /// // Register application-wide configuration
@@ -152,7 +158,9 @@ public static class ContainerBuilderConfigurationExtensions
     /// Registers a strongly typed configuration object bound to a specific configuration section.
     /// Creates a singleton registration that binds a named configuration section to the specified type.
     /// </summary>
-    /// <typeparam name="T">The configuration class type to register. Must have a parameterless constructor.</typeparam>
+    /// <typeparam name="T">
+    /// The configuration class type to register. Must have a parameterless constructor.
+    /// </typeparam>
     /// <param name="builder">The container builder to register the configuration with.</param>
     /// <param name="sectionPath">
     /// The hierarchical path to the configuration section to bind (e.g., "Database", "External:Api").
@@ -208,10 +216,18 @@ public static class ContainerBuilderConfigurationExtensions
     /// </code>
     /// </para>
     /// </remarks>
-    /// <exception cref="ArgumentNullException">Thrown when <paramref name="builder"/> or <paramref name="sectionPath"/> is null.</exception>
-    /// <exception cref="ArgumentException">Thrown when <paramref name="sectionPath"/> is empty or whitespace.</exception>
-    /// <exception cref="InvalidOperationException">Thrown when IConfiguration is not registered in the container.</exception>
-    /// <exception cref="FormatException">Thrown when configuration values cannot be converted to the target property types.</exception>
+    /// <exception cref="ArgumentNullException">
+    /// Thrown when <paramref name="builder"/> or <paramref name="sectionPath"/> is null.
+    /// </exception>
+    /// <exception cref="ArgumentException">
+    /// Thrown when <paramref name="sectionPath"/> is empty or whitespace.
+    /// </exception>
+    /// <exception cref="InvalidOperationException">
+    /// Thrown when IConfiguration is not registered in the container.
+    /// </exception>
+    /// <exception cref="FormatException">
+    /// Thrown when configuration values cannot be converted to the target property types.
+    /// </exception>
     /// <example>
     /// <code>
     /// // Register section-specific configurations
@@ -296,9 +312,15 @@ public static class ContainerBuilderConfigurationExtensions
     /// </list>
     /// </para>
     /// </remarks>
-    /// <exception cref="ArgumentNullException">Thrown when <paramref name="builder"/> or <paramref name="configurations"/> is null.</exception>
-    /// <exception cref="InvalidOperationException">Thrown when IConfiguration is not registered in the container.</exception>
-    /// <exception cref="FormatException">Thrown when configuration values cannot be converted to any of the target types.</exception>
+    /// <exception cref="ArgumentNullException">
+    /// Thrown when <paramref name="builder"/> or <paramref name="configurations"/> is null.
+    /// </exception>
+    /// <exception cref="InvalidOperationException">
+    /// Thrown when IConfiguration is not registered in the container.
+    /// </exception>
+    /// <exception cref="FormatException">
+    /// Thrown when configuration values cannot be converted to any of the target types.
+    /// </exception>
     /// <example>
     /// <code>
     /// // Batch registration of multiple configuration types

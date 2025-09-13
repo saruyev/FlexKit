@@ -9,7 +9,7 @@ namespace FlexKit.Logging.NLog.Core;
 /// </summary>
 /// <param name="config">The FlexKit logging configuration.</param>
 #pragma warning disable S3881
-public class NLogLoggerProvider(LoggingConfig config) : ILoggerProvider
+internal sealed class NLogLoggerProvider(LoggingConfig config) : ILoggerProvider
 #pragma warning restore S3881
 {
     /// <inheritdoc />

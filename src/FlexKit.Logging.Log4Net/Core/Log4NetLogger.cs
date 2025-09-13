@@ -17,8 +17,22 @@ namespace FlexKit.Logging.Log4Net.Core;
 /// Logger implementation that bridges Microsoft.Extensions.Logging to Log4Net.
 /// Routes log messages to the appropriate Log4Net logger based on category.
 /// </remarks>
-public class Log4NetLogger(string categoryName, ILoggerRepository repository, LoggingConfig config) : ILogger
+public class Log4NetLogger(
+    string categoryName,
+    ILoggerRepository repository,
+    LoggingConfig config) : ILogger
 {
+    /// <summary>
+    /// Represents the underlying core logger instance used to route log messages
+    /// to the Log4Net logging framework.
+    /// </summary>
+    /// <remarks>
+    /// The <c>_logger</c> field is an instance of <see cref="log4net.Core.ILogger"/>
+    /// initialized with a specified category name from the Log4Net repository.
+    /// It serves as the internal mechanism for emitting log events to Log4Net,
+    /// bridging the functionality between Microsoft.Extensions.Logging abstractions
+    /// and Log4Net's implementation.
+    /// </remarks>
     private readonly log4net.Core.ILogger _logger = repository.GetLogger(categoryName);
 
     /// <inheritdoc />
@@ -69,7 +83,8 @@ public class Log4NetLogger(string categoryName, ILoggerRepository repository, Lo
         logLevel >= GetMinimumLogLevelForCategory() && _logger.IsEnabledFor(ConvertLogLevel(logLevel));
 
     /// <summary>
-    /// Converts a <see cref="LogLevel"/> from Microsoft.Extensions.Logging to a corresponding <see cref="Level"/> used by Log4Net.
+    /// Converts a <see cref="LogLevel"/> from Microsoft.Extensions.Logging to a corresponding
+    /// <see cref="Level"/> used by Log4Net.
     /// </summary>
     /// <param name="logLevel">The <see cref="LogLevel"/> to convert.</param>
     /// <returns>The corresponding <see cref="Level"/> in Log4Net.</returns>
@@ -93,7 +108,8 @@ public class Log4NetLogger(string categoryName, ILoggerRepository repository, Lo
     /// </summary>
     /// <returns>The minimum <see cref="LogLevel"/> required for logging in the current category.</returns>
     private LogLevel GetMinimumLogLevelForCategory() =>
-        config.SuppressedCategories.Any(c => categoryName.StartsWith(c, StringComparison.InvariantCultureIgnoreCase))
+        config.SuppressedCategories.Any(
+            c => categoryName.StartsWith(c, StringComparison.InvariantCultureIgnoreCase))
             ? config.SuppressedLogLevel
             : LogLevel.Trace;
 
@@ -103,7 +119,8 @@ public class Log4NetLogger(string categoryName, ILoggerRepository repository, Lo
     /// </summary>
     /// <remarks>
     /// Provides an implementation of IDisposable that performs no operations when disposed.
-    /// Typically used in logging or scenarios where scoping functionality is required but no actual scope management is needed.
+    /// Typically used in logging or scenarios where scoping functionality is required but no actual
+    /// scope management is needed.
     /// </remarks>
     private sealed class NullScope : IDisposable
     {

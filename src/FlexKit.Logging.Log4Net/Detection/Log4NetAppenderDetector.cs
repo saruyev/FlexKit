@@ -8,12 +8,12 @@ namespace FlexKit.Logging.Log4Net.Detection;
 /// Auto-detects available Log4Net appenders by scanning loaded assemblies for
 /// classes that inherit from log4net.Appender.IAppender and can be configured with FlexKit.
 /// </summary>
-public static class Log4NetAppenderDetector
+internal static class Log4NetAppenderDetector
 {
     /// <summary>
     /// Information about a detected Log4Net appender, including its configuration details.
     /// </summary>
-    public class AppenderInfo
+    internal sealed class AppenderInfo
     {
         /// <summary>
         /// Gets the name of the detected Log4Net appender.

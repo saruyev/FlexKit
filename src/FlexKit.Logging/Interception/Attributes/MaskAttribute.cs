@@ -78,7 +78,8 @@ namespace FlexKit.Logging.Interception.Attributes;
 /// }
 /// </code>
 /// </example>
-[AttributeUsage(AttributeTargets.Parameter | AttributeTargets.Property | AttributeTargets.Class | AttributeTargets.Struct)]
+[AttributeUsage(AttributeTargets.Parameter | AttributeTargets.Property | AttributeTargets.Class |
+                AttributeTargets.Struct)]
 [UsedImplicitly]
 public sealed class MaskAttribute : Attribute
 {

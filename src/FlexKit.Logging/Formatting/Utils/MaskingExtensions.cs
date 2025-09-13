@@ -12,8 +12,36 @@ namespace FlexKit.Logging.Formatting.Utils;
 /// </summary>
 internal static class MaskingExtensions
 {
+    /// <summary>
+    /// A thread-safe cache that stores whether a given type has properties marked with the [Mask] attribute.
+    /// </summary>
+    /// <remarks>
+    /// This <see cref="ConcurrentDictionary{TKey, TValue}"/> is used to improve performance by avoiding
+    /// repetitive reflection-based checks for property attributes on types. Each type is evaluated once,
+    /// and the result is stored for further lookups.
+    /// </remarks>
     private static readonly ConcurrentDictionary<Type, bool> _typeHasMaskedPropsCache = new();
+
+    /// <summary>
+    /// A thread-safe cache that stores the properties of a type that are marked with the [Mask] attribute.
+    /// </summary>
+    /// <remarks>
+    /// This <see cref="ConcurrentDictionary{TKey, TValue}"/> is used to enhance performance by caching
+    /// the results of reflection-based lookups for properties marked with the [Mask] attribute. The cache
+    /// ensures that each type is processed only once, and the following lookups retrieve the stored result
+    /// directly, avoiding redundant reflection operations.
+    /// </remarks>
     private static readonly ConcurrentDictionary<Type, PropertyInfo[]> _maskedPropertiesCache = new();
+
+    /// <summary>
+    /// A thread-safe cache that stores whether a specific type has one or more members marked with
+    /// the [Mask] attribute.
+    /// </summary>
+    /// <remarks>
+    /// This <see cref="ConcurrentDictionary{TKey, TValue}"/> is used to improve performance by caching
+    /// the results of reflection-based checks for the presence of the [Mask] attribute on a type.
+    /// Once a type is evaluated, the result is stored to prevent redundant evaluations during further operations.
+    /// </remarks>
     private static readonly ConcurrentDictionary<Type, bool> _typeHasMaskAttributeCache = new();
 
     /// <summary>
@@ -41,7 +69,8 @@ internal static class MaskingExtensions
 
         if (parameterInfo.GetCustomAttribute<MaskAttribute>() != null)
         {
-            return parameterInfo.GetCustomAttribute<MaskAttribute>()?.Replacement ?? GetDefaultMaskReplacement(context.Config);
+            return parameterInfo.GetCustomAttribute<MaskAttribute>()?.Replacement ??
+                   GetDefaultMaskReplacement(context.Config);
         }
 
         // Check parameter-level masking (cases 2 & 3)
@@ -118,7 +147,9 @@ internal static class MaskingExtensions
     /// <param name="outputValue">The output value to check.</param>
     /// <param name="pattern">The pattern to match against.</param>
     /// <returns>True if the output value matches the pattern; false otherwise.</returns>
-    private static bool MatchesOutputPattern(object outputValue, string pattern)
+    private static bool MatchesOutputPattern(
+        object outputValue,
+        string pattern)
     {
         var outputString = outputValue.ToString();
 
@@ -169,7 +200,9 @@ internal static class MaskingExtensions
     /// <param name="type">The type to find configuration for.</param>
     /// <param name="config">The logging configuration.</param>
     /// <returns>The matching interception config; null if none found.</returns>
-    private static InterceptionConfig? FindMatchingConfigurationForType(Type type, LoggingConfig config)
+    private static InterceptionConfig? FindMatchingConfigurationForType(
+        Type type,
+        LoggingConfig config)
     {
         var typeName = type.FullName;
         if (string.IsNullOrEmpty(typeName))
@@ -228,7 +261,9 @@ internal static class MaskingExtensions
     /// <param name="original">The original object to mask.</param>
     /// <param name="config">The logging configuration containing mask settings.</param>
     /// <returns>A new object with masked properties.</returns>
-    private static object CreateMaskedCopy(object original, LoggingConfig config)
+    private static object CreateMaskedCopy(
+        object original,
+        LoggingConfig config)
     {
         var context = new MaskingContext(
             original,
@@ -259,7 +294,8 @@ internal static class MaskingExtensions
     /// Applies masking to properties indicated by the masking context.
     /// </summary>
     /// <param name="context">
-    /// The masking context containing the original object, its type, configuration, masked properties, and default mask text.
+    /// The masking context containing the original object, its type, configuration, masked properties,
+    /// and default mask text.
     /// </param>
     /// <returns>
     /// A new object instance with copied properties, where masked properties are set according to the masking rules.
@@ -274,27 +310,46 @@ internal static class MaskingExtensions
         }
 
         // Copy all properties, masking the marked ones
-        foreach (var prop in context.Type.GetProperties(BindingFlags.Public | BindingFlags.Instance))
+        foreach (var prop in context.Type.GetProperties(
+                     BindingFlags.Public | BindingFlags.Instance))
         {
             if (!prop.CanRead || !prop.CanWrite)
             {
                 continue;
             }
 
-            var originalValue = prop.GetValue(context.Original);
-
-            if (context.MaskedProperties.Contains(prop))
-            {
-                // Use custom mask text from attribute or default
-                prop.SetMaskText(context, clone);
-            }
-            else
-            {
-                prop.SetValue(clone, originalValue);
-            }
+            ProcessPropertyValue(context, prop, clone);
         }
 
         return clone;
+    }
+
+    /// <summary>
+    /// Processes the specified property value during the creation of a cloned object.
+    /// Determines whether the property should be masked or copied as is,
+    /// based on the supplied masking context.
+    /// </summary>
+    /// <param name="context">
+    /// The masking context containing the original object, configuration, masked properties, and masking rules.
+    /// </param>
+    /// <param name="prop">The property metadata representing the property to be processed.</param>
+    /// <param name="clone">The cloned object where the processed property value will be set.</param>
+    private static void ProcessPropertyValue(
+        MaskingContext context,
+        PropertyInfo prop,
+        object clone)
+    {
+        var originalValue = prop.GetValue(context.Original);
+
+        if (context.MaskedProperties.Contains(prop))
+        {
+            // Use custom mask text from attribute or default
+            prop.SetMaskText(context, clone);
+        }
+        else
+        {
+            prop.SetValue(clone, originalValue);
+        }
     }
 
     /// <summary>
@@ -304,7 +359,10 @@ internal static class MaskingExtensions
     /// <param name="prop">The property to apply the masking text to.</param>
     /// <param name="context">The context containing the masking configurations and default rules.</param>
     /// <param name="clone">The cloned object where the masked value will be set.</param>
-    private static void SetMaskText(this PropertyInfo prop, MaskingContext context, object clone)
+    private static void SetMaskText(
+        this PropertyInfo prop,
+        MaskingContext context,
+        object clone)
     {
         var maskAttr = prop.GetCustomAttribute<MaskAttribute>();
         var maskText = maskAttr?.Replacement ?? context.DefaultMaskText;
@@ -359,7 +417,9 @@ internal static class MaskingExtensions
     /// <param name="name">The name to check.</param>
     /// <param name="pattern">The pattern to match against.</param>
     /// <returns>True if the name matches the pattern; false otherwise.</returns>
-    private static bool MatchesPattern(string name, string pattern)
+    private static bool MatchesPattern(
+        string name,
+        string pattern)
     {
         if (string.IsNullOrEmpty(name) || string.IsNullOrEmpty(pattern))
         {
@@ -393,17 +453,17 @@ internal static class MaskingExtensions
     /// </summary>
     /// <param name="config">The logging configuration.</param>
     /// <returns>The default mask replacement text.</returns>
-    private static string GetDefaultMaskReplacement(LoggingConfig config)
-    {
-        // Try to get from any configured service or use hardcoded default
-        var configWithMask = config.Services.Values.FirstOrDefault(c => !string.IsNullOrEmpty(c.MaskReplacement));
-        return configWithMask?.MaskReplacement ?? "***MASKED***";
-    }
+    private static string GetDefaultMaskReplacement(LoggingConfig config) =>
+        config
+            .Services
+            .Values
+            .FirstOrDefault(c => !string.IsNullOrEmpty(c.MaskReplacement))?
+            .MaskReplacement ?? "***MASKED***";
 
     /// <summary>
-    /// Represents the contextual information required for applying masking logic to sensitive properties within an object.
-    /// This includes the original object, associated logging configuration, metadata for the object's type,
-    /// properties flagged for masking, and a default mask replacement text.
+    /// Represents the contextual information required for applying masking logic to sensitive
+    /// properties within an object. This includes the original object, associated logging configuration,
+    /// metadata for the object's type, properties flagged for masking, and a default mask replacement text.
     /// </summary>
     /// <param name="Original">The original object to mask.</param>
     /// <param name="Config">The logging configuration containing mask settings.</param>

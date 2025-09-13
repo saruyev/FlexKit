@@ -15,7 +15,7 @@ namespace FlexKit.Logging.Serilog.Detection;
 /// Replaces MEL components when "FlexKit.Logging.Serilog" is present.
 /// </summary>
 [UsedImplicitly]
-public class SerilogLoggingModule : Module
+internal sealed class SerilogLoggingModule : Module
 {
     /// <summary>
     /// Configures the container with Serilog-based logging services.
@@ -91,7 +91,8 @@ public class SerilogLoggingModule : Module
                     loggingBuilder.SetMinimumLevel(LogLevel.Trace);
 
                     // Add the Serilog provider that bridges to our configured Serilog
-                    loggingBuilder.AddProvider(new SerilogLoggerProvider(loggingConfig, c.Resolve<ILogger>()));
+                    loggingBuilder.AddProvider(
+                        new SerilogLoggerProvider(loggingConfig, c.Resolve<ILogger>()));
                 });
 
                 // Ensure proper cleanup

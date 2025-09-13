@@ -85,7 +85,7 @@ namespace FlexKit.Configuration.Sources;
 /// </remarks>
 /// <param name="source">The configuration source containing .env file settings and options.</param>
 /// <exception cref="ArgumentNullException">Thrown when the source is null.</exception>
-public class DotEnvConfigurationProvider(DotEnvConfigurationSource source) : ConfigurationProvider
+internal class DotEnvConfigurationProvider(DotEnvConfigurationSource source) : ConfigurationProvider
 {
     /// <summary>
     /// The configuration source that defines the .env file location and loading options.
@@ -143,8 +143,12 @@ public class DotEnvConfigurationProvider(DotEnvConfigurationSource source) : Con
     /// </list>
     /// </para>
     /// </remarks>
-    /// <exception cref="FileNotFoundException">Thrown when the .env file doesn't exist and the source is not marked as optional.</exception>
-    /// <exception cref="UnauthorizedAccessException">Thrown when the application lacks permission to read the .env file.</exception>
+    /// <exception cref="FileNotFoundException">
+    /// Thrown when the .env file doesn't exist and the source is not marked as optional.
+    /// </exception>
+    /// <exception cref="UnauthorizedAccessException">
+    /// Thrown when the application lacks permission to read the .env file.
+    /// </exception>
     /// <exception cref="IOException">Thrown when other I/O errors occur during file reading.</exception>
     /// <example>
     /// <code>

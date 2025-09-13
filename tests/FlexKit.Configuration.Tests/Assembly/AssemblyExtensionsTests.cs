@@ -169,7 +169,7 @@ public class AssemblyExtensionsTests : UnitTestBase
     [InlineData("Acme.Services", true)]
     [InlineData("Acme.Data", true)]
     [InlineData("OtherVendor.Services", false)]
-    [InlineData("FlexKit.Configuration", false)] // Not in the names list
+    [InlineData("FlexKit.Configuration", false)] // Not in the names' list
     public void FilterLibraries_WithNames_FiltersCorrectly(string assemblyName, bool shouldInclude)
     {
         // Arrange

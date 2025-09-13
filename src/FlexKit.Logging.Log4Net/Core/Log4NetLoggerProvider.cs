@@ -11,7 +11,9 @@ namespace FlexKit.Logging.Log4Net.Core;
 /// <param name="repository">The Log4Net repository to configure.</param>
 /// <param name="config">The FlexKit logging configuration.</param>
 #pragma warning disable S3881
-public class Log4NetLoggerProvider(ILoggerRepository repository, LoggingConfig config) : ILoggerProvider
+internal sealed class Log4NetLoggerProvider(
+    ILoggerRepository repository,
+    LoggingConfig config) : ILoggerProvider
 #pragma warning restore S3881
 {
     /// <inheritdoc />

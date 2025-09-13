@@ -13,8 +13,15 @@ namespace FlexKit.Logging.ZLogger.Core;
 /// Integrates with ZLogger and uses ILogEntryProcessor for processing and outputting log entries.
 /// </remarks>
 /// <param name="processor">The log entry processor that writes to ZLogger.</param>
-public sealed class ZLoggerBackgroundLog(ILogEntryProcessor processor) : IBackgroundLog, IDisposable
+internal sealed class ZLoggerBackgroundLog(ILogEntryProcessor processor) : IBackgroundLog, IDisposable
 {
+    /// <summary>
+    /// Indicates whether the object has been disposed.
+    /// </summary>
+    /// <remarks>
+    /// This flag is used to prevent operations on the object after it has been disposed.
+    /// It is set to true when the Dispose method is called.
+    /// </remarks>
     private volatile bool _disposed;
 
     /// <inheritdoc />

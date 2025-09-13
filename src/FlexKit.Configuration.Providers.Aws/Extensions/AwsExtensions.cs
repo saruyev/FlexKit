@@ -177,7 +177,9 @@ public static class AwsExtensions
     /// </code>
     /// </para>
     /// </remarks>
-    /// <exception cref="ArgumentNullException">Thrown when <paramref name="builder"/> or <paramref name="configure"/> is null.</exception>
+    /// <exception cref="ArgumentNullException">
+    /// Thrown when <paramref name="builder"/> or <paramref name="configure"/> is null.
+    /// </exception>
     /// <example>
     /// <code>
     /// // Development configuration with JSON processing and reloading
@@ -393,7 +395,9 @@ public static class AwsExtensions
     /// </code>
     /// </para>
     /// </remarks>
-    /// <exception cref="ArgumentNullException">Thrown when <paramref name="builder"/> or <paramref name="configure"/> is null.</exception>
+    /// <exception cref="ArgumentNullException">
+    /// Thrown when <paramref name="builder"/> or <paramref name="configure"/> is null.
+    /// </exception>
     /// <example>
     /// <code>
     /// // Development configuration with JSON processing and reloading
@@ -509,7 +513,8 @@ public static class AwsExtensions
 
     /// <summary>
     /// Flattens a <see cref="JsonElement"/> into key-value pairs, storing the results in the provided dictionary.
-    /// Complex objects and arrays are traversed recursively, using <c>parentKey</c> as the prefix for each generated key.
+    /// Complex objects and arrays are traversed recursively, using <c>parentKey</c> as the prefix
+    /// for each generated key.
     /// </summary>
     /// <param name="jsonElement">The JSON element to flatten.</param>
     /// <param name="output">The dictionary where flattened key-value pairs will be stored.</param>
@@ -555,7 +560,10 @@ public static class AwsExtensions
         const string keyDelimiter = ":";
         foreach (var property in element.EnumerateObject())
         {
-            var key = string.IsNullOrEmpty(parentKey) ? property.Name : $"{parentKey}{keyDelimiter}{property.Name}";
+            var
+                key = string.IsNullOrEmpty(parentKey)
+                    ? property.Name
+                    : parentKey + keyDelimiter + property.Name;
             FlattenJsonElement(property.Value, output, key);
         }
     }

@@ -13,13 +13,39 @@ namespace FlexKit.Logging.ZLogger.Core;
 /// Handles template parsing, parameter ordering, compilation, and caching.
 /// </summary>
 /// <param name="config">The logging configuration containing all templates.</param>
-public partial class ZLoggerTemplateEngine(LoggingConfig config) : IZLoggerTemplateEngine
+internal sealed partial class ZLoggerTemplateEngine(LoggingConfig config) : IZLoggerTemplateEngine
 {
+    /// <summary>
+    /// A compiled regular expression used to identify and extract parameters within logging templates.
+    /// Matches template placeholders of the form {ParameterName:Format}.
+    /// </summary>
+    /// <returns>
+    /// A regular expression instance designed to parse parameter names and formats from a template string.
+    /// </returns>
     [GeneratedRegex(@"\{([^}:]+)(?::([^}]+))?\}", RegexOptions.Compiled)]
     private static partial Regex ParameterRegex();
 
+    /// <summary>
+    /// Serves as a caching mechanism for storing compiled templates.
+    /// </summary>
+    /// <remarks>
+    /// The cache uses a dictionary structure where the keys are template strings, and the values
+    /// are precompiled delegate instances representing the compiled templates. This allows the
+    /// engine to avoid repeatedly compiling the same template, significantly improving performance
+    /// when templates are reused. The cached delegates contain both the compiled action and
+    /// the corresponding parameter names required for rendering the template.
+    /// </remarks>
     private readonly ConcurrentDictionary<string, CompiledDelegateForTemplate> _cache = new();
 
+    /// <summary>
+    /// Determines whether JSON output is formatted with indentation and line breaks for improved readability.
+    /// </summary>
+    /// <remarks>
+    /// This flag is set based on the logging configuration, specifically the `PrettyPrint` property of
+    /// the JSON formatter settings (`LoggingConfig.Formatters.Json.PrettyPrint`) and whether
+    /// the `DefaultFormatter` is set to `FormatterType.Json`. If true, the JSON output will be more human-readable,
+    /// which can help with debugging but may increase the size of the logged data.
+    /// </remarks>
     private readonly bool _prettyPrint =
         config.Formatters.Json.PrettyPrint && config.DefaultFormatter == FormatterType.Json;
 
@@ -67,7 +93,10 @@ public partial class ZLoggerTemplateEngine(LoggingConfig config) : IZLoggerTempl
         try
         {
             var compiled = _cache.GetOrAdd(message.Template, CompileTemplate);
-            var orderedArgs = PrepareParameters(message.Parameters, compiled.ParameterNames, message.Template);
+            var orderedArgs = PrepareParameters(
+                message.Parameters,
+                compiled.ParameterNames,
+                message.Template);
             compiled.Action(logger, orderedArgs, level);
         }
         catch (Exception ex)
@@ -435,9 +464,14 @@ public partial class ZLoggerTemplateEngine(LoggingConfig config) : IZLoggerTempl
     /// </summary>
     /// <param name="template">The template string to parse.</param>
     /// <param name="parsedTemplate">The parsed template object where the extracted parts will be stored.</param>
-    /// <param name="i">The current index in the template string. This will be updated to the new position after parsing.</param>
+    /// <param name="i">
+    /// The current index in the template string. This will be updated to the new position after parsing.
+    /// </param>
     /// <returns>Returns true if the parsing reaches the end of the template string; otherwise, false.</returns>
-    private static bool ParseTemplateParts(string template, ParsedTemplate parsedTemplate, ref int i)
+    private static bool ParseTemplateParts(
+        string template,
+        ParsedTemplate parsedTemplate,
+        ref int i)
     {
         var brace = template.IndexOf('{', i);
         if (brace == -1)

@@ -9,8 +9,15 @@ namespace FlexKit.Logging.Formatting.Utils;
 /// Provides extension methods for building and populating parameter dictionaries based
 /// on the information found in log entries.
 /// </summary>
-public static class ParameterExtensions
+internal static class ParameterExtensions
 {
+    /// <summary>
+    /// A static instance of <see cref="JsonSerializerOptions"/> used for JSON serialization settings
+    /// in the context of parameter extraction and formatting.
+    /// The configuration includes options such as ignoring cycles during reference handling,
+    /// preventing null values from being written, limiting the maximum depth of serialization,
+    /// and disabling indentation in the JSON output.
+    /// </summary>
     private static readonly JsonSerializerOptions _options = new()
     {
         WriteIndented = false,
@@ -167,9 +174,8 @@ public static class ParameterExtensions
     /// </summary>
     /// <param name="value">The value to serialize for JSON output.</param>
     /// <returns>A JSON-serializable representation of the value.</returns>
-    private static object? SerializeValueForJson(object? value)
-    {
-        return value switch
+    private static object? SerializeValueForJson(object? value) =>
+        value switch
         {
             null => null,
             string or bool or byte or sbyte or short or ushort or int or uint or long or ulong or float or double
@@ -194,7 +200,6 @@ public static class ParameterExtensions
             // For complex objects, try to create a JSON-serializable representation
             var complexObj => SerializeComplexObjectForJson(complexObj)
         };
-    }
 
     /// <summary>
     /// Serializes complex objects for JSON output with truncation and error handling.
@@ -218,7 +223,12 @@ public static class ParameterExtensions
         }
         catch
         {
-            return new { _type = obj.GetType().Name, _error = "Serialization failed", _toString = obj.ToString() ?? "null", };
+            return new
+            {
+                _type = obj.GetType().Name,
+                _error = "Serialization failed",
+                _toString = obj.ToString() ?? "null",
+            };
         }
     }
 }

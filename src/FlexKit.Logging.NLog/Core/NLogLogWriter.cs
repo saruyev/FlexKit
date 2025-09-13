@@ -23,11 +23,18 @@ namespace FlexKit.Logging.NLog.Core;
 /// <param name="formatterFactory">Message formatter factory.</param>
 /// <param name="nlogLogger">Configured NLog logger instance.</param>
 [UsedImplicitly]
-public sealed class NLogLogWriter(
+internal sealed class NLogLogWriter(
     LoggingConfig loggingConfig,
     IMessageFormatterFactory formatterFactory,
     ILogger nlogLogger) : ILogEntryProcessor
 {
+    /// <summary>
+    /// A thread-safe cache that stores instances of NLog loggers, keyed by type name.
+    /// </summary>
+    /// <remarks>
+    /// Ensures efficient retrieval and reuse of NLog logger instances for specific type names,
+    /// avoiding the overhead of repeatedly creating new logger instances.
+    /// </remarks>
     private readonly ConcurrentDictionary<string, ILogger> _loggerCache = new();
 
     /// <inheritdoc />

@@ -24,7 +24,7 @@ public static class LoggingInfrastructureExtensions
     /// Call this before registering any types that need logging interception.
     /// </summary>
     /// <param name="builder">The Autofac container builder.</param>
-    public static void RegisterLoggingInfrastructure(this ContainerBuilder builder)
+    internal static void RegisterLoggingInfrastructure(this ContainerBuilder builder)
     {
         builder.RegisterLoggingConfiguration();
         builder.RegisterMessageFormatting();
@@ -266,9 +266,12 @@ public static class LoggingInfrastructureExtensions
 
     /// <summary>
     /// Ensures that all remaining log entries are flushed before the application exits.
-    /// Intended to prevent the loss of any pending log messages by invoking the background logging service's flush operation.
+    /// Intended to prevent the loss of any pending log messages by invoking the background
+    /// logging service's flush operation.
     /// </summary>
-    /// <param name="backgroundService">The instance of <see cref="BackgroundLoggingService"/> responsible for managing and flushing log entries.</param>
+    /// <param name="backgroundService">
+    /// The instance of <see cref="BackgroundLoggingService"/> responsible for managing and flushing log entries.
+    /// </param>
     [UsedImplicitly]
     public static void FlushLogsOnExit(BackgroundLoggingService backgroundService)
     {

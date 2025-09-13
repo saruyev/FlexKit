@@ -40,20 +40,46 @@ namespace FlexKit.Configuration.Providers.Azure.Sources;
 /// maintaining the hierarchical structure using colon separators.
 /// </para>
 /// </remarks>
-public sealed class AzureAppConfigurationProvider : ConfigurationProvider, IDisposable
+internal sealed class AzureAppConfigurationProvider : ConfigurationProvider, IDisposable
 {
+    /// <summary>
+    /// An instance of the AzureAppConfigurationSource that provides the configuration source
+    /// details and settings for the Azure App Configuration integration.
+    /// This is used to manage and retrieve configuration data asynchronously from the Azure App Configuration.
+    /// </summary>
     private readonly AzureAppConfigurationSource _source;
+
+    /// <summary>
+    /// A readonly instance of the ConfigurationClient used to communicate with Azure App Configuration service.
+    /// It facilitates loading, retrieving, and managing configuration settings from the Azure App Configuration
+    /// storage.
+    /// </summary>
     private readonly ConfigurationClient _configClient;
+
+    /// <summary>
+    /// A timer instance used to trigger periodic configuration reloads
+    /// based on the specified reload interval in the AzureAppConfigurationSource.
+    /// Responsible for invoking asynchronous configuration updates at regular intervals.
+    /// </summary>
     private Timer? _reloadTimer;
+
+    /// <summary>
+    /// Indicates whether the resources used by the AzureAppConfigurationProvider
+    /// have already been released. This flag is used to ensure that the Dispose
+    /// method is only called once and avoids potential multiple disposal of resources.
+    /// </summary>
     private bool _disposed;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="AzureAppConfigurationProvider"/> class with an existing configuration client.
+    /// Initializes a new instance of the <see cref="AzureAppConfigurationProvider"/> class with an existing
+    /// configuration client.
     /// This constructor is primarily used for testing scenarios where a pre-configured client is provided.
     /// </summary>
     /// <param name="source">The configuration source that contains the App Configuration access configuration.</param>
     /// <param name="configClient">The pre-configured Azure App Configuration client to use.</param>
-    /// <exception cref="ArgumentNullException">Thrown when <paramref name="source"/> or <paramref name="configClient"/> is null.</exception>
+    /// <exception cref="ArgumentNullException">
+    /// Thrown when <paramref name="source"/> or <paramref name="configClient"/> is null.
+    /// </exception>
     [UsedImplicitly]
     internal AzureAppConfigurationProvider(
         AzureAppConfigurationSource source,
@@ -70,14 +96,17 @@ public sealed class AzureAppConfigurationProvider : ConfigurationProvider, IDisp
 
     /// <summary>
     /// Initializes a new instance of the <see cref="AzureAppConfigurationProvider"/> class.
-    /// Creates the Azure App Configuration client and configures automatic reloading if specified in the source options.
+    /// Creates the Azure App Configuration client and configures automatic reloading if specified
+    /// in the source options.
     /// </summary>
     /// <param name="source">
     /// The configuration source that contains the App Configuration access configuration,
     /// including the connection string, Azure options, and processing settings.
     /// </param>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="source"/> is null.</exception>
-    /// <exception cref="InvalidOperationException">Thrown when Azure credentials cannot be resolved or App Configuration client creation fails.</exception>
+    /// <exception cref="InvalidOperationException">
+    /// Thrown when Azure credentials cannot be resolved or App Configuration client creation fails.
+    /// </exception>
     public AzureAppConfigurationProvider(AzureAppConfigurationSource source)
         : this(source, CreateConfigurationClient(source))
     {
@@ -89,7 +118,9 @@ public sealed class AzureAppConfigurationProvider : ConfigurationProvider, IDisp
     /// </summary>
     /// <param name="source">The configuration source containing connection details.</param>
     /// <returns>A configured <see cref="ConfigurationClient"/> instance.</returns>
-    /// <exception cref="InvalidOperationException">Thrown when the client cannot be created due to invalid configuration or credential issues.</exception>
+    /// <exception cref="InvalidOperationException">
+    /// Thrown when the client cannot be created due to invalid configuration or credential issues.
+    /// </exception>
     private static ConfigurationClient CreateConfigurationClient(AzureAppConfigurationSource source)
     {
         try
@@ -107,13 +138,16 @@ public sealed class AzureAppConfigurationProvider : ConfigurationProvider, IDisp
         catch (Exception ex)
         {
             throw new InvalidOperationException(
-                "Failed to create Azure App Configuration client. Ensure connection string or credentials are properly configured.", ex);
+                "Failed to create Azure App Configuration client. Ensure connection" +
+                " string or credentials are properly configured.",
+                ex);
         }
     }
 
     /// <summary>
     /// Sets up the automatic reload timer if a reload interval is specified in the source configuration.
-    /// The timer will periodically trigger configuration reloading to keep data synchronized with Azure App Configuration.
+    /// The timer will periodically trigger configuration reloading to keep data synchronized with
+    /// Azure App Configuration.
     /// </summary>
     private void SetupReloadTimer()
     {
@@ -133,8 +167,12 @@ public sealed class AzureAppConfigurationProvider : ConfigurationProvider, IDisp
     /// Loads configuration data from Azure App Configuration.
     /// Retrieves configuration keys according to the specified filters and processes them.
     /// </summary>
-    /// <exception cref="InvalidOperationException">Thrown when App Configuration access fails and the source is not optional.</exception>
-    /// <exception cref="UnauthorizedAccessException">Thrown when the configured credentials lack necessary permissions.</exception>
+    /// <exception cref="InvalidOperationException">
+    /// Thrown when App Configuration access fails and the source is not optional.
+    /// </exception>
+    /// <exception cref="UnauthorizedAccessException">
+    /// Thrown when the configured credentials lack necessary permissions.
+    /// </exception>
     public override void Load()
     {
         try
@@ -206,10 +244,13 @@ public sealed class AzureAppConfigurationProvider : ConfigurationProvider, IDisp
     }
 
     /// <summary>
-    /// Processes a single configuration setting from Azure App Configuration and adds it to the configuration data dictionary.
+    /// Processes a single configuration setting from Azure App Configuration and adds it
+    /// to the configuration data dictionary.
     /// </summary>
     /// <param name="setting">The configuration setting retrieved from Azure App Configuration.</param>
-    /// <param name="configurationData">The concurrent dictionary storing processed configuration key-value pairs.</param>
+    /// <param name="configurationData">
+    /// The concurrent dictionary storing processed configuration key-value pairs.
+    /// </param>
     /// <remarks>
     /// If JSON processing is enabled and the setting value is valid JSON, the method will flatten the JSON structure
     /// into multiple configuration keys. Otherwise, the setting is stored as a simple key-value pair.
@@ -247,7 +288,9 @@ public sealed class AzureAppConfigurationProvider : ConfigurationProvider, IDisp
     /// Releases the unmanaged resources used by the provider and optionally releases the managed resources.
     /// Disposes of the Azure App Configuration client and stops the reload timer if configured.
     /// </summary>
-    /// <param name="disposing">True to release both managed and unmanaged resources; false to release only unmanaged resources.</param>
+    /// <param name="disposing">
+    /// True to release both managed and unmanaged resources; false to release only unmanaged resources.
+    /// </param>
     [SuppressMessage("ReSharper", "FlagArgument", Justification =
         "Flag argument is used to indicate whether to dispose managed resources." +
         "No SRP violation as this is a standard pattern for IDisposable implementations.")]

@@ -8,8 +8,14 @@ namespace FlexKit.Logging.ZLogger.Translation;
 /// This implementation extends the DefaultMessageTranslator class and provides
 /// specific logic to clean and reorder parameters for logs created using ZLogger.
 /// </summary>
-public partial class ZLoggerMessageTranslator : DefaultMessageTranslator
+internal sealed partial class ZLoggerMessageTranslator : DefaultMessageTranslator
 {
+    /// <summary>
+    /// Provides a regular expression to identify parameter placeholders within a template string.
+    /// </summary>
+    /// <returns>
+    /// A <see cref="Regex"/> instance configured to match parameter placeholders in the format "{parameterName}".
+    /// </returns>
     [GeneratedRegex(@"\{([^}]+)\}")]
     private static partial Regex ParameterRegex();
 

@@ -19,35 +19,33 @@ namespace FlexKit.Logging.Core;
 /// <param name="loggingConfig">Logging configuration.</param>
 /// <param name="formatterFactory">Message formatter factory.</param>
 /// <param name="loggerFactory">The logger factory to create category-specific loggers.</param>
-[SuppressMessage("Performance", "CA1848:Use the LoggerMessage delegates")]
+[SuppressMessage("Performance", "CA1848:Use the LoggerMessage delegates",
+    Justification = "Used only for warnings and exceptions, no real performance impact")]
 [UsedImplicitly]
-public sealed class FormattedLogWriter(
+internal sealed class FormattedLogWriter(
     LoggingConfig loggingConfig,
     IMessageFormatterFactory formatterFactory,
     ILoggerFactory loggerFactory) : ILogEntryProcessor
 {
+    /// <summary>
+    /// Provides an abstraction for creating instances of message formatters to handle
+    /// the formatting of log entries based on the provided context.
+    /// </summary>
     private readonly IMessageFormatterFactory _formatterFactory =
         formatterFactory ?? throw new ArgumentNullException(nameof(formatterFactory));
+
+    /// <summary>
+    /// Supplies functionality for creating logger instances that are scoped by category,
+    /// enabling custom logging behavior per category within the application.
+    /// </summary>
     private readonly ILoggerFactory _loggerFactory =
         loggerFactory ?? throw new ArgumentNullException(nameof(loggerFactory));
+
+    /// <summary>
+    /// A thread-safe dictionary used to cache and retrieve instances of loggers
+    /// associated with specific type names, optimizing logger creation and reuse.
+    /// </summary>
     private readonly ConcurrentDictionary<string, ILogger> _loggerCache = new();
-    private static readonly Action<ILogger, string, Exception?> _logTrace =
-        LoggerMessage.Define<string>(LogLevel.Trace, new EventId(1), "{Message}");
-
-    private static readonly Action<ILogger, string, Exception?> _logDebug =
-        LoggerMessage.Define<string>(LogLevel.Debug, new EventId(2), "{Message}");
-
-    private static readonly Action<ILogger, string, Exception?> _logInfo =
-        LoggerMessage.Define<string>(LogLevel.Information, new EventId(3), "{Message}");
-
-    private static readonly Action<ILogger, string, Exception?> _logWarning =
-        LoggerMessage.Define<string>(LogLevel.Warning, new EventId(4), "{Message}");
-
-    private static readonly Action<ILogger, string, Exception?> _logError =
-        LoggerMessage.Define<string>(LogLevel.Error, new EventId(5), "{Message}");
-
-    private static readonly Action<ILogger, string, Exception?> _logCritical =
-        LoggerMessage.Define<string>(LogLevel.Critical, new EventId(6), "{Message}");
 
     /// <inheritdoc />
     public LoggingConfig Config { get; } = loggingConfig ?? throw new ArgumentNullException(nameof(loggingConfig));
@@ -187,22 +185,22 @@ public sealed class FormattedLogWriter(
         switch (level)
         {
             case LogLevel.Trace:
-                _logTrace(logger, message, null);
+                LogWriter.LogTrace(logger, message, null);
                 break;
             case LogLevel.Debug:
-                _logDebug(logger, message, null);
+                LogWriter.LogDebug(logger, message, null);
                 break;
             case LogLevel.Information:
-                _logInfo(logger, message, null);
+                LogWriter.LogInfo(logger, message, null);
                 break;
             case LogLevel.Warning:
-                _logWarning(logger, message, null);
+                LogWriter.LogWarning(logger, message, null);
                 break;
             case LogLevel.Error:
-                _logError(logger, message, null);
+                LogWriter.LogError(logger, message, null);
                 break;
             case LogLevel.Critical:
-                _logCritical(logger, message, null);
+                LogWriter.LogCritical(logger, message, null);
                 break;
             case LogLevel.None:
                 break;

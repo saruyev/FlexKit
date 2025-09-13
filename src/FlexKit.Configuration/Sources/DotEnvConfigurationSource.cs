@@ -68,7 +68,7 @@ namespace FlexKit.Configuration.Sources;
 ///     .Build();
 /// </code>
 /// </example>
-public class DotEnvConfigurationSource : IConfigurationSource
+internal class DotEnvConfigurationSource : IConfigurationSource
 {
     /// <summary>
     /// Gets or sets the path to the .env file.

@@ -156,7 +156,9 @@ public static class AzureExtensions
     /// </list>
     /// </para>
     /// </remarks>
-    /// <exception cref="ArgumentNullException">Thrown when <paramref name="builder"/> or <paramref name="configure"/> is null.</exception>
+    /// <exception cref="ArgumentNullException">
+    /// Thrown when <paramref name="builder"/> or <paramref name="configure"/> is null.
+    /// </exception>
     /// <example>
     /// <code>
     /// // Development configuration with JSON processing and reloading
@@ -227,7 +229,9 @@ public static class AzureExtensions
     /// </para>
     /// </remarks>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="builder"/> is null.</exception>
-    /// <exception cref="ArgumentException">Thrown when <paramref name="connectionString"/> is null or empty.</exception>
+    /// <exception cref="ArgumentException">
+    /// Thrown when <paramref name="connectionString"/> is null or empty.
+    /// </exception>
     /// <example>
     /// <code>
     /// // Basic App Configuration
@@ -273,7 +277,9 @@ public static class AzureExtensions
     /// making it suitable for production scenarios that require specific Azure settings,
     /// key filtering, labels, or automatic reloading.
     /// </remarks>
-    /// <exception cref="ArgumentNullException">Thrown when <paramref name="builder"/> or <paramref name="configure"/> is null.</exception>
+    /// <exception cref="ArgumentNullException">
+    /// Thrown when <paramref name="builder"/> or <paramref name="configure"/> is null.
+    /// </exception>
     /// <example>
     /// <code>
     /// // Production configuration with labels and filtering

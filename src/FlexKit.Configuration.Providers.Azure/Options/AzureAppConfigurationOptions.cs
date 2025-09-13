@@ -92,7 +92,9 @@ public class AzureAppConfigurationOptions
     /// <para>
     /// <strong>Production Recommendations:</strong>
     /// <list type="bullet">
-    /// <item><strong>Critical Config:</strong> Set to false for essential configuration like database connections</item>
+    /// <item>
+    /// <strong>Critical Config:</strong> Set to false for essential configuration like database connections
+    /// </item>
     /// <item><strong>Feature Flags:</strong> Set to true for optional features that have reasonable defaults</item>
     /// <item><strong>Environment-Specific:</strong> Set to true for dev/test, false for production</item>
     /// </list>
@@ -228,10 +230,12 @@ public class AzureAppConfigurationOptions
 
     /// <summary>
     /// Gets or sets a pre-configured Azure App Configuration client for testing scenarios.
-    /// When provided, this client will be used instead of creating a new one from the App Configuration URI and credentials.
+    /// When provided, this client will be used instead of creating a new one from the
+    /// App Configuration URI and credentials.
     /// </summary>
     /// <value>
-    /// A configured ConfigurationClient instance, or null to create a new client using the App Configuration URI and credentials.
+    /// A configured ConfigurationClient instance, or null to create a new client using the
+    /// App Configuration URI and credentials.
     /// Default is null.
     /// </value>
     /// <remarks>

@@ -12,7 +12,7 @@ namespace FlexKit.Logging.ZLogger.Detection;
 /// Represents the context for building and configuring logging components
 /// using specific targets and providers in the FlexKit.Logging.ZLogger infrastructure.
 /// </summary>
-public sealed class BuildContext
+internal sealed class BuildContext
 {
     /// <summary>
     /// Specifies the type of the provider associated with the logging configuration.
@@ -85,7 +85,9 @@ public sealed class BuildContext
         }
 
         Debug.WriteLine(
-            $"Warning: Could not find suitable method to register IAsyncLogProcessor '{processorInfo.ProcessorType.Name}'");
+            $"Warning: Could not find suitable method to register IAsyncLogProcessor " +
+            $"'{processorInfo.ProcessorType.Name}'");
+
         return false;
     }
 
@@ -365,7 +367,9 @@ public sealed class BuildContext
     /// </summary>
     /// <param name="target">The FlexKit target configuration.</param>
     /// <returns>An action delegate to configure ZLogger options.</returns>
-    [SuppressMessage("Major Code Smell", "S3011:Reflection should not be used to increase accessibility of classes, methods, or fields")]
+    [SuppressMessage(
+        "Major Code Smell",
+        "S3011:Reflection should not be used to increase accessibility of classes, methods, or fields")]
     private static Delegate CreateZLoggerOptionsAction(LoggingTarget target)
     {
         // Find ZLoggerOptions type
@@ -512,7 +516,9 @@ public sealed class BuildContext
     /// <param name="target">The FlexKit target configuration.</param>
     /// <param name="propertyName">The name of the property to extract.</param>
     /// <returns>The string value if found, null otherwise.</returns>
-    private static string? GetStringPropertyFromTarget(LoggingTarget target, string propertyName) =>
+    private static string? GetStringPropertyFromTarget(
+        LoggingTarget target,
+        string propertyName) =>
         target.Properties.TryGetValue(propertyName, out var configSection)
             ? configSection?.Value
             : null;

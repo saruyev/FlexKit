@@ -11,8 +11,23 @@ namespace FlexKit.Logging.Core;
 /// </summary>
 public sealed class BackgroundLog : IBackgroundLog, IDisposable
 {
+    /// <summary>
+    /// Represents a writer component from the bounded channel that enables enqueuing
+    /// log entries for asynchronous background processing in the logging system.
+    /// </summary>
     private readonly ChannelWriter<LogEntry> _writer;
+
+    /// <summary>
+    /// Represents a reader component from the bounded channel used to dequeue
+    /// log entries for asynchronous background processing and consumption in the logging system.
+    /// </summary>
     private readonly ChannelReader<LogEntry> _reader;
+
+    /// <summary>
+    /// Indicates whether the <see cref="BackgroundLog"/> instance has been disposed,
+    /// preventing further enqueue or processing operations. Once set to <c>true</c>,
+    /// the instance is considered no longer usable for its intended functionality.
+    /// </summary>
     private volatile bool _disposed;
 
     /// <summary>

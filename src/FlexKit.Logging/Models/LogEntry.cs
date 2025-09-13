@@ -166,7 +166,9 @@ public readonly record struct LogEntry
     /// <summary>
     /// Converts a duration in ticks to its equivalent in seconds, rounded to three decimal places.
     /// </summary>
-    /// <param name="duration">The duration in ticks to be converted. If the value is null, the method returns 0.0.</param>
+    /// <param name="duration">
+    /// The duration in ticks to be converted. If the value is null, the method returns 0.0.
+    /// </param>
     /// <returns>The duration in seconds, rounded to three decimal places, or 0.0 if the input is null.</returns>
     private static double GetSeconds(long? duration) =>
         !duration.HasValue ? 0.0 : Math.Round(TimeSpan.FromTicks(duration.Value).TotalSeconds, 3);
@@ -197,8 +199,13 @@ public readonly record struct LogEntry
     /// <summary>
     /// Returns a new <see cref="LogEntry"/> with the specified exception log level.
     /// </summary>
-    /// <param name="level">The log level to set for exceptions. If null, the current instance is returned unchanged.</param>
-    /// <returns>A new <see cref="LogEntry"/> instance with the updated exception log level, or the current instance if no level is provided.</returns>
+    /// <param name="level">
+    /// The log level to set for exceptions. If null, the current instance is returned unchanged.
+    /// </param>
+    /// <returns>
+    /// A new <see cref="LogEntry"/> instance with the updated exception log level,
+    /// or the current instance if no level is provided.
+    /// </returns>
     public LogEntry WithErrorLevel(LogLevel? level) =>
         level is null
             ? this

@@ -18,7 +18,9 @@ internal static class TypeRegistrationExtensions
     /// </summary>
     /// <param name="builder">The Autofac container builder.</param>
     /// <param name="types">Types to register with logging interception.</param>
-    public static void RegisterTypesWithLogging(this ContainerBuilder builder, IEnumerable<Type> types)
+    public static void RegisterTypesWithLogging(
+        this ContainerBuilder builder,
+        IEnumerable<Type> types)
     {
         foreach (var type in types)
         {
@@ -33,7 +35,9 @@ internal static class TypeRegistrationExtensions
     /// </summary>
     /// <param name="builder">The Autofac container builder.</param>
     /// <param name="type">Type to register with logging interception.</param>
-    private static void RegisterTypeWithLogging(this ContainerBuilder builder, Type type)
+    private static void RegisterTypeWithLogging(
+        this ContainerBuilder builder,
+        Type type)
     {
         var userInterfaces = GetUserInterfaces(type);
 
@@ -58,7 +62,10 @@ internal static class TypeRegistrationExtensions
     /// <param name="builder">The Autofac container builder.</param>
     /// <param name="type">The implementation type.</param>
     /// <param name="interfaces">User-defined interfaces to register as.</param>
-    private static void RegisterWithInterfaceInterception(this ContainerBuilder builder, Type type, IList<Type> interfaces) =>
+    private static void RegisterWithInterfaceInterception(
+        this ContainerBuilder builder,
+        Type type,
+        IList<Type> interfaces) =>
         builder.RegisterType(type)
             .As(interfaces.ToArray())
             .EnableInterfaceInterceptors()
@@ -71,7 +78,9 @@ internal static class TypeRegistrationExtensions
     /// </summary>
     /// <param name="builder">The Autofac container builder.</param>
     /// <param name="type">The type to register with class interception.</param>
-    private static void RegisterWithClassInterception(this ContainerBuilder builder, Type type) =>
+    private static void RegisterWithClassInterception(
+        this ContainerBuilder builder,
+        Type type) =>
         builder.RegisterType(type)
             .AsSelf()
             .EnableClassInterceptors()
@@ -84,7 +93,9 @@ internal static class TypeRegistrationExtensions
     /// </summary>
     /// <param name="builder">The Autofac container builder.</param>
     /// <param name="type">The type to register without interception.</param>
-    private static void RegisterWithoutInterception(this ContainerBuilder builder, Type type)
+    private static void RegisterWithoutInterception(
+        this ContainerBuilder builder,
+        Type type)
     {
         Debug.WriteLine(
             $"Warning: Cannot intercept {type.FullName} - class is sealed or has no virtual methods. " +
@@ -135,7 +146,6 @@ internal static class TypeRegistrationExtensions
 
         // Must have at least one public virtual method (excluding Object methods)
         return type.GetMethods(BindingFlags.Public | BindingFlags.Instance)
-            .Where(m => m.DeclaringType != typeof(object))
-            .Any(m => m is { IsVirtual: true, IsFinal: false });
+            .Any(m => m.DeclaringType != typeof(object) && m is { IsVirtual: true, IsFinal: false });
     }
 }

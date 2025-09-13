@@ -14,7 +14,7 @@ namespace FlexKit.Logging.Detection;
 /// Provides transparent logging infrastructure that requires no manual service registration by the user.
 /// </summary>
 [UsedImplicitly]
-public sealed class LoggingModule : Module
+internal sealed class LoggingModule : Module
 {
     /// <summary>
     /// Loads and configures the logging infrastructure components and discovers classes that need logging.

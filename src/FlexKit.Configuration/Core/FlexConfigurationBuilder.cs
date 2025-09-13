@@ -328,7 +328,9 @@ public class FlexConfigurationBuilder
     /// </para>
     /// </remarks>
     /// <exception cref="InvalidOperationException">Thrown when called after Build() has been called.</exception>
-    /// <exception cref="FileNotFoundException">Thrown when the file doesn't exist and <paramref name="optional"/> is <c>false</c>.</exception>
+    /// <exception cref="FileNotFoundException">
+    /// Thrown when the file doesn't exist and <paramref name="optional"/> is <c>false</c>.
+    /// </exception>
     /// <example>
     /// <code>
     /// // Standard .env file
@@ -599,10 +601,18 @@ public class FlexConfigurationBuilder
     /// be called once during application startup rather than repeatedly.
     /// </para>
     /// </remarks>
-    /// <exception cref="InvalidOperationException">Thrown when Build() has already been called on this builder instance.</exception>
-    /// <exception cref="FileNotFoundException">Thrown when a required configuration file is not found.</exception>
-    /// <exception cref="FormatException">Thrown when a configuration file has an invalid format (e.g., malformed JSON).</exception>
-    /// <exception cref="UnauthorizedAccessException">Thrown when the application lacks permission to read configuration files.</exception>
+    /// <exception cref="InvalidOperationException">
+    /// Thrown when Build() has already been called on this builder instance.
+    /// </exception>
+    /// <exception cref="FileNotFoundException">
+    /// Thrown when a required configuration file is not found.
+    /// </exception>
+    /// <exception cref="FormatException">
+    /// Thrown when a configuration file has an invalid format (e.g., malformed JSON).
+    /// </exception>
+    /// <exception cref="UnauthorizedAccessException">
+    /// Thrown when the application lacks permission to read configuration files.
+    /// </exception>
     /// <example>
     /// <code>
     /// // Complete configuration setup

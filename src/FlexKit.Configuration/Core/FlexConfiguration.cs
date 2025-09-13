@@ -107,13 +107,6 @@ namespace FlexKit.Configuration.Core;
 public sealed class FlexConfiguration(IConfiguration root) : DynamicObject, IFlexConfig
 {
     /// <summary>
-    /// The underlying IConfiguration instance that provides the actual configuration data.
-    /// This field maintains the connection to the Microsoft configuration system while
-    /// adding FlexKit's enhanced access capabilities on top.
-    /// </summary>
-    private readonly IConfiguration _root = root ?? throw new ArgumentNullException(nameof(root));
-
-    /// <summary>
     /// Gets the underlying IConfiguration instance for compatibility with standard .NET configuration patterns.
     /// Provides direct access to the wrapped configuration when standard IConfiguration methods are needed.
     /// </summary>
@@ -146,7 +139,7 @@ public sealed class FlexConfiguration(IConfiguration root) : DynamicObject, IFle
     /// </code>
     /// </para>
     /// </remarks>
-    public IConfiguration Configuration => _root;
+    public IConfiguration Configuration { get; } = root ?? throw new ArgumentNullException(nameof(root));
 
     /// <summary>
     /// Gets a configuration value by key using traditional indexer syntax.
@@ -209,7 +202,8 @@ public sealed class FlexConfiguration(IConfiguration root) : DynamicObject, IFle
     /// var port = flexConfig["Server:Port"]?.ToType&lt;int&gt;();
     /// </code>
     /// </example>
-    public string? this[string key] => !string.IsNullOrEmpty(key.Trim()) ? _root[key] : null;
+    public string? this[string key] =>
+        !string.IsNullOrEmpty(key.Trim()) ? Configuration[key] : null;
 
     /// <summary>
     /// Gets a configuration section by numeric index, treating the configuration as an array-like structure.
@@ -292,7 +286,8 @@ public sealed class FlexConfiguration(IConfiguration root) : DynamicObject, IFle
     /// }
     /// </code>
     /// </example>
-    public IFlexConfig? this[int index] => _root.CurrentConfig(index.ToString(CultureInfo.InvariantCulture));
+    public IFlexConfig? this[int index] =>
+        Configuration.CurrentConfig(index.ToString(CultureInfo.InvariantCulture));
 
     /// <summary>
     /// Retrieves a subsection of the configuration hierarchy based on the specified key.
@@ -303,7 +298,8 @@ public sealed class FlexConfiguration(IConfiguration root) : DynamicObject, IFle
     /// The configuration subsection corresponding to the provided key if found;
     /// otherwise, null if the key is empty or not found.
     /// </returns>
-    public IFlexConfig? GetSection(string key) => !string.IsNullOrEmpty(key.Trim()) ? _root.CurrentConfig(key) : null;
+    public IFlexConfig? GetSection(string key) =>
+        !string.IsNullOrEmpty(key.Trim()) ? Configuration.CurrentConfig(key) : null;
 
     /// <summary>
     /// Attempts to convert the configuration value to the specified type.
@@ -393,7 +389,7 @@ public sealed class FlexConfiguration(IConfiguration root) : DynamicObject, IFle
         out object? result)
     {
         result = binder.Type.IsValueType ? Activator.CreateInstance(binder.Type) : null;
-        var section = _root as IConfigurationSection;
+        var section = Configuration as IConfigurationSection;
 
         if (binder.Type.IsValueType || binder.Type == typeof(string))
         {
@@ -495,7 +491,7 @@ public sealed class FlexConfiguration(IConfiguration root) : DynamicObject, IFle
         GetMemberBinder binder,
         out object? result)
     {
-        result = _root.CurrentConfig(binder.Name);
+        result = Configuration.CurrentConfig(binder.Name);
         return true;
     }
 
@@ -581,7 +577,7 @@ public sealed class FlexConfiguration(IConfiguration root) : DynamicObject, IFle
     /// </code>
     /// </example>
     public override string ToString() =>
-        _root is IConfigurationSection configRoot ? configRoot.Value ?? string.Empty : string.Empty;
+        Configuration is IConfigurationSection configRoot ? configRoot.Value ?? string.Empty : string.Empty;
 
     /// <summary>
     /// Retrieves a generic dictionary value from the provided configuration section.
@@ -649,6 +645,8 @@ public sealed class FlexConfiguration(IConfiguration root) : DynamicObject, IFle
         var genericType = binder.Type.GetGenericTypeDefinition();
         var isExpectedType = genericType == typeof(IDictionary<,>);
 
-        return isExpectedType || genericType == typeof(Dictionary<,>) ? section?.GetChildren().ToDictionary(binder.Type) : null;
+        return isExpectedType || genericType == typeof(Dictionary<,>)
+            ? section?.GetChildren().ToDictionary(binder.Type)
+            : null;
     }
 }

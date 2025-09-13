@@ -39,7 +39,7 @@ namespace FlexKit.Logging.NLog.Detection;
 /// </para>
 /// </remarks>
 [UsedImplicitly]
-public class NLogLoggingModule : Module
+internal sealed class NLogLoggingModule : Module
 {
     /// <summary>
     /// Configures the container with NLog-based logging services.

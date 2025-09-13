@@ -71,16 +71,27 @@ namespace FlexKit.Logging.ZLogger.Core;
 /// <param name="engine">ZLogger template engine.</param>
 [UsedImplicitly]
 [SuppressMessage("Performance", "CA1848:Use the LoggerMessage delegates")]
-public sealed class ZLoggerLogWriter(
+internal sealed class ZLoggerLogWriter(
     LoggingConfig loggingConfig,
     IMessageFormatterFactory formatterFactory,
     ILoggerFactory loggerFactory,
     IZLoggerTemplateEngine engine) : ILogEntryProcessor
 {
+    /// <summary>
+    /// Represents the factory responsible for creating instances of message formatters used in log processing.
+    /// </summary>
     private readonly IMessageFormatterFactory _formatterFactory =
         formatterFactory ?? throw new ArgumentNullException(nameof(formatterFactory));
+
+    /// <summary>
+    /// Represents the factory used to create logger instances for logging operations.
+    /// </summary>
     private readonly ILoggerFactory _loggerFactory =
         loggerFactory ?? throw new ArgumentNullException(nameof(loggerFactory));
+
+    /// <summary>
+    /// A thread-safe dictionary used to cache and retrieve logger instances by their category name.
+    /// </summary>
     private readonly ConcurrentDictionary<string, ILogger> _loggerCache = new();
 
     /// <inheritdoc />

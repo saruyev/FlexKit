@@ -17,8 +17,12 @@ namespace FlexKit.Logging.Formatting.Formatters;
 /// </remarks>
 /// <param name="translator">The message translator for provider-specific syntax conversion.</param>
 [UsedImplicitly]
-public sealed class SuccessErrorFormatter(IMessageTranslator translator) : IMessageFormatter
+internal sealed class SuccessErrorFormatter(IMessageTranslator translator) : IMessageFormatter
 {
+    /// <summary>
+    /// Provides functionality to translate message templates and parameters
+    /// during the formatting process.
+    /// </summary>
     private readonly IMessageTranslator _translator =
         translator ?? throw new ArgumentNullException(nameof(translator));
 

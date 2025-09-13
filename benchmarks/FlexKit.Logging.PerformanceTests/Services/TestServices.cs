@@ -271,12 +271,8 @@ public interface IFormatterManualService
     string ProcessWithFormatter(string formatterName, ComplexTestData data);
 }
 
-public class FormatterManualService : IFormatterManualService
+public class FormatterManualService(IFlexKitLogger logger) : IFormatterManualService
 {
-    private readonly IFlexKitLogger _logger;
-
-    public FormatterManualService(IFlexKitLogger logger) => _logger = logger;
-
     public string ProcessWithFormatter(string formatterName, ComplexTestData data)
     {
         var formatterType = Enum.Parse<FormatterType>(formatterName);
@@ -286,7 +282,7 @@ public class FormatterManualService : IFormatterManualService
             .WithFormatter(formatterType)
             .WithTarget("Console");
 
-        _logger.Log(startEntry);
+        logger.Log(startEntry);
 
         var result = $"Manual {formatterName}: {data.Name}";
 
@@ -294,7 +290,7 @@ public class FormatterManualService : IFormatterManualService
             .WithCompletion(true)
             .WithOutput(result);
 
-        _logger.Log(endEntry);
+        logger.Log(endEntry);
         return result;
     }
 }

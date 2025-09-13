@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using FlexKit.Logging.Configuration;
 using Microsoft.Extensions.Logging;
@@ -9,7 +10,7 @@ namespace FlexKit.Logging.Interception.Attributes;
 /// Provides the logic for attribute precedence and inheritance handling according to
 /// the interception decision hierarchy.
 /// </summary>
-public static class AttributeResolver
+internal static class AttributeResolver
 {
     /// <summary>
     /// Determines if logging should be completely disabled for the specified method.
@@ -82,7 +83,8 @@ public static class AttributeResolver
     /// The resolved InterceptionDecision if logging attributes are found at the method level;
     /// null if no method-level logging attributes are present.
     /// </returns>
-    private static InterceptionDecision? GetMethodLevelDecision(MethodInfo method) => MemberInfoDecision(method);
+    private static InterceptionDecision? GetMethodLevelDecision(MethodInfo method) =>
+        MemberInfoDecision(method);
 
     /// <summary>
     /// Resolves the interception decision from class-level attributes.
@@ -93,21 +95,24 @@ public static class AttributeResolver
     /// The resolved InterceptionDecision if logging attributes are found at the class level;
     /// null if no class-level logging attributes are present.
     /// </returns>
-    private static InterceptionDecision? GetClassLevelDecision(Type classType) => MemberInfoDecision(classType);
+    private static InterceptionDecision? GetClassLevelDecision(Type classType) =>
+        MemberInfoDecision(classType);
 
     /// <summary>
-    /// Determines the logging interception decision based on the attributes applied to the provided member information.
+    /// Determines the logging interception decision based on the attributes applied to the provided
+    /// member information.
     /// Evaluates attributes such as LogBothAttribute, LogInputAttribute, and LogOutputAttribute to decide
     /// the appropriate logging behavior and levels.
     /// </summary>
     /// <param name="member">The member (method or type) to inspect for logging-related attributes.</param>
     /// <returns>
-    /// An InterceptionDecision object representing the resolved logging behavior, or null if no relevant attributes are found.
+    /// An InterceptionDecision object representing the resolved logging behavior,
+    /// or null if no relevant attributes are found.
     /// </returns>
+    [SuppressMessage("ReSharper", "NullableWarningSuppressionIsUsed")]
     private static InterceptionDecision? MemberInfoDecision(MemberInfo member)
     {
-        var logBothAttr = member.GetCustomAttribute<LogBothAttribute>();
-        if (logBothAttr != null)
+        if (member.GetCustomAttribute<LogBothAttribute>() is { } logBothAttr)
         {
             return GetDecision(logBothAttr, InterceptionBehavior.LogBoth);
         }
@@ -120,7 +125,9 @@ public static class AttributeResolver
             // Both input and output attributes present - use the higher log level
             var attribute = new LogBothAttribute(
                 level: (LogLevel)Math.Min((int)logInputAttr.Level, (int)logOutputAttr.Level),
-                exceptionLevel: (LogLevel)Math.Min((int)logInputAttr.ExceptionLevel!, (int)logOutputAttr.ExceptionLevel!),
+                exceptionLevel: (LogLevel)Math.Min(
+                    (int)logInputAttr.ExceptionLevel!,
+                    (int)logOutputAttr.ExceptionLevel!),
                 target: logInputAttr.Target ?? logOutputAttr.Target,
                 formatter: logInputAttr.Formatter?.ToString() ?? logOutputAttr.Formatter?.ToString());
 
@@ -132,7 +139,7 @@ public static class AttributeResolver
             return GetDecision(logInputAttr, InterceptionBehavior.LogInput);
         }
 
-        return logOutputAttr != null ? GetDecision(logOutputAttr, InterceptionBehavior.LogInput) : null;
+        return logOutputAttr != null ? GetDecision(logOutputAttr, InterceptionBehavior.LogOutput) : null;
     }
 
     /// <summary>
@@ -142,12 +149,16 @@ public static class AttributeResolver
     /// The logging attribute containing configuration for logging, such as level, target, and formatter.
     /// </param>
     /// <param name="behavior">
-    /// The logging behavior specifying how the interception should be processed (e.g., LogInput, LogOutput, or LogBoth).
+    /// The logging behavior specifying how the interception should be processed
+    /// (e.g., LogInput, LogOutput, or LogBoth).
     /// </param>
     /// <returns>
-    /// An <see cref="InterceptionDecision"/> instance encapsulating all relevant configurations for the interception decision.
+    /// An <see cref="InterceptionDecision"/> instance encapsulating all relevant configurations
+    /// for the interception decision.
     /// </returns>
-    private static InterceptionDecision? GetDecision(LoggingAttribute attribute, InterceptionBehavior behavior) =>
+    private static InterceptionDecision? GetDecision(
+        LoggingAttribute attribute,
+        InterceptionBehavior behavior) =>
         new InterceptionDecision()
             .WithBehavior(behavior)
             .WithTarget(attribute.Target)

@@ -14,11 +14,28 @@ namespace FlexKit.Logging.Formatting.Formatters;
 /// </summary>
 [SuppressMessage("Performance", "CA1859:Use concrete types when possible for improved performance")]
 [UsedImplicitly]
-public sealed class HybridFormatter : IMessageFormatter
+internal sealed class HybridFormatter : IMessageFormatter
 {
+    /// <summary>
+    /// Represents an instance of <see cref="IMessageFormatter"/> used for delegating
+    /// the formatting of log entries in the <see cref="HybridFormatter"/> implementation.
+    /// Uses the provided <see cref="IMessageTranslator"/> to transform structured logging
+    /// data into a formatted message.
+    /// </summary>
     private readonly IMessageFormatter _messageFormatter;
+
+    /// <summary>
+    /// Represents an instance of <see cref="IMessageTranslator"/> used within the
+    /// <see cref="HybridFormatter"/> to handle the translation of structured message templates.
+    /// Provides the ability to integrate metadata or transformations to enhance the formatting process.
+    /// </summary>
     private readonly IMessageTranslator _translator;
 
+    /// <summary>
+    /// Represents the configuration options for the JSON serialization process,
+    /// used internally to define properties such as naming policy, indentation,
+    /// and encoding for serializing log metadata in the <see cref="HybridFormatter"/> output.
+    /// </summary>
     private readonly JsonSerializerOptions _options = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
@@ -103,7 +120,9 @@ public sealed class HybridFormatter : IMessageFormatter
     /// <returns>
     /// A formatted message containing the final template and parameters, optionally including metadata based on settings.
     /// </returns>
-    private FormattedMessage RawMessage(HybridFormatterSettings hybridSettings, FormattedMessage messageResult) =>
+    private FormattedMessage RawMessage(
+        HybridFormatterSettings hybridSettings,
+        FormattedMessage messageResult) =>
         hybridSettings.IncludeMetadata
             ? FormattedMessage.Success(
                 messageResult.Template +
@@ -165,6 +184,7 @@ public sealed class HybridFormatter : IMessageFormatter
     /// <summary>
     /// Generates the JSON metadata part of the hybrid output containing additional log entry details.
     /// </summary>
+    /// <param name="parameters">The log entry parameters to be serialized as JSON.</param>
     /// <returns>A JSON string containing the metadata, or an empty string if no metadata is available.</returns>
     private string GetMetadataPart(IReadOnlyDictionary<string, object?> parameters) =>
         parameters.Count > 0 ? JsonSerializer.Serialize(parameters, _options) : string.Empty;

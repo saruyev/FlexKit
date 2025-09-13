@@ -12,8 +12,13 @@ namespace FlexKit.Logging.Formatting.Formatters;
 /// Formats log entries as JSON objects with method execution data.
 /// Produces structured JSON like {"method_name": "ProcessPayment", "duration": 450, "success": true}.
 /// </summary>
-public sealed class JsonFormatter(IMessageTranslator translator) : IMessageFormatter
+internal sealed class JsonFormatter(IMessageTranslator translator) : IMessageFormatter
 {
+    /// <summary>
+    /// Contains preconfigured options used by the JSON serializer in the <see cref="JsonFormatter"/>.
+    /// These options define the serialization behavior, including property naming policy,
+    /// output formatting, and character encoding, optimized for log entry formatting.
+    /// </summary>
     private static readonly JsonSerializerOptions _serializerOptions = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
@@ -21,6 +26,12 @@ public sealed class JsonFormatter(IMessageTranslator translator) : IMessageForma
         Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
     };
 
+    /// <summary>
+    /// Defines preconfigured JSON serialization options optimized for human-readable output.
+    /// These options include snake_case naming policy, indented formatting, and relaxed JSON escaping.
+    /// Designed for use in contexts where pretty-printed serialization is required for
+    /// enhanced readability of log entries or diagnostic information.
+    /// </summary>
     private static readonly JsonSerializerOptions _prettySerializerOptions = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
@@ -46,7 +57,9 @@ public sealed class JsonFormatter(IMessageTranslator translator) : IMessageForma
             }
 
             var entry = context.LogEntry.WithParametersJson();
-            var options = context.Configuration.Formatters.Json.PrettyPrint ? _prettySerializerOptions : _serializerOptions;
+            var options = context.Configuration.Formatters.Json.PrettyPrint
+                ? _prettySerializerOptions
+                : _serializerOptions;
 
             return context.DisableFormatting ?
                 FormattedMessage.Success(

@@ -175,7 +175,7 @@ public class SecretsManagerReloadingSteps(ScenarioContext scenarioContext)
 
         try
         {
-            // Verify that we can access secrets data dynamically using the actual configuration structure
+            // Verify that we can access secrets' data dynamically using the actual configuration structure
             var databaseCredentials = AwsTestConfigurationBuilder.GetDynamicProperty(
                 _secretsReloadFlexConfiguration!,
                 "infrastructure-module-database-credentials");

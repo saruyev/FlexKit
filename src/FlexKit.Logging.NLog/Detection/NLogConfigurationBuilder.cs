@@ -16,8 +16,12 @@ namespace FlexKit.Logging.NLog.Detection;
 /// Builds NLog LoggingConfiguration from FlexKit LoggingConfig by dynamically
 /// detecting available targets and configuring them using reflection.
 /// </summary>
-public class NLogConfigurationBuilder
+internal sealed class NLogConfigurationBuilder
 {
+    /// <summary>
+    /// Stores information about the NLog targets that have been detected and are available for configuration.
+    /// The dictionary keys represent the target types as strings, and the values contain detailed target information.
+    /// </summary>
     private readonly Dictionary<string, NLogTargetDetector.TargetInfo> _availableTargets;
 
     /// <summary>

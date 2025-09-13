@@ -14,8 +14,11 @@ namespace FlexKit.Logging.Formatting.Formatters;
 /// Initializes a new instance of the StandardStructuredFormatter.
 /// </remarks>
 /// <param name="translator">The message translator for provider-specific syntax conversion.</param>
-public sealed class StandardStructuredFormatter(IMessageTranslator translator) : IMessageFormatter
+internal sealed class StandardStructuredFormatter(IMessageTranslator translator) : IMessageFormatter
 {
+    /// <summary>
+    /// Represents the translator component used to apply message translations, including template and parameter translations.
+    /// </summary>
     private readonly IMessageTranslator _translator =
         translator ?? throw new ArgumentNullException(nameof(translator));
 

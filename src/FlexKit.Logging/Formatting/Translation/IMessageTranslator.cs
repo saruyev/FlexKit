@@ -57,7 +57,9 @@ public interface IMessageTranslator
     /// rather than throwing exceptions, ensuring graceful degradation.
     /// </para>
     /// </remarks>
-    string TranslateTemplate(string? messageTemplate, LoggingConfig? config = null);
+    string TranslateTemplate(
+        string? messageTemplate,
+        LoggingConfig? config = null);
 
     /// <summary>
     /// Translates parameter names and values for provider-specific formatting requirements.

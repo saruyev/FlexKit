@@ -62,7 +62,9 @@ public readonly record struct FormattingContext
         {
             LogEntry = logEntry,
             Configuration = configuration,
-            FormatterType = logEntry.Formatter ?? GetTargetFormatter(logEntry.Target, configuration) ?? configuration.DefaultFormatter,
+            FormatterType = logEntry.Formatter ??
+                            GetTargetFormatter(logEntry.Target, configuration) ??
+                            configuration.DefaultFormatter,
             Properties = new Dictionary<string, object?>(),
             EnableFallback = configuration.EnableFallbackFormatting,
         };

@@ -17,9 +17,21 @@ namespace FlexKit.Logging.Serilog.Core;
 /// Logger implementation that bridges Microsoft.Extensions.Logging to Serilog.
 /// Routes log messages to the appropriate Serilog logger based on category.
 /// </remarks>
-public class SerilogLogger(string categoryName, LoggingConfig config, ISerilogLogger serilogLogger) : ILogger
+public class SerilogLogger(
+    string categoryName,
+    LoggingConfig config,
+    ISerilogLogger serilogLogger) : ILogger
 {
-    private readonly ISerilogLogger _serilogLogger = serilogLogger.ForContext("SourceContext", categoryName);
+    /// <summary>
+    /// Holds the instance of the Serilog logger used for routing log messages to the appropriate Serilog sink.
+    /// </summary>
+    /// <remarks>
+    /// This field is initialized with a Serilog logger context that enriches log messages with a "SourceContext"
+    /// property based on the category name of the logger. It is used internally within the <see cref="SerilogLogger"/>
+    /// implementation to write structured log events.
+    /// </remarks>
+    private readonly ISerilogLogger _serilogLogger =
+        serilogLogger.ForContext("SourceContext", categoryName);
 
     /// <inheritdoc />
     public IDisposable BeginScope<TState>(TState state) where TState : notnull => NullScope.Instance;
@@ -58,13 +70,10 @@ public class SerilogLogger(string categoryName, LoggingConfig config, ISerilogLo
         // Add state properties if the state is a structured object
         if (state is IEnumerable<KeyValuePair<string, object?>> properties)
         {
-            foreach (var property in properties)
-            {
-                if (property.Key != "{OriginalFormat}")
-                {
-                    logger = logger.ForContext(property.Key, property.Value, destructureObjects: true);
-                }
-            }
+            logger = properties
+                .Where(property => property.Key != "{OriginalFormat}")
+                .Aggregate(logger, (current, property) =>
+                    current.ForContext(property.Key, property.Value, destructureObjects: true));
         }
 
         // Write the log event
@@ -79,7 +88,8 @@ public class SerilogLogger(string categoryName, LoggingConfig config, ISerilogLo
         logLevel >= GetMinimumLogLevelForCategory() && _serilogLogger.IsEnabled(ConvertLogLevel(logLevel));
 
     /// <summary>
-    /// Converts a <see cref="LogLevel"/> from Microsoft.Extensions.Logging to a corresponding <see cref="LogEventLevel"/> used by Serilog.
+    /// Converts a <see cref="LogLevel"/> from Microsoft.Extensions.Logging to a corresponding
+    /// <see cref="LogEventLevel"/> used by Serilog.
     /// </summary>
     /// <param name="logLevel">The <see cref="LogLevel"/> to convert.</param>
     /// <returns>The corresponding <see cref="LogEventLevel"/> in Serilog.</returns>
@@ -103,7 +113,8 @@ public class SerilogLogger(string categoryName, LoggingConfig config, ISerilogLo
     /// </summary>
     /// <returns>The minimum <see cref="LogLevel"/> required for logging in the current category.</returns>
     private LogLevel GetMinimumLogLevelForCategory() =>
-        config.SuppressedCategories.Any(c => categoryName.StartsWith(c, StringComparison.InvariantCultureIgnoreCase))
+        config.SuppressedCategories.Any(
+            c => categoryName.StartsWith(c, StringComparison.InvariantCultureIgnoreCase))
             ? config.SuppressedLogLevel
             : LogLevel.Trace;
 
@@ -113,7 +124,8 @@ public class SerilogLogger(string categoryName, LoggingConfig config, ISerilogLo
     /// </summary>
     /// <remarks>
     /// Provides an implementation of IDisposable that performs no operations when disposed.
-    /// Typically used in logging or scenarios where scoping functionality is required but no actual scope management is needed.
+    /// Typically used in logging or scenarios where scoping functionality is required but no actual
+    /// scope management is needed.
     /// </remarks>
     private sealed class NullScope : IDisposable
     {

@@ -11,7 +11,9 @@ namespace FlexKit.Logging.Serilog.Core;
 /// <param name="config">The FlexKit logging configuration.</param>
 /// <param name="serilogLogger">The Serilog logger instance.</param>
 #pragma warning disable S3881
-public class SerilogLoggerProvider(LoggingConfig config, ISerilogLogger serilogLogger) : ILoggerProvider
+internal sealed class SerilogLoggerProvider(
+    LoggingConfig config,
+    ISerilogLogger serilogLogger) : ILoggerProvider
 #pragma warning restore S3881
 {
     /// <inheritdoc />

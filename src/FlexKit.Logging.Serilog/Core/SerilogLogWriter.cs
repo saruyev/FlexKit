@@ -20,7 +20,7 @@ namespace FlexKit.Logging.Serilog.Core;
 /// <param name="loggingConfig">Logging configuration.</param>
 /// <param name="formatterFactory">Message formatter factory.</param>
 /// <param name="serilogLogger">Configured Serilog logger instance.</param>
-public sealed class SerilogLogWriter(
+internal sealed class SerilogLogWriter(
     LoggingConfig loggingConfig,
     IMessageFormatterFactory formatterFactory,
     ILogger serilogLogger) : ILogEntryProcessor

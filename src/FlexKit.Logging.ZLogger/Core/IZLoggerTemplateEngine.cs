@@ -9,7 +9,7 @@ namespace FlexKit.Logging.ZLogger.Core;
 /// This interface supports precompiled templates for performance optimization and executing
 /// precompiled templates using logging parameters.
 /// </summary>
-public interface IZLoggerTemplateEngine
+internal interface IZLoggerTemplateEngine
 {
     /// <summary>
     /// Pre-compiles all templates from configuration at startup for better performance.

@@ -575,7 +575,7 @@ public class AzureKeyVaultConfigurationProviderTests
         var source = new AzureKeyVaultConfigurationSource
         {
             VaultUri = "https://test-vault.vault.azure.net/",
-            ReloadAfter = TimeSpan.FromMinutes(1) // Create a timer so there's something to dispose
+            ReloadAfter = TimeSpan.FromMinutes(1) // Create a timer so there's something to dispose of
         };
         var provider = new AzureKeyVaultConfigurationProvider(source);
 

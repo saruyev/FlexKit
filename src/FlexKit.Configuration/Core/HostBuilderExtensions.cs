@@ -65,7 +65,9 @@ public static class HostBuilderExtensions
     /// This method performs the following setup steps automatically:
     ///
     /// <list type="number">
-    /// <item>Configures Autofac as the service provider factory using <see cref="AutofacServiceProviderFactory"/></item>
+    /// <item>
+    /// Configures Autofac as the service provider factory using <see cref="AutofacServiceProviderFactory"/>
+    /// </item>
     /// <item>Captures the existing host configuration (from Host.CreateDefaultBuilder)</item>
     /// <item>Sets up FlexConfig using the existing configuration as the base</item>
     /// <item>Applies additional configuration sources specified in the configure action</item>
@@ -126,8 +128,12 @@ public static class HostBuilderExtensions
     /// ConfigureServices, ConfigureLogging, and other standard hosting extensions.
     /// </para>
     /// </remarks>
-    /// <exception cref="ArgumentNullException">Thrown when <paramref name="hostBuilder"/> is null.</exception>
-    /// <exception cref="InvalidOperationException">Thrown when configuration building fails due to invalid sources or settings.</exception>
+    /// <exception cref="ArgumentNullException">
+    /// Thrown when <paramref name="hostBuilder"/> is null.
+    /// </exception>
+    /// <exception cref="InvalidOperationException">
+    /// Thrown when configuration building fails due to invalid sources or settings.
+    /// </exception>
     /// <example>
     /// <code>
     /// // Console application with FlexConfig - minimal setup (existing host config only)
@@ -227,9 +233,9 @@ public static class HostBuilderExtensions
     }
 
     /// <summary>
-    /// Adds FlexKit.Configuration to the host builder with support for both FlexConfig and ContainerBuilder customization.
-    /// This overload provides maximum flexibility by allowing customization of both the configuration builder
-    /// and the Autofac container builder in a single call.
+    /// Adds FlexKit.Configuration to the host builder with support for both FlexConfig and ContainerBuilder
+    /// customization. This overload provides maximum flexibility by allowing customization of both the
+    /// configuration builder and the Autofac container builder in a single call.
     /// </summary>
     /// <param name="hostBuilder">The host builder to configure with FlexConfig support.</param>
     /// <param name="configure">
@@ -244,7 +250,9 @@ public static class HostBuilderExtensions
     /// without having to use separate ConfigureContainer calls. The configuration builder is set up
     /// with automatic JSON file detection before calling your configure action.
     /// </remarks>
-    /// <exception cref="ArgumentNullException">Thrown when <paramref name="hostBuilder"/> or <paramref name="configure"/> is null.</exception>
+    /// <exception cref="ArgumentNullException">
+    /// Thrown when <paramref name="hostBuilder"/> or <paramref name="configure"/> is null.
+    /// </exception>
     /// <example>
     /// <code>
     /// // Single configuration action for both config and DI
@@ -304,8 +312,13 @@ public static class HostBuilderExtensions
     /// This method performs the following setup steps automatically:
     ///
     /// <list type="number">
-    /// <item>Registers Autofac services with the built-in service collection using <see cref="ServiceCollectionExtensions.AddAutofac"/></item>
-    /// <item>Configures Autofac as the service provider factory using <see cref="AutofacServiceProviderFactory"/></item>
+    /// <item>
+    /// Registers Autofac services with the built-in service collection using
+    /// <see cref="ServiceCollectionExtensions.AddAutofac"/>
+    /// </item>
+    /// <item>
+    /// Configures Autofac as the service provider factory using <see cref="AutofacServiceProviderFactory"/>
+    /// </item>
     /// <item>Captures the existing host configuration from <see cref="IHostApplicationBuilder.Configuration"/></item>
     /// <item>Sets up FlexConfig using the existing configuration as the base</item>
     /// <item>Applies additional configuration sources specified in the configure action</item>
@@ -377,14 +390,26 @@ public static class HostBuilderExtensions
     /// Unlike the <see cref="IHostBuilder"/> extension method which uses callback patterns,
     /// this method works with the direct access model of <see cref="IHostApplicationBuilder"/>:
     /// <list type="bullet">
-    /// <item>Uses <see cref="IHostApplicationBuilder.Configuration"/> directly instead of <see cref="HostBuilderContext.Configuration"/></item>
-    /// <item>Registers Autofac services with <see cref="IHostApplicationBuilder.Services"/> before container configuration</item>
-    /// <item>Explicitly passes <see cref="AutofacServiceProviderFactory"/> to <see cref="IHostApplicationBuilder.ConfigureContainer{TContainerBuilder}(IServiceProviderFactory{TContainerBuilder}, Action{TContainerBuilder}?)"/></item>
+    /// <item>
+    /// Uses <see cref="IHostApplicationBuilder.Configuration"/> directly instead of
+    /// <see cref="HostBuilderContext.Configuration"/>
+    /// </item>
+    /// <item>
+    /// Registers Autofac services with <see cref="IHostApplicationBuilder.Services"/> before container configuration
+    /// </item>
+    /// <item>
+    /// Explicitly passes <see cref="AutofacServiceProviderFactory"/> to
+    /// <see cref="IHostApplicationBuilder.ConfigureContainer{TContainerBuilder}(IServiceProviderFactory{TContainerBuilder}, Action{TContainerBuilder}?)"/>
+    /// </item>
     /// </list>
     /// </para>
     /// </remarks>
-    /// <exception cref="ArgumentNullException">Thrown when <paramref name="builder"/> is null.</exception>
-    /// <exception cref="InvalidOperationException">Thrown when configuration building fails due to invalid sources or settings.</exception>
+    /// <exception cref="ArgumentNullException">
+    /// Thrown when <paramref name="builder"/> is null.
+    /// </exception>
+    /// <exception cref="InvalidOperationException">
+    /// Thrown when configuration building fails due to invalid sources or settings.
+    /// </exception>
     /// <example>
     /// <code>
     /// // ASP.NET Core application with FlexConfig - minimal setup
@@ -488,9 +513,9 @@ public static class HostBuilderExtensions
     }
 
     /// <summary>
-    /// Adds FlexKit.Configuration to the host application builder with support for both FlexConfig and ContainerBuilder customization.
-    /// This overload provides maximum flexibility by allowing customization of both the configuration builder
-    /// and the Autofac container builder in a single call.
+    /// Adds FlexKit.Configuration to the host application builder with support for both FlexConfig and
+    /// ContainerBuilder customization. This overload provides maximum flexibility by allowing customization
+    /// of both the configuration builder and the Autofac container builder in a single call.
     /// </summary>
     /// <param name="builder">The host application builder to configure with FlexConfig support.</param>
     /// <param name="configure">
@@ -505,7 +530,9 @@ public static class HostBuilderExtensions
     /// without having to use separate ConfigureContainer calls. The configuration builder is set up
     /// with automatic JSON file detection before calling your configure action.
     /// </remarks>
-    /// <exception cref="ArgumentNullException">Thrown when <paramref name="builder"/> or <paramref name="configure"/> is null.</exception>
+    /// <exception cref="ArgumentNullException">
+    /// Thrown when <paramref name="builder"/> or <paramref name="configure"/> is null.
+    /// </exception>
     /// <example>
     /// <code>
     /// // Single configuration action for both config and DI
@@ -635,13 +662,19 @@ public static class HostBuilderExtensions
         }
 
         // Check for an environment-specific appsettings file
-        var environmentAppSettingsPath = Path.Combine(Directory.GetCurrentDirectory(), $"appsettings.{environment?.EnvironmentName}.json");
+        var environmentAppSettingsPath = Path.Combine(
+            Directory.GetCurrentDirectory(),
+            $"appsettings.{environment?.EnvironmentName}.json");
+
         if (!File.Exists(environmentAppSettingsPath))
         {
             return;
         }
 
-        config.AddJsonFile($"appsettings.{environment?.EnvironmentName}.json", optional: true, reloadOnChange: true);
+        config.AddJsonFile(
+            $"appsettings.{environment?.EnvironmentName}.json",
+            optional: true,
+            reloadOnChange: true);
     }
 
     /// <summary>

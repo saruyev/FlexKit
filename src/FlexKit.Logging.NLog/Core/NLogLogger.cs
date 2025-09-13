@@ -19,6 +19,16 @@ namespace FlexKit.Logging.NLog.Core;
 /// </remarks>
 public class NLogLogger(string categoryName, LoggingConfig config) : ILogger
 {
+    /// <summary>
+    /// Represents the NLog logger instance used to log messages for a specific category.
+    /// Provides functionality to log messages, exceptions, and additional properties
+    /// using the NLog logging framework within the <see cref="NLogLogger"/> implementation.
+    /// </summary>
+    /// <remarks>
+    /// The logger instance is created based on the specified category name.
+    /// It serves as the underlying NLog component responsible for handling log messages,
+    /// routing them to the appropriate targets, and managing the configured logging behavior.
+    /// </remarks>
     private readonly INLogLogger _nlogLogger = LogManager.GetLogger(categoryName);
 
     /// <inheritdoc />

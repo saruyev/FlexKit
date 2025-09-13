@@ -144,8 +144,12 @@ public class AwsSecretsManagerConfigurationSource : IConfigurationSource
     /// <para>
     /// <strong>Optional vs. Required Sources:</strong>
     /// <list type="bullet">
-    /// <item><strong>Optional (true):</strong> Loading failures are logged but don't prevent application startup</item>
-    /// <item><strong>Required (false):</strong> Loading failures cause exceptions and prevent application startup</item>
+    /// <item>
+    /// <strong>Optional (true):</strong> Loading failures are logged but don't prevent application startup
+    /// </item>
+    /// <item>
+    /// <strong>Required (false):</strong> Loading failures cause exceptions and prevent application startup
+    /// </item>
     /// </list>
     /// </para>
     ///
