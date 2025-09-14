@@ -1,5 +1,6 @@
 using System.Runtime.CompilerServices;
 using System.Threading.Channels;
+using FlexKit.Logging.Configuration;
 using FlexKit.Logging.Models;
 
 namespace FlexKit.Logging.Core;
@@ -33,15 +34,16 @@ public sealed class BackgroundLog : IBackgroundLog, IDisposable
     /// <summary>
     /// Initializes a new instance of the BackgroundLogQueue with the specified capacity.
     /// </summary>
-    /// <param name="capacity">Maximum number of entries the queue can hold. Default is 10,000.</param>
-    public BackgroundLog(int capacity = 10_000)
+    public BackgroundLog(LoggingConfig loggingConfig)
     {
-        if (capacity <= 0)
+        if (loggingConfig.QueueCapacity <= 0)
         {
-            throw new ArgumentOutOfRangeException(nameof(capacity), "Capacity must be greater than zero");
+            throw new ArgumentOutOfRangeException(
+                nameof(loggingConfig),
+                "QueueCapacity must be greater than zero");
         }
 
-        var options = new BoundedChannelOptions(capacity)
+        var options = new BoundedChannelOptions(loggingConfig.QueueCapacity)
         {
             FullMode = BoundedChannelFullMode.DropOldest,
             SingleReader = true,
@@ -98,19 +100,6 @@ public sealed class BackgroundLog : IBackgroundLog, IDisposable
         }
     }
 
-    /// <summary>
-    /// Marks the queue as complete for writing and prevents new entries from being enqueued.
-    /// </summary>
-    private void CompleteAdding()
-    {
-        if (_disposed)
-        {
-            return;
-        }
-
-        _writer.TryComplete();
-    }
-
     /// <inheritdoc />
     public void Dispose()
     {
@@ -119,7 +108,7 @@ public sealed class BackgroundLog : IBackgroundLog, IDisposable
             return;
         }
 
+        _writer.TryComplete();
         _disposed = true;
-        CompleteAdding();
     }
 }

@@ -86,7 +86,7 @@ internal sealed class Log4NetLogWriter(
             context = context.WithTemplateName(entry.TemplateName);
         }
 
-        var formatter = _formatterFactory.GetFormatter(context);
+        var (formatter, _) = _formatterFactory.GetFormatter(context);
         var result = formatter.Format(context);
 
         return !result.IsSuccess ? HandleFormattingFailure(entry, result) : result.Message;

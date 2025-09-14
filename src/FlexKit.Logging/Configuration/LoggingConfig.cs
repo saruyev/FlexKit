@@ -70,6 +70,15 @@ public class LoggingConfig
     public int MaxBatchSize { get; [UsedImplicitly] set; } = 1;
 
     /// <summary>
+    /// Gets or sets the capacity of the queue used for buffering log entries.
+    /// </summary>
+    /// <value>
+    /// The maximum number of log entries that can be stored in the queue before being processed.
+    /// Default is 10,000.
+    /// </value>
+    public int QueueCapacity { get; [UsedImplicitly] set; } = 10_000;
+
+    /// <summary>
     /// Gets or sets the maximum time to wait for a batch to fill before processing.
     /// </summary>
     /// <value>The maximum time to wait for a batch to fill before processing. Default is 1 second.</value>

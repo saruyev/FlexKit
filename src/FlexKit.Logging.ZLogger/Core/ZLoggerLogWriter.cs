@@ -129,8 +129,13 @@ internal sealed class ZLoggerLogWriter(
             context = context.WithTemplateName(entry.TemplateName);
         }
 
-        var formatter = _formatterFactory.GetFormatter(context);
+        var (formatter, isFallback) = _formatterFactory.GetFormatter(context);
         var result = formatter.Format(context);
+
+        if (isFallback)
+        {
+            result = result.WithFallback("Primary formatter not available");
+        }
 
         LogFallbackUsageIfNeeded(entry.Id, result);
         return result;

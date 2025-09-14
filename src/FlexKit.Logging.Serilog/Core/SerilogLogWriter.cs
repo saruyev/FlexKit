@@ -58,8 +58,13 @@ internal sealed class SerilogLogWriter(
             context = context.WithTemplateName(entry.TemplateName);
         }
 
-        var formatter = formatterFactory.GetFormatter(context);
+        var (formatter, isFallback) = formatterFactory.GetFormatter(context);
         var result = formatter.Format(context);
+
+        if (isFallback)
+        {
+            result = result.WithFallback("Primary formatter not available");
+        }
 
         LogFallbackUsageIfNeeded(entry.Id, result);
         return result;

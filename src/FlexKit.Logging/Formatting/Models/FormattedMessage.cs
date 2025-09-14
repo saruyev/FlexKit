@@ -85,4 +85,12 @@ public readonly record struct FormattedMessage
     /// <returns>A new <see cref="FormattedMessage"/> instance with the updated parameters.</returns>
     public FormattedMessage WithParameters(IReadOnlyDictionary<string, object?> parameters) =>
         this with { Parameters = parameters };
+
+    /// <summary>
+    /// Marks the current formatted message as a fallback and optionally assigns an error message.
+    /// </summary>
+    /// <param name="errorMessage">The optional error message to associate with the fallback message.</param>
+    /// <returns>A new instance of the formatted message marked as a fallback.</returns>
+    public FormattedMessage WithFallback(string? errorMessage = null) =>
+        this with { IsFallback = true, ErrorMessage = errorMessage };
 }

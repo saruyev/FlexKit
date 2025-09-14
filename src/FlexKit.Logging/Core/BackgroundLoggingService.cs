@@ -168,11 +168,6 @@ public sealed class BackgroundLoggingService(
         IReadOnlyList<LogEntry> entries,
         CancellationToken cancellationToken)
     {
-        if (entries.Count == 0)
-        {
-            return;
-        }
-
         // Check if disposed before attempting to acquire the semaphore
         if (_disposed)
         {
@@ -191,14 +186,7 @@ public sealed class BackgroundLoggingService(
     {
         foreach (var entry in entries)
         {
-            try
-            {
-                ProcessSingleEntry(entry);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Failed to process log entry {EntryId}", entry.Id);
-            }
+            ProcessSingleEntry(entry);
         }
     }
 
@@ -227,7 +215,7 @@ public sealed class BackgroundLoggingService(
         }
         finally
         {
-            if (lockAcquired && !_disposed)
+            if (lockAcquired)
             {
                 TryReleaseLock();
             }
