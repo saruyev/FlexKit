@@ -288,7 +288,7 @@ internal sealed partial class CustomTemplateFormatter(IMessageTranslator transla
     }
 
     /// <summary>
-    /// Validates that a template is well-formed and that all placeholders have corresponding parameters.
+    /// Validates that all placeholders have corresponding parameters.
     /// </summary>
     /// <param name="template">The template to validate.</param>
     /// <param name="context">The formatting context containing available parameters.</param>
@@ -297,12 +297,6 @@ internal sealed partial class CustomTemplateFormatter(IMessageTranslator transla
         string template,
         in FormattingContext context)
     {
-        if (!IsValidTemplate(template))
-        {
-            return false;
-        }
-
-        // Additional validation could check if all placeholders have corresponding parameters
         var parameters = context.ExtractParameters();
 
         // Extract placeholder names from the template

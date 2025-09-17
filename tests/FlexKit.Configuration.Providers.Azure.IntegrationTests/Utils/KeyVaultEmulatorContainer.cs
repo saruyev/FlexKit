@@ -12,7 +12,7 @@ namespace FlexKit.Configuration.Providers.Azure.IntegrationTests.Utils;
 public class KeyVaultEmulatorContainer : IAsyncDisposable
 {
     private readonly AzureKeyVaultEmulatorContainer _container = new(
-        certificatesDirectory: "/Users/michaels/certs",
+        certificatesDirectory: Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "certs"),
         persist: false,
         generateCertificates: true,
         forceCleanupCertificates: false);

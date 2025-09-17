@@ -9,6 +9,7 @@ using NSubstitute;
 using Xunit;
 // ReSharper disable NullableWarningSuppressionIsUsed
 // ReSharper disable FlagArgument
+// ReSharper disable TooManyDeclarations
 
 namespace FlexKit.Logging.Tests.Core;
 

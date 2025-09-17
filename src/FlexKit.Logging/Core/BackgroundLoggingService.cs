@@ -20,7 +20,7 @@ namespace FlexKit.Logging.Core;
 public sealed class BackgroundLoggingService(
     IBackgroundLog logQueue,
     ILogger<BackgroundLoggingService> logger,
-    ILogEntryProcessor logEntryProcessor) : BackgroundService
+    ILogEntryProcessor logEntryProcessor) : BackgroundService, IBackgroundLoggingService
 {
     /// <summary>
     /// Represents the queue for background log processing in the <see cref="BackgroundLoggingService"/>.

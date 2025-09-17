@@ -13,6 +13,7 @@ using Xunit;
 // ReSharper disable TooManyDeclarations
 // ReSharper disable MethodHasAsyncOverload
 // ReSharper disable MethodTooLong
+// ReSharper disable ClassTooBig
 
 namespace FlexKit.Logging.Tests.Core;
 

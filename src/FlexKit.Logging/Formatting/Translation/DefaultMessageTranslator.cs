@@ -61,7 +61,7 @@ public partial class DefaultMessageTranslator : IMessageTranslator
     /// A <see cref="Regex"/> instance to identify and process NLog conditional patterns like `${when:...}`.
     /// </returns>
     [UsedImplicitly]
-    [GeneratedRegex(@"\$\{when:[^}]+\}")]
+    [GeneratedRegex(@"\{when:[^}]+\}")]
     protected static partial Regex NlogConditionalRegex();
 
     /// <summary>
@@ -72,7 +72,7 @@ public partial class DefaultMessageTranslator : IMessageTranslator
     /// A <see cref="Regex"/> instance to locate and identify variable renderers in NLog message templates.
     /// </returns>
     [UsedImplicitly]
-    [GeneratedRegex(@"\$\{var:[^}]+\}")]
+    [GeneratedRegex(@"\{var:[^}]+\}")]
     protected static partial Regex NlogVariablesRegex();
 
     /// <inheritdoc />
@@ -95,12 +95,8 @@ public partial class DefaultMessageTranslator : IMessageTranslator
     private static string CleanNotSupportedFeatures(string template)
     {
         // Clean all provider-specific syntax, leaving only the basic {Property} format
-
-        // 1. Serilog features
-        template = CleanSerilogFeatures(template);
-
-        // 2. NLog features
         template = CleanNLogFeatures(template);
+        template = CleanSerilogFeatures(template);
 
         return template;
     }
@@ -140,7 +136,7 @@ public partial class DefaultMessageTranslator : IMessageTranslator
 
         // Remove NLog-specific renderers that don't map to FlexKit
         template = NlogConditionalRegex().Replace(template, ""); // Conditional
-        template = NlogVariablesRegex().Replace(template, "");  // Variables
+        template = NlogVariablesRegex().Replace(template, m => "{" + m.Value[5..^1] + "}");
 
         return template;
     }
