@@ -14,5 +14,8 @@
       <ProjectReference Include="..\FlexKit.Configuration\FlexKit.Configuration.csproj" />
       <ProjectReference Include="..\FlexKit.Logging\FlexKit.Logging.csproj" />
     </ItemGroup>
+    <ItemGroup>
+      <InternalsVisibleTo Include="FlexKit.Logging.Log4Net.Tests" />
+    </ItemGroup>
 
 </Project>
