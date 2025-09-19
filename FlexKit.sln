@@ -157,6 +157,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FlexKitLoggingAspNetApp", "
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FlexKitConfigurationConsoleApp", "samples\FlexKitConfigurationConsoleApp\FlexKitConfigurationConsoleApp.csproj", "{121B747B-A580-48C5-9CAB-0E9B8E98D5D6}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FlexKit.Logging.Tests", "tests\FlexKit.Logging.Tests\FlexKit.Logging.Tests.csproj", "{16A3105B-45B7-4368-B3FF-C621AC1133B4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -287,6 +289,10 @@ Global
 		{121B747B-A580-48C5-9CAB-0E9B8E98D5D6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{121B747B-A580-48C5-9CAB-0E9B8E98D5D6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{121B747B-A580-48C5-9CAB-0E9B8E98D5D6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{16A3105B-45B7-4368-B3FF-C621AC1133B4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{16A3105B-45B7-4368-B3FF-C621AC1133B4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{16A3105B-45B7-4368-B3FF-C621AC1133B4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{16A3105B-45B7-4368-B3FF-C621AC1133B4}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{EEDA0AD3-426C-426B-8832-B34B21B1D332} = {F60C1E3A-80C0-4F52-9CE0-C3D24657A3AC}
@@ -338,5 +344,6 @@ Global
 		{1FD7290B-A08D-4CAF-917E-2D7D8AFF4C9C} = {731E5676-CC1B-4E4E-98C6-AF5CAB518362}
 		{F8F6CDE7-BAB0-4CAE-8581-BBBFCAD220E2} = {731E5676-CC1B-4E4E-98C6-AF5CAB518362}
 		{121B747B-A580-48C5-9CAB-0E9B8E98D5D6} = {731E5676-CC1B-4E4E-98C6-AF5CAB518362}
+		{16A3105B-45B7-4368-B3FF-C621AC1133B4} = {3C69FF89-2E54-42E0-B5DA-A0D38528755B}
 	EndGlobalSection
 EndGlobal

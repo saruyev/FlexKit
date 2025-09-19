@@ -144,8 +144,7 @@ public readonly record struct LogEntry
     /// Calculates the actual timestamp from Stopwatch ticks.
     /// </summary>
     /// <param name="stopwatchTicks">The stopwatch ticks when the method began.</param>
-    private static DateTimeOffset GetActualTimestamp(
-        long stopwatchTicks)
+    private static DateTimeOffset GetActualTimestamp(long stopwatchTicks)
     {
         var currentStopwatchTicks = Stopwatch.GetTimestamp();
         var elapsedSinceStart = currentStopwatchTicks - stopwatchTicks;
@@ -193,7 +192,7 @@ public readonly record struct LogEntry
             Level = level,
             ExceptionLevel = LogLevel.Error,
             ActivityId = Activity.Current?.Id,
-            ThreadId = Environment.CurrentManagedThreadId
+            ThreadId = Environment.CurrentManagedThreadId,
         };
 
     /// <summary>
@@ -211,7 +210,7 @@ public readonly record struct LogEntry
             ? this
             : this with
             {
-                ExceptionLevel = level.Value
+                ExceptionLevel = level.Value,
             };
 
     /// <summary>
@@ -222,7 +221,7 @@ public readonly record struct LogEntry
     public LogEntry WithTarget(string? target) =>
         this with
         {
-            Target = target
+            Target = target,
         };
 
     /// <summary>
@@ -233,7 +232,7 @@ public readonly record struct LogEntry
     public LogEntry WithInput(object? inputParameters) =>
         this with
         {
-            InputParameters = inputParameters
+            InputParameters = inputParameters,
         };
 
     /// <summary>
@@ -280,7 +279,7 @@ public readonly record struct LogEntry
     public LogEntry WithOutput(object? outputValue) =>
         this with
         {
-            OutputValue = outputValue
+            OutputValue = outputValue,
         };
 
     /// <summary>
@@ -291,7 +290,7 @@ public readonly record struct LogEntry
     public LogEntry WithFormatter(FormatterType? formatterType) =>
         this with
         {
-            Formatter = formatterType
+            Formatter = formatterType,
         };
 
     /// <summary>
@@ -303,6 +302,6 @@ public readonly record struct LogEntry
     public LogEntry WithTemplate(string name) =>
         this with
         {
-            TemplateName = name
+            TemplateName = name,
         };
 }

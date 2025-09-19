@@ -146,7 +146,7 @@ internal sealed class InterceptionDecisionCache(LoggingConfig loggingConfig)
         }
 
         // TIER 2: Check configuration patterns (medium priority)
-        return ResolveFromConfiguration(declaringType) ?? ResolveFromAutoIntercept(declaringType);
+        return ResolveFromConfiguration(declaringType) ?? ResolveFromAutoIntercept();
     }
 
     /// <summary>
@@ -184,18 +184,11 @@ internal sealed class InterceptionDecisionCache(LoggingConfig loggingConfig)
     /// Resolves interception decision from auto-intercept settings.
     /// Only applies when AutoIntercept is enabled and the type is not explicitly excluded.
     /// </summary>
-    /// <param name="type">The type to resolve auto-interception for.</param>
     /// <returns>The auto-interception decision if applicable; null if auto-interception should not apply.</returns>
-    private InterceptionDecision? ResolveFromAutoIntercept(Type type)
+    private InterceptionDecision? ResolveFromAutoIntercept()
     {
         // Only auto-intercept if enabled in configuration
         if (!Config.AutoIntercept)
-        {
-            return null;
-        }
-
-        // Don't auto-intercept if explicitly disabled at type level
-        if (IsTypeCompletelyDisabled(type))
         {
             return null;
         }
@@ -206,16 +199,6 @@ internal sealed class InterceptionDecisionCache(LoggingConfig loggingConfig)
             .WithLevel(Microsoft.Extensions.Logging.LogLevel.Information)
             .WithExceptionLevel(Microsoft.Extensions.Logging.LogLevel.Error);
     }
-
-    /// <summary>
-    /// Checks if a type is completely disabled for logging via NoLog or NoAutoLog attributes.
-    /// Used to determine if all methods of a type should skip interception.
-    /// </summary>
-    /// <param name="type">The type to check for disabled attributes.</param>
-    /// <returns>True if the type has disabled attributes; false if logging is allowed.</returns>
-    private static bool IsTypeCompletelyDisabled(Type type) =>
-        type.GetCustomAttribute<NoLogAttribute>() != null ||
-        type.GetCustomAttribute<NoAutoLogAttribute>() != null;
 
     /// <summary>
     /// Finds the implementation type for a given interface by searching through cached types.
@@ -240,6 +223,7 @@ internal sealed class InterceptionDecisionCache(LoggingConfig loggingConfig)
             .GetParameters()
             .Select(p => p.ParameterType)
             .ToArray();
+
         return implementationType.GetMethod(interfaceMethod.Name, parameterTypes);
     }
 

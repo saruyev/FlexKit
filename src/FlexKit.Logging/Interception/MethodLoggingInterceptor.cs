@@ -255,7 +255,9 @@ internal sealed class MethodLoggingInterceptor(
 
         try
         {
-            var resultProperty = task.GetType().GetProperty("Result");
+            var resultProperty = task.GetType().GetProperty(
+                "Result",
+                BindingFlags.DeclaredOnly | BindingFlags.Public | BindingFlags.Instance);
             if (resultProperty != null && HasValidResultType(resultProperty.PropertyType))
             {
                 return resultProperty.GetValue(task);
@@ -301,14 +303,7 @@ internal sealed class MethodLoggingInterceptor(
             baseType = baseType.BaseType;
         }
 
-        // Check interfaces
-        return taskType.GetInterfaces()
-            .Where(IsGenericTask)
-            .Select(interfaceType =>
-                typeof(Task<>)
-                    .MakeGenericType(interfaceType.GetGenericArguments()[0])
-                    .GetProperty("Result"))
-            .Select(resultProperty => resultProperty?.GetValue(task)).FirstOrDefault();
+        return null;
     }
 
     /// <summary>

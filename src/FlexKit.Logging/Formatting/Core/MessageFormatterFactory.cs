@@ -57,17 +57,17 @@ internal sealed class MessageFormatterFactory : IMessageFormatterFactory
     }
 
     /// <inheritdoc />
-    public IMessageFormatter GetFormatter(FormattingContext context)
+    public (IMessageFormatter formatter, bool isFallback) GetFormatter(FormattingContext context)
     {
         // Try the primary formatter first
         if (_formatters.TryGetValue(context.FormatterType, out var primaryFormatter))
         {
-            return primaryFormatter;
+            return (primaryFormatter, false);
         }
 
         // If primary fails and fallback is enabled, try other formatters
         return context.EnableFallback
-            ? _fallbackFormatter
+            ? (_fallbackFormatter, true)
             : throw new InvalidOperationException(
             $"No suitable formatter found for type {context.FormatterType}. " +
             $"EnableFallback: {context.EnableFallback}");

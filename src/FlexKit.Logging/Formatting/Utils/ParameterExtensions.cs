@@ -108,7 +108,7 @@ internal static class ParameterExtensions
             {
                 name = item.Name,
                 type = item.Type,
-                value = SerializeValueForJson(item.Value) ?? "null"
+                value = SerializeValueForJson(item.Value) ?? "null",
             })));
     }
 
@@ -191,7 +191,7 @@ internal static class ParameterExtensions
                     _type = "Collection",
                     _count = collection.Count,
                     _truncated = true,
-                    items = collection.Cast<object>().Take(3).Select(SerializeValueForJson).ToArray()
+                    items = collection.Cast<object>().Take(3).Select(SerializeValueForJson).ToArray(),
                 },
 
             System.Collections.IEnumerable enumerable =>

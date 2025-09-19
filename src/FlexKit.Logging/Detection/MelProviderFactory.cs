@@ -1,5 +1,6 @@
 using System.Reflection;
 using FlexKit.Logging.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace FlexKit.Logging.Detection;
@@ -43,18 +44,28 @@ internal class MelProviderFactory
     private readonly string[] _types;
 
     /// <summary>
+    /// An instance of <see cref="IFilterTypeProvider"/> that provides the ability to retrieve
+    /// types associated with filter providers. This enables the configuration of filter-related
+    /// logging behavior within the Microsoft.Extensions.Logging framework.
+    /// </summary>
+    private readonly IFilterTypeProvider _filterTypeProvider;
+
+    /// <summary>
     /// Factory class responsible for creating and configuring Microsoft.Extensions.Logging (MEL) providers
     /// based on the provided logging configuration.
     /// </summary>
     /// <param name="builder">The configuration builder to extend.</param>
     /// <param name="config">FlexKit logging configuration settings.</param>
+    /// <param name="filterTypeProvider">An instance of <see cref="IFilterTypeProvider"/> to use for filtering.</param>
     public MelProviderFactory(
         ILoggingBuilder builder,
-        LoggingConfig config)
+        LoggingConfig config,
+        IFilterTypeProvider? filterTypeProvider = null)
     {
         _builder = builder;
         _config = config;
         _types = [.. config.Targets.Values.Select(t => t.Type).Distinct()];
+        _filterTypeProvider = filterTypeProvider ?? IFilterTypeProvider.CreateDefault();
         _providerConfigurers["Debug"] = TryAddDebug;
         _providerConfigurers["Console"] = TryAddConsole;
         _providerConfigurers["EventSource"] = TryAddEventSource;
@@ -267,72 +278,45 @@ internal class MelProviderFactory
     /// Configures Azure File Logger options for the specified logging target.
     /// </summary>
     /// <param name="target">The logging target whose Azure File Logger options need to be configured.</param>
-    private void ConfigureAzureFileLoggerOptions(LoggingTarget target)
-    {
-        var optionsType = Type.GetType(MelNames.AzureFileOptionsType);
-
-        if (optionsType == null)
-        {
-            return;
-        }
-
-        var servicesProperty = _builder.GetType().GetProperty("Services");
-        var services = servicesProperty?.GetValue(_builder);
-
-        if (services == null)
-        {
-            return;
-        }
-
-        // Find IServiceCollection.Configure<T>(Action<T>) method
-        var servicesType = services.GetType();
-        var configureMethod = servicesType.GetMethods()
-            .FirstOrDefault(MelExtensions.IsConfigure);
-
-        if (configureMethod == null)
-        {
-            return;
-        }
-
-        var specificMethod = configureMethod.MakeGenericMethod(optionsType);
-        var configAction = target.CreateConfigurationAction(optionsType);
-        specificMethod.Invoke(null, [services, configAction]);
-    }
+    private void ConfigureAzureFileLoggerOptions(LoggingTarget target) =>
+        ConfigureOptions(target, MelNames.AzureFileOptionsType);
 
     /// <summary>
     /// Configures the Azure Blob logging options for the specified logging target.
     /// </summary>
     /// <param name="target">The logging target that contains settings for configuring Azure Blob logging.</param>
-    private void ConfigureAzureBlobLoggerOptions(LoggingTarget target)
-    {
-        var optionsType = Type.GetType(MelNames.AzureBlobOptionsType);
+    private void ConfigureAzureBlobLoggerOptions(LoggingTarget target) =>
+        ConfigureOptions(target, MelNames.AzureBlobOptionsType);
 
+    /// <summary>
+    /// Configures logging options for a specific logging target by dynamically invoking
+    /// the relevant configuration methods in the provided logging builder.
+    /// </summary>
+    /// <param name="target">The logging target that provides configuration details for the options.</param>
+    /// <param name="optionsTypeName">The fully qualified type name of the logging options to configure.</param>
+    private void ConfigureOptions(LoggingTarget target, string optionsTypeName)
+    {
+        var optionsType = Type.GetType(optionsTypeName);
         if (optionsType == null)
         {
             return;
         }
 
         var servicesProperty = _builder.GetType().GetProperty("Services");
-        var services = servicesProperty?.GetValue(_builder);
-
+        var services = servicesProperty?.GetValue(_builder) as IServiceCollection;
         if (services == null)
         {
             return;
         }
 
-        // Find IServiceCollection.Configure<T>(Action<T>) method
-        var servicesType = services.GetType();
-        var configureMethod = servicesType.GetMethods()
+        // Look for an extension method
+        var configureMethod = typeof(OptionsServiceCollectionExtensions)
+            .GetMethods(BindingFlags.Public | BindingFlags.Static)
             .FirstOrDefault(MelExtensions.IsConfigure);
 
-        if (configureMethod == null)
-        {
-            return;
-        }
-
-        var specificMethod = configureMethod.MakeGenericMethod(optionsType);
+        var specificMethod = configureMethod?.MakeGenericMethod(optionsType);
         var configAction = target.CreateConfigurationAction(optionsType);
-        specificMethod.Invoke(null, [services, configAction]);
+        specificMethod?.Invoke(null, [services, configAction]);
     }
 
     /// <summary>
@@ -351,7 +335,7 @@ internal class MelProviderFactory
             return;
         }
 
-        var filterType = Type.GetType(MelNames.FilterType);
+        var filterType = _filterTypeProvider.GetFilterType();
 
         // Find the generic AddFilter<T> method: AddFilter<T>(ILoggingBuilder, string?, LogLevel)
         var genericMethod = filterType?.GetMethods()

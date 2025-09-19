@@ -12,7 +12,10 @@ public interface IMessageFormatterFactory
     /// Gets a formatter that can handle the specified formatting context.
     /// </summary>
     /// <param name="context">The formatting context requiring a formatter.</param>
-    /// <returns>A formatter instance capable of processing the context.</returns>
+    /// <returns>
+    /// A formatter instance capable of processing the context and a flag indicating that
+    /// a fallback formatter was applied.
+    /// </returns>
     /// <exception cref="InvalidOperationException">Thrown when no suitable formatter can be found.</exception>
     /// <remarks>
     /// This method performs more sophisticated formatter selection by:
@@ -22,5 +25,5 @@ public interface IMessageFormatterFactory
     /// <item>Considering configuration settings and context requirements</item>
     /// </list>
     /// </remarks>
-    IMessageFormatter GetFormatter(FormattingContext context);
+    (IMessageFormatter formatter, bool isFallback) GetFormatter(FormattingContext context);
 }

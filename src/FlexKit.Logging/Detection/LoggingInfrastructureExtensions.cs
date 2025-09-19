@@ -98,7 +98,7 @@ public static class LoggingInfrastructureExtensions
                 {
                     ShouldListenTo = source => source.Name == config.ActivitySourceName,
                     Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData,
-                    SampleUsingParentId = (ref ActivityCreationOptions<string> _) => ActivitySamplingResult.AllData
+                    SampleUsingParentId = (ref ActivityCreationOptions<string> _) => ActivitySamplingResult.AllData,
                 });
 
                 return activitySource;
@@ -131,6 +131,7 @@ public static class LoggingInfrastructureExtensions
 
         // Register and auto-start the background service
         builder.RegisterType<BackgroundLoggingService>()
+            .As<IBackgroundLoggingService>()
             .AsImplementedInterfaces()
             .AsSelf()
             .SingleInstance()
@@ -139,7 +140,7 @@ public static class LoggingInfrastructureExtensions
         // Setup background service lifecycle
         builder.RegisterBuildCallback(container =>
         {
-            var backgroundService = container.Resolve<BackgroundLoggingService>();
+            var backgroundService = container.Resolve<IBackgroundLoggingService>();
 
             // Start the service in the background
             _ = Task.Run(() => RunBackgroundServiceAsync(backgroundService));
@@ -222,15 +223,18 @@ public static class LoggingInfrastructureExtensions
     /// until a cancellation is requested or the application shuts down.
     /// </summary>
     /// <param name="backgroundService">The instance of the background logging service to be run.</param>
+    /// <param name="timeout">The maximum amount of time to wait for the service to complete.</param>
     /// <returns>A task representing the asynchronous operation of the background service.</returns>
     [UsedImplicitly]
-    public static async Task RunBackgroundServiceAsync(BackgroundLoggingService backgroundService)
+    public static async Task RunBackgroundServiceAsync(
+        IBackgroundLoggingService backgroundService,
+        TimeSpan? timeout = null)
     {
         using var cancellationTokenSource = new CancellationTokenSource();
         try
         {
             await backgroundService.StartAsync(cancellationTokenSource.Token);
-            await Task.Delay(Timeout.Infinite, cancellationTokenSource.Token);
+            await Task.Delay(timeout ?? Timeout.InfiniteTimeSpan, cancellationTokenSource.Token);
         }
         catch (OperationCanceledException)
         {
@@ -252,7 +256,7 @@ public static class LoggingInfrastructureExtensions
     /// </summary>
     /// <param name="backgroundService">The instance of the background logging service to be stopped.</param>
     /// <returns>A task that represents the asynchronous operation of stopping the background service.</returns>
-    private static async Task StopBackgroundServiceSafelyAsync(BackgroundLoggingService backgroundService)
+    private static async Task StopBackgroundServiceSafelyAsync(IBackgroundLoggingService backgroundService)
     {
         try
         {
@@ -273,7 +277,7 @@ public static class LoggingInfrastructureExtensions
     /// The instance of <see cref="BackgroundLoggingService"/> responsible for managing and flushing log entries.
     /// </param>
     [UsedImplicitly]
-    public static void FlushLogsOnExit(BackgroundLoggingService backgroundService)
+    public static void FlushLogsOnExit(IBackgroundLoggingService backgroundService)
     {
         try
         {

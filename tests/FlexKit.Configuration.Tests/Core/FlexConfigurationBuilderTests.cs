@@ -227,6 +227,160 @@ public class FlexConfigurationBuilderTests : UnitTestBase
             .WithMessage("Cannot add sources after Build() has been called");
     }
 
+    [Fact]
+    public void AddCommandLine_WithValidArgs_ConfigurationContainsValues()
+    {
+        // Arrange
+        var builder = Resolve<FlexConfigurationBuilder>();
+        var args = new[] { "--key1=value1", "--key2", "value2" };
+
+        // Act
+        var flexConfig = builder.AddCommandLine(args).Build();
+
+        // Assert
+        flexConfig.Configuration["key1"].Should().Be("value1");
+        flexConfig.Configuration["key2"].Should().Be("value2");
+    }
+
+    [Fact]
+    public void AddCommandLine_WithArgsAndSwitchMappings_ConfigurationContainsMappedValues()
+    {
+        // Arrange
+        var builder = Resolve<FlexConfigurationBuilder>();
+        var args = new[] { "-e", "Production", "--db=Server=localhost;" };
+        var switchMappings = new Dictionary<string, string>
+        {
+            ["-e"] = "Environment",
+            ["--db"] = "Database:ConnectionString"
+        };
+
+        // Act
+        var flexConfig = builder.AddCommandLine(args, switchMappings).Build();
+
+        // Assert
+        flexConfig.Configuration["Environment"].Should().Be("Production");
+        flexConfig.Configuration["Database:ConnectionString"].Should().Be("Server=localhost;");
+    }
+
+    [Fact]
+    public void AddCommandLine_WithEmptyArgs_ConfigurationBuildsSuccessfully()
+    {
+        // Arrange
+        var builder = Resolve<FlexConfigurationBuilder>();
+        var args = Array.Empty<string>();
+
+        // Act
+        var flexConfig = builder.AddCommandLine(args).Build();
+
+        // Assert
+        flexConfig.Should().NotBeNull();
+        flexConfig.Configuration.Should().NotBeNull();
+    }
+
+    [Fact]
+    public void AddCommandLine_AfterBuild_ThrowsInvalidOperationException()
+    {
+        // Arrange
+        var builder = Resolve<FlexConfigurationBuilder>();
+        var testData = ConfigurationTestDataBuilder.CreateConfigurationDictionary();
+        var args = new[] { "--key=value" };
+
+        builder.AddSource(new MemoryConfigurationSource { InitialData = testData! });
+        builder.Build(); // Set _isBuilt to true
+
+        // Act & Assert
+        var action = () => builder.AddCommandLine(args);
+        action.Should().Throw<InvalidOperationException>()
+            .WithMessage("Cannot add sources after Build() has been called");
+    }
+
+    [Fact]
+    public void AddCommandLine_WithHighestPrecedence_OverridesOtherSources()
+    {
+        // Arrange
+        var builder = Resolve<FlexConfigurationBuilder>();
+        var memoryData = new Dictionary<string, string?> { ["TestKey"] = "MemoryValue" };
+        var args = new[] { "--TestKey=CommandLineValue" };
+
+        // Act
+        var flexConfig = builder
+            .AddSource(new MemoryConfigurationSource { InitialData = memoryData })
+            .AddCommandLine(args) // Should override a memory source
+            .Build();
+
+        // Assert
+        flexConfig.Configuration["TestKey"].Should().Be("CommandLineValue");
+    }
+
+    [Fact]
+    public void AddCommandLine_WithHierarchicalKeys_ConfigurationContainsNestedValues()
+    {
+        // Arrange
+        var builder = Resolve<FlexConfigurationBuilder>();
+        var args = new[]
+        {
+            "--Database:ConnectionString=Server=localhost;Database=Test;",
+            "--Logging:LogLevel:Default=Debug",
+            "--Api:Timeout=5000"
+        };
+
+        // Act
+        var flexConfig = builder.AddCommandLine(args).Build();
+
+        // Assert
+        flexConfig.Configuration["Database:ConnectionString"].Should().Be("Server=localhost;Database=Test;");
+        flexConfig.Configuration["Logging:LogLevel:Default"].Should().Be("Debug");
+        flexConfig.Configuration["Api:Timeout"].Should().Be("5000");
+    }
+
+    [Fact]
+    public void AddCommandLine_WithDynamicAccess_ValuesAccessibleThroughFlexConfig()
+    {
+        // Arrange
+        var builder = Resolve<FlexConfigurationBuilder>();
+        var args = new[]
+        {
+            "--Database:Host=localhost",
+            "--Database:Port=5432",
+            "--Api:EnableLogging=true"
+        };
+
+        // Act
+        var flexConfig = builder.AddCommandLine(args).Build();
+        dynamic config = flexConfig;
+
+        // Assert
+        string host = config.Database.Host;
+        string port = config.Database.Port;
+        string enableLogging = config.Api.EnableLogging;
+
+        host.Should().Be("localhost");
+        port.Should().Be("5432");
+        enableLogging.Should().Be("true");
+    }
+
+    [Fact]
+    public void AddCommandLine_WithComplexSwitchMappings_ConfigurationContainsCorrectValues()
+    {
+        // Arrange
+        var builder = Resolve<FlexConfigurationBuilder>();
+        var args = new[] { "-env", "Development", "-cs", "Server=dev;", "-log", "Trace" };
+        var switchMappings = new Dictionary<string, string>
+        {
+            ["-env"] = "Environment",
+            ["-cs"] = "Database:ConnectionString",
+            ["-log"] = "Logging:LogLevel:Default"
+        };
+
+        // Act
+        var flexConfig = builder.AddCommandLine(args, switchMappings).Build();
+
+        // Assert
+        flexConfig.Configuration["Environment"].Should().Be("Development");
+        flexConfig.Configuration["Database:ConnectionString"].Should().Be("Server=dev;");
+        flexConfig.Configuration["Logging:LogLevel:Default"].Should().Be("Trace");
+    }
+
     #region UseExistingConfiguration Tests
 
     [Fact]

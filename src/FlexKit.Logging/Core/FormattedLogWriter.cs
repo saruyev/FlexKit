@@ -80,12 +80,17 @@ internal sealed class FormattedLogWriter(
             context = context.WithTemplateName(entry.TemplateName);
         }
 
-        var formatter = _formatterFactory.GetFormatter(context);
+        var (formatter, isFallback) = _formatterFactory.GetFormatter(context);
         var result = formatter.Format(context);
 
         if (!result.IsSuccess)
         {
             return HandleFormattingFailure(entry, result);
+        }
+
+        if (isFallback)
+        {
+            result = result.WithFallback("Primary formatter not available");
         }
 
         LogFallbackUsageIfNeeded(entry.Id, result);
@@ -203,9 +208,8 @@ internal sealed class FormattedLogWriter(
                 LogWriter.LogCritical(logger, message, null);
                 break;
             case LogLevel.None:
-                break;
             default:
-                throw new ArgumentOutOfRangeException(nameof(level), level, null);
+                break;
         }
     }
 

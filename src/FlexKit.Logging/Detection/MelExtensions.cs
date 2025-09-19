@@ -4,6 +4,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 using FlexKit.Logging.Configuration;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace FlexKit.Logging.Detection;
@@ -37,10 +38,9 @@ internal static class MelExtensions
 
         return (methodName switch
         {
-            "AddSimpleConsole" => Type.GetType(MelNames.SimpleConsoleOptionsType),
             "AddSystemdConsole" => Type.GetType(MelNames.ConsoleOptionsType),
             "AddJsonConsole" => Type.GetType(MelNames.JsonConsoleOptionsType),
-            _ => null,
+            _ => Type.GetType(MelNames.SimpleConsoleOptionsType),
         }, methodName);
     }
 
@@ -69,6 +69,7 @@ internal static class MelExtensions
     internal static bool IsConfigure(MethodInfo m) =>
         m is { Name: "Configure", IsGenericMethodDefinition: true } &&
         m.GetParameters().Length == 2 &&
+        m.GetParameters()[0].ParameterType == typeof(IServiceCollection) &&
         m.GetParameters()[1].ParameterType.IsGenericType &&
         m.GetParameters()[1].ParameterType.GetGenericTypeDefinition() == typeof(Action<>);
 
@@ -239,8 +240,30 @@ internal static class MelExtensions
             return LogLevel.Information;
         }
 
-        return level?.Value is { } levelString && Enum.TryParse<LogLevel>(levelString, out var parsedLevel)
+        return level?.Value is { } levelString && Enum.TryParse<LogLevel>(
+            levelString.ToLower(CultureInfo.InvariantCulture).Capitalize(),
+            out var parsedLevel)
             ? parsedLevel
             : LogLevel.Information;
+    }
+
+    /// <summary>
+    /// Capitalizes the first letter of the specified string and converts the rest of the characters to lowercase.
+    /// </summary>
+    /// <param name="str">The string to be capitalized.</param>
+    /// <returns>
+    /// A new string with the first letter capitalized and the remaining characters converted to lowercase.
+    /// If the input string is null or empty, the method returns the original string.
+    /// </returns>
+    private static string Capitalize(this string str)
+    {
+        if (string.IsNullOrEmpty(str))
+        {
+            return string.Empty;
+        }
+
+        var arr = str.ToLowerInvariant().ToCharArray();
+        arr[0] = char.ToUpper(arr[0], CultureInfo.InvariantCulture);
+        return new string(arr).Trim();
     }
 }
