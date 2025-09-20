@@ -66,14 +66,13 @@ public class Log4NetLogger(
         var level = ConvertLogLevel(logLevel);
 
         // Create LoggingEvent manually since we're using ILogger, not ILog
-        var loggingEvent = new LoggingEvent(new LoggingEventData
-        {
-            LoggerName = categoryName,
-            Level = level,
-            Message = message,
-            TimeStampUtc = DateTime.UtcNow,
-            ExceptionString = exception?.ToString()
-        });
+        var loggingEvent = new LoggingEvent(
+            typeof(Log4NetLogger),
+            _logger.Repository,
+            categoryName,
+            level,
+            message,
+            exception);
         _logger.Log(loggingEvent);
     }
 
@@ -97,8 +96,7 @@ public class Log4NetLogger(
             LogLevel.Warning => Level.Warn,
             LogLevel.Error => Level.Error,
             LogLevel.Critical => Level.Fatal,
-            LogLevel.None => Level.Off,
-            _ => Level.Info,
+            _ => Level.Off,
         };
 
     /// <summary>
