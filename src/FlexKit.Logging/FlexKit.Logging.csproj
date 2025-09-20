@@ -20,6 +20,10 @@
 
     <ItemGroup>
       <InternalsVisibleTo Include="FlexKit.Logging.Tests" />
+      <InternalsVisibleTo Include="FlexKit.Logging.Log4Net.Tests" />
+      <InternalsVisibleTo Include="FlexKit.Logging.NLog.Tests" />
+      <InternalsVisibleTo Include="FlexKit.Logging.Serilog.Tests" />
+      <InternalsVisibleTo Include="FlexKit.Logging.ZLogger.Tests" />
       <InternalsVisibleTo Include="FlexKit.Logging.IntegrationTests" />
       <InternalsVisibleTo Include="FlexKit.Logging.Providers.Yaml.IntegrationTests" />
       <InternalsVisibleTo Include="FlexKit.Logging.PerformanceTests" />

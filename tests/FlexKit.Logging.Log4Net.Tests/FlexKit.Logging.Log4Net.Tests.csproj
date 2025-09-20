@@ -22,14 +22,12 @@
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
             <PrivateAssets>all</PrivateAssets>
         </PackageReference>
+        <PackageReference Include="Lib.Harmony" Version="2.4.1" />
         <PackageReference Include="log4net" Version="3.2.0" />
         <PackageReference Include="ReportGenerator" Version="[5.4.8,6.0.0)"/>
 
         <!-- Additional configuration support for unit testing configuration logic -->
         <PackageReference Include="Microsoft.Extensions.Diagnostics.Testing" Version="[9.1.0,10.0.0)"/>
-    </ItemGroup>
-    <ItemGroup>
-      <Folder Include="Detection\" />
     </ItemGroup>
     <ItemGroup>
       <ProjectReference Include="..\..\src\FlexKit.Logging\FlexKit.Logging.csproj" />
