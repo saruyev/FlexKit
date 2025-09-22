@@ -14,5 +14,8 @@
     <ItemGroup>
       <PackageReference Include="NLog" Version="6.0.3" />
     </ItemGroup>
+    <ItemGroup>
+      <InternalsVisibleTo Include="FlexKit.Logging.NLog.Tests" />
+    </ItemGroup>
 
 </Project>

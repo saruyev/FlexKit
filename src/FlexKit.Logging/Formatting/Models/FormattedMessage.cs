@@ -75,7 +75,26 @@ public readonly record struct FormattedMessage
             Message = $"[Formatting Error: {errorMessage}]",
             IsSuccess = false,
             ErrorMessage = errorMessage,
-            IsFallback = false
+            IsFallback = false,
+        };
+
+    /// <summary>
+    /// Creates a failed formatted message with the specified error message.
+    /// </summary>
+    /// <param name="errorMessage">The error message describing the reason for the failure.</param>
+    /// <param name="parameters">The collection of key-value pairs to be set as the message parameters.</param>
+    /// <returns>A failed formatted message containing the error details.</returns>
+    public static FormattedMessage Failure(
+        string errorMessage,
+        IReadOnlyDictionary<string, object?> parameters) =>
+        new()
+        {
+            Message = $"[Formatting Error: {errorMessage}]",
+            Template = $"[Formatting Error: {errorMessage}]",
+            IsSuccess = false,
+            ErrorMessage = errorMessage,
+            IsFallback = false,
+            Parameters = parameters,
         };
 
     /// <summary>

@@ -111,8 +111,11 @@ internal sealed class NLogLogWriter(
         in LogEntry entry,
         Exception ex)
     {
+        var parameters = entry.InputParameters as Dictionary<string, object?> ?? new();
         OutputMessage(
-            FormattedMessage.Failure($"[Error] Method {entry.TypeName}.{entry.MethodName} - Success: {entry.Success}"),
+            FormattedMessage.Failure(
+                $"[Error] Method {entry.TypeName}.{entry.MethodName} - Success: {entry.Success}",
+                parameters),
             ConvertLogLevel(entry.ExceptionLevel),
             entry.Target ?? Config.DefaultTarget ?? entry.TypeName);
 
@@ -171,8 +174,7 @@ internal sealed class NLogLogWriter(
             Microsoft.Extensions.Logging.LogLevel.Warning => LogLevel.Warn,
             Microsoft.Extensions.Logging.LogLevel.Error => LogLevel.Error,
             Microsoft.Extensions.Logging.LogLevel.Critical => LogLevel.Fatal,
-            Microsoft.Extensions.Logging.LogLevel.None => LogLevel.Off,
-            _ => LogLevel.Info,
+            _ => LogLevel.Off,
         };
 
     /// <summary>

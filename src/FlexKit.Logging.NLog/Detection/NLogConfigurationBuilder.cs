@@ -306,28 +306,19 @@ internal sealed class NLogConfigurationBuilder
                 return configSection.Get(targetType);
             }
 
-            if (targetType.IsEnum)
-            {
-                // Handle enum conversion from string (case-insensitive)
-                return Enum.Parse(targetType, configSection.Value, ignoreCase: true);
-            }
-
-            if (targetType == typeof(string))
-            {
-                // Handle NLog layout strings directly
-                return configSection.Value;
-            }
-
-            if (targetType == typeof(Layout))
-            {
-                return Layout.FromString(configSection.Value);
-            }
-
             // Handle primitive type conversion
-            return Convert.ChangeType(
-                configSection.Value,
-                targetType,
-                CultureInfo.InvariantCulture);
+            return targetType switch
+            {
+                { IsEnum: true } t =>
+                    Enum.Parse(t, configSection.Value, ignoreCase: true),
+                { } t when t == typeof(string) =>
+                    configSection.Value,
+                { } t when t == typeof(TimeSpan) || t == typeof(TimeSpan?) =>
+                    TimeSpan.Parse(configSection.Value, CultureInfo.InvariantCulture),
+                { } t when t == typeof(Layout) =>
+                    Layout.FromString(configSection.Value),
+                _ => Convert.ChangeType(configSection.Value, targetType, CultureInfo.InvariantCulture)
+            };
         }
         catch (Exception)
         {
@@ -369,8 +360,7 @@ internal sealed class NLogConfigurationBuilder
             "WARNING" => LogLevel.Warn,
             "ERROR" => LogLevel.Error,
             "CRITICAL" => LogLevel.Fatal,
-            "NONE" => LogLevel.Off,
-            _ => LogLevel.Info,
+            _ => LogLevel.Off,
         };
     }
 
