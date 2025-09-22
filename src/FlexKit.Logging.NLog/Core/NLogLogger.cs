@@ -102,8 +102,7 @@ public class NLogLogger(string categoryName, LoggingConfig config) : ILogger
             Microsoft.Extensions.Logging.LogLevel.Warning => LogLevel.Warn,
             Microsoft.Extensions.Logging.LogLevel.Error => LogLevel.Error,
             Microsoft.Extensions.Logging.LogLevel.Critical => LogLevel.Fatal,
-            Microsoft.Extensions.Logging.LogLevel.None => LogLevel.Off,
-            _ => LogLevel.Info,
+            _ => LogLevel.Off,
         };
 
     /// <summary>

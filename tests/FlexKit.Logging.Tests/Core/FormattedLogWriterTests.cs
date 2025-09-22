@@ -98,6 +98,39 @@ public class FormattedLogWriterTests
             null,
             Arg.Any<Func<object, Exception?, string>>());
     }
+    
+    [Fact]
+    public void ProcessEntry_ShouldUseFallback_WhenFormattingFails_AndExtensionEnabledWithFallback()
+    {
+        // Arrange
+        var entry = CreateEntry();
+        var context = FormattingContext.Create(entry, _config);
+
+        var formatter = Substitute.For<IMessageFormatter>();
+        formatter.Format(context).Returns(FormattedMessage.Failure("boom", new Dictionary<string, object?>()));
+
+        _formatterFactory.GetFormatter(Arg.Any<FormattingContext>()).Returns((formatter, false));
+
+        var writer = new FormattedLogWriter(_config, _formatterFactory, _loggerFactory);
+
+        // Act
+        writer.ProcessEntry(entry);
+
+        // Assert: warning about fallback and fallback message logged
+        _logger.Received().Log(
+            LogLevel.Warning,
+            Arg.Any<EventId>(),
+            Arg.Any<object>(),
+            null,
+            Arg.Any<Func<object, Exception?, string>>());
+
+        _logger.Received().Log(
+            LogLevel.Information,
+            Arg.Any<EventId>(),
+            Arg.Is<object>(o => o.ToString()!.Contains("Fallback TestType.TestMethod")),
+            null,
+            Arg.Any<Func<object, Exception?, string>>());
+    }
 
     [Fact]
     public void ProcessEntry_ShouldLogError_WhenFormattingFails_AndFallbackDisabled()
